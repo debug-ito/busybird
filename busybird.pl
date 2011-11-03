@@ -4,13 +4,11 @@ use warnings;
 use Getopt::Long;
 use Scalar::Util qw(refaddr);
 use Encode;
+use FindBin;
 
 use POE;
-use POE::Component::Server::HTTP;
-use HTTP::Status;
 
 use Net::Twitter;
-
 use BusyBird::Input;
 use BusyBird::Input::Twitter::HomeTimeline;
 use BusyBird::Input::Twitter::List;
@@ -18,6 +16,7 @@ use BusyBird::Output;
 use BusyBird::Judge;
 use BusyBird::Timer;
 use BusyBird::ClientAgent;
+use BusyBird::HTTPD;
 
 require 'config.test.pl';
 
@@ -50,27 +49,15 @@ sub main() {
     $output->judge(BusyBird::Judge->new());
     $output->agents($client_agent);
     ## ** 一つのInputが複数のTimerに紐付けられないように管理しないといけない
-    &initiateTimer(BusyBird::Timer->new(120), [$input], [$output]);
-    &initiateTimer(
-        BusyBird::Timer->new(200),
-        [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', nt => $nt)],
-        [$output],
-        );
+    ## &initiateTimer(BusyBird::Timer->new(120), [$input], [$output]);
+    ## &initiateTimer(
+    ##     BusyBird::Timer->new(200),
+    ##     [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', nt => $nt)],
+    ##     [$output],
+    ##     );
 
-    my $aliases = POE::Component::Server::HTTP->new(
-        Port => 8888,
-        ContentHandler => {
-            '/comet_sample' => \&poeCometSample,
-            '/' => \&poeIndex,
-        },
-        Headers => { Server => 'My Server' },
-        );
-## HTTPDを終了するにはshutdownイベントを送る必要がある。SIGINTをトラップしてshutdownに変換？
-
-## 新着件数などのサーバからのpush性の強いデータはcomet的にデータを送るといいかも
-## http://d.hatena.ne.jp/dayflower/20061116/1163663677
-## でもここのサンプル、実際動かしてみると二つ以上のコネクションを同時に張ってくれないような…
-
+    BusyBird::HTTPD->init($FindBin::Bin . "/resources/httpd");
+    BusyBird::HTTPD->start();
     POE::Kernel->run();
 }
 
@@ -114,9 +101,9 @@ sub initiateTimer() {
                         $output_stream->pushStatuses($statuses);
                     }
                 }
-                foreach my $output_stream (@{$heap->{output_streams}}) {
-                    $output_stream->flushStatuses(); ## ** For test..
-                }
+                ## foreach my $output_stream (@{$heap->{output_streams}}) {
+                ##     $output_stream->flushStatuses(); ## ** For test..
+                ## }
                 
                 return $kernel->yield('set_delay');
             },
@@ -128,22 +115,6 @@ sub initiateTimer() {
             },
         },
         );
-}
-
-sub poeIndex() {
-    my ($request, $response) = @_;
-    $response->code(RC_OK);
-    my $ret_str = $client_agent->getHTMLHead($DEFAULT_STREAM_NAME) . $client_agent->getHTMLStream($DEFAULT_STREAM_NAME)
-        . $client_agent->getHTMLFoot($DEFAULT_STREAM_NAME);
-    $response->content(Encode::encode('utf8', $ret_str));
-    return RC_OK;
-}
-
-sub poeCometSample() {
-    my ($request, $response) = @_;
-    $notify_responses{refaddr($response)} = $response;
-    $request->headers->header(Connection => 'close');
-    return RC_WAIT;
 }
 
 &main();
