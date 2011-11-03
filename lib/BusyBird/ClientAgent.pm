@@ -1,8 +1,6 @@
 package BusyBird::ClientAgent;
 use DateTime;
 
-my $TIMEZONE = DateTime::TimeZone->new(name => 'local');
-
 sub new() {
     my ($class) = @_;
     my $self = {
@@ -78,7 +76,6 @@ sub getHTMLStream() {
 </div>
 END
     foreach my $status (@{$self->{document}{output}{$stream_name}}) {
-        $status->{bb_datetime}->set_time_zone($TIMEZONE);
         $ret .= sprintf($format,
                         $status->{bb_id},
                         $status->{bb_datetime}->ymd, $status->{bb_datetime}->hms,

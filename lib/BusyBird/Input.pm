@@ -3,15 +3,15 @@ package BusyBird::Input;
 use strict;
 use warnings;
 use Scalar::Util ('blessed');
-
+use DateTime;
 use IO::File;
 
 my $DEFAULT_PAGE_COUNT = 100;
 my $DEFAULT_PAGE_MAX   = 10;
 my $ID_CACHE_MAX = 100;
 
-## new statusのしきい値時刻をファイルに保存し、リストアする機能も必要。
-## あと、チェックタイミングに関する変数も必要だが、それはPOEの提供するインタフェースに依存する
+my $TIMEZONE = DateTime::TimeZone->new(name => 'local');
+
 
 sub new() {
     my ($class, %params) = @_;
@@ -96,12 +96,12 @@ sub getNewStatuses() {
     ## $self->{latest_id_cache} = {};
     $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
     for(my $page = 0 ; $page < $self->{page_max} ; $page++) {
-        ## 例外のハンドリングはもうちょっと上のレイヤか？
         my $statuses = $self->_getStatuses($self->{page_count}, $page);
         my $is_complete = 0;
         last if !defined($statuses);
         foreach my $status (@$statuses) {
             my $datetime = $status->{bb_datetime};
+            $datetime->set_time_zone($TIMEZONE);
             ## ** Update latest status time and ID cache
             if(!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
                 $self->{last_status_epoch_time} = $datetime->epoch;
