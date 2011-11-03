@@ -66,8 +66,6 @@ sub pushStatuses() {
     }
     $self->_sort();
     ## ** we should do classification here
-
-    $self->flushStatuses();
 }
 
 sub flushStatuses() {

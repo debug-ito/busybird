@@ -40,12 +40,12 @@ sub main() {
     my $output = BusyBird::Output->new($DEFAULT_STREAM_NAME);
     $output->judge(BusyBird::Judge->new());
     $output->agents($client_agent);
-    ## ** タイマーを複数のInputで共有するのは危険。
-    &initiateInputStream($input, BusyBird::Timer->new(120), $output);
-    &initiateInputStream(
-        BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', nt => $nt),
+    ## ** 一つのInputが複数のTimerに紐付けられないように管理しないといけない
+    &initiateTimer(BusyBird::Timer->new(120), [$input], [$output]);
+    &initiateTimer(
         BusyBird::Timer->new(200),
-        $output
+        [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', nt => $nt)],
+        [$output],
         );
 
     my $aliases = POE::Component::Server::HTTP->new(
@@ -65,45 +65,57 @@ sub main() {
     POE::Kernel->run();
 }
 
-sub initiateInputStream() {
-    my ($input_stream, $timer, @output_streams) = @_;
+sub initiateTimer() {
+    my ($timer, $input_streams_ref, $output_streams_ref) = @_;
     POE::Session->create(
         heap => {
-            input_stream => $input_stream,
+            input_streams => $input_streams_ref,
             timer => $timer,
-            output_streams => \@output_streams,
+            output_streams => $output_streams_ref,
         },
         inline_states => {
             ## タイムライン名でaliasを設定するといいのかもしれない。
             _start => sub { $_[KERNEL]->yield("timer_fire") },
             set_delay => sub {
                 my $delay = $_[HEAP]->{timer}->getNextDelay();
-                printf STDERR ("INFO: Input %s will be checked in %.2f seconds.\n", $_[HEAP]->{input_stream}->getName(), $delay);
+                printf STDERR ("INFO: Following inputs will be checked in %.2f seconds.\n", $delay);
+                foreach my $input (@{$_[HEAP]->{input_streams}}) {
+                    printf STDERR ("INFO:   %s\n", $input->getName());
+                }
                 $_[KERNEL]->delay('timer_fire', $delay);
             },
             timer_fire   => sub {
                 my ($kernel, $heap) = @_[KERNEL, HEAP];
-                my $input = $heap->{input_stream};
-                printf STDERR ("INFO: fire on input %s\n", $input->getName());
+                printf STDERR ("INFO: fire on input");
+                foreach my $input (@{$heap->{input_streams}}) {
+                    printf STDERR (" %s", $input->getName());
+                }
+                print STDERR "\n";
                 
-                my $statuses;
-                eval {
-                    $statuses = $input->getNewStatuses();
-                };
-                if($@) {
-                    printf STDERR ("ERROR: while getting input %s: %s\n", $input->getName(), $@);
-                    return $kernel->yield('set_delay');;
+                foreach my $input (@{$heap->{input_streams}}) {
+                    my $statuses;
+                    eval {
+                        $statuses = $input->getNewStatuses();
+                    };
+                    if($@) {
+                        printf STDERR ("ERROR: while getting input %s: %s\n", $input->getName(), $@);
+                        next;
+                    }
+                    foreach my $output_stream (@{$heap->{output_streams}}) {
+                        $output_stream->pushStatuses($statuses);
+                    }
                 }
                 foreach my $output_stream (@{$heap->{output_streams}}) {
-                    $output_stream->pushStatuses($statuses);
+                    $output_stream->flushStatuses(); ## ** For test..
                 }
+                
                 return $kernel->yield('set_delay');
             },
             change_interval => sub {
                 my ($kernel, $heap) = @_[KERNEL, HEAP];
                 my $new_interval = ($_[ARG0] < $TIMER_INTERVAL_MIN ? $TIMER_INTERVAL_MIN : $_[ARG0]);
                 $heap->{timer}->setInterval($new_interval);
-                $kernel->yield('set_delay');
+                return $kernel->yield('set_delay');
             },
         },
         );
