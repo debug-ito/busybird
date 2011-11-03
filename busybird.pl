@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use warnings;
+use Getopt::Long;
 use Scalar::Util qw(refaddr);
 use Encode;
 
@@ -20,6 +21,11 @@ use BusyBird::ClientAgent;
 
 require 'config.test.pl';
 
+my $OPT_THRESHOLD_OFFSET = 0;
+GetOptions(
+    't=s' => \$OPT_THRESHOLD_OFFSET,
+    );
+
 my $TIMER_INTERVAL_MIN = 60;
 my $DEFAULT_STREAM_NAME = 'default';
 
@@ -27,6 +33,9 @@ my %notify_responses = ();
 my $client_agent = BusyBird::ClientAgent->new();
 
 sub main() {
+    ## ** TODO: support more sophisticated format of threshold offset (other than just seconds).
+    BusyBird::Input->setThresholdOffset(int($OPT_THRESHOLD_OFFSET));
+    
     my %configs = &tempGetConfig();
     my $nt = Net::Twitter->new(
         traits   => [qw/OAuth API::REST API::Lists/],

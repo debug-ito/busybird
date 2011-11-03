@@ -12,6 +12,12 @@ my $ID_CACHE_MAX = 100;
 
 my $TIMEZONE = DateTime::TimeZone->new(name => 'local');
 
+my $THRESHOLD_OFFSET_SEC = 0;
+
+sub setThresholdOffset() {
+    my ($class, $offset) = @_;
+    $THRESHOLD_OFFSET_SEC = $offset;
+}
 
 sub new() {
     my ($class, %params) = @_;
@@ -67,7 +73,7 @@ sub _loadCacheFile() {
         die "Invalid cache file $filepath";
     }
     chomp $epoch_time;
-    $self->{last_status_epoch_time} = int($epoch_time);
+    $self->{last_status_epoch_time} = int($epoch_time) - $THRESHOLD_OFFSET_SEC;
     ## while(my $line = $file->getline()) {
     ##     chomp $line;
     ##     $self->{latest_id_cache}{$line} = 1;
