@@ -92,8 +92,6 @@ sub _saveCacheFile() {
 sub getNewStatuses() {
     my ($self, $threshold_epoch_time) = @_;
     my $ret_array = [];
-    ## my $cur_latest_id_cache = $self->{latest_id_cache};
-    ## $self->{latest_id_cache} = {};
     $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
     for(my $page = 0 ; $page < $self->{page_max} ; $page++) {
         my $statuses = $self->_getStatuses($self->{page_count}, $page);
@@ -102,22 +100,15 @@ sub getNewStatuses() {
         foreach my $status (@$statuses) {
             my $datetime = $status->{bb_datetime};
             $datetime->set_time_zone($TIMEZONE);
-            ## ** Update latest status time and ID cache
+            ## ** Update latest status time
             if(!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
                 $self->{last_status_epoch_time} = $datetime->epoch;
-                ## $self->{latest_id_cache} = {$status->{bb_id} => 1};
             }
-            ## elsif($datetime->epoch == $self->{last_status_epoch_time}) {
-            ##     $self->{latest_id_cache}{$status->{bb_id}} = 1;
-            ## }
-            
-            ## ** Collect new statuses
-            $status->{bb_input_name} = $self->{name};
-            push(@$ret_array, $status);
-            
-            ## if(!defined($threshold_epoch_time)
-            ##    || ($datetime->epoch >= $threshold_epoch_time && !defined($cur_latest_id_cache->{$status->{bb_id}}) )) {
-            if(defined($threshold_epoch_time) && $datetime->epoch < $threshold_epoch_time) {
+            ## ** Collect new status
+            if(!defined($threshold_epoch_time) || $datetime->epoch >= $threshold_epoch_time) {
+                $status->{bb_input_name} = $self->{name};
+                push(@$ret_array, $status);
+            }else {
                 $is_complete = 1;
             }
         }
