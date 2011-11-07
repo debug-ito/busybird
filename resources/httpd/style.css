@@ -1,0 +1,86 @@
+.status_container {
+  margin: 5px 30px;
+  width: 700px;
+}
+.status_time {
+    text-align: right;
+  text-weight: bold;
+  color: red;
+  float: right;
+}
+div {
+  border: solid 1px red;
+}
+
+/* *********************** */
+
+div#statuses div.cursor {
+    border: 2px solid blue;
+}
+
+div.status_lv1, div.status_lv2, div.status_lv3, div.status_lv4, div.status_lv5 {
+    border: 2px solid red;
+    padding: 5px;
+    margin: 2px auto;
+    width: 400px;
+    background-color: white;
+    display: none;
+}
+
+div.header_lv1, div.header_lv2,div.header_lv3,div.header_lv4,div.header_lv5 {
+    background-color: #222;
+    color: red;
+    height: 5px;
+    margin: 0px auto;
+    width: 800px;
+    display: none;
+    padding: auto;
+    vertical-align: middle;
+}
+
+div.header_lv1 {
+    display: block;
+}
+
+div.status_lv1 {
+    display: block;
+}
+
+div.status_lv2 {
+    background-color: #DDD;
+}
+
+div.status_lv3{
+    background-color: #CCC;
+}
+
+div.status_lv4{
+    background-color: #AAA;
+}
+
+div.status_lv5{
+    background-color: #888;
+}
+
+div#control {
+    background-color: #FFF;
+    position: fixed;
+    left: auto;
+    right: auto;
+    width: 100%;
+}
+
+div#control_left {
+    float: right;
+}
+
+div#statuses {
+    padding: 5px 40px;
+}
+
+body {
+    background-color: #CCFFCC;
+    padding: 0;
+    margin: 0;
+}
+

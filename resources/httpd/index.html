@@ -1,0 +1,2311 @@
+<html>
+<head>
+  <title>Traffic Shaper Test</title>
+  <link rel="stylesheet" href="static/style.css" type="text/css" media="screen" />
+  <script type="text/javascript" src="static/jquery.js"></script>
+  <script type="text/javascript" src="static/shaper.js"></script>
+</head>
+<body>
+<div id="control">
+<h1>トラフィックシェーパテスト</h1>
+<div id="control_left">
+  <input type="button" value="↑" onClick="cursorSlide(-1)" />
+  <input type="button" value="↓" onClick="cursorSlide(+1)" />
+  <input type="button" value="-" onClick="changeLevel(current_level - 1, '')" />
+  <input type="button" value="+" onClick="changeLevel(current_level + 1, '')" />
+</div>
+<div id="cur_level_box">Lv.<span id="cur_level">1</span> Y:<span id="y_pos">0</span> CurLV_status_num:<span id="cur_lv_num">0</span></div>
+</div>
+<div id="control_placehold"></div>
+<div id="statuses">
+<div id="box_0" class="status_lv1 cursor">
+ID:0 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_1" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_1'); return false;">HIDE</a> 
+ID:1 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_2" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_2'); return false;">HIDE</a> 
+ID:2 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_3" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_3'); return false;">HIDE</a> 
+ID:3 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_4" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_4'); return false;">HIDE</a> 
+ID:4 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_5" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_5'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_6" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_6'); return false;">HIDE</a> 
+ID:6 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_7" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_7'); return false;">Header: Lv. 2 NUM:5</a></div>
+<div id="box_8" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_8'); return false;">HIDE</a> 
+ID:8 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_9" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_9'); return false;">HIDE</a> 
+ID:9 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_10" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_10'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_11" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_11'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_12" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_12'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_13" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_13'); return false;">HIDE</a> 
+ID:13 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_14" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_14'); return false;">Header: Lv. 1 NUM:8</a></div>
+<div id="box_15" class="status_lv1">
+ID:15 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_16" class="status_lv1">
+ID:16 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_17" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_17'); return false;">HIDE</a> 
+ID:17 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_18" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_18'); return false;">HIDE</a> 
+ID:18 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_19" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_19'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_20" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_20'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_21" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_21'); return false;">HIDE</a> 
+ID:21 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_22" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_22'); return false;">HIDE</a> 
+ID:22 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_23" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_23'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_24" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_24'); return false;">Header: Lv. 2 NUM:4</a></div>
+<div id="box_25" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_25'); return false;">HIDE</a> 
+ID:25 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_26" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_26'); return false;">HIDE</a> 
+ID:26 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_27" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_27'); return false;">HIDE</a> 
+ID:27 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_28" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_28'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_29" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_29'); return false;">Header: Lv. 1 NUM:7</a></div>
+<div id="box_30" class="status_lv1">
+ID:30 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_31" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_31'); return false;">HIDE</a> 
+ID:31 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_32" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_32'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_33" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_33'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_34" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_34'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_35" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_35'); return false;">Header: Lv. 1 NUM:1</a></div>
+<div id="box_36" class="status_lv1">
+ID:36 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_37" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_37'); return false;">HIDE</a> 
+ID:37 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_38" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_38'); return false;">HIDE</a> 
+ID:38 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_39" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_39'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_40" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_40'); return false;">HIDE</a> 
+ID:40 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_41" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_41'); return false;">HIDE</a> 
+ID:41 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_42" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_42'); return false;">HIDE</a> 
+ID:42 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_43" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_43'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_44" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_44'); return false;">HIDE</a> 
+ID:44 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_45" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_45'); return false;">HIDE</a> 
+ID:45 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_46" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_46'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_47" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_47'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_48" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_48'); return false;">Header: Lv. 2 NUM:4</a></div>
+<div id="box_49" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_49'); return false;">HIDE</a> 
+ID:49 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_50" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_50'); return false;">HIDE</a> 
+ID:50 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_51" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_51'); return false;">HIDE</a> 
+ID:51 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_52" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_52'); return false;">HIDE</a> 
+ID:52 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_53" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_53'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_54" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_54'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_55" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_55'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_56" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_56'); return false;">HIDE</a> 
+ID:56 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_57" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_57'); return false;">HIDE</a> 
+ID:57 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_58" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_58'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_59" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_59'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_60" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_60'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_61" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_61'); return false;">HIDE</a> 
+ID:61 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_62" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_62'); return false;">HIDE</a> 
+ID:62 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_63" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_63'); return false;">HIDE</a> 
+ID:63 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_64" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_64'); return false;">HIDE</a> 
+ID:64 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_65" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_65'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_66" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_66'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_67" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_67'); return false;">Header: Lv. 1 NUM:17</a></div>
+<div id="box_68" class="status_lv1">
+ID:68 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_69" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_69'); return false;">HIDE</a> 
+ID:69 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_70" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_70'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_71" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_71'); return false;">HIDE</a> 
+ID:71 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_72" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_72'); return false;">HIDE</a> 
+ID:72 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_73" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_73'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_74" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_74'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_75" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_75'); return false;">HIDE</a> 
+ID:75 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_76" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_76'); return false;">Header: Lv. 1 NUM:4</a></div>
+<div id="box_77" class="status_lv1">
+ID:77 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_78" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_78'); return false;">HIDE</a> 
+ID:78 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_79" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_79'); return false;">HIDE</a> 
+ID:79 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_80" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_80'); return false;">HIDE</a> 
+ID:80 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_81" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_81'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_82" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_82'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_83" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_83'); return false;">Header: Lv. 1 NUM:3</a></div>
+<div id="box_84" class="status_lv1">
+ID:84 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_85" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_85'); return false;">HIDE</a> 
+ID:85 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_86" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_86'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_87" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_87'); return false;">HIDE</a> 
+ID:87 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_88" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_88'); return false;">HIDE</a> 
+ID:88 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_89" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_89'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_90" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_90'); return false;">HIDE</a> 
+ID:90 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_91" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_91'); return false;">HIDE</a> 
+ID:91 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_92" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_92'); return false;">HIDE</a> 
+ID:92 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_93" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_93'); return false;">HIDE</a> 
+ID:93 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_94" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_94'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_95" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_95'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_96" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_96'); return false;">Header: Lv. 1 NUM:7</a></div>
+<div id="box_97" class="status_lv1">
+ID:97 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_98" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_98'); return false;">HIDE</a> 
+ID:98 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_99" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_99'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_100" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_100'); return false;">HIDE</a> 
+ID:100 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_101" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_101'); return false;">HIDE</a> 
+ID:101 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_102" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_102'); return false;">Header: Lv. 1 NUM:3</a></div>
+<div id="box_103" class="status_lv1">
+ID:103 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_104" class="status_lv1">
+ID:104 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_105" class="status_lv1">
+ID:105 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_106" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_106'); return false;">HIDE</a> 
+ID:106 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_107" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_107'); return false;">HIDE</a> 
+ID:107 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_108" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_108'); return false;">HIDE</a> 
+ID:108 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_109" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_109'); return false;">HIDE</a> 
+ID:109 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_110" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_110'); return false;">HIDE</a> 
+ID:110 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_111" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_111'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_112" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_112'); return false;">Header: Lv. 3 NUM:4</a></div>
+<div id="box_113" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_113'); return false;">Header: Lv. 2 NUM:5</a></div>
+<div id="box_114" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_114'); return false;">HIDE</a> 
+ID:114 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_115" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_115'); return false;">HIDE</a> 
+ID:115 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_116" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_116'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_117" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_117'); return false;">Header: Lv. 1 NUM:7</a></div>
+<div id="box_118" class="status_lv1">
+ID:118 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_119" class="status_lv1">
+ID:119 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_120" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_120'); return false;">HIDE</a> 
+ID:120 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_121" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_121'); return false;">HIDE</a> 
+ID:121 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_122" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_122'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_123" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_123'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_124" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_124'); return false;">Header: Lv. 1 NUM:2</a></div>
+<div id="box_125" class="status_lv1">
+ID:125 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_126" class="status_lv1">
+ID:126 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_127" class="status_lv1">
+ID:127 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_128" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_128'); return false;">HIDE</a> 
+ID:128 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_129" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_129'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_130" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_130'); return false;">HIDE</a> 
+ID:130 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_131" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_131'); return false;">Header: Lv. 1 NUM:2</a></div>
+<div id="box_132" class="status_lv1">
+ID:132 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_133" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_133'); return false;">HIDE</a> 
+ID:133 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_134" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_134'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_135" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_135'); return false;">HIDE</a> 
+ID:135 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_136" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_136'); return false;">HIDE</a> 
+ID:136 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_137" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_137'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_138" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_138'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_139" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_139'); return false;">HIDE</a> 
+ID:139 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_140" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_140'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_141" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_141'); return false;">HIDE</a> 
+ID:141 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_142" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_142'); return false;">HIDE</a> 
+ID:142 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_143" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_143'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_144" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_144'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_145" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_145'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_146" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_146'); return false;">Header: Lv. 1 NUM:6</a></div>
+<div id="box_147" class="status_lv1">
+ID:147 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_148" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_148'); return false;">HIDE</a> 
+ID:148 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_149" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_149'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_150" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_150'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_151" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_151'); return false;">Header: Lv. 1 NUM:1</a></div>
+<div id="box_152" class="status_lv1">
+ID:152 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_153" class="status_lv1">
+ID:153 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_154" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_154'); return false;">HIDE</a> 
+ID:154 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_155" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_155'); return false;">HIDE</a> 
+ID:155 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_156" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_156'); return false;">HIDE</a> 
+ID:156 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_157" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_157'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_158" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_158'); return false;">HIDE</a> 
+ID:158 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_159" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_159'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_160" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_160'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_161" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_161'); return false;">HIDE</a> 
+ID:161 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_162" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_162'); return false;">Header: Lv. 1 NUM:5</a></div>
+<div id="box_163" class="status_lv1">
+ID:163 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_164" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_164'); return false;">HIDE</a> 
+ID:164 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_165" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_165'); return false;">HIDE</a> 
+ID:165 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_166" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_166'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_167" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_167'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_168" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_168'); return false;">HIDE</a> 
+ID:168 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_169" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_169'); return false;">HIDE</a> 
+ID:169 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_170" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_170'); return false;">HIDE</a> 
+ID:170 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_171" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_171'); return false;">HIDE</a> 
+ID:171 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_172" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_172'); return false;">HIDE</a> 
+ID:172 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_173" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_173'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_174" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_174'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_175" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_175'); return false;">HIDE</a> 
+ID:175 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_176" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_176'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_177" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_177'); return false;">HIDE</a> 
+ID:177 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_178" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_178'); return false;">HIDE</a> 
+ID:178 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_179" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_179'); return false;">HIDE</a> 
+ID:179 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_180" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_180'); return false;">HIDE</a> 
+ID:180 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_181" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_181'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_182" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_182'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_183" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_183'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_184" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_184'); return false;">Header: Lv. 1 NUM:12</a></div>
+<div id="box_185" class="status_lv1">
+ID:185 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_186" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_186'); return false;">HIDE</a> 
+ID:186 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_187" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_187'); return false;">HIDE</a> 
+ID:187 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_188" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_188'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_189" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_189'); return false;">HIDE</a> 
+ID:189 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_190" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_190'); return false;">HIDE</a> 
+ID:190 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_191" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_191'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_192" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_192'); return false;">HIDE</a> 
+ID:192 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_193" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_193'); return false;">HIDE</a> 
+ID:193 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_194" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_194'); return false;">Header: Lv. 2 NUM:5</a></div>
+<div id="box_195" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_195'); return false;">HIDE</a> 
+ID:195 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_196" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_196'); return false;">HIDE</a> 
+ID:196 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_197" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_197'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_198" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_198'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_199" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_199'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_200" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_200'); return false;">HIDE</a> 
+ID:200 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_201" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_201'); return false;">HIDE</a> 
+ID:201 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_202" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_202'); return false;">HIDE</a> 
+ID:202 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_203" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_203'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_204" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_204'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_205" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_205'); return false;">HIDE</a> 
+ID:205 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_206" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_206'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_207" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_207'); return false;">Header: Lv. 1 NUM:12</a></div>
+<div id="box_208" class="status_lv1">
+ID:208 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_209" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_209'); return false;">HIDE</a> 
+ID:209 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_210" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_210'); return false;">HIDE</a> 
+ID:210 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_211" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_211'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_212" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_212'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_213" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_213'); return false;">HIDE</a> 
+ID:213 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_214" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_214'); return false;">HIDE</a> 
+ID:214 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_215" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_215'); return false;">HIDE</a> 
+ID:215 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_216" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_216'); return false;">HIDE</a> 
+ID:216 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_217" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_217'); return false;">HIDE</a> 
+ID:217 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_218" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_218'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_219" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_219'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_220" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_220'); return false;">Header: Lv. 2 NUM:7</a></div>
+<div id="box_221" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_221'); return false;">HIDE</a> 
+ID:221 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_222" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_222'); return false;">HIDE</a> 
+ID:222 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_223" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_223'); return false;">HIDE</a> 
+ID:223 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_224" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_224'); return false;">HIDE</a> 
+ID:224 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_225" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_225'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_226" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_226'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_227" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_227'); return false;">HIDE</a> 
+ID:227 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_228" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_228'); return false;">HIDE</a> 
+ID:228 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_229" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_229'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_230" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_230'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_231" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_231'); return false;">Header: Lv. 2 NUM:5</a></div>
+<div id="box_232" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_232'); return false;">Header: Lv. 1 NUM:13</a></div>
+<div id="box_233" class="status_lv1">
+ID:233 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_234" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_234'); return false;">HIDE</a> 
+ID:234 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_235" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_235'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_236" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_236'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_237" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_237'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_238" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_238'); return false;">Header: Lv. 1 NUM:1</a></div>
+<div id="box_239" class="status_lv1">
+ID:239 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_240" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_240'); return false;">HIDE</a> 
+ID:240 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_241" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_241'); return false;">HIDE</a> 
+ID:241 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_242" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_242'); return false;">HIDE</a> 
+ID:242 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_243" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_243'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_244" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_244'); return false;">Header: Lv. 1 NUM:3</a></div>
+<div id="box_245" class="status_lv1">
+ID:245 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_246" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_246'); return false;">HIDE</a> 
+ID:246 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_247" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_247'); return false;">HIDE</a> 
+ID:247 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_248" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_248'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_249" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_249'); return false;">Header: Lv. 1 NUM:2</a></div>
+<div id="box_250" class="status_lv1">
+ID:250 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_251" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_251'); return false;">HIDE</a> 
+ID:251 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_252" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_252'); return false;">HIDE</a> 
+ID:252 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_253" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_253'); return false;">HIDE</a> 
+ID:253 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_254" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_254'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_255" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_255'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_256" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_256'); return false;">Header: Lv. 1 NUM:3</a></div>
+<div id="box_257" class="status_lv1">
+ID:257 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_258" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_258'); return false;">HIDE</a> 
+ID:258 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_259" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_259'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_260" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_260'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_261" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_261'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_262" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_262'); return false;">HIDE</a> 
+ID:262 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_263" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_263'); return false;">HIDE</a> 
+ID:263 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_264" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_264'); return false;">HIDE</a> 
+ID:264 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_265" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_265'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_266" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_266'); return false;">HIDE</a> 
+ID:266 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_267" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_267'); return false;">HIDE</a> 
+ID:267 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_268" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_268'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_269" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_269'); return false;">Header: Lv. 1 NUM:6</a></div>
+<div id="box_270" class="status_lv1">
+ID:270 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_271" class="status_lv1">
+ID:271 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_272" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_272'); return false;">HIDE</a> 
+ID:272 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_273" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_273'); return false;">HIDE</a> 
+ID:273 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_274" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_274'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_275" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_275'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_276" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_276'); return false;">HIDE</a> 
+ID:276 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_277" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_277'); return false;">HIDE</a> 
+ID:277 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_278" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_278'); return false;">HIDE</a> 
+ID:278 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_279" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_279'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_280" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_280'); return false;">HIDE</a> 
+ID:280 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_281" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_281'); return false;">HIDE</a> 
+ID:281 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_282" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_282'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_283" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_283'); return false;">Header: Lv. 3 NUM:4</a></div>
+<div id="box_284" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_284'); return false;">HIDE</a> 
+ID:284 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_285" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_285'); return false;">HIDE</a> 
+ID:285 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_286" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_286'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_287" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_287'); return false;">HIDE</a> 
+ID:287 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_288" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_288'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_289" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_289'); return false;">Header: Lv. 2 NUM:10</a></div>
+<div id="box_290" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_290'); return false;">Header: Lv. 1 NUM:10</a></div>
+<div id="box_291" class="status_lv1">
+ID:291 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_292" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_292'); return false;">HIDE</a> 
+ID:292 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_293" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_293'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_294" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_294'); return false;">HIDE</a> 
+ID:294 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_295" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_295'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_296" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_296'); return false;">Header: Lv. 1 NUM:2</a></div>
+<div id="box_297" class="status_lv1">
+ID:297 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_298" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_298'); return false;">HIDE</a> 
+ID:298 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_299" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_299'); return false;">HIDE</a> 
+ID:299 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_300" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_300'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_301" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_301'); return false;">HIDE</a> 
+ID:301 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_302" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_302'); return false;">HIDE</a> 
+ID:302 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_303" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_303'); return false;">HIDE</a> 
+ID:303 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_304" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_304'); return false;">HIDE</a> 
+ID:304 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_305" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_305'); return false;">Header: Lv. 3 NUM:5</a></div>
+<div id="box_306" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_306'); return false;">HIDE</a> 
+ID:306 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_307" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_307'); return false;">HIDE</a> 
+ID:307 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_308" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_308'); return false;">HIDE</a> 
+ID:308 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_309" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_309'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_310" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_310'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_311" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_311'); return false;">Header: Lv. 2 NUM:9</a></div>
+<div id="box_312" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_312'); return false;">HIDE</a> 
+ID:312 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_313" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_313'); return false;">HIDE</a> 
+ID:313 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_314" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_314'); return false;">HIDE</a> 
+ID:314 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_315" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_315'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_316" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_316'); return false;">Header: Lv. 1 NUM:12</a></div>
+<div id="box_317" class="status_lv1">
+ID:317 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_318" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_318'); return false;">HIDE</a> 
+ID:318 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_319" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_319'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_320" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_320'); return false;">HIDE</a> 
+ID:320 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_321" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_321'); return false;">HIDE</a> 
+ID:321 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_322" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_322'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_323" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_323'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_324" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_324'); return false;">HIDE</a> 
+ID:324 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_325" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_325'); return false;">Header: Lv. 1 NUM:4</a></div>
+<div id="box_326" class="status_lv1">
+ID:326 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_327" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_327'); return false;">HIDE</a> 
+ID:327 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_328" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_328'); return false;">HIDE</a> 
+ID:328 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_329" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_329'); return false;">HIDE</a> 
+ID:329 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_330" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_330'); return false;">HIDE</a> 
+ID:330 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_331" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_331'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_332" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_332'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_333" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_333'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_334" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_334'); return false;">HIDE</a> 
+ID:334 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_335" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_335'); return false;">HIDE</a> 
+ID:335 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_336" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_336'); return false;">Header: Lv. 1 NUM:6</a></div>
+<div id="box_337" class="status_lv1">
+ID:337 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_338" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_338'); return false;">HIDE</a> 
+ID:338 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_339" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_339'); return false;">HIDE</a> 
+ID:339 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_340" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_340'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_341" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_341'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_342" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_342'); return false;">HIDE</a> 
+ID:342 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_343" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_343'); return false;">HIDE</a> 
+ID:343 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_344" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_344'); return false;">HIDE</a> 
+ID:344 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_345" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_345'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_346" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_346'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_347" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_347'); return false;">Header: Lv. 1 NUM:5</a></div>
+<div id="box_348" class="status_lv1">
+ID:348 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_349" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_349'); return false;">HIDE</a> 
+ID:349 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_350" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_350'); return false;">HIDE</a> 
+ID:350 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_351" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_351'); return false;">HIDE</a> 
+ID:351 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_352" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_352'); return false;">HIDE</a> 
+ID:352 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_353" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_353'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_354" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_354'); return false;">Header: Lv. 3 NUM:4</a></div>
+<div id="box_355" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_355'); return false;">Header: Lv. 2 NUM:4</a></div>
+<div id="box_356" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_356'); return false;">Header: Lv. 1 NUM:4</a></div>
+<div id="box_357" class="status_lv1">
+ID:357 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_358" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_358'); return false;">HIDE</a> 
+ID:358 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_359" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_359'); return false;">Header: Lv. 1 NUM:1</a></div>
+<div id="box_360" class="status_lv1">
+ID:360 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_361" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_361'); return false;">HIDE</a> 
+ID:361 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_362" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_362'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_363" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_363'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_364" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_364'); return false;">Header: Lv. 1 NUM:1</a></div>
+<div id="box_365" class="status_lv1">
+ID:365 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_366" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_366'); return false;">HIDE</a> 
+ID:366 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_367" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_367'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_368" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_368'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_369" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_369'); return false;">HIDE</a> 
+ID:369 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_370" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_370'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_371" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_371'); return false;">Header: Lv. 1 NUM:2</a></div>
+<div id="box_372" class="status_lv1">
+ID:372 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_373" class="status_lv1">
+ID:373 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_374" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_374'); return false;">HIDE</a> 
+ID:374 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_375" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_375'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_376" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_376'); return false;">HIDE</a> 
+ID:376 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_377" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_377'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_378" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_378'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_379" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_379'); return false;">HIDE</a> 
+ID:379 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_380" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_380'); return false;">HIDE</a> 
+ID:380 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_381" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_381'); return false;">HIDE</a> 
+ID:381 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_382" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_382'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_383" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_383'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_384" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_384'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_385" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_385'); return false;">Header: Lv. 1 NUM:5</a></div>
+<div id="box_386" class="status_lv1">
+ID:386 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_387" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_387'); return false;">HIDE</a> 
+ID:387 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_388" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_388'); return false;">HIDE</a> 
+ID:388 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_389" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_389'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_390" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_390'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_391" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_391'); return false;">Header: Lv. 1 NUM:2</a></div>
+<div id="box_392" class="status_lv1">
+ID:392 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_393" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_393'); return false;">HIDE</a> 
+ID:393 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_394" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_394'); return false;">HIDE</a> 
+ID:394 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_395" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_395'); return false;">Header: Lv. 1 NUM:2</a></div>
+<div id="box_396" class="status_lv1">
+ID:396 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_397" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_397'); return false;">HIDE</a> 
+ID:397 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_398" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_398'); return false;">HIDE</a> 
+ID:398 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_399" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_399'); return false;">HIDE</a> 
+ID:399 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_400" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_400'); return false;">HIDE</a> 
+ID:400 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_401" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_401'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_402" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_402'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_403" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_403'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_404" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_404'); return false;">Header: Lv. 1 NUM:4</a></div>
+<div id="box_405" class="status_lv1">
+ID:405 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_406" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_406'); return false;">HIDE</a> 
+ID:406 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_407" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_407'); return false;">HIDE</a> 
+ID:407 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_408" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_408'); return false;">HIDE</a> 
+ID:408 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_409" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_409'); return false;">HIDE</a> 
+ID:409 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_410" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_410'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_411" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_411'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_412" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_412'); return false;">HIDE</a> 
+ID:412 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_413" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_413'); return false;">HIDE</a> 
+ID:413 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_414" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_414'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_415" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_415'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_416" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_416'); return false;">HIDE</a> 
+ID:416 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_417" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_417'); return false;">HIDE</a> 
+ID:417 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_418" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_418'); return false;">HIDE</a> 
+ID:418 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_419" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_419'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_420" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_420'); return false;">Header: Lv. 1 NUM:9</a></div>
+<div id="box_421" class="status_lv1">
+ID:421 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_422" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_422'); return false;">HIDE</a> 
+ID:422 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_423" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_423'); return false;">HIDE</a> 
+ID:423 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_424" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_424'); return false;">HIDE</a> 
+ID:424 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_425" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_425'); return false;">HIDE</a> 
+ID:425 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_426" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_426'); return false;">HIDE</a> 
+ID:426 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_427" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_427'); return false;">HIDE</a> 
+ID:427 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_428" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_428'); return false;">Header: Lv. 4 NUM:3</a></div>
+<div id="box_429" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_429'); return false;">Header: Lv. 3 NUM:5</a></div>
+<div id="box_430" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_430'); return false;">Header: Lv. 2 NUM:6</a></div>
+<div id="box_431" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_431'); return false;">Header: Lv. 1 NUM:6</a></div>
+<div id="box_432" class="status_lv1">
+ID:432 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_433" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_433'); return false;">HIDE</a> 
+ID:433 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_434" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_434'); return false;">HIDE</a> 
+ID:434 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_435" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_435'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_436" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_436'); return false;">HIDE</a> 
+ID:436 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_437" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_437'); return false;">HIDE</a> 
+ID:437 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_438" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_438'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_439" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_439'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_440" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_440'); return false;">Header: Lv. 2 NUM:4</a></div>
+<div id="box_441" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_441'); return false;">HIDE</a> 
+ID:441 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_442" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_442'); return false;">HIDE</a> 
+ID:442 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_443" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_443'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_444" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_444'); return false;">Header: Lv. 1 NUM:6</a></div>
+<div id="box_445" class="status_lv1">
+ID:445 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_446" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_446'); return false;">HIDE</a> 
+ID:446 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_447" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_447'); return false;">HIDE</a> 
+ID:447 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_448" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_448'); return false;">HIDE</a> 
+ID:448 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_449" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_449'); return false;">HIDE</a> 
+ID:449 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_450" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_450'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_451" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_451'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_452" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_452'); return false;">Header: Lv. 1 NUM:4</a></div>
+<div id="box_453" class="status_lv1">
+ID:453 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_454" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_454'); return false;">HIDE</a> 
+ID:454 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_455" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_455'); return false;">HIDE</a> 
+ID:455 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_456" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_456'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_457" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_457'); return false;">HIDE</a> 
+ID:457 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_458" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_458'); return false;">HIDE</a> 
+ID:458 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_459" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_459'); return false;">HIDE</a> 
+ID:459 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_460" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_460'); return false;">Header: Lv. 2 NUM:4</a></div>
+<div id="box_461" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_461'); return false;">Header: Lv. 1 NUM:5</a></div>
+<div id="box_462" class="status_lv1">
+ID:462 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_463" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_463'); return false;">HIDE</a> 
+ID:463 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_464" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_464'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_465" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_465'); return false;">HIDE</a> 
+ID:465 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_466" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_466'); return false;">HIDE</a> 
+ID:466 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_467" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_467'); return false;">HIDE</a> 
+ID:467 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_468" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_468'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_469" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_469'); return false;">HIDE</a> 
+ID:469 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_470" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_470'); return false;">HIDE</a> 
+ID:470 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_471" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_471'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_472" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_472'); return false;">HIDE</a> 
+ID:472 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_473" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_473'); return false;">HIDE</a> 
+ID:473 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_474" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_474'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_475" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_475'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_476" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_476'); return false;">HIDE</a> 
+ID:476 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_477" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_477'); return false;">HIDE</a> 
+ID:477 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_478" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_478'); return false;">HIDE</a> 
+ID:478 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_479" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_479'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_480" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_480'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_481" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_481'); return false;">Header: Lv. 1 NUM:11</a></div>
+<div id="box_482" class="status_lv1">
+ID:482 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_483" class="status_lv1">
+ID:483 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_484" class="status_lv1">
+ID:484 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_485" class="status_lv1">
+ID:485 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_486" class="status_lv1">
+ID:486 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_487" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_487'); return false;">HIDE</a> 
+ID:487 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_488" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_488'); return false;">HIDE</a> 
+ID:488 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_489" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_489'); return false;">HIDE</a> 
+ID:489 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_490" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_490'); return false;">HIDE</a> 
+ID:490 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_491" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_491'); return false;">Header: Lv. 4 NUM:3</a></div>
+<div id="box_492" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_492'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_493" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_493'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_494" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_494'); return false;">Header: Lv. 1 NUM:4</a></div>
+<div id="box_495" class="status_lv1">
+ID:495 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_496" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_496'); return false;">HIDE</a> 
+ID:496 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_497" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_497'); return false;">HIDE</a> 
+ID:497 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_498" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_498'); return false;">HIDE</a> 
+ID:498 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_499" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_499'); return false;">HIDE</a> 
+ID:499 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_500" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_500'); return false;">Header: Lv. 4 NUM:3</a></div>
+<div id="box_501" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_501'); return false;">Header: Lv. 3 NUM:4</a></div>
+<div id="box_502" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_502'); return false;">HIDE</a> 
+ID:502 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_503" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_503'); return false;">HIDE</a> 
+ID:503 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_504" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_504'); return false;">HIDE</a> 
+ID:504 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_505" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_505'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_506" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_506'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_507" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_507'); return false;">Header: Lv. 2 NUM:7</a></div>
+<div id="box_508" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_508'); return false;">HIDE</a> 
+ID:508 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_509" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_509'); return false;">Header: Lv. 1 NUM:8</a></div>
+<div id="box_510" class="status_lv1">
+ID:510 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_511" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_511'); return false;">HIDE</a> 
+ID:511 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_512" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_512'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_513" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_513'); return false;">HIDE</a> 
+ID:513 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_514" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_514'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_515" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_515'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_516" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_516'); return false;">HIDE</a> 
+ID:516 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_517" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_517'); return false;">Header: Lv. 1 NUM:3</a></div>
+<div id="box_518" class="status_lv1">
+ID:518 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_519" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_519'); return false;">HIDE</a> 
+ID:519 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_520" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_520'); return false;">HIDE</a> 
+ID:520 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_521" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_521'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_522" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_522'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_523" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_523'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_524" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_524'); return false;">HIDE</a> 
+ID:524 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_525" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_525'); return false;">HIDE</a> 
+ID:525 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_526" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_526'); return false;">HIDE</a> 
+ID:526 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_527" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_527'); return false;">HIDE</a> 
+ID:527 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_528" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_528'); return false;">HIDE</a> 
+ID:528 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_529" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_529'); return false;">HIDE</a> 
+ID:529 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_530" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_530'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_531" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_531'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_532" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_532'); return false;">Header: Lv. 1 NUM:8</a></div>
+<div id="box_533" class="status_lv1">
+ID:533 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_534" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_534'); return false;">HIDE</a> 
+ID:534 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_535" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_535'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_536" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_536'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_537" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_537'); return false;">HIDE</a> 
+ID:537 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_538" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_538'); return false;">HIDE</a> 
+ID:538 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_539" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_539'); return false;">HIDE</a> 
+ID:539 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_540" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_540'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_541" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_541'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_542" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_542'); return false;">Header: Lv. 1 NUM:4</a></div>
+<div id="box_543" class="status_lv1">
+ID:543 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_544" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_544'); return false;">HIDE</a> 
+ID:544 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_545" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_545'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_546" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_546'); return false;">Header: Lv. 1 NUM:1</a></div>
+<div id="box_547" class="status_lv1">
+ID:547 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_548" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_548'); return false;">HIDE</a> 
+ID:548 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_549" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_549'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_550" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_550'); return false;">Header: Lv. 1 NUM:1</a></div>
+<div id="box_551" class="status_lv1">
+ID:551 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_552" class="status_lv1">
+ID:552 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_553" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_553'); return false;">HIDE</a> 
+ID:553 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_554" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_554'); return false;">HIDE</a> 
+ID:554 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_555" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_555'); return false;">HIDE</a> 
+ID:555 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_556" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_556'); return false;">HIDE</a> 
+ID:556 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_557" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_557'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_558" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_558'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_559" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_559'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_560" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_560'); return false;">Header: Lv. 1 NUM:4</a></div>
+<div id="box_561" class="status_lv1">
+ID:561 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_562" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_562'); return false;">HIDE</a> 
+ID:562 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_563" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_563'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_564" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_564'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_565" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_565'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_566" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_566'); return false;">HIDE</a> 
+ID:566 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_567" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_567'); return false;">HIDE</a> 
+ID:567 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_568" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_568'); return false;">HIDE</a> 
+ID:568 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_569" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_569'); return false;">HIDE</a> 
+ID:569 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_570" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_570'); return false;">HIDE</a> 
+ID:570 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_571" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_571'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_572" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_572'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_573" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_573'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_574" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_574'); return false;">HIDE</a> 
+ID:574 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_575" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_575'); return false;">HIDE</a> 
+ID:575 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_576" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_576'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_577" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_577'); return false;">HIDE</a> 
+ID:577 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_578" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_578'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_579" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_579'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_580" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_580'); return false;">HIDE</a> 
+ID:580 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_581" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_581'); return false;">HIDE</a> 
+ID:581 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_582" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_582'); return false;">HIDE</a> 
+ID:582 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_583" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_583'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_584" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_584'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_585" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_585'); return false;">HIDE</a> 
+ID:585 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_586" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_586'); return false;">HIDE</a> 
+ID:586 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_587" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_587'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_588" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_588'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_589" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_589'); return false;">HIDE</a> 
+ID:589 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_590" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_590'); return false;">HIDE</a> 
+ID:590 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_591" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_591'); return false;">HIDE</a> 
+ID:591 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_592" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_592'); return false;">HIDE</a> 
+ID:592 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_593" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_593'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_594" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_594'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_595" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_595'); return false;">HIDE</a> 
+ID:595 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_596" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_596'); return false;">HIDE</a> 
+ID:596 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_597" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_597'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_598" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_598'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_599" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_599'); return false;">Header: Lv. 2 NUM:10</a></div>
+<div id="box_600" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_600'); return false;">Header: Lv. 1 NUM:20</a></div>
+<div id="box_601" class="status_lv1">
+ID:601 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_602" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_602'); return false;">HIDE</a> 
+ID:602 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_603" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_603'); return false;">HIDE</a> 
+ID:603 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_604" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_604'); return false;">HIDE</a> 
+ID:604 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_605" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_605'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_606" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_606'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_607" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_607'); return false;">HIDE</a> 
+ID:607 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_608" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_608'); return false;">HIDE</a> 
+ID:608 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_609" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_609'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_610" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_610'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_611" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_611'); return false;">Header: Lv. 2 NUM:5</a></div>
+<div id="box_612" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_612'); return false;">HIDE</a> 
+ID:612 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_613" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_613'); return false;">HIDE</a> 
+ID:613 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_614" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_614'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_615" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_615'); return false;">HIDE</a> 
+ID:615 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_616" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_616'); return false;">HIDE</a> 
+ID:616 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_617" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_617'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_618" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_618'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_619" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_619'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_620" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_620'); return false;">HIDE</a> 
+ID:620 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_621" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_621'); return false;">Header: Lv. 1 NUM:10</a></div>
+<div id="box_622" class="status_lv1">
+ID:622 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_623" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_623'); return false;">HIDE</a> 
+ID:623 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_624" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_624'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_625" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_625'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_626" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_626'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_627" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_627'); return false;">HIDE</a> 
+ID:627 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_628" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_628'); return false;">HIDE</a> 
+ID:628 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_629" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_629'); return false;">HIDE</a> 
+ID:629 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_630" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_630'); return false;">Header: Lv. 1 NUM:4</a></div>
+<div id="box_631" class="status_lv1">
+ID:631 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_632" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_632'); return false;">HIDE</a> 
+ID:632 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_633" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_633'); return false;">HIDE</a> 
+ID:633 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_634" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_634'); return false;">HIDE</a> 
+ID:634 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_635" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_635'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_636" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_636'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_637" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_637'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_638" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_638'); return false;">Header: Lv. 1 NUM:3</a></div>
+<div id="box_639" class="status_lv1">
+ID:639 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_640" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_640'); return false;">HIDE</a> 
+ID:640 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_641" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_641'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_642" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_642'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_643" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_643'); return false;">Header: Lv. 1 NUM:1</a></div>
+<div id="box_644" class="status_lv1">
+ID:644 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_645" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_645'); return false;">HIDE</a> 
+ID:645 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_646" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_646'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_647" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_647'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_648" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_648'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_649" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_649'); return false;">HIDE</a> 
+ID:649 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_650" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_650'); return false;">HIDE</a> 
+ID:650 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_651" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_651'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_652" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_652'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_653" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_653'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_654" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_654'); return false;">Header: Lv. 1 NUM:3</a></div>
+<div id="box_655" class="status_lv1">
+ID:655 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_656" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_656'); return false;">HIDE</a> 
+ID:656 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_657" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_657'); return false;">HIDE</a> 
+ID:657 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_658" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_658'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_659" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_659'); return false;">HIDE</a> 
+ID:659 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_660" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_660'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_661" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_661'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_662" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_662'); return false;">HIDE</a> 
+ID:662 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_663" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_663'); return false;">HIDE</a> 
+ID:663 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_664" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_664'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_665" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_665'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_666" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_666'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_667" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_667'); return false;">Header: Lv. 1 NUM:5</a></div>
+<div id="box_668" class="status_lv1">
+ID:668 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_669" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_669'); return false;">HIDE</a> 
+ID:669 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_670" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_670'); return false;">HIDE</a> 
+ID:670 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_671" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_671'); return false;">HIDE</a> 
+ID:671 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_672" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_672'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_673" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_673'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_674" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_674'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_675" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_675'); return false;">HIDE</a> 
+ID:675 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_676" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_676'); return false;">HIDE</a> 
+ID:676 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_677" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_677'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_678" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_678'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_679" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_679'); return false;">Header: Lv. 1 NUM:5</a></div>
+<div id="box_680" class="status_lv1">
+ID:680 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_681" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_681'); return false;">HIDE</a> 
+ID:681 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_682" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_682'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_683" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_683'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_684" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_684'); return false;">HIDE</a> 
+ID:684 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_685" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_685'); return false;">HIDE</a> 
+ID:685 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_686" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_686'); return false;">HIDE</a> 
+ID:686 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_687" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_687'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_688" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_688'); return false;">HIDE</a> 
+ID:688 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_689" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_689'); return false;">Header: Lv. 2 NUM:5</a></div>
+<div id="box_690" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_690'); return false;">Header: Lv. 1 NUM:5</a></div>
+<div id="box_691" class="status_lv1">
+ID:691 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_692" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_692'); return false;">HIDE</a> 
+ID:692 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_693" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_693'); return false;">HIDE</a> 
+ID:693 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_694" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_694'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_695" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_695'); return false;">HIDE</a> 
+ID:695 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_696" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_696'); return false;">HIDE</a> 
+ID:696 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_697" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_697'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_698" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_698'); return false;">HIDE</a> 
+ID:698 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_699" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_699'); return false;">HIDE</a> 
+ID:699 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_700" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_700'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_701" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_701'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_702" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_702'); return false;">Header: Lv. 2 NUM:5</a></div>
+<div id="box_703" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_703'); return false;">HIDE</a> 
+ID:703 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_704" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_704'); return false;">HIDE</a> 
+ID:704 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_705" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_705'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_706" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_706'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_707" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_707'); return false;">HIDE</a> 
+ID:707 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_708" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_708'); return false;">Header: Lv. 1 NUM:9</a></div>
+<div id="box_709" class="status_lv1">
+ID:709 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_710" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_710'); return false;">HIDE</a> 
+ID:710 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_711" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_711'); return false;">Header: Lv. 1 NUM:1</a></div>
+<div id="box_712" class="status_lv1">
+ID:712 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_713" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_713'); return false;">HIDE</a> 
+ID:713 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_714" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_714'); return false;">HIDE</a> 
+ID:714 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_715" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_715'); return false;">HIDE</a> 
+ID:715 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_716" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_716'); return false;">HIDE</a> 
+ID:716 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_717" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_717'); return false;">HIDE</a> 
+ID:717 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_718" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_718'); return false;">HIDE</a> 
+ID:718 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_719" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_719'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_720" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_720'); return false;">Header: Lv. 2 NUM:4</a></div>
+<div id="box_721" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_721'); return false;">HIDE</a> 
+ID:721 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_722" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_722'); return false;">HIDE</a> 
+ID:722 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_723" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_723'); return false;">Header: Lv. 1 NUM:8</a></div>
+<div id="box_724" class="status_lv1">
+ID:724 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_725" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_725'); return false;">HIDE</a> 
+ID:725 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_726" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_726'); return false;">HIDE</a> 
+ID:726 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_727" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_727'); return false;">HIDE</a> 
+ID:727 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_728" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_728'); return false;">HIDE</a> 
+ID:728 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_729" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_729'); return false;">HIDE</a> 
+ID:729 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_730" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_730'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_731" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_731'); return false;">HIDE</a> 
+ID:731 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_732" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_732'); return false;">HIDE</a> 
+ID:732 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_733" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_733'); return false;">Header: Lv. 3 NUM:4</a></div>
+<div id="box_734" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_734'); return false;">HIDE</a> 
+ID:734 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_735" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_735'); return false;">HIDE</a> 
+ID:735 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_736" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_736'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_737" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_737'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_738" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_738'); return false;">Header: Lv. 2 NUM:7</a></div>
+<div id="box_739" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_739'); return false;">HIDE</a> 
+ID:739 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_740" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_740'); return false;">HIDE</a> 
+ID:740 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_741" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_741'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_742" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_742'); return false;">Header: Lv. 1 NUM:11</a></div>
+<div id="box_743" class="status_lv1">
+ID:743 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_744" class="status_lv1">
+ID:744 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_745" class="status_lv1">
+ID:745 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_746" class="status_lv1">
+ID:746 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_747" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_747'); return false;">HIDE</a> 
+ID:747 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_748" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_748'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_749" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_749'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_750" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_750'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_751" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_751'); return false;">HIDE</a> 
+ID:751 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_752" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_752'); return false;">Header: Lv. 1 NUM:2</a></div>
+<div id="box_753" class="status_lv1">
+ID:753 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_754" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_754'); return false;">HIDE</a> 
+ID:754 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_755" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_755'); return false;">HIDE</a> 
+ID:755 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_756" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_756'); return false;">HIDE</a> 
+ID:756 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_757" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_757'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_758" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_758'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_759" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_759'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_760" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_760'); return false;">HIDE</a> 
+ID:760 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_761" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_761'); return false;">HIDE</a> 
+ID:761 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_762" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_762'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_763" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_763'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_764" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_764'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_765" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_765'); return false;">Header: Lv. 1 NUM:5</a></div>
+<div id="box_766" class="status_lv1">
+ID:766 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_767" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_767'); return false;">HIDE</a> 
+ID:767 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_768" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_768'); return false;">HIDE</a> 
+ID:768 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_769" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_769'); return false;">HIDE</a> 
+ID:769 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_770" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_770'); return false;">HIDE</a> 
+ID:770 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_771" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_771'); return false;">HIDE</a> 
+ID:771 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_772" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_772'); return false;">HIDE</a> 
+ID:772 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_773" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_773'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_774" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_774'); return false;">HIDE</a> 
+ID:774 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_775" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_775'); return false;">HIDE</a> 
+ID:775 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_776" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_776'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_777" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_777'); return false;">Header: Lv. 3 NUM:6</a></div>
+<div id="box_778" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_778'); return false;">Header: Lv. 2 NUM:8</a></div>
+<div id="box_779" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_779'); return false;">Header: Lv. 1 NUM:8</a></div>
+<div id="box_780" class="status_lv1">
+ID:780 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_781" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_781'); return false;">HIDE</a> 
+ID:781 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_782" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_782'); return false;">HIDE</a> 
+ID:782 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_783" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_783'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_784" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_784'); return false;">Header: Lv. 1 NUM:2</a></div>
+<div id="box_785" class="status_lv1">
+ID:785 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_786" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_786'); return false;">HIDE</a> 
+ID:786 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_787" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_787'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_788" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_788'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_789" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_789'); return false;">HIDE</a> 
+ID:789 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_790" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_790'); return false;">HIDE</a> 
+ID:790 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_791" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_791'); return false;">Header: Lv. 1 NUM:3</a></div>
+<div id="box_792" class="status_lv1">
+ID:792 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_793" class="status_lv1">
+ID:793 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_794" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_794'); return false;">HIDE</a> 
+ID:794 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_795" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_795'); return false;">HIDE</a> 
+ID:795 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_796" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_796'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_797" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_797'); return false;">HIDE</a> 
+ID:797 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_798" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_798'); return false;">HIDE</a> 
+ID:798 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_799" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_799'); return false;">HIDE</a> 
+ID:799 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_800" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_800'); return false;">HIDE</a> 
+ID:800 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_801" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_801'); return false;">HIDE</a> 
+ID:801 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_802" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_802'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_803" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_803'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_804" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_804'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_805" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_805'); return false;">HIDE</a> 
+ID:805 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_806" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_806'); return false;">HIDE</a> 
+ID:806 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_807" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_807'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_808" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_808'); return false;">HIDE</a> 
+ID:808 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_809" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_809'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_810" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_810'); return false;">HIDE</a> 
+ID:810 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_811" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_811'); return false;">HIDE</a> 
+ID:811 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_812" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_812'); return false;">HIDE</a> 
+ID:812 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_813" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_813'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_814" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_814'); return false;">HIDE</a> 
+ID:814 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_815" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_815'); return false;">HIDE</a> 
+ID:815 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_816" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_816'); return false;">HIDE</a> 
+ID:816 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_817" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_817'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_818" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_818'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_819" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_819'); return false;">HIDE</a> 
+ID:819 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_820" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_820'); return false;">Header: Lv. 2 NUM:9</a></div>
+<div id="box_821" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_821'); return false;">Header: Lv. 1 NUM:17</a></div>
+<div id="box_822" class="status_lv1">
+ID:822 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_823" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_823'); return false;">HIDE</a> 
+ID:823 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_824" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_824'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_825" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_825'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_826" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_826'); return false;">Header: Lv. 1 NUM:1</a></div>
+<div id="box_827" class="status_lv1">
+ID:827 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_828" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_828'); return false;">HIDE</a> 
+ID:828 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_829" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_829'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_830" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_830'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_831" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_831'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_832" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_832'); return false;">HIDE</a> 
+ID:832 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_833" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_833'); return false;">Header: Lv. 1 NUM:2</a></div>
+<div id="box_834" class="status_lv1">
+ID:834 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_835" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_835'); return false;">HIDE</a> 
+ID:835 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_836" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_836'); return false;">HIDE</a> 
+ID:836 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_837" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_837'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_838" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_838'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_839" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_839'); return false;">HIDE</a> 
+ID:839 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_840" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_840'); return false;">HIDE</a> 
+ID:840 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_841" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_841'); return false;">HIDE</a> 
+ID:841 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_842" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_842'); return false;">Header: Lv. 4 NUM:2</a></div>
+<div id="box_843" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_843'); return false;">HIDE</a> 
+ID:843 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_844" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_844'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_845" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_845'); return false;">HIDE</a> 
+ID:845 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_846" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_846'); return false;">Header: Lv. 2 NUM:7</a></div>
+<div id="box_847" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_847'); return false;">HIDE</a> 
+ID:847 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_848" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_848'); return false;">Header: Lv. 1 NUM:8</a></div>
+<div id="box_849" class="status_lv1">
+ID:849 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_850" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_850'); return false;">HIDE</a> 
+ID:850 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_851" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_851'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_852" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_852'); return false;">HIDE</a> 
+ID:852 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_853" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_853'); return false;">HIDE</a> 
+ID:853 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_854" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_854'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_855" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_855'); return false;">HIDE</a> 
+ID:855 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_856" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_856'); return false;">HIDE</a> 
+ID:856 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_857" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_857'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_858" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_858'); return false;">Header: Lv. 3 NUM:3</a></div>
+<div id="box_859" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_859'); return false;">Header: Lv. 2 NUM:3</a></div>
+<div id="box_860" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_860'); return false;">HIDE</a> 
+ID:860 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_861" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_861'); return false;">HIDE</a> 
+ID:861 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_862" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_862'); return false;">Header: Lv. 3 NUM:1</a></div>
+<div id="box_863" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_863'); return false;">Header: Lv. 2 NUM:1</a></div>
+<div id="box_864" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_864'); return false;">Header: Lv. 1 NUM:7</a></div>
+<div id="box_865" class="status_lv1">
+ID:865 &nbsp;&nbsp; Lv. 1
+</div>
+<div id="box_866" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_866'); return false;">HIDE</a> 
+ID:866 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_867" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_867'); return false;">HIDE</a> 
+ID:867 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_868" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_868'); return false;">HIDE</a> 
+ID:868 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_869" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_869'); return false;">HIDE</a> 
+ID:869 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_870" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_870'); return false;">Header: Lv. 3 NUM:4</a></div>
+<div id="box_871" class="status_lv3">
+<a href="javascript:void(0)" onClick="changeLevel(2, 'box_871'); return false;">HIDE</a> 
+ID:871 &nbsp;&nbsp; Lv. 3
+</div>
+<div id="box_872" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_872'); return false;">Header: Lv. 2 NUM:5</a></div>
+<div id="box_873" class="status_lv2">
+<a href="javascript:void(0)" onClick="changeLevel(1, 'box_873'); return false;">HIDE</a> 
+ID:873 &nbsp;&nbsp; Lv. 2
+</div>
+<div id="box_874" class="status_lv4">
+<a href="javascript:void(0)" onClick="changeLevel(3, 'box_874'); return false;">HIDE</a> 
+ID:874 &nbsp;&nbsp; Lv. 4
+</div>
+<div id="box_875" class="status_lv5">
+<a href="javascript:void(0)" onClick="changeLevel(4, 'box_875'); return false;">HIDE</a> 
+ID:875 &nbsp;&nbsp; Lv. 5
+</div>
+<div id="box_876" class="header_lv4"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_876'); return false;">Header: Lv. 4 NUM:1</a></div>
+<div id="box_877" class="header_lv3"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_877'); return false;">Header: Lv. 3 NUM:2</a></div>
+<div id="box_878" class="header_lv2"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_878'); return false;">Header: Lv. 2 NUM:2</a></div>
+<div id="box_879" class="header_lv1"><a href="javascript:void(0)" onClick="changeLevel(current_level + 1, 'box_879'); return false;">Header: Lv. 1 NUM:8</a></div>
+<div id="box_880" class="status_lv1">
+ID:880 &nbsp;&nbsp; Lv. 1
+</div>
+</div>
+</body>
+</html>
