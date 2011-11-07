@@ -10,7 +10,7 @@ use DateTime;
 
 use BusyBird::Judge;
 
-sub new() {
+sub new {
     my ($class, $name) = @_;
     my $self = {
         name => $name,
@@ -23,19 +23,19 @@ sub new() {
     return bless $self, $class;
 }
 
-sub judge() {
+sub judge {
     my ($self, $judge) = @_;
     return $self->{judge} if !defined($judge);
     $self->{judge} = $judge;
 }
 
-sub agents() {
+sub agents {
     my ($self, @agents) = @_;
     return $self->{agents} if !@agents;
     push(@{$self->{agents}}, @agents);
 }
 
-sub _uniqStatuses() {
+sub _uniqStatuses {
     my ($self, $statuses) = @_;
     ## my %ids = ();
     ## foreach my $status (@{$self->{statuses}}) {
@@ -51,13 +51,13 @@ sub _uniqStatuses() {
     return $uniq_statuses;
 }
 
-sub _sort() {
+sub _sort {
     my ($self) = @_;
     my @sorted_statuses = sort {$b->{bb_datetime}->epoch <=> $a->{bb_datetime}->epoch} @{$self->{new_statuses}};
     $self->{new_statuses} = \@sorted_statuses;
 }
 
-sub pushStatuses() {
+sub pushStatuses {
     my ($self, $statuses) = @_;
     $statuses = $self->_uniqStatuses($statuses);
     $self->{judge}->addScore($statuses);

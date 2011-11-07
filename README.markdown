@@ -23,4 +23,4 @@ AUTHOR
 Toshio Ito
 
 * https://github.com/debug-ito
-* debug.ito@gmail.com
+* debug.ito [at] gmail.com

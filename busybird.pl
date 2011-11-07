@@ -31,7 +31,7 @@ my $DEFAULT_STREAM_NAME = 'default';
 my %notify_responses = ();
 my $client_agent = BusyBird::ClientAgent->new();
 
-sub main() {
+sub main {
     ## ** TODO: support more sophisticated format of threshold offset (other than just seconds).
     BusyBird::Input->setThresholdOffset(int($OPT_THRESHOLD_OFFSET));
     
@@ -61,7 +61,7 @@ sub main() {
     POE::Kernel->run();
 }
 
-sub initiateTimer() {
+sub initiateTimer {
     my ($timer, $input_streams_ref, $output_streams_ref) = @_;
     POE::Session->create(
         heap => {

@@ -54,14 +54,14 @@ div {
 END
 }
 
-sub getHTMLFoot() {
+sub getHTMLFoot {
     return <<END;
 </body>
 </html>
 END
 }
 
-sub getHTMLStream() {
+sub getHTMLStream {
     my ($self, $stream_name) = @_;
     return '' if !defined($self->{document}{output}{$stream_name});
     my $ret = '';

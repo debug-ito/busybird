@@ -3,12 +3,12 @@ package BusyBird::Judge;
 use strict;
 use warnings;
 
-sub new() {
+sub new {
     my ($class) = @_;
     return bless {}, $class;
 }
 
-sub addScore() {
+sub addScore {
     my ($self, $statuses) = @_;
     ## ** $statuses is a referece to an array of BusyBird statuses.
     

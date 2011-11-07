@@ -14,12 +14,12 @@ my $TIMEZONE = DateTime::TimeZone->new(name => 'local');
 
 my $THRESHOLD_OFFSET_SEC = 0;
 
-sub setThresholdOffset() {
+sub setThresholdOffset {
     my ($class, $offset) = @_;
     $THRESHOLD_OFFSET_SEC = $offset;
 }
 
-sub new() {
+sub new {
     my ($class, %params) = @_;
     my $self = bless {}, $class;
     $self->_setParams(\%params);
@@ -32,7 +32,7 @@ sub new() {
     return $self;
 }
 
-sub _setParam() {
+sub _setParam {
     my ($self, $params_ref, $key, $default, $is_mandatory) = @_;
     if($is_mandatory && !defined($params_ref->{$key})) {
         my $classname = blessed $self;
@@ -41,7 +41,7 @@ sub _setParam() {
     $self->{$key} = (defined($params_ref->{$key}) ? $params_ref->{$key} : $default);
 }
 
-sub _setParams() {
+sub _setParams {
     my ($self, $params_ref) = @_;
     $self->_setParam($params_ref, 'name', undef, 1);
     $self->_setParam($params_ref, 'last_status_epoch_time');
@@ -49,18 +49,18 @@ sub _setParams() {
     $self->_setParam($params_ref, 'page_max', $DEFAULT_PAGE_MAX);
 }
 
-sub _getStatuses() {
+sub _getStatuses {
     ## ** MUST BE IMPLEMENTED BY SUBCLASSES
     my ($self, $count, $page) = @_;
     return undef;
 }
 
-sub _getCacheFilePath() {
+sub _getCacheFilePath {
     my ($self) = @_;
     return "busybird_" . $self->{name} . ".time";
 }
 
-sub _loadCacheFile() {
+sub _loadCacheFile {
     my ($self) = @_;
     my $filepath = $self->_getCacheFilePath();
     my $file = IO::File->new();
@@ -81,7 +81,7 @@ sub _loadCacheFile() {
     $file->close();
 }
 
-sub _saveCacheFile() {
+sub _saveCacheFile {
     my ($self) = @_;
     my $filepath = $self->_getCacheFilePath();
     my $file = IO::File->new();
@@ -95,7 +95,7 @@ sub _saveCacheFile() {
     $file->close();
 }
 
-sub getNewStatuses() {
+sub getNewStatuses {
     my ($self, $threshold_epoch_time) = @_;
     my $ret_array = [];
     $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
@@ -128,7 +128,7 @@ sub getNewStatuses() {
     return $ret_array;
 }
 
-sub getName() {
+sub getName {
     my ($self) = @_;
     return $self->{name};
 }

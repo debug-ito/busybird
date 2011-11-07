@@ -3,25 +3,22 @@ use strict;
 use warnings;
 
 use POE qw(Component::Server::TCP Filter::HTTPD);
-## use POE::Component::Server::HTTP;
 use HTTP::Status;
 use HTTP::Response;
 use HTTP::Request;
 use File::MimeInfo;
 use IO::File;
 
-use Data::Dumper;
-
-$| = 1;
+## use Data::Dumper;
 
 my $self;
 my $PATH_STATIC_BASE = '/static/';
 
-sub RC_WAIT() { 0;} ## DUMMY
+sub RC_WAIT { 0;} ## DUMMY
 
-sub init() {
+sub init {
     my ($class, $content_dir) = @_;
-    my @contents = qw(style.css CA3I0048.JPG photo.jpg photo.png small.gif small.png);
+    my @contents = qw(style.css photo.jpg photo.png small.gif small.png);
     $content_dir =~ s|/+$||g;
     $self = {
         'content_dir' => $content_dir,
@@ -33,7 +30,7 @@ sub init() {
     bless $self, $class;
 }
 
-sub start() {
+sub start {
     my ($class) = @_;
     if(!defined($self)) {
         die 'Call init() before start()';
@@ -47,19 +44,8 @@ sub start() {
         },
         ClientInput => sub {
             my $client_input = $_[ARG0];
-            
-            ## return;
-            ## print STDERR ("INPUT------\n" . $client_input . "\n");
-            ## if($client_input) {
-            ##     return;
-            ## }
-            print STDERR ("---- Create response\n");
             my $response = HTTP::Response->new();
             $self->_handlerStaticContent($client_input, $response);
-            ## $_[HEAP]{client}->put('DATA');
-            ## $_[HEAP]{client}->put(pack('C*', 255,255,255,255,255,255,255,255,));
-            ## $_[HEAP]{client}->put("\r\n");
-            ## my $ret_data = $response->as_string("\r\n");
             $response->header('Content-Length', length($response->content));
             $_[HEAP]{client}->put('HTTP/1.1 ' . $response->status_line . "\r\n" . $response->headers_as_string("\r\n") . "\r\n");
             $_[HEAP]{client}->put($response->content);
@@ -72,48 +58,14 @@ sub start() {
             ## ** separately. Because they are sent by separate
             ## ** packets, it may be unefficient in terms of bandwidth
             ## ** usage, though.
-            
             return;
-            
-            ## my $ret_data = $response->content;
-            ## my $as_str = $response->as_string("\r\n");
-            ## 
-            ## print $as_str;
-            ## print "----------------\n";
-            ## $_[HEAP]{client}->put($as_str);
-            ## $_[HEAP]{client}->put("-----------------\n");
-            ## 
-            ## print $ret_data;
-            ## my @headers = (
-            ##     'HTTP/1.1 200 OK',
-            ##     'Content-Type: image/gif',
-            ##     'Content-Length: ' . length($ret_data),
-            ##     'Connection: Close',
-            ##     '',
-            ##     ''
-            ##     );
-            ## $_[HEAP]{client}->put(join("\r\n", @headers) . $ret_data);
-            ## ## $_[HEAP]{client}->put($ret_data);
-            ## ## $_[HEAP]{client}->put($response);
         },
   );
-##     my $aliases = POE::Component::Server::HTTP->new(
-##         Port => 8888,
-##         ContentHandler => {
-##             '/comet_sample' => \&_handlerCometSample,
-##             '/' => \&_handlerIndex,
-##             $PATH_STATIC_BASE => \&_handlerStaticContent,
-##         },
-##         Headers => { Server => 'My Server' },
-##         );
-
-## ** HTTPDを終了するにはshutdownイベントを送る必要がある。SIGINTをトラップしてshutdownに変換？
-## ** 新着件数などのサーバからのpush性の強いデータはcomet的にデータを送るといいかも
-## ** http://d.hatena.ne.jp/dayflower/20061116/1163663677
-## ** でもここのサンプル、実際動かしてみると二つ以上のコネクションを同時に張ってくれないような…
 }
 
-sub _handlerSample() {
+sub _handlerClientInput {}
+
+sub _handlerSample {
     my ($self, $client, $client_input) = @_;
     my $response = HTTP::Response->new();
     my $path = $self->{content_dir}."/small.gif";
@@ -138,7 +90,7 @@ sub _handlerSample() {
     return $response;
 }
 
-sub _handlerIndex() {
+sub _handlerIndex {
     my ($request, $response) = @_;
     $response->code(RC_OK);
     $response->content("You just fetched " . $request->uri . "\n");
@@ -148,21 +100,21 @@ sub _handlerIndex() {
     return RC_OK;
 }
 
-sub _handlerCometSample() {
+sub _handlerCometSample {
     my ($request, $response) = @_;
     ## $notify_responses{refaddr($response)} = $response;
     $request->headers->header(Connection => 'close');
     return RC_WAIT;
 }
 
-sub _setNotFound() {
+sub _setNotFound {
     my ($response) = @_;
     $response->code(404);
     $response->message('Not Found');
     $response->content('Not Found');
 }
 
-sub _handlerStaticContent() {
+sub _handlerStaticContent {
     my ($self, $request, $response) = @_;
     print STDERR ("URI: " . $request->uri . "\n");
     my ($req_host, $req_path) = ('', '');
