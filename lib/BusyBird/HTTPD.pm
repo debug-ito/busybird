@@ -8,10 +8,14 @@ use HTTP::Response;
 use HTTP::Request;
 use File::MimeInfo;
 use IO::File;
+use Encode;
+
+use BusyBird::Output;
+use BusyBird::Request;
 
 ## use Data::Dumper;
 
-my $self;
+my $g_httpd_self;
 my $CAT_STATIC = 'static';
 my $HANDLER_PREFIX = '_cathandler_';
 my %MIME_MAP = (
@@ -21,29 +25,43 @@ my %MIME_MAP = (
     css => 'text/css',
     );
 
-## sub RC_WAIT { 0;} ## DUMMY
+my $LISTEN_PORT = 8888;
+my @NOTIFY_FOR_OUTPUT = qw(new_statuses);
+
 
 sub init {
     my ($class, $content_dir) = @_;
     my @contents = qw(style.css index.html jquery.js shaper.js favicon.ico);
     $content_dir =~ s|/+$||g;
-    $self = {
+    $g_httpd_self = {
         'content_dir' => $content_dir,
         'contents' => {},
+        'notify_points' => {},
     };
     foreach my $file (@contents) {
-        $self->{contents}{$file} = 1;
+        $g_httpd_self->{contents}{$file} = 1;
     }
-    bless $self, $class;
+    bless $g_httpd_self, $class;
+}
+
+sub registerOutputs {
+    my ($class, @output_streams) = @_;
+    foreach my $output_stream (@output_streams) {
+        foreach my $notify_event (@NOTIFY_FOR_OUTPUT) {
+            my $point_name = $notify_event . '/' . $output_stream->getName();
+            $g_httpd_self->{notify_points}{$point_name} = {listener => $output_stream, requests => {}};
+            print STDERR "Register notify point: $point_name\n";
+        }
+    }
 }
 
 sub start {
     my ($class) = @_;
-    if(!defined($self)) {
+    if(!defined($g_httpd_self)) {
         die 'Call init() before start()';
     }
     POE::Component::Server::TCP->new(
-        Port => 8888,
+        Port => $LISTEN_PORT,
         Address => '127.0.0.1',
         ClientInputFilter  => "POE::Filter::HTTPD",
         ClientOutputFilter => "POE::Filter::Stream",
@@ -55,6 +73,29 @@ sub start {
         },
         ClientInput => \&_handlerClientInput,
   );
+}
+
+sub replyPoint {
+    my ($class_self, $point) = @_;
+    my $self = ref($class_self) ? $class_self : $g_httpd_self;
+    if(!$self->_isPointDefined($point)) {
+        return 0;
+    }
+    my $listener = $self->{notify_points}{$point}{listener};
+    my @request_keys = keys %{$self->{notify_points}{$point}{requests}};
+    foreach my $req_key (@request_keys) {
+        my $bb_request = $self->{notify_points}{$point}{requests}{$req_key};
+        my ($content, $mime) = $listener->reply($bb_request->getPoint, $bb_request->getDetail);
+        if(defined($content)) {
+            $mime = 'text/plain' if !defined($mime);
+            my $response = HTTP::Response->new();
+            $response->code(200);
+            $response->header('Content-Type', $mime);
+            $response->content(Encode::encode('utf8', $content));
+            $self->_sendHTTPResponse($bb_request->getClient, $response);
+            delete $self->{notify_points}{$point}{requests}{$req_key};
+        }
+    }
 }
 
 sub _handlerClientInput {
@@ -81,26 +122,26 @@ sub _handlerClientInput {
     }
     print STDERR "Category: $category, Lower_path: $lower_path\n";
 
-    my $response = HTTP::Response->new();
     my $handler_name = $HANDLER_PREFIX . $category;
-    if($self->can($handler_name)) {
-        $self->$handler_name($request, $response, $lower_path);
+    if($g_httpd_self->can($handler_name)) {
+        $g_httpd_self->$handler_name($request, $lower_path, $heap->{client});
     }else {
         print STDERR "No Category handler defined.\n";
-        $self->_setNotFound($response);
+        my $response = HTTP::Reponse->new();
+        $g_httpd_self->_setNotFound($response);
+        $g_httpd_self->_sendHTTPResponse($heap->{client}, $response);
     }
-    $response->header('Content-Length', length($response->content));
-    $heap->{client}->put('HTTP/1.1 ' . $response->status_line . "\r\n" . $response->headers_as_string("\r\n") . "\r\n");
-    $heap->{client}->put($response->content);
+    
     print STDERR "End client input------------------------\n";
 }
 
 sub _cathandler_static {
-    my ($self, $request, $response, $content_path) = @_;
+    my ($self, $request, $content_path, $client) = @_;
+    my $response = HTTP::Response->new();
     print STDERR "path> $content_path\n";
     if(!defined($self->{contents}{$content_path})) {
         $self->_setNotFound($response);
-        print STDERR ("2\n");
+        $self->_sendHTTPResponse($client, $response);
         return;
     }
     my $path = $self->{content_dir}."/".$content_path;
@@ -109,7 +150,7 @@ sub _cathandler_static {
     my $file = IO::File->new();
     if(!$file->open($path, "r")) {
         $self->_setNotFound($response);
-        print STDERR ("3\n");
+        $self->_sendHTTPResponse($client, $response);
         return;
     }
     my $filedata = '';
@@ -123,18 +164,39 @@ sub _cathandler_static {
     ## print $response->content;
     $response->code(RC_OK);
     ## $response->decode();
+    $self->_sendHTTPResponse($client, $response);
     return;
+}
+
+sub _cathandler_notify {
+    my ($self, $request, $point, $client) = @_;
+    my $bb_request = BusyBird::Request->new($point, $client, '');
+    if(!$self->_pushRequest($bb_request)) {
+        my $response = HTTP::Response->new();
+        $self->_setNotFound($response);
+        $self->_sendHTTPResponse($client, $response);
+        return;
+    }
+    $self->replyPoint($point);
 }
 
 sub _setNotFound {
     my ($class, $response) = @_;
     $response->code(404);
     $response->message('Not Found');
+    $response->header('Content-Type', 'text/plain');
     $response->content('Not Found');
 }
 
+sub _sendHTTPResponse {
+    my ($class_self, $client, $response) = @_;
+    $response->header('Content-Length', length($response->content));
+    $client->put('HTTP/1.1 ' . $response->status_line . "\r\n" . $response->headers_as_string("\r\n") . "\r\n");
+    $client->put($response->content);
+}
+
 sub _getMimeForFilePath {
-    my ($class, $path) = @_;
+    my ($class_self, $path) = @_;
     if($path =~ m|\.([^\.]+)$|) {
         my $ext = $1;
         $ext = lc($ext);
@@ -147,97 +209,18 @@ sub _getMimeForFilePath {
     return $mimetype;
 }
 
-## sub _handlerSample {
-##     my ($self, $client, $client_input) = @_;
-##     my $response = HTTP::Response->new();
-##     my $path = $self->{content_dir}."/small.gif";
-##     my $mimetype = mimetype($path);
-##     $mimetype = 'application/octet-stream' if !defined($mimetype);
-##     my $file = IO::File->new();
-##     if(!$file->open($path, "r")) {
-##         &_setNotFound($response);
-##         print STDERR ("3\n");
-##         return $response;
-##     }
-##     my $filedata = '';
-##     {
-##         local $/ = undef;
-##         $filedata = $file->getline();
-##     }
-##     $file->close();
-##     $response->header('Content-Type', $mimetype);
-##     $response->header('Content-Length', length($filedata));
-##     $response->content_ref(\$filedata);
-##     $response->code(200);
-##     return $response;
-## }
-## 
-## sub _handlerIndex {
-##     my ($request, $response) = @_;
-##     $response->code(RC_OK);
-##     $response->content("You just fetched " . $request->uri . "\n");
-##     ## my $ret_str = $client_agent->getHTMLHead($DEFAULT_STREAM_NAME) . $client_agent->getHTMLStream($DEFAULT_STREAM_NAME)
-##     ##     . $client_agent->getHTMLFoot($DEFAULT_STREAM_NAME);
-##     ## $response->content(Encode::encode('utf8', $ret_str));
-##     return RC_OK;
-## }
-## 
-## sub _handlerCometSample {
-##     my ($request, $response) = @_;
-##     ## $notify_responses{refaddr($response)} = $response;
-##     $request->headers->header(Connection => 'close');
-##     return RC_WAIT;
-## }
-## 
-## sub _handlerStaticContent {
-##     my ($self, $request, $response) = @_;
-##     print STDERR ("URI: " . $request->uri . "\n");
-##     my ($req_host, $req_path) = ('', '');
-##     if($request->uri =~ m|^https?://([^/]+)(.+?)$|) {
-##         $req_host = $1;
-##         $req_path = $2;
-##     }else {
-##         $req_path = $request->uri;
-##     }
-##     $req_path = '/' . $req_path if $req_path !~ m|^/|;
-##     
-##     if($req_path !~ m|^$PATH_STATIC_BASE(.*)$|) {
-##         &_setNotFound($response);
-##         print STDERR ("1\n");
-##         return RC_OK;
-##     }
-##     my $content_path = $1;
-##     print STDERR "path> $content_path\n";
-##     if(!defined($self->{contents}{$content_path})) {
-##         &_setNotFound($response);
-##         print STDERR ("2\n");
-##         return RC_OK;
-##     }
-##     my $path = $self->{content_dir}."/".$content_path;
-##     my $mimetype = mimetype($path);
-##     $mimetype = 'application/octet-stream' if !defined($mimetype);
-##     my $file = IO::File->new();
-##     if(!$file->open($path, "r")) {
-##         &_setNotFound($response);
-##         print STDERR ("3\n");
-##         return RC_OK;
-##     }
-##     my $filedata = '';
-##     {
-##         ## local $/ = undef;
-##         ## $filedata = $file->getline();
-##         while(my $line = $file->getline()) {
-##             $filedata .= $line;
-##         }
-##         print STDERR "Write to stdout\n";
-##     }
-##     $file->close();
-##     $response->push_header('Content-Type', $mimetype);
-##     $response->content_ref(\$filedata);
-##     ## print $response->content;
-##     $response->code(RC_OK);
-##     ## $response->decode();
-##     return RC_OK;
-## }
+sub _isPointDefined {
+    my ($self, $point_name) = @_;
+    return defined($self->{notify_points}{$point_name});
+}
+
+sub _pushRequest {
+    my ($self, $bb_request) = @_;
+    my $point = $bb_request->getPoint();
+    if(!$self->_isPointDefined($point)) {
+        return 0;
+    }
+    $self->{notify_points}{$point}{requests}{$bb_request->getID} = $bb_request;
+}
 
 1;

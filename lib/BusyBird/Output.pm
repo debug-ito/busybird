@@ -23,6 +23,11 @@ sub new {
     return bless $self, $class;
 }
 
+sub getName {
+    my $self = shift;
+    return $self->{name};
+}
+
 sub judge {
     my ($self, $judge) = @_;
     return $self->{judge} if !defined($judge);
@@ -68,6 +73,20 @@ sub pushStatuses {
     $self->_sort();
     
     ## ** we should do classification here, or it's better to do it in another method??
+}
+
+sub reply {
+    my ($self, $notify_point_name, $detail) = @_;
+    if(!@{$self->{new_statuses}}) {
+        return undef;
+    }
+    my $ret = "";
+    while(my $status = pop(@{$self->{new_statuses}})) {
+        $ret = sprintf("Source: %s, Text: %s\n", $status->{bb_source_name}, $status->{bb_text}) . $ret;
+        unshift(@{$self->{old_statuses}}, $status);
+    }
+    return ($ret, "text/plain; charset=UTF-8");
+    ## ** STUB: return ($content, $mime) or undef
 }
 
 ## sub flushStatuses() {
