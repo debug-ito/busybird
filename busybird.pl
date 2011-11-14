@@ -104,10 +104,12 @@ sub initiateTimer {
                         $output_stream->pushStatuses($statuses);
                     }
                 }
-                ## foreach my $output_stream (@{$heap->{output_streams}}) {
-                ##     $output_stream->flushStatuses(); ## ** For test..
-                ## }
                 
+                ## ** Try to reply to pending requests
+                my @request_points = map { $_->getRequestPoints() } @{$heap->{output_streams}};
+                foreach my $point (@request_points) {
+                    BusyBird::HTTPD->replyPoint($point);
+                }
                 return $kernel->yield('set_delay');
             },
             change_interval => sub {

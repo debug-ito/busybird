@@ -13,18 +13,7 @@ use BusyBird::Request;
 use BusyBird::RequestListener;
 use BusyBird::StaticContent;
 
-## use Data::Dumper;
-
 my $g_httpd_self;
-## my $CAT_STATIC = 'static';
-## my $HANDLER_PREFIX = '_cathandler_';
-## my %MIME_MAP = (
-##     html => 'text/html',
-##     txt => 'text/plain',
-##     js => 'text/javascript',
-##     css => 'text/css',
-##     );
-
 my $LISTEN_PORT = 8888;
 
 sub init {
@@ -56,6 +45,14 @@ sub start {
         ClientDisconnected => sub {
             print STDERR "disconnected: $_[HEAP]{remote_ip}:$_[HEAP]{remote_port}\n";
         },
+        ClientError => sub {
+            my ($syscall_name, $error_num, $error_str) = @_[ARG0..ARG2];
+            # Handle the client error here.
+            print STDERR ("Custom ClientError: $syscall_name: $error_num: $error_str\n");
+        },
+        ClientFlushed => sub {
+            print STDERR ("POE output buffer flushed on " . $_[HEAP]->{client}->ID . "\n");
+        },
         ClientInput => \&_handlerClientInput,
   );
 }
@@ -66,8 +63,16 @@ sub replyPoint {
     if(!$self->_isPointDefined($point)) {
         return 0;
     }
+    print STDERR ">>> Now Pending\n";
+    print STDERR $self->_getPendingRequestsString();
+    print STDERR ">>> \n";
+    print STDERR "Try to reply to $point...\n";
     my $listener = $self->{request_points}{$point}{listener};
     my @request_keys = keys %{$self->{request_points}{$point}{requests}};
+    if(!@request_keys) {
+        print STDERR "No requests for $point\n";
+        return 1;
+    }
     foreach my $req_key (@request_keys) {
         my $bb_request = $self->{request_points}{$point}{requests}{$req_key};
         my ($ret_code, $content_ref, $mime) = $listener->reply($bb_request->getPoint, $bb_request->getDetail);
@@ -92,6 +97,7 @@ sub replyPoint {
         $self->_sendHTTPResponse($bb_request->getClient, $response);
         delete $self->{request_points}{$point}{requests}{$req_key};
     }
+    return 1;
 }
 
 sub _handlerClientInput {
@@ -140,7 +146,7 @@ sub _handlerClientInput {
     ##     $g_httpd_self->_sendHTTPResponse($heap->{client}, $response);
     ## }
     ## 
-    ## print STDERR "End client input------------------------\n";
+    print STDERR "End client input------------------------\n";
 }
 
 ## sub _cathandler_static {
@@ -234,6 +240,18 @@ sub _pushRequest {
         return 0;
     }
     $self->{request_points}{$point}{requests}{$bb_request->getID} = $bb_request;
+}
+
+sub _getPendingRequestsString {
+    my ($self) = @_;
+    my $ret = '';
+    foreach my $point (keys %{$self->{request_points}}) {
+        $ret .= "Point: $point\n";
+        foreach my $request (values %{$self->{request_points}{$point}{requests}}) {
+            $ret .= sprintf("  Request: ID = %s\n", $request->getID());
+        }
+    }
+    return $ret;
 }
 
 1;
