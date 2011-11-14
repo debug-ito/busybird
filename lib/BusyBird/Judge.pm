@@ -1,5 +1,4 @@
 package BusyBird::Judge;
-
 use strict;
 use warnings;
 
@@ -14,7 +13,7 @@ sub addScore {
     
     ## ** STUB
     foreach my $status (@$statuses) {
-        $status->{bb_score} = 1.0;
+        $status->setScore(1.0);
     }
 }
 

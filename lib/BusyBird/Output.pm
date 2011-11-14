@@ -7,7 +7,6 @@ use DateTime;
 
 ## use Data::Dumper;
 
-
 use BusyBird::Judge;
 
 sub new {
@@ -49,7 +48,7 @@ sub _uniqStatuses {
     ## }
     my $uniq_statuses = [];
     foreach my $status (@$statuses) {
-        if(!defined($self->{status_ids}{$status->{bb_id}})) {
+        if(!defined($self->{status_ids}{$status->getID()})) {
             push(@$uniq_statuses, $status);
         }
     }
@@ -58,7 +57,7 @@ sub _uniqStatuses {
 
 sub _sort {
     my ($self) = @_;
-    my @sorted_statuses = sort {$b->{bb_datetime}->epoch <=> $a->{bb_datetime}->epoch} @{$self->{new_statuses}};
+    my @sorted_statuses = sort {$b->getDateTime()->epoch <=> $a->getDateTime()->epoch} @{$self->{new_statuses}};
     $self->{new_statuses} = \@sorted_statuses;
 }
 
@@ -68,7 +67,7 @@ sub pushStatuses {
     $self->{judge}->addScore($statuses);
     unshift(@{$self->{new_statuses}}, @$statuses);
     foreach my $status (@$statuses) {
-        $self->{status_ids}{$status->{bb_id}} = 1;
+        $self->{status_ids}{$status->getID()} = 1;
     }
     $self->_sort();
     
@@ -82,7 +81,7 @@ sub reply {
     }
     my $ret = "";
     while(my $status = pop(@{$self->{new_statuses}})) {
-        $ret = sprintf("Source: %s, Text: %s\n", $status->{bb_source_name}, $status->{bb_text}) . $ret;
+        $ret = sprintf("Source: %s, Text: %s\n", $status->getSourceName(), $status->getText()) . $ret;
         unshift(@{$self->{old_statuses}}, $status);
     }
     return ($ret, "text/plain; charset=UTF-8");

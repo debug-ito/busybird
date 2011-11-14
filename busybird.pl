@@ -71,7 +71,6 @@ sub initiateTimer {
             output_streams => $output_streams_ref,
         },
         inline_states => {
-            ## タイムライン名でaliasを設定するといいのかもしれない。
             _start => sub { $_[KERNEL]->yield("timer_fire") },
             set_delay => sub {
                 my $delay = $_[HEAP]->{timer}->getNextDelay();
