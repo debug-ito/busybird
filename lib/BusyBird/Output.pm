@@ -1,13 +1,14 @@
 package BusyBird::Output;
-
+use base ('BusyBird::RequestListener');
 use Encode;
 use strict;
 use warnings;
 use DateTime;
 
 ## use Data::Dumper;
-
 use BusyBird::Judge;
+
+my $POINT_PREFIX_NEW_STATUSES = 'new_statuses';
 
 sub new {
     my ($class, $name) = @_;
@@ -74,18 +75,22 @@ sub pushStatuses {
     ## ** we should do classification here, or it's better to do it in another method??
 }
 
+sub getRequestPoints {
+    my ($self) = @_;
+    return ('/' . $POINT_PREFIX_NEW_STATUSES . '/' . $self->getName());
+}
+
 sub reply {
-    my ($self, $notify_point_name, $detail) = @_;
+    my ($self, $request_point_name, $detail) = @_;
     if(!@{$self->{new_statuses}}) {
-        return undef;
+        return ($self->HOLD);
     }
     my $ret = "";
     while(my $status = pop(@{$self->{new_statuses}})) {
         $ret = sprintf("Source: %s, Text: %s\n", $status->getSourceName(), $status->getText()) . $ret;
         unshift(@{$self->{old_statuses}}, $status);
     }
-    return ($ret, "text/plain; charset=UTF-8");
-    ## ** STUB: return ($content, $mime) or undef
+    return ($self->REPLIED, \$ret, "text/plain; charset=UTF-8");
 }
 
 ## sub flushStatuses() {
