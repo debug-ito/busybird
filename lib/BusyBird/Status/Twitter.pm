@@ -18,6 +18,7 @@ sub new {
         'nt_status' => $net_twitter_status,
         'bb_datetime' =>  $class->_timeStringToDateTime($net_twitter_status->{created_at}),
         'bb_score' => 0,
+        'bb_input_name' => '',
             }, $class;
 }
 
@@ -29,6 +30,16 @@ sub setScore {
 sub getScore {
     my $self = shift;
     return $self->{bb_score};
+}
+
+sub setInputName {
+    my ($self, $input_name) = @_;
+    return ($self->{bb_input_name} = $input_name);
+}
+
+sub getInputName {
+    my $self = shift;
+    return $self->{bb_input_name};
 }
 
 sub getID {

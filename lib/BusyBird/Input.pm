@@ -99,12 +99,13 @@ sub getNewStatuses {
     my ($self, $threshold_epoch_time) = @_;
     my $ret_array = [];
     $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
-    for(my $page = 0 ; $page < $self->{page_max} ; $page++) {
+    my $page;
+    for($page = 0 ; $page < $self->{page_max} ; $page++) {
         my $statuses = $self->_getStatuses($self->{page_count}, $page);
         my $is_complete = 0;
         last if !defined($statuses);
         foreach my $status (@$statuses) {
-            my $datetime = $status->{bb_datetime};
+            my $datetime = $status->getDateTime()->clone();
             $datetime->set_time_zone($TIMEZONE);
             ## ** Update latest status time
             if(!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
@@ -112,18 +113,19 @@ sub getNewStatuses {
             }
             ## ** Collect new status
             if(!defined($threshold_epoch_time) || $datetime->epoch >= $threshold_epoch_time) {
-                $status->{bb_input_name} = $self->{name};
+                $status->setInputName($self->{name});
                 push(@$ret_array, $status);
             }else {
                 $is_complete = 1;
             }
         }
         if($is_complete || !defined($threshold_epoch_time)) {
-            $self->_saveCacheFile();
-            return $ret_array;
+            last;
         }
     }
-    print STDERR ("WARNING: page has reached the max value of ".$self->{page_max}."\n");
+    if($page == $self->{page_max}) {
+        print STDERR ("WARNING: page has reached the max value of ".$self->{page_max}."\n");
+    }
     $self->_saveCacheFile();
     return $ret_array;
 }

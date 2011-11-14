@@ -12,6 +12,7 @@ use Net::Twitter;
 use BusyBird::Input;
 use BusyBird::Input::Twitter::HomeTimeline;
 use BusyBird::Input::Twitter::List;
+use BusyBird::Input::Test;
 use BusyBird::Output;
 use BusyBird::Judge;
 use BusyBird::Timer;
@@ -49,12 +50,14 @@ sub main {
     $output->judge(BusyBird::Judge->new());
     $output->agents($client_agent);
     ## ** 一つのInputが複数のTimerに紐付けられないように管理しないといけない
-    &initiateTimer(BusyBird::Timer->new(120), [$input], [$output]);
-    &initiateTimer(
-        BusyBird::Timer->new(200),
-        [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', nt => $nt)],
-        [$output],
-        );
+    ## &initiateTimer(BusyBird::Timer->new(120), [$input], [$output]);
+    ## &initiateTimer(
+    ##     BusyBird::Timer->new(200),
+    ##     [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', nt => $nt)],
+    ##     [$output],
+    ##     );
+    &initiateTimer(BusyBird::Timer->new(10), [BusyBird::Input::Test->new(name => 'test_input')],
+                   [$output]);
 
     BusyBird::HTTPD->init($FindBin::Bin . "/resources/httpd");
     BusyBird::HTTPD->registerOutputs($output);
