@@ -50,9 +50,6 @@ sub start {
             # Handle the client error here.
             print STDERR ("Custom ClientError: $syscall_name: $error_num: $error_str\n");
         },
-        ClientFlushed => sub {
-            print STDERR ("POE output buffer flushed on " . $_[HEAP]->{client}->ID . "\n");
-        },
         ClientInput => \&_handlerClientInput,
   );
 }
@@ -125,27 +122,6 @@ sub _handlerClientInput {
         return;
     }
     $g_httpd_self->replyPoint($req_path);
-    
-    ## my ($category, $lower_path);
-    ## if($req_path =~ m|^/([^/]+)/(.+)$|) {
-    ##     ($category, $lower_path) = ($1, $2);
-    ## }else {
-    ##     print STDERR "Invalid Path. Try static.\n";
-    ##     $req_path =~ m|^/+(.+?)$|;
-    ##     ($category, $lower_path) = ($CAT_STATIC, $1);
-    ## }
-    ## print STDERR "Category: $category, Lower_path: $lower_path\n";
-    ## 
-    ## my $handler_name = $HANDLER_PREFIX . $category;
-    ## if($g_httpd_self->can($handler_name)) {
-    ##     $g_httpd_self->$handler_name($request, $lower_path, $heap->{client});
-    ## }else {
-    ##     print STDERR "No Category handler defined.\n";
-    ##     my $response = HTTP::Reponse->new();
-    ##     $g_httpd_self->_setNotFound($response);
-    ##     $g_httpd_self->_sendHTTPResponse($heap->{client}, $response);
-    ## }
-    ## 
     print STDERR "End client input------------------------\n";
 }
 

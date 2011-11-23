@@ -24,7 +24,7 @@ require 'config.test.pl';
 my $OPT_THRESHOLD_OFFSET = 0;
 GetOptions(
     't=s' => \$OPT_THRESHOLD_OFFSET,
-    );
+);
 
 my $TIMER_INTERVAL_MIN = 60;
 my $DEFAULT_STREAM_NAME = 'default';
@@ -35,7 +35,6 @@ my $client_agent = BusyBird::ClientAgent->new();
 sub main {
     ## ** TODO: support more sophisticated format of threshold offset (other than just seconds).
     BusyBird::Input->setThresholdOffset(int($OPT_THRESHOLD_OFFSET));
-    
     my %configs = &tempGetConfig();
     my $nt = Net::Twitter->new(
         traits   => [qw/OAuth API::REST API::Lists/],
@@ -44,7 +43,7 @@ sub main {
         access_token        => $configs{token},
         access_token_secret => $configs{token_secret},
         ssl => 1,
-        );
+    );
     my $input  = BusyBird::Input::Twitter::List->new(name => 'list_test', nt => $nt, owner_name => $configs{owner_name}, list_slug_name => $configs{list_slug_name});
     my $output = BusyBird::Output->new($DEFAULT_STREAM_NAME);
     $output->judge(BusyBird::Judge->new());
@@ -105,10 +104,9 @@ sub initiateTimer {
                     }
                 }
                 
-                ## ** Try to reply to pending requests
-                my @request_points = map { $_->getRequestPoints() } @{$heap->{output_streams}};
-                foreach my $point (@request_points) {
-                    BusyBird::HTTPD->replyPoint($point);
+                ## ** Notify outputs of the complete of pushing statuses
+                foreach my $output (@{$heap->{output_streams}}) {
+                    $output->onCompletePushingStatuses();
                 }
                 return $kernel->yield('set_delay');
             },

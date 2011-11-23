@@ -8,7 +8,10 @@ use DateTime;
 ## use Data::Dumper;
 use BusyBird::Judge;
 
-my $POINT_PREFIX_NEW_STATUSES = 'new_statuses';
+my %COMMAND = (
+    NEW_STATUSES => 'new_statuses',
+    CONFIRM => 'confirm',
+);
 
 sub new {
     my ($class, $name) = @_;
@@ -75,31 +78,52 @@ sub pushStatuses {
     ## ** we should do classification here, or it's better to do it in another method??
 }
 
+sub _getPointNameForCommand {
+    my ($self, $com_name) = @_;
+    return '/' . $self->getName() . '/' . $com_name;
+}
+
 sub getRequestPoints {
     my ($self) = @_;
-    return ('/' . $POINT_PREFIX_NEW_STATUSES . '/' . $self->getName());
+    return map { $self->_getPointNameForCommand($_) } (values %COMMAND);
+}
+
+sub onCompletePushingStatuses {
+    my ($self) = @_;
+    BusyBird::HTTPD->replyPoint($self->_getPointNameForCommand($COMMAND{NEW_STATUSES}));
 }
 
 sub reply {
     my ($self, $request_point_name, $detail) = @_;
+    if($request_point_name !~ m|^/([^/]+)/([^/]+)$|) {
+        return ($self->NOT_FOUND);
+    }
+    my ($output_name, $command) = ($1, $2);
+    if($command eq $COMMAND{NEW_STATUSES}) {
+        return $self->replyNewStatuses($detail);
+    }elsif($command eq $COMMAND{CONFIRM}) {
+        return $self->replyConfirm($detail);
+    }
+}
+
+sub replyNewStatuses {
+    my ($self, $detail) = @_;
     if(!@{$self->{new_statuses}}) {
         return ($self->HOLD);
     }
     my $ret = "";
-    while(my $status = pop(@{$self->{new_statuses}})) {
-        $ret = sprintf("Source: %s, Text: %s\n", $status->getSourceName(), $status->getText()) . $ret;
-        unshift(@{$self->{old_statuses}}, $status);
+    foreach my $status (@{$self->{new_statuses}}) {
+        $ret .= sprintf("Source: %s, Text: %s\n", $status->getSourceName(), $status->getText());
     }
     return ($self->REPLIED, \$ret, "text/plain; charset=UTF-8");
 }
 
-## sub flushStatuses() {
-##     my ($self) = @_;
-##     my $flushed_statuses = $self->{statuses};
-##     $self->{statuses} = [];
-##     foreach my $agent (@{$self->{agents}}) {
-##         $agent->addOutput($self->{name}, $flushed_statuses);
-##     }
-## }
+sub replyConfirm {
+    my ($self, $detail) = @_;
+    unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
+    $self->{new_statuses} = [];
+    my $ret = "Confirm OK";
+    return ($self->REPLIED, \$ret, "text/plain");
+}
 
 1;
