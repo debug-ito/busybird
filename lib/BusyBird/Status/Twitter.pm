@@ -1,6 +1,7 @@
 package BusyBird::Status::Twitter;
 use strict;
 use warnings;
+use base ('BusyBird::Status');
 
 use Net::Twitter;
 use DateTime;

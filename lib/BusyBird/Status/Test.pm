@@ -1,6 +1,7 @@
 package BusyBird::Status::Test;
 use strict;
 use warnings;
+use base ('BusyBird::Status');
 
 sub new {
     my ($class, %params) = @_;

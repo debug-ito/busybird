@@ -115,11 +115,9 @@ sub _replyNewStatuses {
     if(!@{$self->{new_statuses}}) {
         return ($self->HOLD);
     }
-    my $ret = "";
-    foreach my $status (@{$self->{new_statuses}}) {
-        $ret .= sprintf("Source: %s, Text: %s\n", $status->getSourceName(), $status->getText());
-    }
-    return ($self->REPLIED, \$ret, "text/plain; charset=UTF-8");
+    my @json_entries = map { $_->getJSON() } @{$self->{new_statuses}};
+    my $ret = "[" . join(",", @json_entries) . "]";
+    return ($self->REPLIED, \$ret, "application/json; charset=UTF-8");
 }
 
 sub _replyConfirm {
@@ -135,8 +133,10 @@ sub _replyMainPage {
     my $name = $self->getName();
     my $js = <<'END';
 function cometNewStatuses () {
+    // *** Need more serious error handling, right?
+
     $.get("/" + output_name + "/new_statuses", function (data, textStatus, jqXHR) {
-        $("#statuses").prepend(data);
+        $("#statuses").prepend("ID: " + data[0].id + ", TEXT: " + data[0].text);
         $.get("/" + output_name + "/confirm", function (data, textStatus, jqXHR) {
             cometNewStatuses();
         });
