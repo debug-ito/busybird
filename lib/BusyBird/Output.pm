@@ -11,6 +11,7 @@ use BusyBird::Judge;
 my %COMMAND = (
     NEW_STATUSES => 'new_statuses',
     CONFIRM => 'confirm',
+    MAINPAGE => 'mainpage',
 );
 
 sub new {
@@ -100,13 +101,16 @@ sub reply {
     }
     my ($output_name, $command) = ($1, $2);
     if($command eq $COMMAND{NEW_STATUSES}) {
-        return $self->replyNewStatuses($detail);
+        return $self->_replyNewStatuses($detail);
     }elsif($command eq $COMMAND{CONFIRM}) {
-        return $self->replyConfirm($detail);
+        return $self->_replyConfirm($detail);
+    }elsif($command eq $COMMAND{MAINPAGE}) {
+        return $self->_replyMainPage($detail);
     }
+    return ($self->NOT_FOUND);
 }
 
-sub replyNewStatuses {
+sub _replyNewStatuses {
     my ($self, $detail) = @_;
     if(!@{$self->{new_statuses}}) {
         return ($self->HOLD);
@@ -118,12 +122,63 @@ sub replyNewStatuses {
     return ($self->REPLIED, \$ret, "text/plain; charset=UTF-8");
 }
 
-sub replyConfirm {
+sub _replyConfirm {
     my ($self, $detail) = @_;
     unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
     $self->{new_statuses} = [];
     my $ret = "Confirm OK";
     return ($self->REPLIED, \$ret, "text/plain");
+}
+
+sub _replyMainPage {
+    my ($self, $detail) = @_;
+    my $name = $self->getName();
+    my $js = <<'END';
+function cometNewStatuses () {
+    $.get("/" + output_name + "/new_statuses", function (data, textStatus, jqXHR) {
+        $("#statuses").prepend(data);
+        $.get("/" + output_name + "/confirm", function (data, textStatus, jqXHR) {
+            cometNewStatuses();
+        });
+    });
+}
+$(document).ready(cometNewStatuses);
+END
+    
+    my $html = <<"END";
+<html>
+  <head>
+    <title>$name - BusyBird</title>
+    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
+    <script type="text/javascript" src="/jquery.js"></script>
+    <script type="text/javascript" src="/shaper.js"></script>
+    <script type="text/javascript"><!--
+      var output_name = "$name";
+      $js
+--></script>
+  </head>
+  <style type="text/css" media="screen"><!--
+.status_container {
+  margin: 5px 30px;
+  width: 700px;
+}
+.status_time {
+    text-align: right;
+  text-weight: bold;
+  color: red;
+  float: right;
+}
+div {
+  border: solid 1px red;
+}
+--></style>
+  <body>
+    <pre id="statuses">
+    </div>
+  </body>
+</html>
+END
+    return ($self->REPLIED, \$html, 'text/html');
 }
 
 1;
