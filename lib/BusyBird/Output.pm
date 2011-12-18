@@ -76,7 +76,7 @@ sub pushStatuses {
     }
     $self->_sort();
     
-    ## ** we should do classification here, or it's better to do it in another method??
+    ## ** we should do classification here, or its better to do it in another method??
 }
 
 sub _getPointNameForCommand {
@@ -132,17 +132,43 @@ sub _replyMainPage {
     my ($self, $detail) = @_;
     my $name = $self->getName();
     my $js = <<'END';
-function cometNewStatuses () {
-    // *** Need more serious error handling, right?
-
-    $.get("/" + output_name + "/new_statuses", function (data, textStatus, jqXHR) {
-        $("#statuses").prepend("ID: " + data[0].id + ", TEXT: " + data[0].text);
-        $.get("/" + output_name + "/confirm", function (data, textStatus, jqXHR) {
-            cometNewStatuses();
-        });
-    });
-}
-$(document).ready(cometNewStatuses);
+    
+    var g_comet_error_interval_ms = 10000;
+    // ** TODO:: Error handling
+    // ** Maybe we should count total number of errors and stop retrying at a certain point.
+    // ** Or maybe we should appy decaying interval (exponential increase or something...)
+    function cometConfirm() {
+        $.ajax({url: "/" + g_output_name + "/confirm",
+                type: "GET",
+                cache: false,
+                dataType: "text",
+                timeout: 0,
+                error: function (jqXHR, textStatus, errorThrown) {
+                    setTimeout(cometConfirm, g_comet_error_interval_ms);
+                },
+                success: function (data, textStatus, jqXHR) {
+                    cometNewStatuses();
+                }});
+    }
+    
+    function cometNewStatuses () {
+        $.ajax({url: "/" + g_output_name + "/new_statuses",
+                type: "GET",
+                cache: false,
+                dataType: "json",
+                timeout: 0,
+                error: function (jqXHR, textStatus, errorThrown) {
+                    setTimeout(cometNewStatuses, g_comet_error_interval_ms);
+                },
+                success: function (data, textStatus, jqXHR) {
+                    var i;
+                    for(i = 0 ; i < data.length ; i++) {
+                        $("#statuses").prepend("ID: " + data[i].id + ", TEXT: " + data[i].text + "\n");
+                    }
+                    cometConfirm();
+                }});
+    }
+    $(document).ready(cometNewStatuses);
 END
     
     my $html = <<"END";
@@ -153,8 +179,8 @@ END
     <script type="text/javascript" src="/jquery.js"></script>
     <script type="text/javascript" src="/shaper.js"></script>
     <script type="text/javascript"><!--
-      var output_name = "$name";
-      $js
+    var g_output_name = "$name";
+    $js
 --></script>
   </head>
   <style type="text/css" media="screen"><!--

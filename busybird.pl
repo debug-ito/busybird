@@ -55,7 +55,7 @@ sub main {
     ##     [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', nt => $nt)],
     ##     [$output],
     ##     );
-    &initiateTimer(BusyBird::Timer->new(10), [BusyBird::Input::Test->new(name => 'test_input')],
+    &initiateTimer(BusyBird::Timer->new(2), [BusyBird::Input::Test->new(name => 'test_input', new_interval => 5, new_count => 3)],
                    [$output]);
 
     BusyBird::HTTPD->init($FindBin::Bin . "/resources/httpd");

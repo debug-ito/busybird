@@ -97,11 +97,19 @@ sub replyPoint {
     return 1;
 }
 
+sub _unescapeURI {
+    my ($uri) = @_;
+    $uri =~ s/\+/ /g;
+    $uri =~ s/%[0-9a-fA-F][0-9a-fA-F]/pack("C", hex($1))/eg;
+    return $uri;
+}
+
 sub _handlerClientInput {
     my ($request, $heap) = @_[ARG0, HEAP];
     print STDERR "start client input: $_[HEAP]{remote_ip}:$_[HEAP]{remote_port}------\n";
     print STDERR ("URI: " . $request->uri . "\n");
     my ($req_host, $req_path) = ('', '');
+    my %detail_params = ();
     if($request->uri =~ m|^https?://([^/]+)(.+?)$|) {
         $req_host = $1;
         $req_path = $2;
@@ -110,10 +118,18 @@ sub _handlerClientInput {
     }
     $req_path = lc($req_path);
     $req_path = '/' . $req_path if $req_path !~ m|^/|;
+    if($req_path =~ m|^([^\?]+)\?(.+)$|) {
+        $req_path = $1;
+        my @param_pairs = split(/\&/, $2);
+        foreach my $param_pair (@param_pairs) {
+            next if $param_pair !~ /^([^=]+)=([^=+])$/;
+            $detail_params{&_unescapeURI($1)} = &_unescapeURI($2);
+        }
+    }
     $req_path .= "index.html" if $req_path =~ m|/$|;
     print STDERR "Requested path: $req_path\n";
     
-    my $bb_request = BusyBird::Request->new($req_path, $heap->{client}, '');
+    my $bb_request = BusyBird::Request->new($req_path, $heap->{client}, \%detail_params);
     if(!$g_httpd_self->_pushRequest($bb_request)) {
         print STDERR "  The path $req_path is not a request_point. Send Not_Found\n";
         my $response = HTTP::Response->new();
