@@ -29,6 +29,11 @@ sub put {
     }
 }
 
+sub endPut {
+    my ($self) = @_;
+    $self->{child_wheel}->shutdown_stdin();
+}
+
 sub pushOutput {
     my ($self, $output) = @_;
     push(@{$self->{output_objs}}, $output);

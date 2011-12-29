@@ -78,7 +78,7 @@ sub _initSession {
                 _start => '_sessionStart',
                 ## on_exec => '_sessionExec',
                 on_input => '_sessionInput',
-                ## on_child_stdin  => '_sessionChildStdin',
+                on_child_stdin  => '_sessionChildStdin',
                 on_child_stdout => '_sessionChildStdout',
                 on_child_stderr => '_sessionChildStderr',
                 on_child_signal => '_sessionChildSignal',
@@ -123,7 +123,7 @@ sub _sessionInput {
     print STDERR "Worker: sessionInput\n";
     my $child = POE::Wheel::Run->new(
         Program => $self->{Program},
-        ## StdinEvent   => 'on_child_stdin',
+        StdinEvent   => 'on_child_stdin',
         StdoutEvent  => "on_child_stdout",
         StderrEvent  => "on_child_stderr",
         StdinFilter  => $self->{StdinFilter},
@@ -137,10 +137,10 @@ sub _sessionInput {
     $worker_child->put();
 }
 
-## sub _sessionChildStdin {
-##     my ($self, $wheel_id) = @_[OBJECT, ARG0];
-##     print STDERR "Worker: sessionChildStdin\n";
-## }
+sub _sessionChildStdin {
+    my ($self, $wheel_id) = @_[OBJECT, ARG0];
+    $self->{children_by_wid}->{$wheel_id}->endPut();
+}
 
 sub _sessionChildStdout {
     my ($self, $output, $wheel_id) = @_[OBJECT, ARG0, ARG1];
