@@ -22,7 +22,6 @@ sub new {
         old_statuses => [],
         status_ids => {},
         judge => undef,
-        agents => [],
     };
     return bless $self, $class;
 }
@@ -36,12 +35,6 @@ sub judge {
     my ($self, $judge) = @_;
     return $self->{judge} if !defined($judge);
     $self->{judge} = $judge;
-}
-
-sub agents {
-    my ($self, @agents) = @_;
-    return $self->{agents} if !@agents;
-    push(@{$self->{agents}}, @agents);
 }
 
 sub _uniqStatuses {
