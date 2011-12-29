@@ -3,7 +3,7 @@ use base 'BusyBird::Object';
 use strict;
 use warnings;
 
-use POE;
+use POE qw(Wheel::Run Filter::Stream Filter::Line);
 use BusyBird::Worker::Child;
 
 sub new {
@@ -12,11 +12,12 @@ sub new {
         children_by_wid => {},
         children_by_pid => {},
         session => undef,
+        session_alias => undef,
     }, $class;
     $self->_setParam(\%params, 'Program', undef, 1);
-    $self->_setParam(\%params, 'StdinFilter',  'POE::Filter::Stream');
-    $self->_setParam(\%params, 'StdoutFilter', 'POE::Filter::Stream');
-    $self->_setParam(\%params, 'StderrFilter', 'POE::Filter::Line');
+    $self->_setParam(\%params, 'StdinFilter',  POE::Filter::Stream->new());
+    $self->_setParam(\%params, 'StdoutFilter', POE::Filter::Stream->new());
+    $self->_setParam(\%params, 'StderrFilter', POE::Filter::Line->new());
     $self->_initSession();
     ## if($self->_isDaemon) {
     ##     $self->_exec();
@@ -71,17 +72,19 @@ sub startJob {
 
 sub _initSession {
     my ($self) = @_;
-    my $session = POE::Session->create{
+    my $session = POE::Session->create(
         object_states => [
             $self => {
+                _start => '_sessionStart',
                 ## on_exec => '_sessionExec',
                 on_input => '_sessionInput',
+                ## on_child_stdin  => '_sessionChildStdin',
                 on_child_stdout => '_sessionChildStdout',
                 on_child_stderr => '_sessionChildStderr',
                 on_child_signal => '_sessionChildSignal',
             },
         ],
-    };
+    );
     $self->{session} = $session->ID;
 }
 
@@ -102,10 +105,25 @@ sub _initSession {
 ##     ## }
 ## }
 
+sub DESTROY {
+    my $self = shift;
+    POE::Kernel->alias_remove($self->{session_alias});
+}
+
+sub _sessionStart {
+    my ($self, $kernel, $session) = @_[OBJECT, KERNEL, SESSION];
+    ## ** give alias to make the session immortal.
+    my $alias = 'worker_' . $session->ID;
+    $kernel->alias_set($alias);
+    $self->{session_alias} = $alias;
+}
+
 sub _sessionInput {
     my ($self, $worker_child) = @_[OBJECT, ARG0];
+    print STDERR "Worker: sessionInput\n";
     my $child = POE::Wheel::Run->new(
-        Program => $self->{Program};
+        Program => $self->{Program},
+        ## StdinEvent   => 'on_child_stdin',
         StdoutEvent  => "on_child_stdout",
         StderrEvent  => "on_child_stderr",
         StdinFilter  => $self->{StdinFilter},
@@ -119,24 +137,47 @@ sub _sessionInput {
     $worker_child->put();
 }
 
-sub _sessionStdout {
+## sub _sessionChildStdin {
+##     my ($self, $wheel_id) = @_[OBJECT, ARG0];
+##     print STDERR "Worker: sessionChildStdin\n";
+## }
+
+sub _sessionChildStdout {
     my ($self, $output, $wheel_id) = @_[OBJECT, ARG0, ARG1];
+    ## print STDERR "Worker: sessionChildStdout\n";
     $self->{children_by_wid}->{$wheel_id}->pushOutput($output);
 }
 
-sub _sessionStderr {
+sub _sessionChildStderr {
     my ($self, $output, $wheel_id) = @_[OBJECT, ARG0, ARG1];
     printf STDERR (">> From WorkerChild WID=%d: %s\n", $wheel_id, $output);
 }
 
 sub _sessionChildSignal {
     my ($self, $pid) = @_[OBJECT, ARG1];
+    ## print STDERR "Worker: sessionChildSignal\n";
     my $worker_child = $self->{children_by_pid}->{$pid};
     $worker_child->report();
     delete $self->{children_by_wid}->{$worker_child->ID};
     delete $self->{children_by_pid}->{$pid};
 }
 
+sub createTestWorker {
+    my ($class) = @_;
+    return BusyBird::Worker->new(
+        Program => sub {
+            POE::Kernel->stop();
+            print STDERR "Worker started!!\n";
+            print "This is the output\n";
+            my $input_line = <STDIN>;
+            chomp $input_line;
+            print "Input: $input_line\n";
+            print STDERR "Input: $input_line\n";
+            exec($input_line);
+        },
+        StdoutFilter => POE::Filter::Line->new(),
+    );
+}
 
 
 1;

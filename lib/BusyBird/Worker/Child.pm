@@ -24,7 +24,9 @@ sub setChildWheel {
 sub put {
     my ($self, $input) = @_;
     $input = $self->{input_obj} if !defined($input);
-    $self->{child_wheel}->put($input) if defined($input);
+    if(defined($input)) {
+        $self->{child_wheel}->put($input) 
+    }
 }
 
 sub pushOutput {
@@ -34,7 +36,7 @@ sub pushOutput {
 
 sub report {
     my ($self) = @_;
-    POE::Kernel($self->{receiver_session_id}, $self->{receiver_event_name}, $self->{output_objs}, $self->{input_obj});
+    POE::Kernel->post($self->{receiver_session_id}, $self->{receiver_event_name}, $self->{output_objs}, $self->{input_obj});
     $self->{output_objs} = [];
 }
 

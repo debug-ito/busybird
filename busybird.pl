@@ -16,8 +16,8 @@ use BusyBird::Input::Test;
 use BusyBird::Output;
 use BusyBird::Judge;
 use BusyBird::Timer;
-use BusyBird::ClientAgent;
 use BusyBird::HTTPD;
+use BusyBird::Worker;
 
 require 'config.test.pl';
 
@@ -30,7 +30,6 @@ my $TIMER_INTERVAL_MIN = 60;
 my $DEFAULT_STREAM_NAME = 'default';
 
 my %notify_responses = ();
-my $client_agent = BusyBird::ClientAgent->new();
 
 sub main {
     ## ** TODO: support more sophisticated format of threshold offset (other than just seconds).
@@ -47,7 +46,6 @@ sub main {
     my $input  = BusyBird::Input::Twitter::List->new(name => 'list_test', nt => $nt, owner_name => $configs{owner_name}, list_slug_name => $configs{list_slug_name});
     my $output = BusyBird::Output->new($DEFAULT_STREAM_NAME);
     $output->judge(BusyBird::Judge->new());
-    $output->agents($client_agent);
     ## ** 一つのInputが複数のTimerに紐付けられないように管理しないといけない
     ## &initiateTimer(BusyBird::Timer->new(120), [$input], [$output]);
     ## &initiateTimer(
@@ -55,8 +53,10 @@ sub main {
     ##     [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', nt => $nt)],
     ##     [$output],
     ##     );
-    &initiateTimer(BusyBird::Timer->new(2), [BusyBird::Input::Test->new(name => 'test_input', new_interval => 5, new_count => 3)],
-                   [$output]);
+    
+    ## &initiateTimer(BusyBird::Timer->new(2), [BusyBird::Input::Test->new(name => 'test_input', new_interval => 5, new_count => 3)],
+    ##                [$output]);
+    &workerTest();
 
     BusyBird::HTTPD->init($FindBin::Bin . "/resources/httpd");
     BusyBird::HTTPD->registerOutputs($output);
@@ -118,6 +118,34 @@ sub initiateTimer {
             },
         },
         );
+}
+
+sub workerTest {
+    my $worker = BusyBird::Worker->createTestWorker();
+    my @commands = (
+        'ls', 'ls -al /', "cat /home/toshio/patents.txt"
+    );
+    POE::Session->create(
+        heap => {worker => $worker, next_command_index => 0, commands => \@commands},
+        inline_states => {
+            _start => sub { $_[KERNEL]->yield('timer_fire'); },
+            timer_fire => sub {
+                my ($kernel, $heap, $session) = @_[KERNEL, HEAP, SESSION];
+                print STDERR (">> workerTest fired.\n");
+                $worker->startJob($session->ID, 'on_report', $heap->{commands}->[$heap->{next_command_index}] . "\n");
+                $heap->{next_command_index} = ($heap->{next_command_index} + 1) % int(@{$heap->{commands}});
+                $kernel->delay('timer_fire', 5);
+            },
+            on_report => sub {
+                my ($reported_objs, $input_obj) = @_[ARG0, ARG1];
+                print  STDERR ">>>> REPORT Received <<<<\n";
+                print  STDERR "  Input: $input_obj\n";
+                printf STDERR ("  Output: num:%d\n  ", int(@$reported_objs));
+                print  STDERR (join("\n  ", @$reported_objs));
+                print  STDERR "\n";
+            }
+        }
+    );
 }
 
 &main();
