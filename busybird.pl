@@ -123,7 +123,7 @@ sub initiateTimer {
 sub workerTest {
     my $worker = BusyBird::Worker->createTestWorker();
     my @commands = (
-        'ls', 'ls -al /', "cat /home/toshio/patents.txt"
+        'sleep 15; ls', 'sleep 3; ls -al /', "sleep 6; cat /home/toshio/patents.txt"
     );
     POE::Session->create(
         heap => {worker => $worker, next_command_index => 0, commands => \@commands},
@@ -132,9 +132,9 @@ sub workerTest {
             timer_fire => sub {
                 my ($kernel, $heap, $session) = @_[KERNEL, HEAP, SESSION];
                 print STDERR (">> workerTest fired.\n");
-                $worker->startJob($session->ID, 'on_report', $heap->{commands}->[$heap->{next_command_index}] . "\n");
+                $worker->startJob($session->ID, 'on_report', $heap->{commands}->[$heap->{next_command_index}]);
                 $heap->{next_command_index} = ($heap->{next_command_index} + 1) % int(@{$heap->{commands}});
-                $kernel->delay('timer_fire', 5);
+                $kernel->delay('timer_fire', 2);
             },
             on_report => sub {
                 my ($reported_objs, $input_obj) = @_[ARG0, ARG1];
