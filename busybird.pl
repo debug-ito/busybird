@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+
 use strict;
 use warnings;
 use Getopt::Long;
@@ -17,7 +18,7 @@ use BusyBird::Output;
 use BusyBird::Judge;
 use BusyBird::Timer;
 use BusyBird::HTTPD;
-use BusyBird::Worker;
+use BusyBird::Worker::Exec;
 
 require 'config.test.pl';
 
@@ -121,7 +122,7 @@ sub initiateTimer {
 }
 
 sub workerTest {
-    my $worker = BusyBird::Worker->createTestWorker();
+    my $worker = BusyBird::Worker::Exec->create();
     my @commands = (
         'sleep 15; ls', 'sleep 3; ls -al /', "sleep 6; cat /home/toshio/patents.txt"
     );

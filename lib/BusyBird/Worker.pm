@@ -162,24 +162,6 @@ sub _sessionChildSignal {
     delete $self->{children_by_pid}->{$pid};
 }
 
-sub createTestWorker {
-    my ($class) = @_;
-    return BusyBird::Worker->new(
-        Program => sub {
-            POE::Kernel->stop();
-            print STDERR "Worker started!!\n";
-            print "This is the output\n";
-            my $input_line = <STDIN>;
-            chomp $input_line;
-            print "Input: $input_line\n";
-            print STDERR "Input: $input_line\n";
-            exec($input_line);
-        },
-        StdoutFilter => POE::Filter::Line->new(),
-    );
-}
-
-
 1;
 
 
