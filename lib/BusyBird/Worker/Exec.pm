@@ -8,13 +8,13 @@ sub create {
     return BusyBird::Worker->new(
         Program => sub {
             POE::Kernel->stop();
-            my $input_line;
+            my $input_str;
             {
-                $/ = undef;
-                $input_line = <STDIN>;
+                local $/ = undef;
+                $input_str = <STDIN>;
             }
-            chomp $input_line;
-            exec($input_line);
+            chomp $input_str;
+            exec($input_str);
         },
         StdoutFilter => POE::Filter::Line->new(),
     );

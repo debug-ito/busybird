@@ -7,6 +7,7 @@ use Scalar::Util qw(refaddr);
 use Encode;
 use FindBin;
 
+use Data::Dumper;
 use POE;
 
 use Net::Twitter;
@@ -18,7 +19,7 @@ use BusyBird::Output;
 use BusyBird::Judge;
 use BusyBird::Timer;
 use BusyBird::HTTPD;
-use BusyBird::Worker::Exec;
+use BusyBird::Worker::Twitter;
 
 require 'config.test.pl';
 
@@ -31,20 +32,23 @@ my $TIMER_INTERVAL_MIN = 60;
 my $DEFAULT_STREAM_NAME = 'default';
 
 my %notify_responses = ();
+my %config_parameters = &tempGetConfig();
 
 sub main {
     ## ** TODO: support more sophisticated format of threshold offset (other than just seconds).
     BusyBird::Input->setThresholdOffset(int($OPT_THRESHOLD_OFFSET));
-    my %configs = &tempGetConfig();
     my $nt = Net::Twitter->new(
         traits   => [qw/OAuth API::REST API::Lists/],
-        consumer_key        => $configs{consumer_key},
-        consumer_secret     => $configs{consumer_secret},
-        access_token        => $configs{token},
-        access_token_secret => $configs{token_secret},
+        consumer_key        => $config_parameters{consumer_key},
+        consumer_secret     => $config_parameters{consumer_secret},
+        access_token        => $config_parameters{token},
+        access_token_secret => $config_parameters{token_secret},
         ssl => 1,
     );
-    my $input  = BusyBird::Input::Twitter::List->new(name => 'list_test', nt => $nt, owner_name => $configs{owner_name}, list_slug_name => $configs{list_slug_name});
+    my $input  = BusyBird::Input::Twitter::List->new(name => 'list_test',
+                                                     nt => $nt,
+                                                     owner_name => $config_parameters{owner_name},
+                                                     list_slug_name => $config_parameters{list_slug_name});
     my $output = BusyBird::Output->new($DEFAULT_STREAM_NAME);
     $output->judge(BusyBird::Judge->new());
     ## ** 一つのInputが複数のTimerに紐付けられないように管理しないといけない
@@ -122,9 +126,17 @@ sub initiateTimer {
 }
 
 sub workerTest {
-    my $worker = BusyBird::Worker::Exec->create();
+    my $worker = BusyBird::Worker::Twitter->create(
+        consumer_key        => $config_parameters{consumer_key},
+        consumer_secret     => $config_parameters{consumer_secret},
+        access_token        => $config_parameters{token},
+        access_token_secret => $config_parameters{token_secret}
+    );
     my @commands = (
-        'sleep 15; ls', 'sleep 3; ls -al /', "sleep 6; cat /home/toshio/patents.txt"
+        ## 'sleep 15; ls', 'sleep 3; ls -al /', "sleep 6; cat /home/toshio/patents.txt"
+        {method => 'home_timeline', arg => {count => 10, page => 0}},
+        {method => 'public_timeline', arg => {}},
+        {method => 'list_statuses', arg => {user => "hoge_user", list_id => "foobar_list", per_page => 10, page => 1}},
     );
     POE::Session->create(
         heap => {worker => $worker, next_command_index => 0, commands => \@commands},
@@ -135,15 +147,19 @@ sub workerTest {
                 print STDERR (">> workerTest fired.\n");
                 $worker->startJob($session->ID, 'on_report', $heap->{commands}->[$heap->{next_command_index}]);
                 $heap->{next_command_index} = ($heap->{next_command_index} + 1) % int(@{$heap->{commands}});
-                $kernel->delay('timer_fire', 2);
+                $kernel->delay('timer_fire', 30);
             },
             on_report => sub {
                 my ($reported_objs, $input_obj) = @_[ARG0, ARG1];
                 print  STDERR ">>>> REPORT Received <<<<\n";
-                print  STDERR "  Input: $input_obj\n";
+                ## print  STDERR "  Input: $input_obj\n";
                 printf STDERR ("  Output: num:%d\n  ", int(@$reported_objs));
-                print  STDERR (join("\n  ", @$reported_objs));
-                print  STDERR "\n";
+                for(my $i = 0 ; $i < @$reported_objs ; $i++) {
+                    printf STDERR ("  Output index %d\n", $i);
+                    print STDERR (Dumper($reported_objs->[$i]));
+                }
+                ## print  STDERR (join("\n  ", @$reported_objs));
+                ## print  STDERR "\n";
             }
         }
     );
