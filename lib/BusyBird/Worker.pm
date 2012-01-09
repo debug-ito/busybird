@@ -2,9 +2,38 @@ package BusyBird::Worker;
 use base 'BusyBird::Object';
 use strict;
 use warnings;
-
 use POE qw(Wheel::Run Filter::Stream Filter::Line);
 use BusyBird::Worker::Child;
+
+=pod
+
+=head1 NAME
+
+BusyBird::Worker - Generic non-blocking wrapper for blocking routines
+
+
+=head1 METHODS
+
+=head2 WORKER_OBJ = new(PARAMS)
+
+Create a BusyBird::Worker object.
+PARAMS is a hash whose items are following.
+
+=over
+
+=item Program
+
+=item StdinFilter
+
+=item StdoutFilter
+
+=item StderrFilter
+
+=back
+
+
+=cut
+
 
 sub new {
     my ($class, %params) = @_;
