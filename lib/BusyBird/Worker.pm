@@ -183,9 +183,10 @@ sub _sessionChildStderr {
 }
 
 sub _sessionChildSignal {
-    my ($self, $pid) = @_[OBJECT, ARG1];
+    my ($self, $pid, $exit_val) = @_[OBJECT, ARG1, ARG2];
     ## print STDERR "Worker: sessionChildSignal\n";
     my $worker_child = $self->{children_by_pid}->{$pid};
+    $worker_child->setExitStatus($exit_val);
     $worker_child->report();
     delete $self->{children_by_wid}->{$worker_child->ID};
     delete $self->{children_by_pid}->{$pid};

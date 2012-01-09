@@ -12,6 +12,7 @@ sub new {
         input_obj           => $input_obj,
         child_wheel         => undef,
         output_objs         => [],
+        exit_status         => 0,
     }, $class;
     return $self;
 }
@@ -39,10 +40,16 @@ sub pushOutput {
     push(@{$self->{output_objs}}, $output);
 }
 
+sub setExitStatus {
+    my ($self, $exit_status) = @_;
+    $self->{exit_status} = $exit_status;
+}
+
 sub report {
     my ($self) = @_;
-    POE::Kernel->post($self->{receiver_session_id}, $self->{receiver_event_name}, $self->{output_objs}, $self->{input_obj});
+    POE::Kernel->post($self->{receiver_session_id}, $self->{receiver_event_name}, $self->{output_objs}, $self->{input_obj}, $self->{exit_status});
     $self->{output_objs} = [];
+    $self->{exit_status} = 0;
 }
 
 sub ID {
