@@ -1,11 +1,13 @@
 package BusyBird::Worker::Exec;
+use base ('BusyBird::Worker');
 
 use strict;
+use warnings;
 use BusyBird::Worker;
 
-sub create {
+sub new {
     my ($class) = @_;
-    return BusyBird::Worker->new(
+    return $class->SUPER::new(
         Program => sub {
             POE::Kernel->stop();
             my $input_str;
