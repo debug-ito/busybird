@@ -62,7 +62,7 @@ sub new {
                     }
                 };
                 if($@) {
-                    my $error_msg = ("ERROR: %s::%s: %s", ref($target_object), $method_name, $@);
+                    my $error_msg = sprintf("ERROR: %s::%s: %s", ref($target_object), $method_name, $@);
                     print STDERR ("$error_msg\n");
                     push(@$output_obj, &_makeOutputObject(STATUS_METHOD_DIES, $error_msg));
                     next;
