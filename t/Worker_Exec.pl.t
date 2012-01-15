@@ -5,6 +5,8 @@ use warnings;
 use Test::More tests => 10;
 
 BEGIN {
+    sub POE::Kernel::CATCH_EXCEPTIONS () { 0 }
+    
     use_ok('POE');
     use_ok('BusyBird::Worker');
     use_ok('BusyBird::Worker::Exec');
@@ -14,6 +16,8 @@ BEGIN {
 chdir($FindBin::Bin);
 
 my $worker = BusyBird::Worker::Exec->new();
+isa_ok($worker, 'BusyBird::Worker');
+isa_ok($worker, 'BusyBird::Worker::Exec');
 
 my $SESSION_ALIAS = 'SESSION_ALIAS';
 POE::Session->create(
@@ -26,7 +30,7 @@ POE::Session->create(
             $worker->startJob($SESSION_ALIAS, 'on_false', 'sleep 3; false');
             $worker->startJob($SESSION_ALIAS, 'on_sort', join("\n", qw(sort strawberry apple orange melon)));
             $worker->startJob($SESSION_ALIAS, 'on_no_command', 'this_command_probably_does_not_exist');
-            $worker->stratJob($SESSION_ALIAS, 'on_ls_wild_card', 'ls *');
+            $worker->startJob($SESSION_ALIAS, 'on_ls_wild_card', 'ls *');
             $worker->startJob($SESSION_ALIAS, 'on_no_command_wild_card', 'this_does_not_exist_either *');
             $heap->{report_max} = 7;
             $heap->{report_count} = 0;

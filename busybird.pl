@@ -2,13 +2,15 @@
 
 use strict;
 use warnings;
+
 use Getopt::Long;
 use Scalar::Util qw(refaddr);
 use Encode;
 use FindBin;
 
-use Data::Dumper;
+sub POE::Kernel::CATCH_EXCEPTIONS () { 0 }
 use POE;
+use Data::Dumper;
 
 use Net::Twitter;
 use BusyBird::Input;

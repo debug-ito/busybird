@@ -6,6 +6,7 @@ use warnings;
 use Test::More tests => 71;
 
 BEGIN {
+    sub POE::Kernel::CATCH_EXCEPTIONS () { 0 }
     use_ok('POE');
     use_ok('BusyBird::Worker');
     use_ok('BusyBird::Worker::Object');
