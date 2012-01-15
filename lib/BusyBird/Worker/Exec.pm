@@ -11,14 +11,12 @@ sub new {
         Program => sub {
             POE::Kernel->stop();
             my $input_str;
-            {
-                local $/ = undef;
-                $input_str = <STDIN>;
-            }
+            $input_str = <STDIN>;
             chomp $input_str;
+            print STDERR "Exec: $input_str\n";
             exec($input_str);
         },
-        StdoutFilter => POE::Filter::Line->new(),
+        StdoutFilter => POE::Filter::Stream->new(),
     );
 }
 
