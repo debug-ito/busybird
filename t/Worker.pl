@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 66;
+use Test::More tests => 71;
 
 BEGIN {
     use_ok('POE');
@@ -51,6 +51,13 @@ sub cat {
     return join($self->{string}, @strings);
 }
 
+sub do_not_call_me {
+    my ($self) = @_;
+    die("I said do not call me!!!\n");
+}
+
+
+#######################################################
 package main;
 
 sub checkDisassembled {
@@ -155,6 +162,7 @@ POE::Session->create(
             $worker_obj->getTargetObject()->setString('//');
             $worker_obj->startJob($WORKER_OBJECT_SESSION, 'report5', {method => 'cat', args => [qw(foo bar buzz)], context => 's'});
             $worker_obj->startJob($WORKER_OBJECT_SESSION, 'report6', {method => 'not_exist', args => [1]});
+            $worker_obj->startJob($WORKER_OBJECT_SESSION, 'report7', {method => 'do_not_call_me', context => 's'});
         },
         report5 => sub {
             my ($kernel, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0, ARG1, ARG2];
@@ -185,12 +193,26 @@ POE::Session->create(
 
             $kernel->yield('check_end', 'report6');
         },
+        report7 => sub {
+            my ($kernel, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0, ARG1, ARG2];
+            diag('------- report7');
+            cmp_ok(int(@$output_objs), '==', 1, 'output num: 1');
+            cmp_ok($exit_status, '==', 0, 'exit status: OK');
+            is($input_obj->{method}, "do_not_call_me", "method: do_not_call_me");
+
+            my ($status, $data) = ($output_objs->[0]->{status}, $output_objs->[0]->{data});
+
+            cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_METHOD_DIES, "method dies");
+            is($data, "I said do not call me!!!\n", "exception object is in data.");
+
+            $kernel->yield('check_end', 'report7');
+        },
         check_end => sub {
             my ($kernel, $heap, $end_token) = @_[KERNEL, HEAP, ARG0];
             my $report_done_list = $heap->{report_done};
             $report_done_list->{$end_token} = 1;
             my $is_end = 1;
-            foreach my $token (qw(report1 report2 report3 report4 report5 report6)) {
+            foreach my $token (qw(report1 report2 report3 report4 report5 report6 report7)) {
                 $is_end = 0 if !$report_done_list->{$token};
             }
             if ($is_end) {
