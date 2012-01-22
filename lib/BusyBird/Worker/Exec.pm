@@ -10,10 +10,15 @@ sub new {
     return $class->SUPER::new(
         Program => sub {
             POE::Kernel->stop();
-            my $input_str;
-            $input_str = <STDIN>;
-            chomp $input_str;
-            print STDERR "Exec: $input_str\n";
+            my $input_str = "";
+            my $input_char = undef;
+            while(1) {
+                if(!sysread(STDIN, $input_char, 1)) {
+                    last;
+                }
+                last if $input_char eq "\n";
+                $input_str .= $input_char;
+            }
             exec($input_str);
         },
         StdoutFilter => POE::Filter::Stream->new(),
