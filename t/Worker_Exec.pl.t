@@ -44,6 +44,7 @@ POE::Session->create(
 
             my $data = $output_objs->[0];
             like($data, qr(/t$), "pwd's output ends with /t");
+            diag(sprintf('output data: %s', $data));
             
             $kernel->yield('check_end');
         },
@@ -62,11 +63,11 @@ POE::Session->create(
         on_false => sub {
             my ($kernel, $state, $output_objs, $input_obj, $exit_status) = @_[KERNEL, STATE, ARG0 .. $#_];
             diag("--- $state");
-            cmp_ok(int(@$output_objs), "==", 1, 'output num: 1');
+            cmp_ok(int(@$output_objs), "==", 0, 'output num: 0');
             is($input_obj, "sleep 3; false", "input OK");
-            cmp_ok($exit_status, '==', 1, "exit status of false is 1");
-            
-            is($output_objs->[0], "", "no output data");
+            cmp_ok($exit_status >> 8, '==', 1, "exit status of false is 1");
+            my $data = join('', @$output_objs);
+            is($data, '', 'no output');
 
             $kernel->yield('check_end');
         },
@@ -78,7 +79,7 @@ POE::Session->create(
             cmp_ok($exit_status, '==', 0, "exit status OK");
 
             my $data = $output_objs->[0];
-            is($data, join("\n", qw(apple melon orange strawberry)), 'data sorted');
+            is($data, join("\n", qw(apple melon orange strawberry)) . "\n", 'data sorted');
 
             $kernel->yield('check_end');
         },
