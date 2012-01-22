@@ -4,6 +4,7 @@ use base ('BusyBird::Worker');
 use strict;
 use warnings;
 use BusyBird::Worker;
+use POSIX qw(_exit);
 
 sub new {
     my ($class) = @_;
@@ -19,7 +20,10 @@ sub new {
                 last if $input_char eq "\n";
                 $input_str .= $input_char;
             }
-            exec($input_str);
+            if(!exec($input_str)) {
+                print "Command not found: $input_str\n";
+                _exit(127);
+            }
         },
         StdoutFilter => POE::Filter::Stream->new(),
     );

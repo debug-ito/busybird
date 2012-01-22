@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 10;
+use Test::More tests => 34;
 
 BEGIN {
     sub POE::Kernel::CATCH_EXCEPTIONS () { 0 }
@@ -87,8 +87,8 @@ POE::Session->create(
             my ($kernel, $state, $output_objs, $input_obj, $exit_status) = @_[KERNEL, STATE, ARG0 .. $#_];
             diag("--- $state");
             cmp_ok(int(@$output_objs), "==", 1, 'output num: 1');
-            is($input_obj, "this_command_probebly_does_not_exist");
-            cmp_ok($exit_status, '!=', 0, "exit status OK");
+            is($input_obj, "this_command_probably_does_not_exist");
+            cmp_ok($exit_status >> 8, '==', 127, "exit value: 127");
 
             like($output_objs->[0], qr(command not found)i, "command not found");
 
@@ -96,12 +96,23 @@ POE::Session->create(
         },
         on_ls_wild_card => sub {
             my ($kernel, $state, $output_objs, $input_obj, $exit_status) = @_[KERNEL, STATE, ARG0 .. $#_];
-            fail($state);
+            diag("--- $state");
+            cmp_ok(int(@$output_objs), "==", 1, "output num: 1");
+            is($input_obj, "ls *");
+            cmp_ok($exit_status, "==", 0, "exit status: ok");
+
+            my $data = $output_objs->[0];
+            my @files = split(/\s+/, $data);
+            cmp_ok(int(@files), ">", "1", "multiple files in this directory");
+            diag("File: $_") foreach @files;
             $kernel->yield('check_end');
         },
         on_no_command_wild_card => sub {
             my ($kernel, $state, $output_objs, $input_obj, $exit_status) = @_[KERNEL, STATE, ARG0 .. $#_];
-            fail($state);
+            diag("--- $state");
+            cmp_ok(int(@$output_objs), "==", 0, 'output num: 0');
+            is($input_obj, 'this_does_not_exist_either *', "input_obj: ok");
+            cmp_ok($exit_status >> 8, "==", 127, "exit value: 127");
             $kernel->yield('check_end');
         },
         check_end => sub {
