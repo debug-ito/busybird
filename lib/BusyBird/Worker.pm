@@ -41,7 +41,6 @@ sub new {
         children_by_wid => {},
         children_by_pid => {},
         session => undef,
-        session_alias => undef,
     }, $class;
     $self->_setParam(\%params, 'Program', undef, 1);
     $self->_setParam(\%params, 'StdinFilter',  POE::Filter::Stream->new());
@@ -62,7 +61,7 @@ sub startJob {
 
 sub _initSession {
     my ($self) = @_;
-    my $session = POE::Session->create(
+    POE::Session->create(
         inline_states => {
             _stop => sub {},
         },
@@ -78,15 +77,13 @@ sub _initSession {
             },
         ],
     );
-    $self->{session} = $session->ID;
 }
 
 sub _sessionStart {
     my ($self, $kernel, $session) = @_[OBJECT, KERNEL, SESSION];
     ## ** give alias to make the session immortal.
-    my $alias = 'worker_' . $session->ID;
-    $kernel->alias_set($alias);
-    $self->{session_alias} = $alias;
+    $self->{session} = $session->ID;
+    $kernel->alias_set($session->ID);
 }
 
 sub _sessionInput {
