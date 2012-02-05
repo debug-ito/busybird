@@ -7,6 +7,7 @@ use Test::More;
 
 BEGIN {
     sub POE::Kernel::CATCH_EXCEPTIONS () { 0 }
+    sub POE::Kernel::ASSERT_DEFAULT   () { 1 }
     use_ok('POE');
     use_ok('BusyBird::CallStack');
     use_ok('BusyBird::Worker');
@@ -96,6 +97,7 @@ POE::Session->create(
             $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report4', {method => 'disassemble'});
             return 0;
         },
+        _stop => sub {},
         report1 => sub {
             my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
             diag('------- report1');

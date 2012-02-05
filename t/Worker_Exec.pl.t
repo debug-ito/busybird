@@ -6,6 +6,7 @@ use Test::More;
 
 BEGIN {
     sub POE::Kernel::CATCH_EXCEPTIONS () { 0 }
+    sub POE::Kernel::ASSERT_DEFAULT   () { 1 }
     
     use_ok('POE');
     use_ok('BusyBird::CallStack');
@@ -36,6 +37,7 @@ POE::Session->create(
             $heap->{report_max} = 7;
             $heap->{report_count} = 0;
         },
+        _stop => sub {},
         on_pwd => sub {
             my ($kernel, $state, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, STATE, ARG0 .. $#_];
             diag("--- $state");

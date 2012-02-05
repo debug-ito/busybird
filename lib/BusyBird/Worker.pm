@@ -63,6 +63,9 @@ sub startJob {
 sub _initSession {
     my ($self) = @_;
     my $session = POE::Session->create(
+        inline_states => {
+            _stop => sub {},
+        },
         object_states => [
             $self => {
                 _start => '_sessionStart',

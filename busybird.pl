@@ -9,7 +9,11 @@ use Encode;
 use FindBin;
 
 sub POE::Kernel::CATCH_EXCEPTIONS () { 0 }
+sub POE::Kernel::ASSERT_DEFAULT    () { 1 }
 use POE;
+
+
+
 use Data::Dumper;
 
 use Net::Twitter;
