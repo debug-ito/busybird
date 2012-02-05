@@ -88,7 +88,7 @@ sub initiateTimer {
             _start => sub {
                 my ($kernel, $session) = @_[KERNEL, SESSION];
                 $kernel->yield("timer_fire");
-                $kernel->alias_set(sprintf("bb_main/%d", $session->ID));
+                ## $kernel->alias_set(sprintf("bb_main/%d", $session->ID));
             },
             
             set_delay => sub {

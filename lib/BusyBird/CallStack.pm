@@ -29,6 +29,7 @@ sub push {
     ## if(!defined(%init_heap)) {
     ##     %init_heap = ();
     ## }
+    POE::Kernel->refcount_increment($recv_session, 'bb_callstack');
     CORE::push(@{$self->{stack}},
          {recv_session => $recv_session,
           recv_event   => $recv_event,
@@ -46,7 +47,15 @@ sub pop {
     my $entry = CORE::pop(@{$self->{stack}});
     printf STDERR ("CallStack: post to (%s, %s)\n", $entry->{recv_session}, $entry->{recv_event});
     POE::Kernel->post($entry->{recv_session}, $entry->{recv_event}, $self, @return_values);
+    POE::Kernel->refcount_decrement($entry->{recv_session}, 'bb_callstack');
     return $self;
+}
+
+sub DESTROY {
+    my ($self) = @_;
+    foreach my $entry (@{$self->{stack}}) {
+        POE::Kernel->refcount_decrement($entry->{recv_session}, 'bb_callback');
+    }
 }
 
 sub size {

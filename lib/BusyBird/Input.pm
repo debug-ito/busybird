@@ -26,6 +26,7 @@ sub new {
     my ($class, %params) = @_;
     my $self = bless {
         session => undef,
+        session_alias => undef,
     }, $class;
     $self->_setParams(\%params);
     eval {
@@ -34,14 +35,14 @@ sub new {
     if($@) {
         print STDERR "WARNING: $@Cache is not loaded.\n";
     }
-    POE::Session->create(
+    $self->{session} = POE::Session->create(
         object_states => [
             $self => {
                 _start => '_sessionStart',
                 on_get_statuses => '_sessionOnGetStatuses',
             },
         ],
-    );
+    )->ID;
     return $self;
 }
 
@@ -57,7 +58,7 @@ sub _sessionStart {
     my ($self, $kernel) = @_[OBJECT, KERNEL];
     my $alias_name = sprintf("bb_input/%s", $self->{name});
     $kernel->alias_set($alias_name);
-    $self->{session} = $alias_name;
+    $self->{session_alias} = $alias_name;
 }
 
 sub _getStatuses {
