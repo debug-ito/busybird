@@ -22,6 +22,7 @@ use BusyBird::Judge;
 use BusyBird::Timer;
 use BusyBird::HTTPD;
 use BusyBird::Worker::Twitter;
+use BusyBird::Status;
 
 require 'config.test.pl';
 
@@ -39,7 +40,7 @@ my %config_parameters = &tempGetConfig();
 sub main {
     ## ** TODO: support more sophisticated format of threshold offset (other than just seconds).
     BusyBird::Input->setThresholdOffset(int($OPT_THRESHOLD_OFFSET));
-    my $nt = Net::Twitter->new(
+    my $twitter_worker = BusyBird::Worker::Twitter->new(
         traits   => [qw/OAuth API::REST API::Lists/],
         consumer_key        => $config_parameters{consumer_key},
         consumer_secret     => $config_parameters{consumer_secret},
@@ -47,10 +48,10 @@ sub main {
         access_token_secret => $config_parameters{token_secret},
         ssl => 1,
     );
-    my $input  = BusyBird::Input::Twitter::List->new(name => 'list_test',
-                                                     nt => $nt,
-                                                     owner_name => $config_parameters{owner_name},
-                                                     list_slug_name => $config_parameters{list_slug_name});
+    ## my $input  = BusyBird::Input::Twitter::List->new(name => 'list_test',
+    ##                                                  worker => $twitter_worker,
+    ##                                                  owner_name => $config_parameters{owner_name},
+    ##                                                  list_slug_name => $config_parameters{list_slug_name});
     my $output = BusyBird::Output->new($DEFAULT_STREAM_NAME);
     $output->judge(BusyBird::Judge->new());
     ## ** 一つのInputが複数のTimerに紐付けられないように管理しないといけない
@@ -61,9 +62,8 @@ sub main {
     ##     [$output],
     ##     );
     
-    ## &initiateTimer(BusyBird::Timer->new(2), [BusyBird::Input::Test->new(name => 'test_input', new_interval => 5, new_count => 3)],
-    ##                [$output]);
-    &workerTest();
+    &initiateTimer(BusyBird::Timer->new(2), [BusyBird::Input::Test->new(name => 'test_input', new_interval => 5, new_count => 3)],
+                   [$output]);
 
     BusyBird::HTTPD->init($FindBin::Bin . "/resources/httpd");
     BusyBird::HTTPD->registerOutputs($output);
@@ -78,9 +78,15 @@ sub initiateTimer {
             input_streams => $input_streams_ref,
             timer => $timer,
             output_streams => $output_streams_ref,
+            new_statuses => [],
         },
         inline_states => {
-            _start => sub { $_[KERNEL]->yield("timer_fire") },
+            _start => sub {
+                my ($kernel, $session) = @_[KERNEL, SESSION];
+                $kernel->yield("timer_fire");
+                $kernel->alias_set(sprintf("bb_main/%d", $session->ID));
+            },
+            
             set_delay => sub {
                 my $delay = $_[HEAP]->{timer}->getNextDelay();
                 printf STDERR ("INFO: Following inputs will be checked in %.2f seconds.\n", $delay);
@@ -89,34 +95,65 @@ sub initiateTimer {
                 }
                 $_[KERNEL]->delay('timer_fire', $delay);
             },
+            
             timer_fire   => sub {
-                my ($kernel, $heap) = @_[KERNEL, HEAP];
+                my ($kernel, $session, $heap) = @_[KERNEL, SESSION, HEAP];
                 printf STDERR ("INFO: fire on input");
                 foreach my $input (@{$heap->{input_streams}}) {
                     printf STDERR (" %s", $input->getName());
                 }
                 print STDERR "\n";
-                
+
+                @{$heap->{new_statuses}} = ();
                 foreach my $input (@{$heap->{input_streams}}) {
-                    my $statuses;
-                    eval {
-                        $statuses = $input->getNewStatuses();
-                    };
-                    if($@) {
-                        printf STDERR ("ERROR: while getting input %s: %s\n", $input->getName(), $@);
-                        next;
-                    }
-                    foreach my $output_stream (@{$heap->{output_streams}}) {
-                        $output_stream->pushStatuses($statuses);
-                    }
+                    $input->getNewStatuses(undef, $session->ID, 'on_get_new_statuses');
                 }
+
                 
-                ## ** Notify outputs of the complete of pushing statuses
-                foreach my $output (@{$heap->{output_streams}}) {
-                    $output->onCompletePushingStatuses();
+                #### foreach my $input (@{$heap->{input_streams}}) {
+                ####     my $statuses;
+                ####     eval {
+                ####         $statuses = $input->getNewStatuses();
+                ####     };
+                ####     if($@) {
+                ####         printf STDERR ("ERROR: while getting input %s: %s\n", $input->getName(), $@);
+                ####         next;
+                ####     }
+                ####     foreach my $output_stream (@{$heap->{output_streams}}) {
+                ####         $output_stream->pushStatuses($statuses);
+                ####     }
+                #### }
+                #### 
+                #### ## ** Notify outputs of the complete of pushing statuses
+                #### foreach my $output (@{$heap->{output_streams}}) {
+                ####     $output->onCompletePushingStatuses();
+                #### }
+                #### return $kernel->yield('set_delay');
+            },
+
+            on_get_new_statuses => sub {
+                my ($kernel, $heap, $state, $callstack, $ret_array) = @_[KERNEL, HEAP, STATE, ARG0 .. ARG1];
+                print STDERR ("main session(state => $state)\n");
+                push(@{$heap->{new_statuses}}, $ret_array);
+                if(int(@{$heap->{new_statuses}}) != int(@{$heap->{input_streams}})) {
+                    return;
+                }
+                printf STDERR ("main session: status input from %d streams.\n", int(@{$heap->{input_streams}}));
+                
+                my @new_statuses = ();
+                foreach my $single_stream (@{$heap->{new_statuses}}) {
+                    push(@new_statuses, @$single_stream);
+                }
+
+                printf STDERR ("main session: %d statuses received.\n", int(@new_statuses));
+
+                ## test
+                foreach my $status (@new_statuses) {
+                    printf STDERR ("Status----\n%s\n", $status->getJSON());
                 }
                 return $kernel->yield('set_delay');
             },
+            
             change_interval => sub {
                 my ($kernel, $heap) = @_[KERNEL, HEAP];
                 my $new_interval = ($_[ARG0] < $TIMER_INTERVAL_MIN ? $TIMER_INTERVAL_MIN : $_[ARG0]);
@@ -124,48 +161,9 @@ sub initiateTimer {
                 return $kernel->yield('set_delay');
             },
         },
-        );
+    );
 }
 
-sub workerTest {
-    my $worker = BusyBird::Worker::Twitter->create(
-        consumer_key        => $config_parameters{consumer_key},
-        consumer_secret     => $config_parameters{consumer_secret},
-        access_token        => $config_parameters{token},
-        access_token_secret => $config_parameters{token_secret}
-    );
-    my @commands = (
-        ## 'sleep 15; ls', 'sleep 3; ls -al /', "sleep 6; cat /home/toshio/patents.txt"
-        {method => 'home_timeline', arg => {count => 10, page => 0}},
-        {method => 'public_timeline', arg => {}},
-        {method => 'list_statuses', arg => {user => "hoge_user", list_id => "foobar_list", per_page => 10, page => 1}},
-    );
-    POE::Session->create(
-        heap => {worker => $worker, next_command_index => 0, commands => \@commands},
-        inline_states => {
-            _start => sub { $_[KERNEL]->yield('timer_fire'); },
-            timer_fire => sub {
-                my ($kernel, $heap, $session) = @_[KERNEL, HEAP, SESSION];
-                print STDERR (">> workerTest fired.\n");
-                $worker->startJob($session->ID, 'on_report', $heap->{commands}->[$heap->{next_command_index}]);
-                $heap->{next_command_index} = ($heap->{next_command_index} + 1) % int(@{$heap->{commands}});
-                $kernel->delay('timer_fire', 30);
-            },
-            on_report => sub {
-                my ($reported_objs, $input_obj) = @_[ARG0, ARG1];
-                print  STDERR ">>>> REPORT Received <<<<\n";
-                ## print  STDERR "  Input: $input_obj\n";
-                printf STDERR ("  Output: num:%d\n  ", int(@$reported_objs));
-                for(my $i = 0 ; $i < @$reported_objs ; $i++) {
-                    printf STDERR ("  Output index %d\n", $i);
-                    print STDERR (Dumper($reported_objs->[$i]));
-                }
-                ## print  STDERR (join("\n  ", @$reported_objs));
-                ## print  STDERR "\n";
-            }
-        }
-    );
-}
 
 &main();
 

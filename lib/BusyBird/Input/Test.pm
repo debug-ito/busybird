@@ -4,7 +4,9 @@ use strict;
 use warnings;
 
 use DateTime;
+use POE;
 use BusyBird::Status::Test;
+use BusyBird::CallStack;
 
 my $LOCAL_TZ = DateTime::TimeZone->new( name => 'local' );
 
@@ -29,12 +31,21 @@ sub _newStatus {
 }
 
 sub _getStatuses {
-    my ($self, $count, $page) = @_;
+    my ($self, $callstack, $ret_session, $ret_event, $count, $page) = @_;
+    $callstack = BusyBird::CallStack->newStack($callstack, $ret_session, $ret_event, count => $count, page => $page);
+
+    print STDERR ("Input::Test::_getStatus(ret_session => $ret_session, ret_event => $ret_event, count => $count, page => $page)\n");
+    print STDERR ($callstack->toString() . "\n");
+    
     $self->{fired_count}++;
-    return undef if $self->{fired_count} <= $self->{new_interval};
+    if($self->{fired_count} <= $self->{new_interval}) {
+        $callstack->pop(undef);
+        return;
+    }
     $self->{fired_count} = 0;
     if($page > 0) {
-        return undef;
+        $callstack->pop(undef);
+        return;
     }
     my @ret = ();
     my $nowtime = DateTime->now();
@@ -42,7 +53,25 @@ sub _getStatuses {
     for(my $i = 0 ; $i < $self->{new_count} ; $i++) {
         push(@ret, $self->_newStatus($nowtime, $i));
     }
-    return \@ret;
+
+    printf STDERR ("Input::Test::_getStatus: %d statuses are reported.\n", int(@ret));
+    $callstack->pop(\@ret);
+
+    ### #### 
+    ### my ($self, $count, $page) = @_;
+    ### $self->{fired_count}++;
+    ### return undef if $self->{fired_count} <= $self->{new_interval};
+    ### $self->{fired_count} = 0;
+    ### if($page > 0) {
+    ###     return undef;
+    ### }
+    ### my @ret = ();
+    ### my $nowtime = DateTime->now();
+    ### $nowtime->set_time_zone($LOCAL_TZ);
+    ### for(my $i = 0 ; $i < $self->{new_count} ; $i++) {
+    ###     push(@ret, $self->_newStatus($nowtime, $i));
+    ### }
+    ### return \@ret;
 }
 
 1;

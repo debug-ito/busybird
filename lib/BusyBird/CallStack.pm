@@ -40,9 +40,11 @@ sub push {
 sub pop {
     my ($self, @return_values) = @_;
     if(!@{$self->{stack}}) {
+        printf STDERR ("CallStack: no stack entry to pop\n");
         die "CallStack: no stack entry to pop.";
     }
-    my $entry = pop(@{$self->{stack}});
+    my $entry = CORE::pop(@{$self->{stack}});
+    printf STDERR ("CallStack: post to (%s, %s)\n", $entry->{recv_session}, $entry->{recv_event});
     POE::Kernel->post($entry->{recv_session}, $entry->{recv_event}, $self, @return_values);
     return $self;
 }
@@ -77,6 +79,22 @@ sub set {
     while(my ($key, $val) = each(%keyvals)) {
         $heap->{$key} = $val;
     }
+}
+
+sub toString {
+    my ($self, $with_heap) = @_;
+    my $ret = "";
+    for(my $i = 0 ; $i < int(@{$self->{stack}}) ; $i++) {
+        my $entry = $self->{stack}->[$i];
+        $ret .= sprintf("Stack %d: return to (%s, %s)\n",
+                        $i, $entry->{recv_session}, $entry->{recv_event});
+        if($with_heap) {
+            while(my ($key, $val) = each(%{$entry->{heap}})) {
+                $ret .= "  $key => $val\n";
+            }
+        }
+    }
+    return $ret;
 }
 
 1;
