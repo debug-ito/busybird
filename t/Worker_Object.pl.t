@@ -84,17 +84,15 @@ my $worker_obj = BusyBird::Worker::Object->new(
 }
 
 
-my $WORKER_OBJECT_SESSION = "main_session_alias";
 POE::Session->create(
     heap => {report_done => {}},
     inline_states => {
         _start => sub {
-            my ($kernel) = $_[KERNEL];
-            $kernel->alias_set($WORKER_OBJECT_SESSION);
-            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report1', {method => 'getString'});
-            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report2', {method => 'getContext', context => 'scalar'});
-            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report3', {method => 'getContext', context => 'list'});
-            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report4', {method => 'disassemble'});
+            my ($kernel, $session) = @_[KERNEL, SESSION];
+            $worker_obj->startJob(undef, $session->ID, 'report1', {method => 'getString'});
+            $worker_obj->startJob(undef, $session->ID, 'report2', {method => 'getContext', context => 'scalar'});
+            $worker_obj->startJob(undef, $session->ID, 'report3', {method => 'getContext', context => 'list'});
+            $worker_obj->startJob(undef, $session->ID, 'report4', {method => 'disassemble'});
             return 0;
         },
         _stop => sub {},
@@ -158,7 +156,7 @@ POE::Session->create(
             $kernel->yield('check_end', 'report3');
         },
         report4 => sub {
-            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
+            my ($kernel, $session, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, SESSION, ARG0 .. ARG3];
             diag('-------- report4');
             isa_ok($callstack, 'BusyBird::CallStack');
             cmp_ok($callstack->size, "==", 0);
@@ -172,9 +170,9 @@ POE::Session->create(
             $kernel->yield('check_end', 'report4');
 
             $worker_obj->getTargetObject()->setString('//');
-            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report5', {method => 'cat', args => [qw(foo bar buzz)], context => 's'});
-            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report6', {method => 'not_exist', args => [1]});
-            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report7', {method => 'do_not_call_me', context => 's'});
+            $worker_obj->startJob(undef, $session->ID, 'report5', {method => 'cat', args => [qw(foo bar buzz)], context => 's'});
+            $worker_obj->startJob(undef, $session->ID, 'report6', {method => 'not_exist', args => [1]});
+            $worker_obj->startJob(undef, $session->ID, 'report7', {method => 'do_not_call_me', context => 's'});
         },
         report5 => sub {
             my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
@@ -234,7 +232,6 @@ POE::Session->create(
                 $is_end = 0 if !$report_done_list->{$token};
             }
             if ($is_end) {
-                $_[KERNEL]->alias_remove($WORKER_OBJECT_SESSION);
                 pass('the test successfully ends here');
                 done_testing();
             }

@@ -21,19 +21,17 @@ my $worker = BusyBird::Worker::Exec->new();
 isa_ok($worker, 'BusyBird::Worker');
 isa_ok($worker, 'BusyBird::Worker::Exec');
 
-my $SESSION_ALIAS = 'SESSION_ALIAS';
 POE::Session->create(
     inline_states => {
         _start => sub {
-            my ($kernel, $heap) = @_[KERNEL, HEAP];
-            $kernel->alias_set($SESSION_ALIAS);
-            $worker->startJob(undef, $SESSION_ALIAS, 'on_pwd', 'pwd');
-            $worker->startJob(undef, $SESSION_ALIAS, 'on_sleep_echo', 'sleep 5; echo hogehogehoge');
-            $worker->startJob(undef, $SESSION_ALIAS, 'on_false', 'sleep 3; false');
-            $worker->startJob(undef, $SESSION_ALIAS, 'on_sort', join("\n", qw(sort strawberry apple orange melon)));
-            $worker->startJob(undef, $SESSION_ALIAS, 'on_no_command', 'this_command_probably_does_not_exist');
-            $worker->startJob(undef, $SESSION_ALIAS, 'on_ls_wild_card', 'ls *');
-            $worker->startJob(undef, $SESSION_ALIAS, 'on_no_command_wild_card', 'this_does_not_exist_either *');
+            my ($kernel, $session, $heap) = @_[KERNEL, SESSION, HEAP];
+            $worker->startJob(undef, $session->ID, 'on_pwd', 'pwd');
+            $worker->startJob(undef, $session->ID, 'on_sleep_echo', 'sleep 5; echo hogehogehoge');
+            $worker->startJob(undef, $session->ID, 'on_false', 'sleep 3; false');
+            $worker->startJob(undef, $session->ID, 'on_sort', join("\n", qw(sort strawberry apple orange melon)));
+            $worker->startJob(undef, $session->ID, 'on_no_command', 'this_command_probably_does_not_exist');
+            $worker->startJob(undef, $session->ID, 'on_ls_wild_card', 'ls *');
+            $worker->startJob(undef, $session->ID, 'on_no_command_wild_card', 'this_does_not_exist_either *');
             $heap->{report_max} = 7;
             $heap->{report_count} = 0;
         },
@@ -135,9 +133,6 @@ POE::Session->create(
         check_end => sub {
             my ($kernel, $heap) = @_[KERNEL, HEAP];
             $heap->{report_count}++;
-            if($heap->{report_max} == $heap->{report_count}) {
-                $kernel->alias_remove($SESSION_ALIAS);
-            }
         },
     },
 );
