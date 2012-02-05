@@ -3,11 +3,12 @@
 use strict;
 use warnings;
 
-use Test::More tests => 71;
+use Test::More;
 
 BEGIN {
     sub POE::Kernel::CATCH_EXCEPTIONS () { 0 }
     use_ok('POE');
+    use_ok('BusyBird::CallStack');
     use_ok('BusyBird::Worker');
     use_ok('BusyBird::Worker::Object');
 }
@@ -89,15 +90,17 @@ POE::Session->create(
         _start => sub {
             my ($kernel) = $_[KERNEL];
             $kernel->alias_set($WORKER_OBJECT_SESSION);
-            $worker_obj->startJob($WORKER_OBJECT_SESSION, 'report1', {method => 'getString'});
-            $worker_obj->startJob($WORKER_OBJECT_SESSION, 'report2', {method => 'getContext', context => 'scalar'});
-            $worker_obj->startJob($WORKER_OBJECT_SESSION, 'report3', {method => 'getContext', context => 'list'});
-            $worker_obj->startJob($WORKER_OBJECT_SESSION, 'report4', {method => 'disassemble'});
+            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report1', {method => 'getString'});
+            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report2', {method => 'getContext', context => 'scalar'});
+            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report3', {method => 'getContext', context => 'list'});
+            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report4', {method => 'disassemble'});
             return 0;
         },
         report1 => sub {
-            my ($kernel, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0, ARG1, ARG2];
+            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
             diag('------- report1');
+            isa_ok($callstack, 'BusyBird::CallStack');
+            cmp_ok($callstack->size, "==", 0);
             is(ref($output_objs), 'ARRAY', 'Returning output_objs is array,');
             cmp_ok(int(@$output_objs), "==", 1, 'and it has one element.');
             is($input_obj->{method}, 'getString', 'Input was getString method');
@@ -115,8 +118,10 @@ POE::Session->create(
             $kernel->yield('check_end', 'report1');
         },
         report2 => sub {
-            my ($kernel, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0, ARG1, ARG2];
+            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
             diag('------- report2');
+            isa_ok($callstack, 'BusyBird::CallStack');
+            cmp_ok($callstack->size, "==", 0);
             cmp_ok(int(@$output_objs), '==', 1, '1 output');
             cmp_ok($exit_status, '==', 0, 'exit status OK');
             is($input_obj->{method}, 'getContext', 'method: getContext');
@@ -130,8 +135,10 @@ POE::Session->create(
             $kernel->yield('check_end', 'report2');
         },
         report3 => sub {
-            my ($kernel, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0, ARG1, ARG2];
+            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
             diag('------- report3');
+            isa_ok($callstack, 'BusyBird::CallStack');
+            cmp_ok($callstack->size, "==", 0);
             cmp_ok(int(@$output_objs), '==', 1, '1 output');
             cmp_ok($exit_status, '==', 0, 'exit status OK');
             is($input_obj->{context}, 'list', 'input context: list');
@@ -149,8 +156,10 @@ POE::Session->create(
             $kernel->yield('check_end', 'report3');
         },
         report4 => sub {
-            my ($kernel, $output_objs, $input_obj) = @_[KERNEL, ARG0, ARG1];
+            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
             diag('-------- report4');
+            isa_ok($callstack, 'BusyBird::CallStack');
+            cmp_ok($callstack->size, "==", 0);
             is($input_obj->{method}, 'disassemble', 'method: disassemble');
 
             my ($status, @data) = ($output_objs->[0]->{status}, @{$output_objs->[0]->{data}});
@@ -161,13 +170,15 @@ POE::Session->create(
             $kernel->yield('check_end', 'report4');
 
             $worker_obj->getTargetObject()->setString('//');
-            $worker_obj->startJob($WORKER_OBJECT_SESSION, 'report5', {method => 'cat', args => [qw(foo bar buzz)], context => 's'});
-            $worker_obj->startJob($WORKER_OBJECT_SESSION, 'report6', {method => 'not_exist', args => [1]});
-            $worker_obj->startJob($WORKER_OBJECT_SESSION, 'report7', {method => 'do_not_call_me', context => 's'});
+            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report5', {method => 'cat', args => [qw(foo bar buzz)], context => 's'});
+            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report6', {method => 'not_exist', args => [1]});
+            $worker_obj->startJob(undef, $WORKER_OBJECT_SESSION, 'report7', {method => 'do_not_call_me', context => 's'});
         },
         report5 => sub {
-            my ($kernel, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0, ARG1, ARG2];
+            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
             diag('------- report5');
+            isa_ok($callstack, 'BusyBird::CallStack');
+            cmp_ok($callstack->size, "==", 0);
             cmp_ok(int(@$output_objs), '==', 1, 'output num: 1');
             is($input_obj->{method}, 'cat', 'method: cat');
             is($input_obj->{context}, 's', 'context: s');
@@ -181,8 +192,10 @@ POE::Session->create(
             $kernel->yield('check_end', 'report5');
         },
         report6 => sub {
-            my ($kernel, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0, ARG1, ARG2];
+            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
             diag('------- report6');
+            isa_ok($callstack, 'BusyBird::CallStack');
+            cmp_ok($callstack->size, "==", 0);
             cmp_ok(int(@$output_objs), '==', 1, 'output num: 1');
             cmp_ok($exit_status, '==', 0, 'exit status: ok');
             is($input_obj->{method}, 'not_exist', 'method: not_exist');
@@ -195,8 +208,10 @@ POE::Session->create(
             $kernel->yield('check_end', 'report6');
         },
         report7 => sub {
-            my ($kernel, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0, ARG1, ARG2];
+            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
             diag('------- report7');
+            isa_ok($callstack, 'BusyBird::CallStack');
+            cmp_ok($callstack->size, "==", 0);
             cmp_ok(int(@$output_objs), '==', 1, 'output num: 1');
             cmp_ok($exit_status, '==', 0, 'exit status: OK');
             is($input_obj->{method}, "do_not_call_me", "method: do_not_call_me");
@@ -219,6 +234,7 @@ POE::Session->create(
             if ($is_end) {
                 $_[KERNEL]->alias_remove($WORKER_OBJECT_SESSION);
                 pass('the test successfully ends here');
+                done_testing();
             }
         },
         

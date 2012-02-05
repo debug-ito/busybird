@@ -3,7 +3,7 @@ use base 'BusyBird::Object';
 use strict;
 use warnings;
 use POE qw(Wheel::Run Filter::Stream Filter::Line);
-use BusyBird::Worker::Child;
+use BusyBird::CallStack;
 
 =pod
 
@@ -55,49 +55,10 @@ sub new {
 }
 
 sub startJob {
-    my ($self, $receiver_session_id, $receiver_event_name, $input_obj) = @_;
+    my ($self, $callstack, $receiver_session_id, $receiver_event_name, $input_obj) = @_;
     POE::Kernel->post($self->{session}, "on_input",
-                      BusyBird::Worker::Child->new($receiver_session_id, $receiver_event_name, $input_obj));
-    ## $self->_push($receiver_session_id, $receiver_event_name, $input_obj);
-    ## if($self->_isBusy) {
-    ##     return;
-    ## }
-    ## if($self->_isDeamon) {
-    ##     POE::Kernel->post($self->{session}, 'on_input');
-    ## }else {
-    ##     POE::Kernel->post($self->{session}, 'on_exec');
-    ## }
+                      BusyBird::CallStack->newStack($callstack, $receiver_session_id, $receiver_event_name, input_obj => $input_obj));
 }
-
-## sub _push {
-##     my ($self, $receiver_session_id, $receiver_event_name, $input_obj) = @_;
-##     push(@{$self->{input_queue}},
-##          {
-##              receiver_session_id => $receiver_session_id,
-##              receiver_event_name => $receiver_event_name,
-##              input_obj           => $input_obj,
-##          });
-## }
-
-## sub _isDaemon {
-##     my ($self) = @_;
-##     return $self->{is_daemon};
-## }
-## 
-## sub _isBusy {
-##     my ($self) = @_;
-##     return $self->{is_busy};
-## }
-## 
-## sub _setBusy {
-##     my ($self, $busy_state) = @_;
-##     $self->{is_busy} = $busy_state;
-## }
-
-## sub _exec {
-##     my ($self) = @_;
-##     POE::Kernel->post($self->{session}, 'on_exec');
-## }
 
 sub _initSession {
     my ($self) = @_;
@@ -117,23 +78,6 @@ sub _initSession {
     $self->{session} = $session->ID;
 }
 
-## sub _sessionExec {
-##     my ($self) = @_[OBJECT];
-##     my $child = POE::Wheel::Run->new(
-##         Program => $self->{Program};
-##         StdoutEvent  => "on_child_stdout",
-##         StderrEvent  => "on_child_stderr",
-##         StdinFilter  => $self->{StdinFilter},
-##         StdoutFilter => $self->{StdoutFilter},
-##         StderrFilter => $self->{StderrFilter},
-##     );
-##     $self->{child} = $child;
-##     $_[KERNEL]->sig_child($child->PID, "on_child_signal");
-##     ## if(!$self->_isDaemon) {
-##     ##     @_[KERNEL]->post($self->{session}, 'on_input');
-##     ## }
-## }
-
 sub DESTROY {
     my $self = shift;
     POE::Kernel->alias_remove($self->{session_alias});
@@ -148,7 +92,7 @@ sub _sessionStart {
 }
 
 sub _sessionInput {
-    my ($self, $worker_child) = @_[OBJECT, ARG0];
+    my ($self, $callstack) = @_[OBJECT, ARG0];
     my $child = POE::Wheel::Run->new(
         Program => $self->{Program},
         StdinEvent   => 'on_child_stdin',
@@ -159,20 +103,24 @@ sub _sessionInput {
         StderrFilter => $self->{StderrFilter},
     );
     $_[KERNEL]->sig_child($child->PID, "on_child_signal");
-    $worker_child->setChildWheel($child);
-    $self->{children_by_wid}->{$child->ID} = $worker_child;
-    $self->{children_by_pid}->{$child->PID} = $worker_child;
-    $worker_child->put();
+    $callstack->set(wheel => $child,
+                    output_objs => [],
+                    exit_status => 0);
+    $self->{children_by_wid}->{$child->ID} = $callstack;
+    $self->{children_by_pid}->{$child->PID} = $callstack;
+    ## $callstack->put();
+    $child->put($callstack->get('input_obj'));
 }
 
 sub _sessionChildStdin {
     my ($self, $wheel_id) = @_[OBJECT, ARG0];
-    $self->{children_by_wid}->{$wheel_id}->endPut();
+    $self->{children_by_wid}->{$wheel_id}->get('wheel')->shutdown_stdin();
 }
 
 sub _sessionChildStdout {
     my ($self, $output, $wheel_id) = @_[OBJECT, ARG0, ARG1];
-    $self->{children_by_wid}->{$wheel_id}->pushOutput($output);
+    ## $self->{children_by_wid}->{$wheel_id}->pushOutput($output);
+    push(@{$self->{children_by_wid}->{$wheel_id}->get('output_objs')}, $output);
 }
 
 sub _sessionChildStderr {
@@ -182,11 +130,15 @@ sub _sessionChildStderr {
 
 sub _sessionChildSignal {
     my ($self, $pid, $exit_val) = @_[OBJECT, ARG1, ARG2];
-    my $worker_child = $self->{children_by_pid}->{$pid};
-    $worker_child->setExitStatus($exit_val);
-    $worker_child->report();
-    delete $self->{children_by_wid}->{$worker_child->ID};
+    ## my $worker_child = $self->{children_by_pid}->{$pid};
+    ## $worker_child->setExitStatus($exit_val);
+    my $callstack = $self->{children_by_pid}->{$pid};
+    $callstack->set(exit_status => $exit_val);
+    ## $worker_child->report();
+    ## delete $self->{children_by_wid}->{$worker_child->ID};
+    delete $self->{children_by_wid}->{$callstack->get('wheel')->ID};
     delete $self->{children_by_pid}->{$pid};
+    $callstack->pop($callstack->get(qw(output_objs input_obj exit_status)));
 }
 
 1;

@@ -4,12 +4,21 @@ use strict;
 use warnings;
 use POE;
 
+sub newStack {
+    my ($class, $existing_obj, $recv_session, $recv_event, %init_heap) = @_;
+    if(defined($existing_obj)) {
+        return $existing_obj->push($recv_session, $recv_event, %init_heap);
+    }else {
+        return $class->new()->push($recv_session, $recv_event, %init_heap);
+    }
+}
+
 sub new {
-    my ($class, $recv_session, $recv_event, %init_heap) = @_;
+    my ($class) = @_;
     my $self = bless {
         stack => [],
     }, $class;
-    return $self->push($recv_session, $recv_event, %init_heap);
+    return $self;
 }
 
 sub push {
@@ -17,10 +26,10 @@ sub push {
     if(!defined($recv_session) or !defined($recv_event)) {
         return $self;
     }
-    if(!defined(%init_heap)) {
-        %init_heap = ();
-    }
-    push(@{$self->{stack}},
+    ## if(!defined(%init_heap)) {
+    ##     %init_heap = ();
+    ## }
+    CORE::push(@{$self->{stack}},
          {recv_session => $recv_session,
           recv_event   => $recv_event,
           heap         => \%init_heap,
@@ -57,7 +66,7 @@ sub get {
     my @vals = ();
     my $heap = $self->_heap;
     foreach my $key (@keys) {
-        push(@vals, $heap->{$key});
+        CORE::push(@vals, $heap->{$key});
     }
     return wantarray ? @vals : $vals[0];
 }
