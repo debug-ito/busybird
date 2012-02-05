@@ -78,11 +78,6 @@ sub _initSession {
     $self->{session} = $session->ID;
 }
 
-sub DESTROY {
-    my $self = shift;
-    POE::Kernel->alias_remove($self->{session_alias});
-}
-
 sub _sessionStart {
     my ($self, $kernel, $session) = @_[OBJECT, KERNEL, SESSION];
     ## ** give alias to make the session immortal.
