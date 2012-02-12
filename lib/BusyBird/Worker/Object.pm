@@ -32,7 +32,7 @@ sub new {
     my ($class, $target_object) = @_;
     my $self = $class->SUPER::new(
         Program => sub {
-            POE::Kernel->stop();
+            ## POE::Kernel->stop();
             my $input_str;
             {
                 local $/ = undef;

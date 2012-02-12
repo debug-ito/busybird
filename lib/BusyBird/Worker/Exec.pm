@@ -10,7 +10,7 @@ sub new {
     my ($class) = @_;
     return $class->SUPER::new(
         Program => sub {
-            POE::Kernel->stop();
+            ## POE::Kernel->stop();
             my $input_str = "";
             my $input_char = undef;
             while(1) {
