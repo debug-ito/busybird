@@ -112,27 +112,6 @@ sub initiateTimer {
                 foreach my $input (@{$heap->{input_streams}}) {
                     $input->getNewStatuses(undef, $session->ID, 'on_get_new_statuses');
                 }
-
-                
-                #### foreach my $input (@{$heap->{input_streams}}) {
-                ####     my $statuses;
-                ####     eval {
-                ####         $statuses = $input->getNewStatuses();
-                ####     };
-                ####     if($@) {
-                ####         printf STDERR ("ERROR: while getting input %s: %s\n", $input->getName(), $@);
-                ####         next;
-                ####     }
-                ####     foreach my $output_stream (@{$heap->{output_streams}}) {
-                ####         $output_stream->pushStatuses($statuses);
-                ####     }
-                #### }
-                #### 
-                #### ## ** Notify outputs of the complete of pushing statuses
-                #### foreach my $output (@{$heap->{output_streams}}) {
-                ####     $output->onCompletePushingStatuses();
-                #### }
-                #### return $kernel->yield('set_delay');
             },
 
             on_get_new_statuses => sub {
@@ -148,12 +127,12 @@ sub initiateTimer {
                 foreach my $single_stream (@{$heap->{new_statuses}}) {
                     push(@new_statuses, @$single_stream);
                 }
-
                 printf STDERR ("main session: %d statuses received.\n", int(@new_statuses));
-
-                ## test
-                foreach my $status (@new_statuses) {
-                    printf STDERR ("Status----\n%s\n", $status->getJSON());
+                if (@new_statuses) {
+                    foreach my $output_stream (@{$heap->{output_streams}}) {
+                        $output_stream->pushStatuses(\@new_statuses);
+                        $output_stream->onCompletePushingStatuses();
+                    }
                 }
                 return $kernel->yield('set_delay');
             },
