@@ -7,9 +7,9 @@ use POE;
 sub newStack {
     my ($class, $existing_obj, $recv_session, $recv_event, %init_heap) = @_;
     if(defined($existing_obj)) {
-        return $existing_obj->push($recv_session, $recv_event, %init_heap);
+        return $existing_obj->_push($recv_session, $recv_event, %init_heap);
     }else {
-        return $class->new()->push($recv_session, $recv_event, %init_heap);
+        return $class->new()->_push($recv_session, $recv_event, %init_heap);
     }
 }
 
@@ -21,7 +21,7 @@ sub new {
     return $self;
 }
 
-sub push {
+sub _push {
     my ($self, $recv_session, $recv_event, %init_heap) = @_;
     if(!defined($recv_session) or !defined($recv_event)) {
         return $self;
