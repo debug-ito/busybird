@@ -60,14 +60,14 @@ sub main {
     $output->judge(BusyBird::Judge->new());
     ## ** 一つのInputが複数のTimerに紐付けられないように管理しないといけない
     ## &initiateTimer(BusyBird::Timer->new(120), [$input], [$output]);
-    ## &initiateTimer(
-    ##     BusyBird::Timer->new(200),
-    ##     [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', nt => $nt)],
-    ##     [$output],
-    ##     );
+    &initiateTimer(
+        BusyBird::Timer->new(200),
+        [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', worker => $twitter_worker)],
+        [$output],
+        );
     
-    &initiateTimer(BusyBird::Timer->new(2), [BusyBird::Input::Test->new(name => 'test_input', new_interval => 5, new_count => 3)],
-                   [$output]);
+    ## &initiateTimer(BusyBird::Timer->new(2), [BusyBird::Input::Test->new(name => 'test_input', new_interval => 5, new_count => 3)],
+    ##                [$output]);
 
     BusyBird::HTTPD->init($FindBin::Bin . "/resources/httpd");
     BusyBird::HTTPD->registerOutputs($output);
