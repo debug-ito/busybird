@@ -155,9 +155,11 @@ sub _replyMainPage {
                 },
                 success: function (data, textStatus, jqXHR) {
                     var i;
+                    var new_statuses_text = "";
                     for(i = 0 ; i < data.length ; i++) {
-                        $("#statuses").prepend("ID: " + data[i].id + ", TEXT: " + data[i].text + "\n");
+                        new_statuses_text += "ID: " + data[i].id + " (" + data[i].datetime + ") TEXT: " + data[i].text + "\n";
                     }
+                    $("#statuses").prepend(new_statuses_text);
                     cometConfirm();
                 }});
     }
