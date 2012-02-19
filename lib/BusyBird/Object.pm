@@ -9,6 +9,24 @@ sub _setParam {
     $self->{$key} = (defined($params_ref->{$key}) ? $params_ref->{$key} : $default);
 }
 
+sub objectStates {
+    my ($class, @event_names) = @_;
+    my %object_state = ();
+    foreach my $event (@event_names) {
+        my $method_name = $event;
+        $method_name =~ s/^(.)/uc($1)/e;
+        $method_name =~ s/_(.)/uc($1)/eg;
+        $method_name = '_session' . $method_name;
+        $object_state{$event} = $method_name;
+    }
+
+    while(my ($key, $val) = each(%object_state)) {
+        print STDERR "Object state: $key => $val\n";
+    }
+    
+    return \%object_state;
+}
+
 
 1;
 
