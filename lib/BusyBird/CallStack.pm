@@ -21,6 +21,29 @@ sub new {
     return $self;
 }
 
+sub forks {
+    my ($self, $total_instance_num) = @_;
+    if($total_instance_num <= 0) {
+        return ();
+    }
+    my @forks = ($self);
+    for(my $i = 0 ; $i < $total_instance_num - 1 ; $i++) {
+        push(@forks, $self->_clone());
+    }
+    return @forks;
+}
+
+sub _clone {
+    my ($self) = @_;
+    my $cloned_stack = ref($self)->new();
+    foreach my $stack_frame (@{$self->{stack}}) {
+        $cloned_stack->_push($stack_frame->{recv_session},
+                             $stack_frame->{recv_event},
+                             %{$stack_frame->{heap}});
+    }
+    return $cloned_stack;
+}
+
 sub _push {
     my ($self, $recv_session, $recv_event, %init_heap) = @_;
     if(!defined($recv_session) or !defined($recv_event)) {
