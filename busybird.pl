@@ -20,6 +20,7 @@ use Net::Twitter;
 use BusyBird::Input;
 use BusyBird::Input::Twitter::HomeTimeline;
 use BusyBird::Input::Twitter::List;
+use BusyBird::Input::Twitter::PublicTimeline;
 use BusyBird::Input::Test;
 use BusyBird::Output;
 use BusyBird::Judge;
@@ -61,8 +62,9 @@ sub main {
     ## ** 一つのInputが複数のTimerに紐付けられないように管理しないといけない
     ## &initiateTimer(BusyBird::Timer->new(120), [$input], [$output]);
     &initiateTimer(
-        BusyBird::Timer->new(200),
-        [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', worker => $twitter_worker)],
+        BusyBird::Timer->new(120),
+        ## [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', worker => $twitter_worker)],
+        [BusyBird::Input::Twitter::PublicTimeline->new(name => 'public_tl', worker => $twitter_worker)],
         [$output],
         );
     
