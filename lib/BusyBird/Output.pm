@@ -115,7 +115,7 @@ sub _replyMainPage {
     my $name = $self->getName();
     my $js = <<'END';
     
-    var g_comet_error_interval_ms = 10000;
+    var g_comet_error_interval_ms = 60000;
     // ** TODO:: Error handling
     // ** Maybe we should count total number of errors and stop retrying at a certain point.
     // ** Or maybe we should appy decaying interval (exponential increase or something...)
