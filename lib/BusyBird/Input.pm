@@ -182,14 +182,14 @@ sub _sessionOnGetStatuses {
         }
     }
     
-    if($is_complete || !defined($threshold_epoch_time)) {
-        if($page == $self->{page_max}) {
+    $page++;
+    if($is_complete || !defined($threshold_epoch_time) || $page == $self->{page_max}) {
+        if($page == $self->{page_max} && !$is_complete && defined($threshold_epoch_time)) {
             print STDERR ("WARNING: page has reached the max value of ".$self->{page_max}."\n");
         }
         $self->_saveCacheFile();
         $callstack->pop($callstack->get('ret_array'));
     }else {
-        $page++;
         $callstack->set(page => $page);
         $self->_getStatuses($callstack, $self->{session}, 'on_get_statuses', $self->{page_count}, $page);
     }
