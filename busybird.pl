@@ -17,13 +17,16 @@ use POE;
 use Data::Dumper;
 
 use Net::Twitter;
+
 use BusyBird::Input;
 use BusyBird::Input::Twitter::HomeTimeline;
 use BusyBird::Input::Twitter::List;
 use BusyBird::Input::Twitter::PublicTimeline;
 use BusyBird::Input::Test;
+
+use BusyBird::Filter;
+
 use BusyBird::Output;
-use BusyBird::Judge;
 use BusyBird::Timer;
 use BusyBird::HTTPD;
 use BusyBird::Worker::Twitter;
@@ -58,13 +61,13 @@ sub main {
     ##                                                  owner_name => $config_parameters{owner_name},
     ##                                                  list_slug_name => $config_parameters{list_slug_name});
     my $output = BusyBird::Output->new($DEFAULT_STREAM_NAME);
-    $output->judge(BusyBird::Judge->new());
     ## ** 一つのInputが複数のTimerに紐付けられないように管理しないといけない
     ## &initiateTimer(BusyBird::Timer->new(120), [$input], [$output]);
     &initiateTimer(
         BusyBird::Timer->new(120),
         ## [BusyBird::Input::Twitter::HomeTimeline->new(name => 'home', worker => $twitter_worker)],
-        [BusyBird::Input::Twitter::PublicTimeline->new(name => 'public_tl', worker => $twitter_worker)],
+        [BusyBird::Input::Twitter::PublicTimeline->new(name => 'public_tl', worker => $twitter_worker, no_cache => 1)],
+        [],
         [$output],
         );
     
@@ -78,13 +81,14 @@ sub main {
 }
 
 sub initiateTimer {
-    my ($timer, $input_streams_ref, $output_streams_ref) = @_;
+    my ($timer, $input_streams_ref, $filters_ref, $output_streams_ref) = @_;
     POE::Session->create(
         heap => {
             input_streams => $input_streams_ref,
             timer => $timer,
             output_streams => $output_streams_ref,
             new_statuses => [],
+            filters => $filters_ref,
         },
         inline_states => {
             _start => sub {
@@ -117,7 +121,7 @@ sub initiateTimer {
             },
 
             on_get_new_statuses => sub {
-                my ($kernel, $heap, $state, $callstack, $ret_array) = @_[KERNEL, HEAP, STATE, ARG0 .. ARG1];
+                my ($kernel, $heap, $state, $session, $callstack, $ret_array) = @_[KERNEL, HEAP, STATE, SESSION, ARG0 .. ARG1];
                 print STDERR ("main session(state => $state)\n");
                 push(@{$heap->{new_statuses}}, $ret_array);
                 if(int(@{$heap->{new_statuses}}) != int(@{$heap->{input_streams}})) {
@@ -131,14 +135,40 @@ sub initiateTimer {
                 }
                 printf STDERR ("main session: %d statuses received.\n", int(@new_statuses));
                 if (@new_statuses) {
-                    foreach my $output_stream (@{$heap->{output_streams}}) {
-                        $output_stream->pushStatuses(\@new_statuses);
-                        $output_stream->onCompletePushingStatuses();
+                    if(!@{$heap->{filters}}) {
+                        print STDERR ("ERROR: There is no filters in this session!!!\n");
+                        return $kernel->yield('on_filters_complete', undef, \@new_statuses);  ## for test
                     }
+                    my $filter_index = 0;
+                    my $callstack = BusyBird::CallStack->newStack(undef, $session->ID, 'on_filters_complete',
+                                                                  filter_index => $filter_index);
+                    $heap->{filters}->[$filter_index]->execute($callstack, $session->ID, 'on_filter_execute', \@new_statuses);
+                }else {
+                    return $kernel->yield('set_delay');
+                }
+            },
+            on_filter_execute => sub {
+                my ($kernel, $heap, $state, $session, $callstack, $statuses) = @_[KERNEL, HEAP, SESSION, STATE, ARG0, ARG1];
+                print STDERR ("main session(state => $state)\n");
+                my $filter_index = $callstack->get('filter_index');
+                $filter_index++;
+                if($filter_index < int(@{$heap->{filters}})) {
+                    $callstack->set('filter_index', $filter_index);
+                    $heap->{filters}->[$filter_index]->execute($callstack, $session->ID, 'on_filter_execute', $statuses);
+                }else {
+                    $callstack->pop($statuses);
+                }
+            },
+            on_filters_complete => sub {
+                my ($kernel, $heap, $state, $session, $callstack, $statuses) = @_[KERNEL, HEAP, STATE, SESSION, ARG0, ARG1];
+                print STDERR ("main session(state => $state)\n");
+                ## for test: every status is given to every output.
+                foreach my $output_stream (@{$heap->{output_streams}}) {
+                    $output_stream->pushStatuses($statuses);
+                    $output_stream->onCompletePushingStatuses();
                 }
                 return $kernel->yield('set_delay');
             },
-            
             change_interval => sub {
                 my ($kernel, $heap) = @_[KERNEL, HEAP];
                 my $new_interval = ($_[ARG0] < $TIMER_INTERVAL_MIN ? $TIMER_INTERVAL_MIN : $_[ARG0]);

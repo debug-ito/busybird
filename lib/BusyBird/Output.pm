@@ -5,9 +5,6 @@ use strict;
 use warnings;
 use DateTime;
 
-## use Data::Dumper;
-use BusyBird::Judge;
-
 my %COMMAND = (
     NEW_STATUSES => 'new_statuses',
     CONFIRM => 'confirm',
@@ -21,7 +18,6 @@ sub new {
         new_statuses => [],
         old_statuses => [],
         status_ids => {},
-        judge => undef,
     };
     return bless $self, $class;
 }
@@ -29,12 +25,6 @@ sub new {
 sub getName {
     my $self = shift;
     return $self->{name};
-}
-
-sub judge {
-    my ($self, $judge) = @_;
-    return $self->{judge} if !defined($judge);
-    $self->{judge} = $judge;
 }
 
 sub _uniqStatuses {
@@ -62,7 +52,6 @@ sub _sort {
 sub pushStatuses {
     my ($self, $statuses) = @_;
     $statuses = $self->_uniqStatuses($statuses);
-    $self->{judge}->addScore($statuses);
     unshift(@{$self->{new_statuses}}, @$statuses);
     foreach my $status (@$statuses) {
         $self->{status_ids}{$status->getID()} = 1;
