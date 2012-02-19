@@ -8,6 +8,7 @@ sub _setParams {
     my ($self, $params_ref) = @_;
     $self->SUPER::_setParams($params_ref);
     $self->{no_cache} = 1;
+    $self->{page_max} = 1;
 }
 
 sub _getWorkerInput {
