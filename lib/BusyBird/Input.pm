@@ -51,6 +51,7 @@ sub _setParams {
     $self->_setParam($params_ref, 'last_status_epoch_time');
     $self->_setParam($params_ref, 'page_count', $DEFAULT_PAGE_COUNT);
     $self->_setParam($params_ref, 'page_max', $DEFAULT_PAGE_MAX);
+    $self->_setParam($params_ref, 'no_cache', 0);
 }
 
 sub _sessionStart {
@@ -72,6 +73,7 @@ sub _getCacheFilePath {
 
 sub _loadCacheFile {
     my ($self) = @_;
+    return if $self->{no_cache};
     my $filepath = $self->_getCacheFilePath();
     my $file = IO::File->new();
     if(!$file->open($filepath, "r")) {
@@ -93,6 +95,7 @@ sub _loadCacheFile {
 
 sub _saveCacheFile {
     my ($self) = @_;
+    return if $self->{no_cache};
     my $filepath = $self->_getCacheFilePath();
     my $file = IO::File->new();
     if(!$file->open($filepath, "w")) {
