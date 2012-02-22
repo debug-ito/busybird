@@ -21,19 +21,7 @@ sub new {
     return $self;
 }
 
-sub forks {
-    my ($self, $total_instance_num) = @_;
-    if($total_instance_num <= 0) {
-        return ();
-    }
-    my @forks = ($self);
-    for(my $i = 0 ; $i < $total_instance_num - 1 ; $i++) {
-        push(@forks, $self->_clone());
-    }
-    return @forks;
-}
-
-sub _clone {
+sub clone {
     my ($self) = @_;
     my $cloned_stack = ref($self)->new();
     foreach my $stack_frame (@{$self->{stack}}) {
@@ -61,6 +49,11 @@ sub _push {
     return $self;
 }
 
+sub frameNum {
+    my ($self) = @_;
+    return int(@{$self->{stack}});
+}
+
 sub pop {
     my ($self, @return_values) = @_;
     if(!@{$self->{stack}}) {
@@ -68,7 +61,6 @@ sub pop {
         die "CallStack: no stack entry to pop.";
     }
     my $entry = CORE::pop(@{$self->{stack}});
-    printf STDERR ("CallStack: post to (%s, %s)\n", $entry->{recv_session}, $entry->{recv_event});
     POE::Kernel->post($entry->{recv_session}, $entry->{recv_event}, $self, @return_values);
     POE::Kernel->refcount_decrement($entry->{recv_session}, 'bb_callstack');
     return $self;
@@ -76,8 +68,8 @@ sub pop {
 
 sub DESTROY {
     my ($self) = @_;
-    foreach my $entry (@{$self->{stack}}) {
-        POE::Kernel->refcount_decrement($entry->{recv_session}, 'bb_callback');
+    while(my $entry = CORE::pop(@{$self->{stack}})) {
+        POE::Kernel->refcount_decrement($entry->{recv_session}, 'bb_callstack');
     }
 }
 

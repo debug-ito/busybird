@@ -79,9 +79,8 @@ sub _sessionTimerFire {
 sub _getNewStatuses {
     my ($self, $callstack, $ret_session, $ret_event) = @_;
     $callstack = BusyBird::CallStack->newStack($callstack, $ret_session, $ret_event, new_streams => []);
-    my @stack_forks = $callstack->forks(int(@{$self->{input_streams}}));
     foreach my $input (@{$self->{input_streams}}) {
-        $input->getNewStatuses(pop(@stack_forks), $self->{session}, 'on_get_from_input');
+        $input->getNewStatuses($callstack->clone(), $self->{session}, 'on_get_from_input');
     }
 }
 
