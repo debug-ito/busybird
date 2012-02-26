@@ -1,23 +1,28 @@
 package BusyBird::Timer;
+use base ("BusyBird::Object");
 
 use strict;
 use warnings;
+
 use POE;
 
 use BusyBird::CallStack;
-use BusyBird::Object;
 
 my $TIMER_INTERVAL_MIN = 60;
 
 sub new {
-    my ($class, $interval) = @_;
+    my ($class, %params) = @_;
     my $self = bless {
-        cur_interval => $interval,
+        interval => undef,
         input_streams => [],
         filters => [],
         output_streams => [],
         session => undef,
+        aliased => undef,
     }, $class;
+    $self->_setParam(\%params, 'interval', undef, 1);
+    $self->_setParam(\%params, 'aliased', undef);
+    
     POE::Session->create(
         object_states => [
             $self => BusyBird::Object->objectStates(qw(_start timer_fire set_delay
@@ -30,12 +35,12 @@ sub new {
 
 sub _getNextDelay {
     my ($self) = @_;
-    return $self->{cur_interval};
+    return $self->{interval};
 }
 
 sub setInterval {
     my ($self, $new_interval) = @_;
-    $self->{cur_interval} = $new_interval;
+    $self->{interval} = $new_interval;
 }
 
 sub addInput {
@@ -51,6 +56,9 @@ sub addOutput {
 sub _sessionStart {
     my ($self, $kernel, $session) = @_[OBJECT, KERNEL, SESSION];
     $self->{session} = $session->ID;
+    if($self->{aliased}) {
+        $kernel->alias_set($self->{session});
+    }
     $kernel->yield("timer_fire");
 }
 
