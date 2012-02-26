@@ -7,6 +7,7 @@ use DateTime;
 use POE;
 use BusyBird::Status::Test;
 use BusyBird::CallStack;
+use BusyBird::Log ('bblog');
 
 my $LOCAL_TZ = DateTime::TimeZone->new( name => 'local' );
 
@@ -34,8 +35,8 @@ sub _getStatuses {
     my ($self, $callstack, $ret_session, $ret_event, $count, $page) = @_;
     $callstack = BusyBird::CallStack->newStack($callstack, $ret_session, $ret_event, count => $count, page => $page);
 
-    print STDERR ("Input::Test::_getStatus(ret_session => $ret_session, ret_event => $ret_event, count => $count, page => $page)\n");
-    print STDERR ($callstack->toString() . "\n");
+    &bblog("Input::Test::_getStatus(ret_session => $ret_session, ret_event => $ret_event, count => $count, page => $page)");
+    &bblog($callstack->toString());
 
     if($page > 0) {
         $callstack->pop(undef);
@@ -55,7 +56,7 @@ sub _getStatuses {
         push(@ret, $self->_newStatus($nowtime, $i));
     }
 
-    printf STDERR ("Input::Test::_getStatus: %d statuses are reported.\n", int(@ret));
+    &bblog(sprintf("Input::Test::_getStatus: %d statuses are reported.", int(@ret)));
     $callstack->pop(\@ret);
 
     ### #### 

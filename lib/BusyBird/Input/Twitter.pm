@@ -6,6 +6,7 @@ use warnings;
 use POE;
 use BusyBird::Status::Twitter;
 use BusyBird::Worker::Object;
+use BusyBird::Log ('bblog');
 
 use Data::Dumper;
 
@@ -62,11 +63,11 @@ sub _sessionOnWorkerComplete {
     ## print STDERR ("-----------------\n");
     my ($worker_status, $timeline) = ($output_objs->[0]->{status}, $output_objs->[0]->{data});
     if($worker_status != BusyBird::Worker::Object::STATUS_OK) {
-        printf STDERR ("WARNING: Twitter worker returns worker_status %d\n", $worker_status);
+        &bblog(sprintf("WARNING: Twitter worker returns worker_status %d", $worker_status));
         $callstack->pop(undef);
         return;
     }
-    printf STDERR ("DEBUG: Got %d tweets from input %s\n", int(@$timeline), $self->getName());
+    &bblog(sprintf("DEBUG: Got %d tweets from input %s", int(@$timeline), $self->getName()));
     my @ret_stats = map { BusyBird::Status::Twitter->new($_) } @$timeline;
     $callstack->pop(\@ret_stats);
 }

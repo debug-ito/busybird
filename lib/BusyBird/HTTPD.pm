@@ -8,6 +8,7 @@ use HTTP::Response;
 use HTTP::Request;
 use Encode;
 
+use BusyBird::Log ('bblog');
 use BusyBird::Output;
 use BusyBird::Request;
 use BusyBird::RequestListener;
@@ -40,15 +41,15 @@ sub start {
         ClientInputFilter  => "POE::Filter::HTTPD",
         ClientOutputFilter => "POE::Filter::Stream",
         ClientConnected => sub {
-            print STDERR "connected:    $_[HEAP]{remote_ip}:$_[HEAP]{remote_port}\n";
+            &bblog("connected:    $_[HEAP]{remote_ip}:$_[HEAP]{remote_port}");
         },
         ClientDisconnected => sub {
-            print STDERR "disconnected: $_[HEAP]{remote_ip}:$_[HEAP]{remote_port}\n";
+            &bblog("disconnected: $_[HEAP]{remote_ip}:$_[HEAP]{remote_port}");
         },
         ClientError => sub {
             my ($syscall_name, $error_num, $error_str) = @_[ARG0..ARG2];
             # Handle the client error here.
-            print STDERR ("Custom ClientError: $syscall_name: $error_num: $error_str\n");
+            &bblog("Custom ClientError: $syscall_name: $error_num: $error_str");
         },
         ClientInput => \&_handlerClientInput,
   );
@@ -60,21 +61,21 @@ sub replyPoint {
     if(!$self->_isPointDefined($point)) {
         return 0;
     }
-    print STDERR ">>> Now Pending\n";
-    print STDERR $self->_getPendingRequestsString();
-    print STDERR ">>> \n";
-    print STDERR "Try to reply to $point...\n";
+    &bblog(">>> Now Pending");
+    &bblog($self->_getPendingRequestsString());
+    &bblog(">>> ");
+    &bblog("Try to reply to $point...");
     my $listener = $self->{request_points}{$point}{listener};
     my @request_keys = keys %{$self->{request_points}{$point}{requests}};
     if(!@request_keys) {
-        print STDERR "No requests for $point\n";
+        &bblog("No requests for $point");
         return 1;
     }
     foreach my $req_key (@request_keys) {
         my $bb_request = $self->{request_points}{$point}{requests}{$req_key};
         my ($ret_code, $content_ref, $mime) = $listener->reply($bb_request->getPoint, $bb_request->getDetail);
         if($ret_code == BusyBird::RequestListener->HOLD) {
-            print STDERR "Request for $point is made pending.\n";
+            &bblog("Request for $point is made pending.");
             next;
         }
         
@@ -84,12 +85,12 @@ sub replyPoint {
             $response->message('OK');
             $response->header('Content-Type', $mime) if defined($mime);
             $response->content_ref($content_ref);
-            print STDERR "Request for $point handled.\n";
+            &bblog("Request for $point handled.");
         }elsif($ret_code == BusyBird::RequestListener->NOT_FOUND) {
-            print STDERR "RequestListener for $point returns Not_Found.\n";
+            &bblog("RequestListener for $point returns Not_Found.");
             $self->_setNotFound($response);
         }else {
-            die "Unknown return code $ret_code from RequestListener\n";
+            die "Unknown return code $ret_code from RequestListener";
         }
         $self->_sendHTTPResponse($bb_request->getClient, $response);
         delete $self->{request_points}{$point}{requests}{$req_key};
@@ -106,8 +107,8 @@ sub _unescapeURI {
 
 sub _handlerClientInput {
     my ($request, $heap) = @_[ARG0, HEAP];
-    print STDERR "start client input: $_[HEAP]{remote_ip}:$_[HEAP]{remote_port}------\n";
-    print STDERR ("URI: " . $request->uri . "\n");
+    &bblog("start client input: $_[HEAP]{remote_ip}:$_[HEAP]{remote_port}------");
+    &bblog("URI: " . $request->uri);
     my ($req_host, $req_path) = ('', '');
     my %detail_params = ();
     if($request->uri =~ m|^https?://([^/]+)(.+?)$|) {
@@ -127,18 +128,18 @@ sub _handlerClientInput {
         }
     }
     $req_path .= "index.html" if $req_path =~ m|/$|;
-    print STDERR "Requested path: $req_path\n";
+    &bblog("Requested path: $req_path");
     
     my $bb_request = BusyBird::Request->new($req_path, $heap->{client}, \%detail_params);
     if(!$g_httpd_self->_pushRequest($bb_request)) {
-        print STDERR "  The path $req_path is not a request_point. Send Not_Found\n";
+        &bblog("  The path $req_path is not a request_point. Send Not_Found");
         my $response = HTTP::Response->new();
         $g_httpd_self->_setNotFound($response);
         $g_httpd_self->_sendHTTPResponse($heap->{client}, $response);
         return;
     }
     $g_httpd_self->replyPoint($req_path);
-    print STDERR "End client input------------------------\n";
+    &bblog("End client input------------------------");
 }
 
 ## sub _cathandler_static {
@@ -217,7 +218,7 @@ sub _addRequestPoint {
     }
     $self->{request_points}{$point_name} = {listener => $listener,
                                             requests => {}};
-    print STDERR "Register request point: $point_name\n";
+    &bblog("Register request point: $point_name");
 }
 
 sub _isPointDefined {

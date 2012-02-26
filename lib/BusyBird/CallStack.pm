@@ -3,6 +3,7 @@ package BusyBird::CallStack;
 use strict;
 use warnings;
 use POE;
+use BusyBird::Log ('bblog');
 
 sub newStack {
     my ($class, $existing_obj, $recv_session, $recv_event, %init_heap) = @_;
@@ -57,7 +58,7 @@ sub frameNum {
 sub pop {
     my ($self, @return_values) = @_;
     if(!@{$self->{stack}}) {
-        printf STDERR ("CallStack: no stack entry to pop\n");
+        &bblog("CallStack: no stack entry to pop");
         die "CallStack: no stack entry to pop.";
     }
     my $entry = CORE::pop(@{$self->{stack}});

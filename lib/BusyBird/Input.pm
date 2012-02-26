@@ -8,6 +8,7 @@ use DateTime;
 use IO::File;
 use POE;
 use BusyBird::CallStack;
+use BusyBird::Log ('bblog');
 
 my $DEFAULT_PAGE_COUNT = 100;
 my $DEFAULT_PAGE_MAX   = 10;
@@ -32,7 +33,7 @@ sub new {
         $self->_loadCacheFile();
     };
     if($@) {
-        print STDERR "WARNING: $@Cache is not loaded.\n";
+        &bblog("WARNING: $@Cache is not loaded.");
     }
     POE::Session->create(
         object_states => [
@@ -116,7 +117,7 @@ sub _saveCacheFile {
 sub getNewStatuses {
     my ($self, $callstack, $callback_session, $callback_event, $threshold_epoch_time) = @_;
     my $page = 0;
-    print STDERR ("Input::getNewStatuses(callback_session => $callback_session, callback_event => $callback_event)\n");
+    &bblog("Input::getNewStatuses(callback_session => $callback_session, callback_event => $callback_event)");
     $callstack = BusyBird::CallStack->newStack($callstack, $callback_session, $callback_event,
                                                threshold_epoch_time =>
                                                    defined($threshold_epoch_time) ? $threshold_epoch_time : $self->{last_status_epoch_time},
@@ -163,7 +164,7 @@ sub getNewStatuses {
 
 sub _sessionOnGetStatuses {
     my ($self, $kernel, $callstack, $statuses) = @_[OBJECT, KERNEL, ARG0 .. ARG1];
-    print STDERR ("Input::_sessionOnGetStatuses\n");
+    &bblog("Input::_sessionOnGetStatuses");
     my $threshold_epoch_time = $callstack->get('threshold_epoch_time');
     my $page = $callstack->get('page');
     my $is_complete = 0;
@@ -190,7 +191,7 @@ sub _sessionOnGetStatuses {
     $page++;
     if($is_complete || !defined($threshold_epoch_time) || $page == $self->{page_max}) {
         if($page == $self->{page_max} && !$is_complete && defined($threshold_epoch_time)) {
-            print STDERR ("WARNING: page has reached the max value of ".$self->{page_max}."\n");
+            &bblog("WARNING: page has reached the max value of ".$self->{page_max});
         }
         $self->_saveCacheFile();
         $callstack->pop($callstack->get('ret_array'));

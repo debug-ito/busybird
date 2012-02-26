@@ -7,6 +7,7 @@ use warnings;
 use POE;
 
 use BusyBird::CallStack;
+use BusyBird::Log ('bblog');
 
 my $TIMER_INTERVAL_MIN = 60;
 
@@ -30,7 +31,7 @@ sub new {
         ],
         inline_states => {
             _stop => sub {
-                printf STDERR ("Timer session %d stopped.\n", $_[SESSION]->ID);
+                &bblog(sprintf("Timer session %d stopped.", $_[SESSION]->ID));
             },
         },
     );
@@ -76,20 +77,19 @@ sub _sessionStart {
 sub _sessionSetDelay {
     my ($self, $kernel, $state) = @_[OBJECT, KERNEL, STATE];
     my $delay = $self->_getNextDelay();
-    printf STDERR ("INFO: Following inputs will be checked in %.2f seconds.\n", $delay);
+    &bblog(sprintf("INFO: Following inputs will be checked in %.2f seconds.", $delay));
     foreach my $input (@{$self->{input_streams}}) {
-        printf STDERR ("INFO:   %s\n", $input->getName());
+        &bblog(sprintf("INFO:   %s", $input->getName()));
     }
     $kernel->delay('timer_fire', $delay);
 }
 
 sub _sessionTimerFire {
     my ($self, $kernel, $session) = @_[OBJECT, KERNEL, SESSION];
-    printf STDERR ("INFO: fire on input");
+    &bblog("INFO: fire on input");
     foreach my $input (@{$self->{input_streams}}) {
-        printf STDERR (" %s", $input->getName());
+        &bblog(sprintf(" %s", $input->getName()));
     }
-    print STDERR "\n";
 
     ## @{$heap->{new_statuses}} = ();
     $self->_getNewStatuses(undef, $session->ID, 'on_get_statuses_complete');
@@ -109,7 +109,7 @@ sub _executeFilters {
     $callstack = BusyBird::CallStack->newStack($callstack, $ret_session, $ret_event,
                                                filter_index => $filter_index);
     if(!@{$self->{filters}}) {
-        print STDERR ("ERROR: There is no filters in this session!!!\n");
+        &bblog("ERROR: There is no filters in this session!!!");
         ## return $kernel->yield('on_filters_complete', undef, \@new_statuses); ## for test
         $callstack->pop($new_statuses_ref);
         return;
@@ -119,7 +119,7 @@ sub _executeFilters {
 
 sub _sessionOnFilterExecute {
     my ($self, $kernel, $state, $session, $callstack, $statuses) = @_[OBJECT, KERNEL, STATE, SESSION, ARG0 .. ARG1];
-    print STDERR ("main session(state => $state)\n");
+    &bblog("main session(state => $state)");
     my $filter_index = $callstack->get('filter_index');
     $filter_index++;
     if($filter_index < int(@{$self->{filters}})) {
@@ -132,11 +132,11 @@ sub _sessionOnFilterExecute {
 
 sub _sessionOnGetFromInput {
     my ($self, $kernel, $state, $session, $callstack, $ret_array) = @_[OBJECT, KERNEL, STATE, SESSION, ARG0 .. ARG1];
-    print STDERR ("main session(state => $state)\n");
+    &bblog("main session(state => $state)");
     my $new_streams = $callstack->get('new_streams');
     push(@$new_streams, $ret_array);
-    printf STDERR ("main session: status input from a stream (now %d/%d streams).\n",
-                   int(@$new_streams), int(@{$self->{input_streams}}));
+    &bblog(sprintf("main session: status input from a stream (now %d/%d streams).",
+                   int(@$new_streams), int(@{$self->{input_streams}})));
     if(int(@$new_streams) != int(@{$self->{input_streams}})) {
         return;
     }
@@ -144,7 +144,7 @@ sub _sessionOnGetFromInput {
     foreach my $single_stream (@$new_streams) {
         push(@new_statuses, @$single_stream);
     }
-    printf STDERR ("main session: %d statuses received.\n", int(@new_statuses));
+    &bblog(sprintf("main session: %d statuses received.", int(@new_statuses)));
     $callstack->pop(\@new_statuses);
 }
 
@@ -159,7 +159,7 @@ sub _sessionOnGetStatusesComplete {
 
 sub _sessionOnFiltersComplete {
     my ($self, $kernel, $session, $state, $callstack, $new_statuses) = @_[OBJECT, KERNEL, SESSION, STATE, ARG0 .. ARG1];
-    print STDERR ("main session(state => $state)\n");
+    &bblog("main session(state => $state)");
     ## for test: every status is given to every output.
     foreach my $output_stream (@{$self->{output_streams}}) {
         $output_stream->pushStatuses($new_statuses);

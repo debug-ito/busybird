@@ -5,6 +5,7 @@ use warnings;
 
 use File::MimeInfo;
 use IO::File;
+use BusyBird::Log ('bblog');
 
 my %MIME_MAP = (
     html => 'text/html',
@@ -37,7 +38,7 @@ sub reply {
     $request_point_name =~ s|^/+||;
     my $path = $self->{content_dir}."/".$request_point_name;
     my $mimetype = $self->_getMimeForFilePath($path);
-    print STDERR "MIME: $mimetype\n";
+    &bblog("MIME: $mimetype");
     my $file = IO::File->new();
     if(!$file->open($path, "r")) {
         return ($self->NOT_FOUND);

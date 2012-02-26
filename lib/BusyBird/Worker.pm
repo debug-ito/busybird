@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use POE qw(Wheel::Run Filter::Stream Filter::Line);
 use BusyBird::CallStack;
+use BusyBird::Log ('bblog');
 
 =pod
 
@@ -120,7 +121,7 @@ sub _sessionChildStdout {
 
 sub _sessionChildStderr {
     my ($self, $output, $wheel_id) = @_[OBJECT, ARG0, ARG1];
-    printf STDERR (">> From WorkerChild WID=%d: %s\n", $wheel_id, $output);
+    &bblog(sprintf(">> From WorkerChild WID=%d: %s", $wheel_id, $output));
 }
 
 sub _sessionChildSignal {
