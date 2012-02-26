@@ -38,7 +38,7 @@ sub _getStatuses {
     print STDERR ($callstack->toString() . "\n");
     
     $self->{fired_count}++;
-    if($self->{fired_count} <= $self->{new_interval}) {
+    if($self->{fired_count} < $self->{new_interval}) {
         $callstack->pop(undef);
         return;
     }
