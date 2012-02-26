@@ -17,13 +17,6 @@ the updates.
   which also helps view multi-level tweets.
 
 
-TODO
-----
-
-* Make access to Twitter non-blocking using POE::Wheel::Run.
-
-
-
 AUTHOR
 ------
 
