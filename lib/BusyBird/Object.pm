@@ -19,11 +19,6 @@ sub objectStates {
         $method_name = '_session' . $method_name;
         $object_state{$event} = $method_name;
     }
-
-    while(my ($key, $val) = each(%object_state)) {
-        print STDERR "Object state: $key => $val\n";
-    }
-    
     return \%object_state;
 }
 
