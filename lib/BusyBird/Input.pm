@@ -41,6 +41,11 @@ sub new {
                 on_get_statuses => '_sessionOnGetStatuses',
             },
         ],
+        inline_states => {
+            _stop => sub {
+                ;
+            },
+        },
     );
     return $self;
 }
