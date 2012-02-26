@@ -57,6 +57,11 @@ sub addOutput {
     push(@{$self->{output_streams}}, @outputs);
 }
 
+sub startTimer {
+    my ($self) = @_;
+    POE::Kernel->post($self->{session}, "timer_fire");
+}
+
 sub _sessionStart {
     my ($self, $kernel, $session) = @_[OBJECT, KERNEL, SESSION];
     $self->{session} = $session->ID;
