@@ -28,6 +28,11 @@ sub new {
                                                        on_get_from_input on_get_statuses_complete
                                                        on_filter_execute on_filters_complete)),
         ],
+        inline_states => {
+            _stop => sub {
+                printf STDERR ("Timer session %d stopped.\n", $_[SESSION]->ID);
+            },
+        },
     );
     return $self;
 }
