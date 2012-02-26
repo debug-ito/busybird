@@ -36,17 +36,18 @@ sub _getStatuses {
 
     print STDERR ("Input::Test::_getStatus(ret_session => $ret_session, ret_event => $ret_event, count => $count, page => $page)\n");
     print STDERR ($callstack->toString() . "\n");
-    
+
+    if($page > 0) {
+        $callstack->pop(undef);
+        return;
+    }
+
     $self->{fired_count}++;
     if($self->{fired_count} < $self->{new_interval}) {
         $callstack->pop(undef);
         return;
     }
     $self->{fired_count} = 0;
-    if($page > 0) {
-        $callstack->pop(undef);
-        return;
-    }
     my @ret = ();
     my $nowtime = DateTime->now();
     $nowtime->set_time_zone($LOCAL_TZ);
