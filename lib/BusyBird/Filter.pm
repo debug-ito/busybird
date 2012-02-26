@@ -1,4 +1,5 @@
 package BusyBird::Filter;
+use base ("BusyBird::Object");
 
 use strict;
 use warnings;
@@ -7,8 +8,15 @@ use POE;
 use BusyBird::CallStack;
 
 sub new {
-    my ($class) = @_;
-    return bless {}, $class;
+    my ($class, %params) = @_;
+    my $self = bless {}, $class;
+    $self->_setParams(\%params);
+    return $self;
+}
+
+sub _setParams {
+    my ($self, $param_ref) = @_;
+    ;
 }
 
 sub execute {
