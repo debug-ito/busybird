@@ -13,15 +13,14 @@ my $TIMER_INTERVAL_MIN = 60;
 sub new {
     my ($class, %params) = @_;
     my $self = bless {
-        interval => undef,
         input_streams => [],
         filters => [],
         output_streams => [],
         session => undef,
-        aliased => undef,
     }, $class;
     $self->_setParam(\%params, 'interval', undef, 1);
     $self->_setParam(\%params, 'aliased', undef);
+    $self->_setParam(\%params, 'start_delay', 0);
     
     POE::Session->create(
         object_states => [
@@ -59,7 +58,9 @@ sub _sessionStart {
     if($self->{aliased}) {
         $kernel->alias_set($self->{session});
     }
-    $kernel->yield("timer_fire");
+    if($self->{start_delay} >= 0) {
+        $kernel->delay("timer_fire", $self->{start_delay});
+    }
 }
 
 sub _sessionSetDelay {
