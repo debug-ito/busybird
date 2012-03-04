@@ -24,7 +24,7 @@ sub _getWorkerInput {
                 user => $self->{owner_name},
                 list_id => $self->{list_slug_name},
                 per_page => $count,
-                page => $page}]};
+                page => $page + 1}]};
 }
 
 1;
