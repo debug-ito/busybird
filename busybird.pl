@@ -22,6 +22,7 @@ use BusyBird::Input;
 use BusyBird::Input::Twitter::HomeTimeline;
 use BusyBird::Input::Twitter::List;
 use BusyBird::Input::Twitter::PublicTimeline;
+use BusyBird::Input::Twitter::Search;
 use BusyBird::Input::Test;
 
 use BusyBird::Filter;
