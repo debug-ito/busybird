@@ -113,78 +113,21 @@ sub _replyConfirm {
 sub _replyMainPage {
     my ($self, $detail) = @_;
     my $name = $self->getName();
-    my $js = <<'END';
-    
-    var g_comet_error_interval_ms = 60000;
-    // ** TODO:: Error handling
-    // ** Maybe we should count total number of errors and stop retrying at a certain point.
-    // ** Or maybe we should appy decaying interval (exponential increase or something...)
-    function cometConfirm() {
-        $.ajax({url: "/" + g_output_name + "/confirm",
-                type: "GET",
-                cache: false,
-                dataType: "text",
-                timeout: 0,
-                error: function (jqXHR, textStatus, errorThrown) {
-                    setTimeout(cometConfirm, g_comet_error_interval_ms);
-                },
-                success: function (data, textStatus, jqXHR) {
-                    cometNewStatuses();
-                }});
-    }
-    
-    function cometNewStatuses () {
-        $.ajax({url: "/" + g_output_name + "/new_statuses",
-                type: "GET",
-                cache: false,
-                dataType: "json",
-                timeout: 0,
-                error: function (jqXHR, textStatus, errorThrown) {
-                    setTimeout(cometNewStatuses, g_comet_error_interval_ms);
-                },
-                success: function (data, textStatus, jqXHR) {
-                    var i;
-                    var new_statuses_text = "";
-                    for(i = 0 ; i < data.length ; i++) {
-                        new_statuses_text += "ID: " + data[i].id + " (" + data[i].created_at + ") TEXT: " + data[i].text + "\n";
-                    }
-                    $("#statuses").prepend(new_statuses_text);
-                    cometConfirm();
-                }});
-    }
-    $(document).ready(cometNewStatuses);
-END
-    
     my $html = <<"END";
 <html>
   <head>
     <title>$name - BusyBird</title>
     <meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
+    <link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
     <script type="text/javascript" src="/jquery.js"></script>
-    <script type="text/javascript" src="/shaper.js"></script>
     <script type="text/javascript"><!--
-    var g_output_name = "$name";
-    $js
+    function bbGetOutputName() {return "$name"}
 --></script>
+    <script type="text/javascript" src="/main.js"></script>
   </head>
-  <style type="text/css" media="screen"><!--
-.status_container {
-  margin: 5px 30px;
-  width: 700px;
-}
-.status_time {
-    text-align: right;
-  text-weight: bold;
-  color: red;
-  float: right;
-}
-div {
-  border: solid 1px red;
-}
---></style>
   <body>
-    <pre id="statuses">
-    </div>
+    <ul id="statuses">
+    </ul>
   </body>
 </html>
 END

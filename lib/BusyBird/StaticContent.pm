@@ -14,7 +14,7 @@ my %MIME_MAP = (
     css => 'text/css',
     );
 
-my @CONTENTS = qw(style.css index.html jquery.js shaper.js favicon.ico sample.png);
+my @CONTENTS = qw(style.css index.html jquery.js shaper.js favicon.ico sample.png main.js);
 
 sub new {
     my ($class, $content_dir) = @_;
