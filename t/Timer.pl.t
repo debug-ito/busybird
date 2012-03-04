@@ -14,6 +14,8 @@ BEGIN {
     use_ok('BusyBird::Input');
     use_ok('BusyBird::Input::Test');
     use_ok('BusyBird::Input::Twitter::PublicTimeline');
+    use_ok('BusyBird::Filter');
+    use_ok('BusyBird::Filter::Coderef');
 }
 
 my $test_finished = 0;
@@ -52,6 +54,32 @@ sub checkStatuses {
     cmp_ok(int(keys(%got_inputs)), '==', 0);
 }
 
+my @test_filter_sequence = ();
+
+sub createFilter {
+    my ($filter_seq_no, $delay_sec) = @_;
+    return new_ok('BusyBird::Filter::Coderef',
+                  [coderef => sub {
+                       my ($callstack, $ret_session, $ret_event, $statuses) = @_;
+                       $callstack = BusyBird::CallStack->newStack($callstack, $ret_session, $ret_event, statuses => $statuses);
+                       POE::Session->create(
+                           inline_states => {
+                               _default => sub {},
+                               _start => sub {
+                                   diag("Filter $filter_seq_no started.");
+                                   $_[KERNEL]->delay('fire', $delay_sec);
+                               },
+                               fire => sub {
+                                   diag("Filter $filter_seq_no ended.");
+                                   push(@test_filter_sequence, $filter_seq_no);
+                                   $callstack->pop($callstack->get('statuses'));
+                               },
+                           }
+                       );
+                   }]
+              );
+}
+
 POE::Session->create(
     heap => {
         timer => undef,
@@ -70,6 +98,7 @@ POE::Session->create(
             $heap->{timer}->addInput(new_ok('BusyBird::Input::Test', [
                 name => 'test1',new_interval => 1, no_timefile => 1,
                 new_count => $got_statuses_expects{test1}->{num}]));
+            $heap->{timer}->addFilter(&createFilter(0, 5), &createFilter(1, 4), &createFilter(2, 3), &createFilter(3, 2));
             $heap->{timer}->_getNewStatuses(undef, $session->ID, '_getNewStatuses_1input');
         },
         _getNewStatuses_1input => sub {
@@ -110,6 +139,16 @@ POE::Session->create(
             my ($kernel, $heap, $session, $state, $callstack, $ret_array) = @_[KERNEL, HEAP, SESSION, STATE, ARG0 .. ARG1];
             diag($state);
             &checkStatuses($ret_array, qw(test1 public_tl));
+            $heap->{timer}->_executeFilters(undef, $session->ID, '_executeFilters', $ret_array);
+        },
+        _executeFilters => sub {
+            my ($kernel, $heap, $session, $state, $callstack, $statuses) = @_[KERNEL, HEAP, SESSION, STATE, ARG0 .. ARG1];
+            diag($state);
+            &checkStatuses($statuses, qw(test1 public_tl));
+            cmp_ok(int(@test_filter_sequence), '==', 4);
+            foreach my $index (0 .. $#test_filter_sequence) {
+                cmp_ok($test_filter_sequence[$index], '==', $index, "check filters's cascading sequence");
+            }
             $kernel->yield('finish');
         },
         finish => sub {
