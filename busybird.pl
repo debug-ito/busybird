@@ -63,8 +63,8 @@ sub main {
     ## ** 一つのInputが複数のTimerに紐付けられないように管理しないといけない
     ## &initiateTimer(BusyBird::Timer->new(interval => 120), [$input], [$output]);
     my $timer = BusyBird::Timer->new(interval => 120);
-    $timer->addInput(BusyBird::Input::Twitter::PublicTimeline->new(name => 'public_tl', worker => $twitter_worker, no_cache => 1),
-                     BusyBird::Input::Twitter::HomeTimeline->new(name => 'home_tl', worker => $twitter_worker, no_cache => 1));
+    $timer->addInput(BusyBird::Input::Twitter::PublicTimeline->new(name => 'public_tl', worker => $twitter_worker, no_timefile => 1),
+                     BusyBird::Input::Twitter::HomeTimeline->new(name => 'home_tl', worker => $twitter_worker, no_timefile => 1));
     $timer->addOutput($output);
     
     ## &initiateTimer(BusyBird::Timer->new(interval => 2), [BusyBird::Input::Test->new(name => 'test_input', new_interval => 5, new_count => 3)],

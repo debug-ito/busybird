@@ -30,7 +30,7 @@ sub createPublicTimelineInput {
     return new_ok('BusyBird::Input::Twitter::PublicTimeline', [
         name => 'public_tl',
         worker => $worker,
-        no_cache => 1,
+        no_timefile => 1,
     ]);
 }
 
@@ -68,7 +68,7 @@ POE::Session->create(
             my ($kernel, $heap, $session) = @_[KERNEL, HEAP, SESSION];
             $heap->{timer} = new_ok('BusyBird::Timer', [interval => 10, start_delay => -1, aliased => 1]);
             $heap->{timer}->addInput(new_ok('BusyBird::Input::Test', [
-                name => 'test1',new_interval => 1, no_cache => 1,
+                name => 'test1',new_interval => 1, no_timefile => 1,
                 new_count => $got_statuses_expects{test1}->{num}]));
             $heap->{timer}->_getNewStatuses(undef, $session->ID, '_getNewStatuses_1input');
         },
@@ -80,9 +80,9 @@ POE::Session->create(
             is(ref($ret_array), 'ARRAY');
             cmp_ok(int(@$ret_array), '==', 3);
 
-            $heap->{timer}->addInput(new_ok('BusyBird::Input::Test', [name => 'test2', new_interval => 2, no_cache => 1,
+            $heap->{timer}->addInput(new_ok('BusyBird::Input::Test', [name => 'test2', new_interval => 2, no_timefile => 1,
                                                                       new_count => $got_statuses_expects{test2}->{num}]));
-            $heap->{timer}->addInput(new_ok('BusyBird::Input::Test', [name => 'test3', new_interval => 3, no_cache => 1,
+            $heap->{timer}->addInput(new_ok('BusyBird::Input::Test', [name => 'test3', new_interval => 3, no_timefile => 1,
                                                                       new_count => $got_statuses_expects{test3}->{num}]));
             $heap->{timer}->_getNewStatuses(undef, $session->ID, '_getNewStatuses_3inputs');
         },

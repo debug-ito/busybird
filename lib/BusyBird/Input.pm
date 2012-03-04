@@ -12,7 +12,6 @@ use BusyBird::Log ('bblog');
 
 my $DEFAULT_PAGE_COUNT = 100;
 my $DEFAULT_PAGE_MAX   = 10;
-my $ID_CACHE_MAX = 100;
 
 my $TIMEZONE = DateTime::TimeZone->new(name => 'local');
 
@@ -30,10 +29,10 @@ sub new {
     }, $class;
     $self->_setParams(\%params);
     eval {
-        $self->_loadCacheFile();
+        $self->_loadTimeFile();
     };
     if($@) {
-        &bblog("WARNING: $@Cache is not loaded.");
+        &bblog("WARNING: $@Time file is not loaded.");
     }
     POE::Session->create(
         object_states => [
@@ -57,7 +56,7 @@ sub _setParams {
     $self->_setParam($params_ref, 'last_status_epoch_time');
     $self->_setParam($params_ref, 'page_count', $DEFAULT_PAGE_COUNT);
     $self->_setParam($params_ref, 'page_max', $DEFAULT_PAGE_MAX);
-    $self->_setParam($params_ref, 'no_cache', 0);
+    $self->_setParam($params_ref, 'no_timefile', 0);
 }
 
 sub _sessionStart {
@@ -72,15 +71,15 @@ sub _getStatuses {
     POE::Kernel->post($ret_session, $ret_event, $callstack, undef);
 }
 
-sub _getCacheFilePath {
+sub _getTimeFilePath {
     my ($self) = @_;
     return "busybird_" . $self->{name} . ".time";
 }
 
-sub _loadCacheFile {
+sub _loadTimeFile {
     my ($self) = @_;
-    return if $self->{no_cache};
-    my $filepath = $self->_getCacheFilePath();
+    return if $self->{no_timefile};
+    my $filepath = $self->_getTimeFilePath();
     my $file = IO::File->new();
     if(!$file->open($filepath, "r")) {
         die "Cannot open $filepath to read";
@@ -88,29 +87,22 @@ sub _loadCacheFile {
     my $epoch_time = $file->getline();
     if(!defined($epoch_time)) {
         $file->close();
-        die "Invalid cache file $filepath";
+        die "Invalid time file $filepath";
     }
     chomp $epoch_time;
     $self->{last_status_epoch_time} = int($epoch_time) - $THRESHOLD_OFFSET_SEC;
-    ## while(my $line = $file->getline()) {
-    ##     chomp $line;
-    ##     $self->{latest_id_cache}{$line} = 1;
-    ## }
     $file->close();
 }
 
-sub _saveCacheFile {
+sub _saveTimeFile {
     my ($self) = @_;
-    return if $self->{no_cache};
-    my $filepath = $self->_getCacheFilePath();
+    return if $self->{no_timefile};
+    my $filepath = $self->_getTimeFilePath();
     my $file = IO::File->new();
     if(!$file->open($filepath, "w")) {
         die "Cannot open $filepath to write to.";
     }
     $file->printf("%s\n", (defined($self->{last_status_epoch_time}) ? $self->{last_status_epoch_time} : "null"));
-    ## foreach my $id (keys(%{$self->{latest_id_cache}})) {
-    ##     $file->print("$id\n");
-    ## }
     $file->close();
 }
 
@@ -158,7 +150,7 @@ sub getNewStatuses {
     #### if($page == $self->{page_max}) {
     ####     print STDERR ("WARNING: page has reached the max value of ".$self->{page_max}."\n");
     #### }
-    #### $self->_saveCacheFile();
+    #### $self->_saveTimeFile();
     #### return $ret_array;
 }
 
@@ -193,7 +185,7 @@ sub _sessionOnGetStatuses {
         if($page == $self->{page_max} && !$is_complete && defined($threshold_epoch_time)) {
             &bblog("WARNING: page has reached the max value of ".$self->{page_max});
         }
-        $self->_saveCacheFile();
+        $self->_saveTimeFile();
         $callstack->pop($callstack->get('ret_array'));
     }else {
         $callstack->set(page => $page);
