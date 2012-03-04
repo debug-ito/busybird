@@ -33,6 +33,7 @@ sub new {
             _stop => sub {
                 &bblog(sprintf("Timer session %d stopped.", $_[SESSION]->ID));
             },
+            _child => sub {},
         },
     );
     return $self;
@@ -56,6 +57,11 @@ sub addInput {
 sub addOutput {
     my ($self, @outputs) = @_;
     push(@{$self->{output_streams}}, @outputs);
+}
+
+sub addFilter {
+    my ($self, @filters) = @_;
+    push(@{$self->{filters}}, @filters);
 }
 
 sub startTimer {
