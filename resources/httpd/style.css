@@ -8,9 +8,6 @@
   color: red;
   float: right;
 }
-div {
-  border: solid 1px red;
-}
 
 /* *********************** */
 
@@ -74,8 +71,48 @@ div#control_left {
     float: right;
 }
 
-div#statuses {
+/**********************************/
+
+ul#statuses {
     padding: 5px 40px;
+}
+
+ul#statuses li {
+    border-width: 1px 0 0 0;
+    border-color: black;
+    border-style: solid;
+    margin: 10px;
+    padding: 10px;
+    list-style-type: none;
+    clear: both;
+}
+
+div.status_profile_image {
+    float: left;
+    width: 50px;
+    text-align: center;
+}
+
+div.status_main {
+    float: left;
+    width: 600px;
+    margin-left: 12px;
+}
+
+div.status_header {
+    border-width: 0 0 1px 0;
+    border-color: #999;
+    border-style: solid;
+    padding: 3px;
+}
+
+div.status_text {
+    padding: 8px;
+}
+
+span.status_created_at {
+    color: #333;
+    font-size: small;
 }
 
 body {
