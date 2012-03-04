@@ -15,7 +15,10 @@ use BusyBird::RequestListener;
 use BusyBird::StaticContent;
 
 my $g_httpd_self;
-my $LISTEN_PORT = 8888;
+my %g_httpd_params = (
+    bind_address => '127.0.0.1',
+    bind_port    => 8888,
+);
 
 sub init {
     my ($class, $content_dir) = @_;
@@ -23,6 +26,13 @@ sub init {
         'request_points' => {},
     }, $class;
     $g_httpd_self->_addListeners(BusyBird::StaticContent->new($content_dir));
+}
+
+sub config {
+    my ($class, %params) = @_;
+    while(my ($key, $val) = each(%params)) {
+        $g_httpd_params{$key} = $val;
+    }
 }
 
 sub registerOutputs {
@@ -36,8 +46,8 @@ sub start {
         die 'Call init() before start()';
     }
     POE::Component::Server::TCP->new(
-        Port => $LISTEN_PORT,
-        Address => '127.0.0.1',
+        Port => $g_httpd_params{bind_port},
+        Address => $g_httpd_params{bind_address},
         ClientInputFilter  => "POE::Filter::HTTPD",
         ClientOutputFilter => "POE::Filter::Stream",
         ClientConnected => sub {
