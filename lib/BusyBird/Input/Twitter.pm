@@ -28,6 +28,12 @@ sub _getWorkerInput {
     return undef;
 }
 
+sub _extractStatusesFromWorkerData {
+    my ($self_class, $worker_data) = @_;
+    my @statuses = map { BusyBird::Status::Twitter->new($_) } @$worker_data;
+    return \@statuses;
+}
+
 sub _getStatuses {
     my ($self, $callstack, $ret_session, $ret_event, $count, $page) = @_;
     my $worker_input = $self->_getWorkerInput($count, $page);
@@ -61,15 +67,14 @@ sub _sessionOnWorkerComplete {
     ## print STDERR ("BusyBird::Input::Twitter: Worker complate!------\n");
     ## print STDERR (Dumper($output_objs));
     ## print STDERR ("-----------------\n");
-    my ($worker_status, $timeline) = ($output_objs->[0]->{status}, $output_objs->[0]->{data});
+    my ($worker_status, $worker_data) = ($output_objs->[0]->{status}, $output_objs->[0]->{data});
     if($worker_status != BusyBird::Worker::Object::STATUS_OK) {
         &bblog(sprintf("WARNING: Twitter worker returns worker_status %d", $worker_status));
         $callstack->pop(undef);
         return;
     }
-    &bblog(sprintf("DEBUG: Got %d tweets from input %s", int(@$timeline), $self->getName()));
-    my @ret_stats = map { BusyBird::Status::Twitter->new($_) } @$timeline;
-    $callstack->pop(\@ret_stats);
+    &bblog(sprintf("DEBUG: Got %d tweets from input %s", int(@$worker_data), $self->getName()));
+    $callstack->pop($self->_extractStatusesFromWorkerData($worker_data));
 }
 
 1;
