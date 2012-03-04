@@ -8,7 +8,7 @@ use Net::Twitter;
 sub new {
     my ($class, %net_twitter_params) = @_;
     $net_twitter_params{traits} ||= [qw(OAuth API::REST API::Lists)];
-    $net_twitter_params{ssl}    ||= 1;
+    $net_twitter_params{ssl}    = 1 if !defined($net_twitter_params{ssl});
     my $nt = Net::Twitter->new(%net_twitter_params);
     return $class->SUPER::new($nt);
 }
