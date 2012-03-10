@@ -17,7 +17,7 @@ sub _getWorkerInput {
                 q => $self->{query},
                 lang => $self->{lang},
                 rpp => $count,
-                page => $page,
+                page => $page + 1,
             }]};
 }
 
