@@ -160,7 +160,7 @@ sub _sessionOnGetStatuses {
     my $threshold_epoch_time = $callstack->get('threshold_epoch_time');
     my $page = $callstack->get('page');
     my $is_complete = 0;
-    if(!defined($statuses)) {
+    if(!defined($statuses) || int(@$statuses) == 0) {
         $is_complete = 1;
     }else {
         foreach my $status (@$statuses) {
