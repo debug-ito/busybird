@@ -17,6 +17,10 @@ function bbCometConfirm() {
             }});
 }
 
+function bbLinkify(text) {
+    return text.replace(/(https?:\/\/[^ \r\n\t　]+)/g, "<a href=\"$1\">$1</a>");
+}
+
 function bbFormatStatus(status) {
     var ret = "<li>";
     ret += '<div class="status_profile_image"><img class="status_profile_image" src="'+ status.user.profile_image_url +'" width="48" height="48" /></div>';
@@ -25,7 +29,7 @@ function bbFormatStatus(status) {
     ret += '    <span class="status_user_name">' + status.user.screen_name + '</span>';
     ret += '    <span class="status_created_at"> at '+ status.created_at + '</span>';
     ret += '  </div>'
-    ret += '  <div class="status_text">'+ status.text + '</div>';
+    ret += '  <div class="status_text">'+ bbLinkify(status.text) + '</div>';
     ret += '</div>'
     ret += "</li>\n";
     return ret;
