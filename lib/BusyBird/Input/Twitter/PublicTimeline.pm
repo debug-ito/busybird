@@ -12,7 +12,7 @@ sub _setParams {
 
 sub _getWorkerInput {
     my ($self, $count, $page) = @_;
-    return {method => 'public_timeline', context => 's'};
+    return {method => 'public_timeline', context => 's', args => [{include_entities => 1}]};
 }
 
 1;

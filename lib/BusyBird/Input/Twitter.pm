@@ -32,6 +32,39 @@ sub _timeStringToDateTime() {
     return $dt;
 }
 
+sub _processEntities {
+    my ($class_self, $text, $entities) = @_;
+    if(!defined($entities)) {
+        return $text;
+    }
+    if(defined($entities->{media})) {
+        foreach my $entity (@{$entities->{media}}) {
+            $text = $class_self->_entityExpandURL($text, $entity);
+        }
+    }
+    if(defined($entities->{urls})) {
+        foreach my $entity (@{$entities->{urls}}) {
+            $text = $class_self->_entityExpandURL($text, $entity);
+        }
+    }
+    return $text;
+}
+
+sub _entityExpandURL {
+    my ($class_self, $text, $entity) = @_;
+    if(!defined($entity) || !defined($entity->{expanded_url}) || !defined($entity->{indices})) {
+        return $text;
+    }
+    if(ref($entity->{indices}) ne 'ARRAY' || int(@{$entity->{indices}}) < 2) {
+        return $text;
+    }
+    if($entity->{indices}->[1] < $entity->{indices}->[0]) {
+        return $text;
+    }
+    substr($text, $entity->{indices}->[0], $entity->{indices}->[1] - $entity->{indices}->[0]) = $entity->{expanded_url};
+    return $text;
+}
+
 sub _setParams {
     my ($self, $params_ref) = @_;
     $self->SUPER::_setParams($params_ref);
@@ -54,11 +87,12 @@ sub _extractStatusesFromWorkerData {
     my ($self_class, $worker_data) = @_;
     my @statuses = ();
     foreach my $nt_status (@$worker_data) {
+        my $text = $self_class->_processEntities($nt_status->{text}, $nt_status->{entities});
         my $status = BusyBird::Status->new();
         $status->setDateTime($self_class->_timeStringToDateTime($nt_status->{created_at}));
         $status->set(
             id => 'Twitter' . $nt_status->{id},
-            text => $nt_status->{text},
+            text => $text,
             in_reply_to_screen_name => $nt_status->{in_reply_to_screen_name},
             'user/screen_name' => $nt_status->{user}->{screen_name},
             'user/name' => $nt_status->{user}->{name},
