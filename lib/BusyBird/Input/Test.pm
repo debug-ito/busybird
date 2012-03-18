@@ -5,7 +5,7 @@ use warnings;
 
 use DateTime;
 use POE;
-use BusyBird::Status::Test;
+use BusyBird::Status;
 use BusyBird::CallStack;
 use BusyBird::Log ('bblog');
 
@@ -21,14 +21,25 @@ sub _setParams {
 
 sub _newStatus {
     my ($self, $nowtime, $index) = @_;
-    return BusyBird::Status::Test->new(
-        'ID'   => 'Test' . $nowtime->epoch . "_$index",
-        'Text' => 'Now ' . $nowtime->strftime('%Y/%m/%d %H:%M:%S') . ", part $index !!",
-        'DateTime' => $nowtime,
-        'SourceName'    => 'Test',
-        'SourceNameAlt' => 'Te st',
-        'IconURL' => '',
-        'ReplyToName' => '');
+    my $status = BusyBird::Status->new();
+    $status->setDateTime($nowtime);
+    $status->set(
+        id => 'Test' . $nowtime->epoch . "_$index",
+        text => 'Now ' . $nowtime->strftime('%Y/%m/%d %H:%M:%S') . ", part $index !!",
+        in_reply_to_screen_name => '',
+        'user/screen_name' => 'Test',
+        'user/name' => 'Te st',
+        'user/profile_image_url' => '',
+    );
+    return $status;
+    ## return BusyBird::Status::Test->new(
+    ##     'ID'   => 'Test' . $nowtime->epoch . "_$index",
+    ##     'Text' => 'Now ' . $nowtime->strftime('%Y/%m/%d %H:%M:%S') . ", part $index !!",
+    ##     'DateTime' => $nowtime,
+    ##     'SourceName'    => 'Test',
+    ##     'SourceNameAlt' => 'Te st',
+    ##     'IconURL' => '',
+    ##     'ReplyToName' => '');
 }
 
 sub _getStatuses {

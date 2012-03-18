@@ -13,8 +13,6 @@ use BusyBird::Log ('bblog');
 my $DEFAULT_PAGE_COUNT = 100;
 my $DEFAULT_PAGE_MAX   = 10;
 
-my $TIMEZONE = DateTime::TimeZone->new(name => 'local');
-
 my $THRESHOLD_OFFSET_SEC = 0;
 
 sub setThresholdOffset {
@@ -164,8 +162,7 @@ sub _sessionOnGetStatuses {
         $is_complete = 1;
     }else {
         foreach my $status (@$statuses) {
-            my $datetime = $status->getDateTime()->clone();
-            $datetime->set_time_zone($TIMEZONE);
+            my $datetime = $status->getDateTime();
             ## ** Update latest status time
             if (!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
                 $self->{last_status_epoch_time} = $datetime->epoch;

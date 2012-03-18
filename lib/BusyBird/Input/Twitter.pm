@@ -4,11 +4,33 @@ use base ('BusyBird::Input');
 use strict;
 use warnings;
 use POE;
-use BusyBird::Status::Twitter;
+use BusyBird::Status;
 use BusyBird::Worker::Object;
 use BusyBird::Log ('bblog');
 
 use Data::Dumper;
+
+our %MONTH = (
+    Jan => 1, Feb => 2,  Mar =>  3, Apr =>  4,
+    May => 5, Jun => 6,  Jul =>  7, Aug =>  8,
+    Sep => 9, Oct => 10, Nov => 11, Dec => 12,
+);
+
+sub _timeStringToDateTime() {
+    my ($class_self, $time_str) = @_;
+    my ($weekday, $monthname, $day, $time, $timezone, $year) = split(/\s+/, $time_str);
+    my ($hour, $minute, $second) = split(/:/, $time);
+    my $dt = DateTime->new(
+        year      => $year,
+        month     => $MONTH{$monthname},
+        day       => $day,
+        hour      => $hour,
+        minute    => $minute,
+        second    => $second,
+        time_zone => $timezone
+    );
+    return $dt;
+}
 
 sub _setParams {
     my ($self, $params_ref) = @_;
@@ -30,7 +52,21 @@ sub _getWorkerInput {
 
 sub _extractStatusesFromWorkerData {
     my ($self_class, $worker_data) = @_;
-    my @statuses = map { BusyBird::Status::Twitter->new($_) } @$worker_data;
+    my @statuses = ();
+    foreach my $nt_status (@$worker_data) {
+        my $status = BusyBird::Status->new();
+        $status->setDateTime($self_class->_timeStringToDateTime($nt_status->{created_at}));
+        $status->set(
+            id => 'Twitter' . $nt_status->{id},
+            text => $nt_status->{text},
+            in_reply_to_screen_name => $nt_status->{in_reply_to_screen_name},
+            'user/screen_name' => $nt_status->{user}->{screen_name},
+            'user/name' => $nt_status->{user}->{name},
+            'user/profile_image_url' => $nt_status->{user}->{profile_image_url},
+        );
+        push(@statuses, $status);
+    }
+    ## my @statuses = map { BusyBird::Status::Twitter->new($_) } @$worker_data;
     return \@statuses;
 }
 

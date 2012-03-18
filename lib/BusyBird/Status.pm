@@ -9,8 +9,9 @@ my @DAY_OF_WEEK = (undef, qw(Mon Tue Wed Thu Fri Sat Sun));
 
 my $STATUS_TIMEZONE = DateTime::TimeZone->new( name => 'local');
 my @OUTPUT_FIELDS = (
-    qw(id created_at text in_reply_to_screen_name bb_input_name bb_score),
-    map {"user/$_"} qw(screen_name name profile_image_url),
+    qw(id created_at text in_reply_to_screen_name),
+    (map {"user/$_"} qw(screen_name name profile_image_url)),
+    (map {"busybird/$_"} qw(input_name score)),
 );
 
 sub new {
@@ -52,9 +53,29 @@ sub setDateTime {
     $datetime->set_time_zone($STATUS_TIMEZONE);
     $self->{datetime} = $datetime;
     $self->{output}->{created_at} = sprintf("%s %s %s",
-                                            $DAY_OF_WEEK[$self->getDateTime->day_of_week],
-                                            $MONTH[$self->getDateTime->month],
-                                            $self->getDateTime->strftime('%e %H:%M:%S %z %Y'))
+                                            $DAY_OF_WEEK[$datetime->day_of_week],
+                                            $MONTH[$datetime->month],
+                                            $datetime->strftime('%e %H:%M:%S %z %Y'))
+}
+
+sub getDateTime {
+    my ($self) = @_;
+    return $self->{datetime};
+}
+
+sub setInputName {
+    my ($self, $input_name) = @_;
+    $self->set('busybird/input_name', $input_name);
+}
+
+sub getInputName {
+    my ($self) = @_;
+    return $self->get('busybird/input_name');
+}
+
+sub getID {
+    my ($self) = @_;
+    return $self->get('id');
 }
 
 sub set {
