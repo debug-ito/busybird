@@ -11,13 +11,14 @@ my $STATUS_TIMEZONE = DateTime::TimeZone->new( name => 'local');
 my @OUTPUT_FIELDS = (
     qw(id created_at text in_reply_to_screen_name),
     (map {"user/$_"} qw(screen_name name profile_image_url)),
-    (map {"busybird/$_"} qw(input_name score)),
+    (map {"busybird/$_"} qw(input_name)),
 );
 
 sub new {
     my ($class) = @_;
     return bless {
         datetime => undef,
+        scores => {},
         output => {
             map {$_ => undef} @OUTPUT_FIELDS,
         },
@@ -25,7 +26,7 @@ sub new {
 }
 
 sub _getOutputObject {
-    my ($self) = @_;
+    my ($self, %params) = @_;
     my $output_obj = {};
     while(my ($output_key, $output_val) = each(%{$self->{output}})) {
         my @paths = split("/", $output_key);
@@ -39,6 +40,10 @@ sub _getOutputObject {
                 $cur_ref = $cur_ref->{$path};
             }
         }
+    }
+    $output_obj->{busybird}->{is_new} = $params{is_new};
+    if(defined($params{output_name}) && defined($self->{scores}->{$params{output_name}})) {
+        $output_obj->{busybird}->{score} = $self->{scores}->{$params{output_name}};
     }
     return $output_obj;
 }
@@ -106,8 +111,8 @@ sub get {
 ## }
 
 sub getJSON {
-    my ($self) = @_;
-    return encode_json($self->_getOutputObject());
+    my ($self, %params) = @_;
+    return encode_json($self->_getOutputObject(%params));
     ## my $obj = {
     ##     bb_input_name => $self->getInputName,
     ##     bb_datetime => $self->getDateTime->strftime('%Y/%m/%dT%H:%M:%S%z'),

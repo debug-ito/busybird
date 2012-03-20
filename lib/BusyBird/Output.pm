@@ -50,6 +50,18 @@ sub _sort {
     $self->{new_statuses} = \@sorted_statuses;
 }
 
+sub _getNewStatusesJSONEntries {
+    my ($self) = @_;
+    my @json_entries = map {$_->getJSON(is_new => 1)} @{$self->{new_statuses}};
+    return \@json_entries;
+}
+
+sub _getOldStatusesJSONEntries {
+    my ($self) = @_;
+    my @json_entries = map {$_->getJSON(is_new => 0)} @{$self->{old_statuses}};
+    return \@json_entries;
+}
+
 sub pushStatuses {
     my ($self, $statuses) = @_;
     $statuses = $self->_uniqStatuses($statuses);
@@ -100,8 +112,8 @@ sub _replyNewStatuses {
     if(!@{$self->{new_statuses}}) {
         return ($self->HOLD);
     }
-    my @json_entries = map { $_->getJSON() } @{$self->{new_statuses}};
-    my $ret = "[" . join(",", @json_entries) . "]";
+    my $json_entries_ref = $self->_getNewStatusesJSONEntries();
+    my $ret = "[" . join(",", @$json_entries_ref) . "]";
     return ($self->REPLIED, \$ret, "application/json; charset=UTF-8");
 }
 
@@ -139,8 +151,9 @@ END
 
 sub _replyAllStatuses {
     my ($self, $detail) = @_;
-    my @all_statuses = (@{$self->{new_statuses}}, @{$self->{old_statuses}});
-    my $ret = '[' . join(",", (map {$_->getJSON()} @all_statuses)) . ']';
+    my $new_jsons_ref = $self->_getNewStatusesJSONEntries();
+    my $old_jsons_ref = $self->_getOldStatusesJSONEntries();
+    my $ret = '['. join(',', @$new_jsons_ref, @$old_jsons_ref) .']';
     return ($self->REPLIED, \$ret, 'application/json; charset=UTF-8');
 }
 
