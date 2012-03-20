@@ -1,5 +1,5 @@
 package BusyBird::Output;
-use base ('BusyBird::RequestListener');
+use base ('BusyBird::Object', 'BusyBird::RequestListener');
 use Encode;
 use strict;
 use warnings;
@@ -13,14 +13,15 @@ my %COMMAND = (
 );
 
 sub new {
-    my ($class, $name) = @_;
-    my $self = {
-        name => $name,
+    my ($class, %params) = @_;
+    my $self = bless {
         new_statuses => [],
         old_statuses => [],
         status_ids => {},
-    };
-    return bless $self, $class;
+    }, $class;
+    $self->_setParam(\%params, 'name', undef, 1);
+    $self->_setParam(\%params, 'max_old_statuses', 5);
+    return $self;
 }
 
 sub getName {
