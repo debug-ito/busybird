@@ -9,6 +9,7 @@ my %COMMAND = (
     NEW_STATUSES => 'new_statuses',
     CONFIRM => 'confirm',
     MAINPAGE => 'mainpage',
+    ALL_STATUSES => 'all_statuses',
 );
 
 sub new {
@@ -88,6 +89,8 @@ sub reply {
         return $self->_replyConfirm($detail);
     }elsif($command eq $COMMAND{MAINPAGE}) {
         return $self->_replyMainPage($detail);
+    }elsif($command eq $COMMAND{ALL_STATUSES}) {
+        return $self->_replyAllStatuses($detail);
     }
     return ($self->NOT_FOUND);
 }
@@ -132,6 +135,13 @@ sub _replyMainPage {
 </html>
 END
     return ($self->REPLIED, \$html, 'text/html');
+}
+
+sub _replyAllStatuses {
+    my ($self, $detail) = @_;
+    my @all_statuses = (@{$self->{new_statuses}}, @{$self->{old_statuses}});
+    my $ret = '[' . join(",", (map {$_->getJSON()} @all_statuses)) . ']';
+    return ($self->REPLIED, \$ret, 'application/json; charset=UTF-8');
 }
 
 1;

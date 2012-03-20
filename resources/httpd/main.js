@@ -13,7 +13,7 @@ function bbCometConfirm() {
                 setTimeout(bbCometConfirm, g_comet_error_interval_ms);
             },
             success: function (data, textStatus, jqXHR) {
-                bbCometNewStatuses();
+                bbCometLoadStatuses('new_statuses');
             }});
 }
 
@@ -35,14 +35,14 @@ function bbFormatStatus(status) {
     return ret;
 }
 
-function bbCometNewStatuses () {
-    $.ajax({url: "/" + bbGetOutputName() + "/new_statuses",
+function bbCometLoadStatuses (req_point) {
+    $.ajax({url: "/" + bbGetOutputName() + "/" + req_point,
             type: "GET",
             cache: false,
             dataType: "json",
             timeout: 0,
             error: function (jqXHR, textStatus, errorThrown) {
-                setTimeout(bbCometNewStatuses, g_comet_error_interval_ms);
+                setTimeout(bbCometLoadStatuses(req_point), g_comet_error_interval_ms);
             },
             success: function (data, textStatus, jqXHR) {
                 var i;
@@ -54,5 +54,8 @@ function bbCometNewStatuses () {
                 bbCometConfirm();
             }});
 }
-$(document).ready(bbCometNewStatuses);
+
+$(document).ready(function () {
+    bbCometLoadStatuses('all_statuses');
+});
 
