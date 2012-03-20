@@ -122,6 +122,10 @@ sub _replyConfirm {
     my ($self, $detail) = @_;
     unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
     $self->{new_statuses} = [];
+    while(int(@{$self->{old_statuses}}) > $self->{max_old_statuses}) {
+        my $discarded_status = pop(@{$self->{old_statuses}});
+        delete $self->{status_ids}->{$discarded_status->getID};
+    }
     my $ret = "Confirm OK";
     return ($self->REPLIED, \$ret, "text/plain");
 }
