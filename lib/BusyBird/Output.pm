@@ -20,7 +20,8 @@ sub new {
         status_ids => {},
     }, $class;
     $self->_setParam(\%params, 'name', undef, 1);
-    $self->_setParam(\%params, 'max_old_statuses', 5);
+    $self->_setParam(\%params, 'max_old_statuses', 1024);
+    $self->_setParam(\%params, 'max_new_statuses', 2048);
     return $self;
 }
 
@@ -63,6 +64,14 @@ sub _getOldStatusesJSONEntries {
     return \@json_entries;
 }
 
+sub _limitStatusQueueSize {
+    my ($self, $status_queue, $limit_size) = @_;
+    while(int(@$status_queue) > $limit_size) {
+        my $discarded_status = pop(@$status_queue);
+        delete $self->{status_ids}->{$discarded_status->getID};
+    }
+}
+
 sub pushStatuses {
     my ($self, $statuses) = @_;
     $statuses = $self->_uniqStatuses($statuses);
@@ -71,6 +80,7 @@ sub pushStatuses {
         $self->{status_ids}{$status->getID()} = 1;
     }
     $self->_sort();
+    $self->_limitStatusQueueSize($self->{new_statuses}, $self->{max_new_statuses});
     
     ## ** we should do classification here, or its better to do it in another method??
 }
@@ -122,10 +132,7 @@ sub _replyConfirm {
     my ($self, $detail) = @_;
     unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
     $self->{new_statuses} = [];
-    while(int(@{$self->{old_statuses}}) > $self->{max_old_statuses}) {
-        my $discarded_status = pop(@{$self->{old_statuses}});
-        delete $self->{status_ids}->{$discarded_status->getID};
-    }
+    $self->_limitStatusQueueSize($self->{old_statuses}, $self->{max_old_statuses});
     my $ret = "Confirm OK";
     return ($self->REPLIED, \$ret, "text/plain");
 }
