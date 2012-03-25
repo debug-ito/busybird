@@ -43,7 +43,7 @@ function bbCometLoadStatuses (req_point) {
             dataType: "json",
             timeout: 0,
             error: function (jqXHR, textStatus, errorThrown) {
-                setTimeout(bbCometLoadStatuses(req_point), g_comet_error_interval_ms);
+                setTimeout(function () {bbCometLoadStatuses(req_point);}, g_comet_error_interval_ms);
             },
             success: function (data, textStatus, jqXHR) {
                 var i;
