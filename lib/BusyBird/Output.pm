@@ -59,8 +59,16 @@ sub _getNewStatusesJSONEntries {
 }
 
 sub _getOldStatusesJSONEntries {
-    my ($self) = @_;
-    my @json_entries = map {$_->getJSON(is_new => 0)} @{$self->{old_statuses}};
+    my ($self, $start_index, $entry_num) = @_;
+    if($entry_num <= 0) {
+        return [];
+    }
+    if($start_index >= int(@{$self->{old_statuses}})) {
+        return [];
+    }
+    my $end_inc_index = $start_index + $entry_num - 1;
+    $end_inc_index = int(@{$self->{old_statuses}}) - 1 if $end_inc_index >= int(@{$self->{old_statuses}});
+    my @json_entries = map {$_->getJSON(is_new => 0)} @{$self->{old_statuses}}[$start_index .. $end_inc_index];
     return \@json_entries;
 }
 
@@ -163,8 +171,14 @@ END
 
 sub _replyAllStatuses {
     my ($self, $detail) = @_;
-    my $new_jsons_ref = $self->_getNewStatusesJSONEntries();
-    my $old_jsons_ref = $self->_getOldStatusesJSONEntries();
+    my $page = ($detail->{page} or 1) - 1;
+    $page = 0 if $page < 0;
+    my $per_page = ($detail->{per_page} or 20);
+    my $new_jsons_ref = [];
+    if($page == 0) {
+        $new_jsons_ref = $self->_getNewStatusesJSONEntries();
+    }
+    my $old_jsons_ref = $self->_getOldStatusesJSONEntries($page * $per_page, $per_page);
     my $ret = '['. join(',', @$new_jsons_ref, @$old_jsons_ref) .']';
     return ($self->REPLIED, \$ret, 'application/json; charset=UTF-8');
 }
