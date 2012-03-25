@@ -1,3 +1,4 @@
+/*** 
 .status_container {
   margin: 5px 30px;
   width: 700px;
@@ -8,8 +9,6 @@
   color: red;
   float: right;
 }
-
-/* *********************** */
 
 div#statuses div.cursor {
     border: 2px solid blue;
@@ -71,10 +70,61 @@ div#control_left {
     float: right;
 }
 
+***/
+
 /**********************************/
 
+div#global_header {
+    background-color: #FFF;
+    position: fixed;
+    left: auto;
+    right: auto;
+    width: 100%;
+    height: 50px;
+    margin: 0;
+    padding: 0;
+}
+
+div#global_main {
+    margin: 50px 0 0 0;
+    padding: 0;
+    left: auto;
+    right: auto;
+    width: 700px;
+}
+
+div#side_container {
+    float: left;
+    width: 100px;
+    margin: 0;
+    padding: 0;
+}
+
+div#global_side {
+    position: fixed;
+    left: 0;
+    top: 0;
+    background-color: red;
+    width: 100%;
+    height: 200px;
+}
+
+div#local_side {
+    margin: 200px 0 0 0;
+    padding: 0;
+}
+
 ul#statuses {
+    margin: 0 100px 0 100px;
     padding: 5px 40px;
+    width: 500px;
+}
+
+div#optional_container {
+    float: right;
+    width: 100px;
+    margin: 0;
+    padding: 0;
 }
 
 ul#statuses li {
