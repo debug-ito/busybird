@@ -5,6 +5,14 @@ use strict;
 use warnings;
 use DateTime;
 
+my %S = (
+    global_header_height => '50px',
+    global_side_height => '200px',
+    side_width => '150px',
+    optional_width => '100px',
+    profile_image_section_width => '50px',
+);
+
 my %COMMAND = (
     NEW_STATUSES => 'new_statuses',
     CONFIRM => 'confirm',
@@ -36,6 +44,40 @@ sub _initMainPage {
     <title>$name - BusyBird</title>
     <meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
     <link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+    <style type="text/css"><!--
+
+div#global_header {
+    height: $S{global_header_height};
+}
+
+div#global_side {
+    top: $S{global_header_height};
+    width: $S{side_width};
+    height: $S{global_side_height};
+}
+
+div#side_container {
+    width: $S{side_width};
+    margin: $S{global_side_height} 0 0 0;
+}
+
+ul#statuses {
+    margin: $S{global_header_height} $S{optional_width} 0 $S{side_width};
+}
+
+div#optional_container {
+    width: $S{optional_width};
+}
+
+div.status_profile_image {
+    width: $S{profile_image_section_width};
+}
+
+div.status_main {
+    margin: 0 0 0 $S{profile_image_section_width};
+}
+
+    --></style>
     <script type="text/javascript" src="/jquery.js"></script>
     <script type="text/javascript"><!--
     function bbGetOutputName() {return "$name"}
@@ -45,18 +87,14 @@ sub _initMainPage {
   <body>
     <div id="global_header">
     </div>
-    <div id="global_main">
-      <div id="side_container">
-        <div id="global_side">
-        </div>
-        <div id="local_side">
-        </div>
-      </div>
-      <ul id="statuses">
-      </ul>
-      <div id="optional_container">
-      </div>
+    <div id="global_side">
     </div>
+    <div id="side_container">
+    </div>
+    <div id="optional_container">
+    </div>
+    <ul id="statuses">
+    </ul>
   </body>
 </html>
 END

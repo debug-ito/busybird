@@ -75,27 +75,11 @@ div#control_left {
 /**********************************/
 
 div#global_header {
-    background-color: #FFF;
+    background-color: black;
     position: fixed;
-    left: auto;
-    right: auto;
+    left: 0;
+    top: 0;
     width: 100%;
-    height: 50px;
-    margin: 0;
-    padding: 0;
-}
-
-div#global_main {
-    margin: 50px 0 0 0;
-    padding: 0;
-    left: auto;
-    right: auto;
-    width: 700px;
-}
-
-div#side_container {
-    float: left;
-    width: 100px;
     margin: 0;
     padding: 0;
 }
@@ -103,50 +87,40 @@ div#side_container {
 div#global_side {
     position: fixed;
     left: 0;
-    top: 0;
-    background-color: red;
-    width: 100%;
-    height: 200px;
-}
-
-div#local_side {
-    margin: 200px 0 0 0;
+    margin: 0;
     padding: 0;
+    background-color: black;
 }
 
-ul#statuses {
-    margin: 0 100px 0 100px;
-    padding: 5px 40px;
-    width: 500px;
+div#side_container {
+    float: left;
+    padding: 0;
 }
 
 div#optional_container {
     float: right;
-    width: 100px;
     margin: 0;
     padding: 0;
+    background-color: #FC0;
+}
+
+ul#statuses {
+    padding: 5px 20px;
+    width: auto;
 }
 
 ul#statuses li {
     border-width: 1px 0 0 0;
     border-color: black;
     border-style: solid;
-    margin: 10px;
-    padding: 10px;
+    margin: 2px 0;
+    padding: 3px 0 3px 3px;
     list-style-type: none;
-    clear: both;
 }
 
 div.status_profile_image {
     float: left;
-    width: 50px;
     text-align: center;
-}
-
-div.status_main {
-    float: left;
-    width: 600px;
-    margin-left: 12px;
 }
 
 div.status_header {
