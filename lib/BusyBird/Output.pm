@@ -18,11 +18,48 @@ sub new {
         new_statuses => [],
         old_statuses => [],
         status_ids => {},
+        mainpage_html => undef,
     }, $class;
     $self->_setParam(\%params, 'name', undef, 1);
     $self->_setParam(\%params, 'max_old_statuses', 1024);
     $self->_setParam(\%params, 'max_new_statuses', 2048);
+    $self->_initMainPage();
     return $self;
+}
+
+sub _initMainPage {
+    my ($self) = @_;
+    my $name = $self->getName();
+    $self->{mainpage_html} = <<"END";
+<html>
+  <head>
+    <title>$name - BusyBird</title>
+    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
+    <link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+    <script type="text/javascript" src="/jquery.js"></script>
+    <script type="text/javascript"><!--
+    function bbGetOutputName() {return "$name"}
+--></script>
+    <script type="text/javascript" src="/main.js"></script>
+  </head>
+  <body>
+    <div id="global_header">
+    </div>
+    <div id="global_main">
+      <div id="side_container">
+        <div id="global_side">
+        </div>
+        <div id="local_side">
+        </div>
+      </div>
+      <ul id="statuses">
+      </ul>
+      <div id="optional_container">
+      </div>
+    </div>
+  </body>
+</html>
+END
 }
 
 sub getName {
@@ -147,25 +184,7 @@ sub _replyConfirm {
 
 sub _replyMainPage {
     my ($self, $detail) = @_;
-    my $name = $self->getName();
-    my $html = <<"END";
-<html>
-  <head>
-    <title>$name - BusyBird</title>
-    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
-    <link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
-    <script type="text/javascript" src="/jquery.js"></script>
-    <script type="text/javascript"><!--
-    function bbGetOutputName() {return "$name"}
---></script>
-    <script type="text/javascript" src="/main.js"></script>
-  </head>
-  <body>
-    <ul id="statuses">
-    </ul>
-  </body>
-</html>
-END
+    my $html = $self->{mainpage_html};
     return ($self->REPLIED, \$html, 'text/html');
 }
 
