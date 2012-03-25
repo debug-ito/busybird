@@ -111,7 +111,7 @@ sub replyPoint {
 sub _unescapeURI {
     my ($uri) = @_;
     $uri =~ s/\+/ /g;
-    $uri =~ s/%[0-9a-fA-F][0-9a-fA-F]/pack("C", hex($1))/eg;
+    $uri =~ s/%([0-9a-fA-F][0-9a-fA-F])/pack("C", hex($1))/eg;
     return $uri;
 }
 
