@@ -127,13 +127,12 @@ sub _handlerClientInput {
     }else {
         $req_path = $request->uri;
     }
-    $req_path = lc($req_path);
     $req_path = '/' . $req_path if $req_path !~ m|^/|;
-    if($req_path =~ m|^([^\?]+)\?(.+)$|) {
+    if($req_path =~ m|^([^\?]+?)\?(.*)$|) {
         $req_path = $1;
         my @param_pairs = split(/\&/, $2);
         foreach my $param_pair (@param_pairs) {
-            next if $param_pair !~ /^([^=]+)=([^=+])$/;
+            next if $param_pair !~ /^([^=]+?)=([^=]+)$/;
             $detail_params{&_unescapeURI($1)} = &_unescapeURI($2);
         }
     }
