@@ -123,7 +123,8 @@ sub _uniqStatuses {
 
 sub _sort {
     my ($self) = @_;
-    my @sorted_statuses = sort {$b->getDateTime()->epoch <=> $a->getDateTime()->epoch} @{$self->{new_statuses}};
+    ## my @sorted_statuses = sort {$b->getDateTime()->epoch <=> $a->getDateTime()->epoch} @{$self->{new_statuses}};
+    my @sorted_statuses = sort {DateTime->compare($b->getDateTime(), $a->getDateTime())} @{$self->{new_statuses}};
     $self->{new_statuses} = \@sorted_statuses;
 }
 
