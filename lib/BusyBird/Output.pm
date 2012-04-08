@@ -61,7 +61,7 @@ div#side_container {
     margin: $S{global_side_height} 0 0 0;
 }
 
-ul#statuses {
+div#main_container {
     margin: $S{global_header_height} $S{optional_width} 0 $S{side_width};
 }
 
@@ -93,8 +93,13 @@ div.status_main {
     </div>
     <div id="optional_container">
     </div>
-    <ul id="statuses">
-    </ul>
+    <div id="main_container">
+      <ul id="statuses">
+      </ul>
+      <div id="main_footer">
+        <button id="more_button" type="button" onclick="" >More...</button>
+      </div>
+    </div>
   </body>
 </html>
 END
@@ -276,6 +281,7 @@ sub _replyAllStatuses {
     my $per_page = $detail->{per_page};
     my $json_entries;
     my $start_global_index = 0;
+
     if($detail->{max_id}) {
         $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->getID eq $detail->{max_id} });
         $start_global_index = 0 if !defined($start_global_index);

@@ -13,7 +13,7 @@ function bbCometConfirm() {
                 setTimeout(bbCometConfirm, g_comet_error_interval_ms);
             },
             success: function (data, textStatus, jqXHR) {
-                bbCometLoadStatuses('new_statuses');
+                bbCometLoadStatuses('new_statuses', true, true);
             }});
 }
 
@@ -36,14 +36,14 @@ function bbFormatStatus(status) {
     return ret;
 }
 
-function bbCometLoadStatuses (req_point) {
+function bbCometLoadStatuses (req_point, is_prepend, need_confirm) {
     $.ajax({url: "/" + bbGetOutputName() + "/" + req_point,
             type: "GET",
             cache: false,
             dataType: "json",
             timeout: 0,
             error: function (jqXHR, textStatus, errorThrown) {
-                setTimeout(function () {bbCometLoadStatuses(req_point);}, g_comet_error_interval_ms);
+                setTimeout(function () {bbCometLoadStatuses(req_point, is_prepend);}, g_comet_error_interval_ms);
             },
             success: function (data, textStatus, jqXHR) {
                 var i;
@@ -51,12 +51,19 @@ function bbCometLoadStatuses (req_point) {
                 for(i = 0 ; i < data.length ; i++) {
                     new_statuses_text += bbFormatStatus(data[i]);
                 }
-                $("#statuses").prepend(new_statuses_text);
-                bbCometConfirm();
+                if(data.length > 0) {
+                    if(is_prepend) {
+                        $("#statuses").prepend(new_statuses_text);
+                    }else {
+                        $("#statuses").append(new_statuses_text);
+                        $("#more_button").attr("onclick", 'bbCometLoadStatuses("all_statuses?max_id=' + data[data.length-1].id + '", false, false)');
+                    }
+                }
+                if(need_confirm) bbCometConfirm();
             }});
 }
 
 $(document).ready(function () {
-    bbCometLoadStatuses('all_statuses');
+    bbCometLoadStatuses('all_statuses', false, true);
 });
 
