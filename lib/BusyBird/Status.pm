@@ -55,6 +55,7 @@ sub setTimeZone {
 
 sub setDateTime {
     my ($self, $datetime) = @_;
+    $datetime = DateTime->now if !defined($datetime);
     $datetime->set_time_zone($STATUS_TIMEZONE);
     $self->{datetime} = $datetime;
     $self->{output}->{created_at} = sprintf("%s %s %s",
