@@ -127,24 +127,65 @@ sub _sort {
     $self->{new_statuses} = \@sorted_statuses;
 }
 
-sub _getNewStatusesJSONEntries {
-    my ($self) = @_;
-    my @json_entries = map {$_->getJSON(is_new => 1)} @{$self->{new_statuses}};
+sub _getGlobalIndicesForStatuses {
+    my ($self, $condition_func) = @_;
+    my @indices = ();
+    my $global_index = 0;
+    foreach my $status (@{$self->{new_statuses}}, @{$self->{old_statuses}}) {
+        local $_ = $status;
+        push(@indices, $global_index) if &$condition_func();
+        $global_index++;
+    }
+    return wantarray ? @indices : $indices[0];
+}
+
+sub _getSingleStatusesJSONEntries {
+    my ($self, $statuses_ref, $is_new, $start_index, $entry_num) = @_;
+    my $statuses_num = int(@$statuses_ref);
+    $is_new = $is_new ? 1 : 0;
+    $start_index = 0 if !defined($start_index);
+    if($start_index >= $statuses_num) {
+        return [];
+    }
+    $entry_num = $statuses_num - $start_index if !defined($entry_num);
+    if($entry_num <= 0) {
+        return [];
+    }
+    my $end_inc_index = $start_index + $entry_num - 1;
+    $end_inc_index = $statuses_num - 1 if $end_inc_index >= $statuses_num;
+    my @json_entries = map {$_->getJSON(is_new => $is_new)} @$statuses_ref[$start_index .. $end_inc_index];
     return \@json_entries;
+}
+
+sub _getStatusesJSONEntries {
+    my ($self, $global_start_index, $entry_num) = @_;
+    my $new_num = int(@{$self->{new_statuses}});
+    my @entries = ();
+    return \@entries if $entry_num <= 0;
+    $global_start_index = 0 if $global_start_index < 0;
+    my $old_entry_num = $entry_num;
+    if($global_start_index < $new_num) {
+        my $new_entries = $self->_getSingleStatusesJSONEntries($self->{new_statuses}, 1, $global_start_index, $entry_num);
+        push(@entries, @$new_entries);
+        $old_entry_num = $entry_num - int(@$new_entries);
+    }
+    if($old_entry_num > 0) {
+        my $old_start_index = $global_start_index - $new_num;
+        $old_start_index = 0 if $old_start_index < 0;
+        my $old_entries = $self->_getSingleStatusesJSONEntries($self->{old_statuses}, 0, $old_start_index, $old_entry_num);
+        push(@entries, @$old_entries);
+    }
+    return \@entries;
+}
+
+sub _getNewStatusesJSONEntries {
+    my ($self, $start_index, $entry_num) = @_;
+    return $self->_getSingleStatusesJSONEntries($self->{new_statuses}, 1, $start_index, $entry_num);
 }
 
 sub _getOldStatusesJSONEntries {
     my ($self, $start_index, $entry_num) = @_;
-    if($entry_num <= 0) {
-        return [];
-    }
-    if($start_index >= int(@{$self->{old_statuses}})) {
-        return [];
-    }
-    my $end_inc_index = $start_index + $entry_num - 1;
-    $end_inc_index = int(@{$self->{old_statuses}}) - 1 if $end_inc_index >= int(@{$self->{old_statuses}});
-    my @json_entries = map {$_->getJSON(is_new => 0)} @{$self->{old_statuses}}[$start_index .. $end_inc_index];
-    return \@json_entries;
+    return $self->_getSingleStatusesJSONEntries($self->{old_statuses}, 0, $start_index, $entry_num);
 }
 
 sub _limitStatusQueueSize {
@@ -228,15 +269,31 @@ sub _replyMainPage {
 
 sub _replyAllStatuses {
     my ($self, $detail) = @_;
+    my $new_num = int(@{$self->{new_statuses}});
     my $page = ($detail->{page} or 1) - 1;
     $page = 0 if $page < 0;
-    my $per_page = ($detail->{per_page} or 20);
-    my $new_jsons_ref = [];
-    if($page == 0) {
-        $new_jsons_ref = $self->_getNewStatusesJSONEntries();
+    my $per_page = $detail->{per_page};
+    my $json_entries;
+    my $start_global_index = 0;
+    if($detail->{max_id}) {
+        $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->getID eq $detail->{max_id} });
+        $start_global_index = 0 if !defined($start_global_index);
     }
-    my $old_jsons_ref = $self->_getOldStatusesJSONEntries($page * $per_page, $per_page);
-    my $ret = '['. join(',', @$new_jsons_ref, @$old_jsons_ref) .']';
+    if($per_page) {
+        $json_entries = $self->_getStatusesJSONEntries($start_global_index + $page * $per_page, $per_page);
+    }else {
+        $per_page = 20;
+        if($start_global_index < $new_num) {
+            if($page == 0) {
+                $json_entries = $self->_getStatusesJSONEntries($start_global_index, $per_page + $new_num - $start_global_index);
+            }else {
+                $json_entries = $self->_getStatusesJSONEntries($new_num + $page * $per_page, $per_page);
+            }
+        }else {
+            $json_entries = $self->_getStatusesJSONEntries($start_global_index + $page * $per_page, $per_page);
+        }
+    }
+    my $ret = '['. join(',', @$json_entries) .']';
     return ($self->REPLIED, \$ret, 'application/json; charset=UTF-8');
 }
 
