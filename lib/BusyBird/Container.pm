@@ -1,4 +1,4 @@
-package BusyBird::Timer;
+package BusyBird::Container;
 use base ("BusyBird::Object");
 
 use strict;
