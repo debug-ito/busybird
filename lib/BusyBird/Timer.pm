@@ -32,8 +32,8 @@ sub start {
 }
 
 sub addOnFire {
-    my ($self, $callback) = @_;
-    push(@{$self->{callbacks}}, $callback);
+    my ($self, @callbacks) = @_;
+    push(@{$self->{callbacks}}, @callbacks);
 }
 
 1;
