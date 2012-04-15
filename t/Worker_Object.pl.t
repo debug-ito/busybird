@@ -84,8 +84,8 @@ my $sync_cv = AnyEvent->condvar;
 
 $sync_cv->begin();
 $worker_obj->startJob(
-    {method => 'getString'},
-    sub {
+    method => 'getString',
+    cb => sub {
         my ($status, @data) = @_;
         diag('------- getString');
         cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
@@ -97,8 +97,8 @@ $worker_obj->startJob(
 
 $sync_cv->begin();
 $worker_obj->startJob(
-    {method => 'getContext', context => 'scalar'},
-    sub {
+    method => 'getContext', context => 'scalar',
+    cb => sub {
         my ($status, @data) = @_;
         diag('------- getContext in scalar');
         cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
@@ -108,8 +108,8 @@ $worker_obj->startJob(
 
 $sync_cv->begin();
 $worker_obj->startJob(
-    {method => 'getContext', context => 'list'},
-    sub {
+    method => 'getContext', context => 'list',
+    cb => sub {
         my ($status, @data) = @_;
         diag('------- getContext in list');
 
@@ -120,8 +120,8 @@ $worker_obj->startJob(
 
 $sync_cv->begin();
 $worker_obj->startJob(
-    {method => 'disassemble'},
-    sub {
+    method => 'disassemble',
+    cb => sub {
         my ($status, @data) = @_;
         diag('-------- diassemble');
         cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
@@ -137,8 +137,8 @@ $worker_obj->getTargetObject()->setString('//');
 
 $sync_cv->begin();
 $worker_obj->startJob(
-    {method => 'cat', args => [qw(foo bar buzz)], context => 's'},
-    sub {
+    method => 'cat', args => [qw(foo bar buzz)], context => 's',
+    cb => sub {
         my ($status, @data) = @_;
         diag('------- cat');
         cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
@@ -149,8 +149,8 @@ $worker_obj->startJob(
 
 $sync_cv->begin();
 $worker_obj->startJob(
-    {method => 'not_exist', args => [1]},
-    sub {
+    method => 'not_exist', args => [1],
+    cb => sub {
         my ($status, @data) = @_;
         diag('------- not_exist');
         cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_NO_METHOD, 'method status: no method');
@@ -161,8 +161,8 @@ $worker_obj->startJob(
 
 $sync_cv->begin();
 $worker_obj->startJob(
-    {method => 'do_not_call_me', context => 's'},
-    sub {
+    method => 'do_not_call_me', context => 's',
+    cb => sub {
         my ($status, @data) = @_;
         diag('------- do_not_call_me');
         cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_METHOD_DIES, "method dies");

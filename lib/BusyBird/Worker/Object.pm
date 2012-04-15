@@ -93,10 +93,16 @@ sub getTargetObject {
 }
 
 sub startJob {
-    my ($self, $command, $cb) = @_;
+    my ($self, %params) = @_;
+    if(!defined($params{method})) {
+        die "No method param.";
+    }
+    if(!defined($params{cb})) {
+        die "No cb param.";
+    }
     my $target_object = $self->{target_object};
     fork_call {
-        my ($method_name, $args_array, $context_str) = ($command->{method}, $command->{args}, $command->{context});
+        my ($method_name, $args_array, $context_str) = @params{qw(method args context)};
         my $context = &_getContextID($context_str);
         if(!$target_object->can($method_name)) {
             my $error_msg = sprintf ("ERROR: Method %s is undefined on %s.", $method_name, ref($target_object));
@@ -117,7 +123,7 @@ sub startJob {
             return (STATUS_METHOD_DIES, $@);
         }
         return @ret;
-    } $cb;
+    } $params{cb};
 }
 
 
