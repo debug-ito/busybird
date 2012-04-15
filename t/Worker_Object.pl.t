@@ -6,11 +6,8 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    sub POE::Kernel::CATCH_EXCEPTIONS () { 0 }
-    sub POE::Kernel::ASSERT_DEFAULT   () { 1 }
-    use_ok('POE');
-    use_ok('BusyBird::CallStack');
-    use_ok('BusyBird::Worker');
+    use_ok('AnyEvent');
+    use_ok('AnyEvent::Strict');
     use_ok('BusyBird::Worker::Object');
 }
 
@@ -77,186 +74,103 @@ my $worker_obj = BusyBird::Worker::Object->new(
 
 {
     my $test = $worker_obj->getTargetObject();
-    diag('------ before POE::Session');
+    diag('------ direct method calls');
     is(ref($test), 'BusyBird::Test::Object', 'object type ok');
     is($test->getString(), 'initial_text', "getString OK");
     &checkDisassembled('initial_text', $test->disassemble());
 }
 
+my $sync_cv = AnyEvent->condvar;
 
-POE::Session->create(
-    heap => {report_done => {}},
-    inline_states => {
-        _start => sub {
-            my ($kernel, $session) = @_[KERNEL, SESSION];
-            $worker_obj->startJob(undef, $session->ID, 'report1', {method => 'getString'});
-            $worker_obj->startJob(undef, $session->ID, 'report2', {method => 'getContext', context => 'scalar'});
-            $worker_obj->startJob(undef, $session->ID, 'report3', {method => 'getContext', context => 'list'});
-            $worker_obj->startJob(undef, $session->ID, 'report4', {method => 'disassemble'});
-            return 0;
-        },
-        _stop => sub {},
-        report1 => sub {
-            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
-            diag('------- report1');
-            isa_ok($callstack, 'BusyBird::CallStack');
-            cmp_ok($callstack->size, "==", 0);
-            is(ref($output_objs), 'ARRAY', 'Returning output_objs is array,');
-            cmp_ok(int(@$output_objs), "==", 1, 'and it has one element.');
-            is($input_obj->{method}, 'getString', 'Input was getString method');
-            cmp_ok($exit_status, '==', 0, 'exit status ok');
-            
-            my $output_obj = $output_objs->[0];
-            my ($status, $data) = ($output_obj->{status}, $output_obj->{data});
-            
-            cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
-            is(ref($data), 'ARRAY', 'Returning data is an array (list context by default)');
-            cmp_ok(int(@$data), "==", 1, 'one returning data.');
-            
-            is($data->[0], "initial_text", "return value from the method is ok.");
-
-            $kernel->yield('check_end', 'report1');
-        },
-        report2 => sub {
-            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
-            diag('------- report2');
-            isa_ok($callstack, 'BusyBird::CallStack');
-            cmp_ok($callstack->size, "==", 0);
-            cmp_ok(int(@$output_objs), '==', 1, '1 output');
-            cmp_ok($exit_status, '==', 0, 'exit status OK');
-            is($input_obj->{method}, 'getContext', 'method: getContext');
-            is($input_obj->{context}, 'scalar', 'context:scalar');
-
-            my $output_obj = $output_objs->[0];
-
-            cmp_ok($output_obj->{status}, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
-            is($output_obj->{data}, 'scalar', "data: scalar");
-
-            $kernel->yield('check_end', 'report2');
-        },
-        report3 => sub {
-            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
-            diag('------- report3');
-            isa_ok($callstack, 'BusyBird::CallStack');
-            cmp_ok($callstack->size, "==", 0);
-            cmp_ok(int(@$output_objs), '==', 1, '1 output');
-            cmp_ok($exit_status, '==', 0, 'exit status OK');
-            is($input_obj->{context}, 'list', 'input context: list');
-
-            my $output_obj = $output_objs->[0];
-
-            cmp_ok($output_obj->{status}, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: OK');
-            is(ref($output_obj->{data}), 'ARRAY', 'data: is an array');
-
-            my @returned_data = @{$output_obj->{data}};
-
-            cmp_ok(int(@returned_data), '==', 1, 'number of returned data: 1');
-            is($returned_data[0], 'list', 'returned data: list');
-
-            $kernel->yield('check_end', 'report3');
-        },
-        report4 => sub {
-            my ($kernel, $session, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, SESSION, ARG0 .. ARG3];
-            diag('-------- report4');
-            isa_ok($callstack, 'BusyBird::CallStack');
-            cmp_ok($callstack->size, "==", 0);
-            is($input_obj->{method}, 'disassemble', 'method: disassemble');
-
-            my ($status, @data) = ($output_objs->[0]->{status}, @{$output_objs->[0]->{data}});
-
-            cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
-            &checkDisassembled('initial_text', @data);
-
-            $kernel->yield('check_end', 'report4');
-
-            $worker_obj->getTargetObject()->setString('//');
-            $worker_obj->startJob(undef, $session->ID, 'report5', {method => 'cat', args => [qw(foo bar buzz)], context => 's'});
-            $worker_obj->startJob(undef, $session->ID, 'report6', {method => 'not_exist', args => [1]});
-            $worker_obj->startJob(undef, $session->ID, 'report7', {method => 'do_not_call_me', context => 's'});
-        },
-        report5 => sub {
-            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
-            diag('------- report5');
-            isa_ok($callstack, 'BusyBird::CallStack');
-            cmp_ok($callstack->size, "==", 0);
-            cmp_ok(int(@$output_objs), '==', 1, 'output num: 1');
-            is($input_obj->{method}, 'cat', 'method: cat');
-            is($input_obj->{context}, 's', 'context: s');
-            cmp_ok(int(@{$input_obj->{args}}), '==', 3, 'args num: 3');
-
-            my ($status, $data) = ($output_objs->[0]->{status}, $output_objs->[0]->{data});
-
-            cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
-            is($data, 'foo//bar//buzz', 'returend data: ok');
-
-            $kernel->yield('check_end', 'report5');
-        },
-        report6 => sub {
-            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
-            diag('------- report6');
-            isa_ok($callstack, 'BusyBird::CallStack');
-            cmp_ok($callstack->size, "==", 0);
-            cmp_ok(int(@$output_objs), '==', 1, 'output num: 1');
-            cmp_ok($exit_status, '==', 0, 'exit status: ok');
-            is($input_obj->{method}, 'not_exist', 'method: not_exist');
-
-            my ($status, $data) = ($output_objs->[0]->{status}, $output_objs->[0]->{data});
-
-            cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_NO_METHOD, 'method status: no method');
-            like($data, qr|not_exist.*undefined.*BusyBird::Test::Object|, 'error message');
-
-            $kernel->yield('check_end', 'report6');
-        },
-        report7 => sub {
-            my ($kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[KERNEL, ARG0 .. ARG3];
-            diag('------- report7');
-            isa_ok($callstack, 'BusyBird::CallStack');
-            cmp_ok($callstack->size, "==", 0);
-            cmp_ok(int(@$output_objs), '==', 1, 'output num: 1');
-            cmp_ok($exit_status, '==', 0, 'exit status: OK');
-            is($input_obj->{method}, "do_not_call_me", "method: do_not_call_me");
-
-            my ($status, $data) = ($output_objs->[0]->{status}, $output_objs->[0]->{data});
-
-            cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_METHOD_DIES, "method dies");
-            is($data, "I said do not call me!!!\n", "exception object is in data.");
-
-            $kernel->yield('check_end', 'report7');
-        },
-        check_end => sub {
-            my ($kernel, $heap, $end_token) = @_[KERNEL, HEAP, ARG0];
-            my $report_done_list = $heap->{report_done};
-            $report_done_list->{$end_token} = 1;
-            my $is_end = 1;
-            foreach my $token (qw(report1 report2 report3 report4 report5 report6 report7)) {
-                $is_end = 0 if !$report_done_list->{$token};
-            }
-            if ($is_end) {
-                pass('the test successfully ends here');
-                done_testing();
-            }
-        },
+$sync_cv->begin();
+$worker_obj->startJob(
+    {method => 'getString'},
+    sub {
+        my ($status, @data) = @_;
+        diag('------- getString');
+        cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
+        cmp_ok(int(@data), "==", 1, 'one returning data.');
         
-        ## timer_fire => sub {
-        ##     my ($kernel, $heap, $session) = @_[KERNEL, HEAP, SESSION];
-        ##     print STDERR (">> workerTest fired.\n");
-        ##     $worker->startJob($session->ID, 'on_report', $heap->{commands}->[$heap->{next_command_index}]);
-        ##     $heap->{next_command_index} = ($heap->{next_command_index} + 1) % int(@{$heap->{commands}});
-        ##     $kernel->delay('timer_fire', 30);
-        ## },
-        ## on_report => sub {
-        ##     my ($reported_objs, $input_obj) = @_[ARG0, ARG1];
-        ##     print  STDERR ">>>> REPORT Received <<<<\n";
-        ##     ## print  STDERR "  Input: $input_obj\n";
-        ##     printf STDERR ("  Output: num:%d\n  ", int(@$reported_objs));
-        ##     for (my $i = 0 ; $i < @$reported_objs ; $i++) {
-        ##         printf STDERR ("  Output index %d\n", $i);
-        ##         print STDERR (Dumper($reported_objs->[$i]));
-        ##     }
-        ##     ## print  STDERR (join("\n  ", @$reported_objs));
-        ##     ## print  STDERR "\n";
-        ## }
-    },
+        is($data[0], "initial_text", "return value from the method is ok.");
+        $sync_cv->end();
+    });
+
+$sync_cv->begin();
+$worker_obj->startJob(
+    {method => 'getContext', context => 'scalar'},
+    sub {
+        my ($status, @data) = @_;
+        diag('------- getContext in scalar');
+        cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
+        is($data[0], 'scalar', "data: scalar");
+        $sync_cv->end();
+    });
+
+$sync_cv->begin();
+$worker_obj->startJob(
+    {method => 'getContext', context => 'list'},
+    sub {
+        my ($status, @data) = @_;
+        diag('------- getContext in list');
+
+        cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: OK');
+        is($data[0], 'list', 'returned data: list');
+        $sync_cv->end();
+    });
+
+$sync_cv->begin();
+$worker_obj->startJob(
+    {method => 'disassemble'},
+    sub {
+        my ($status, @data) = @_;
+        diag('-------- diassemble');
+        cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
+        &checkDisassembled('initial_text', @data);
+        $sync_cv->end();
+    }
 );
 
-POE::Kernel->run();
+$sync_cv->recv();
+
+$sync_cv = AnyEvent->condvar;
+$worker_obj->getTargetObject()->setString('//');
+
+$sync_cv->begin();
+$worker_obj->startJob(
+    {method => 'cat', args => [qw(foo bar buzz)], context => 's'},
+    sub {
+        my ($status, @data) = @_;
+        diag('------- cat');
+        cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_OK, 'method status: ok');
+        is($data[0], 'foo//bar//buzz', 'returnd data: ok');
+        $sync_cv->end();
+    }
+);
+
+$sync_cv->begin();
+$worker_obj->startJob(
+    {method => 'not_exist', args => [1]},
+    sub {
+        my ($status, @data) = @_;
+        diag('------- not_exist');
+        cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_NO_METHOD, 'method status: no method');
+        like($data[0], qr|not_exist.*undefined.*BusyBird::Test::Object|, 'error message');
+        $sync_cv->end();
+    }
+);
+
+$sync_cv->begin();
+$worker_obj->startJob(
+    {method => 'do_not_call_me', context => 's'},
+    sub {
+        my ($status, @data) = @_;
+        diag('------- do_not_call_me');
+        cmp_ok($status, '==', BusyBird::Worker::Object::STATUS_METHOD_DIES, "method dies");
+        is($data[0], "I said do not call me!!!\n", "exception object is in data.");
+        $sync_cv->end();
+    }
+);
+
+$sync_cv->recv();
+done_testing();
+
