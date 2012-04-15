@@ -4,9 +4,9 @@ use strict;
 use warnings;
 
 use DateTime;
-use POE;
+## use POE;
 use BusyBird::Status;
-use BusyBird::CallStack;
+## use BusyBird::CallStack;
 use BusyBird::Log ('bblog');
 
 my $LOCAL_TZ = DateTime::TimeZone->new( name => 'local' );
@@ -43,20 +43,18 @@ sub _newStatus {
 }
 
 sub _getStatuses {
-    my ($self, $callstack, $ret_session, $ret_event, $count, $page) = @_;
-    $callstack = BusyBird::CallStack->newStack($callstack, $ret_session, $ret_event, count => $count, page => $page);
-
-    &bblog("Input::Test::_getStatus(ret_session => $ret_session, ret_event => $ret_event, count => $count, page => $page)");
-    &bblog($callstack->toString());
+    my ($self, $count, $page, $callback) = @_;
+    &bblog("Input::Test::_getStatuses(count => $count, page => $page)");
+    ## &bblog($callstack->toString());
 
     if($page > 0) {
-        $callstack->pop(undef);
+        $callback->();
         return;
     }
 
     $self->{fired_count}++;
     if($self->{fired_count} < $self->{new_interval}) {
-        $callstack->pop(undef);
+        $callback->();
         return;
     }
     $self->{fired_count} = 0;
@@ -66,9 +64,37 @@ sub _getStatuses {
     for(my $i = 0 ; $i < $self->{new_count} ; $i++) {
         push(@ret, $self->_newStatus($nowtime, $i));
     }
-
     &bblog(sprintf("Input::Test::_getStatus: %d statuses are reported.", int(@ret)));
-    $callstack->pop(\@ret);
+    ## $callstack->pop(\@ret);
+    $callback->(\@ret);
+
+    
+    ## my ($self, $callstack, $ret_session, $ret_event, $count, $page) = @_;
+    ## $callstack = BusyBird::CallStack->newStack($callstack, $ret_session, $ret_event, count => $count, page => $page);
+    ## 
+    ## &bblog("Input::Test::_getStatus(ret_session => $ret_session, ret_event => $ret_event, count => $count, page => $page)");
+    ## &bblog($callstack->toString());
+    ## 
+    ## if($page > 0) {
+    ##     $callstack->pop(undef);
+    ##     return;
+    ## }
+    ## 
+    ## $self->{fired_count}++;
+    ## if($self->{fired_count} < $self->{new_interval}) {
+    ##     $callstack->pop(undef);
+    ##     return;
+    ## }
+    ## $self->{fired_count} = 0;
+    ## my @ret = ();
+    ## my $nowtime = DateTime->now();
+    ## $nowtime->set_time_zone($LOCAL_TZ);
+    ## for(my $i = 0 ; $i < $self->{new_count} ; $i++) {
+    ##     push(@ret, $self->_newStatus($nowtime, $i));
+    ## }
+    ## 
+    ## &bblog(sprintf("Input::Test::_getStatus: %d statuses are reported.", int(@ret)));
+    ## $callstack->pop(\@ret);
 
     ### #### 
     ### my ($self, $count, $page) = @_;
