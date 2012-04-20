@@ -16,16 +16,19 @@ sub _setParams {
     $self->SUPER::_setParams($params_ref);
     $self->_setParam($params_ref, 'new_interval', 1);
     $self->_setParam($params_ref, 'new_count', 1);
-    $self->_setParam($params_ref, 'fired_count', 0);
+    $self->_setParam($params_ref, 'page_num', 1);
+    $self->{fired_count} = 0;
 }
 
 sub _newStatus {
-    my ($self, $nowtime, $index) = @_;
+    my ($self, $nowtime, $page, $index) = @_;
     my $status = BusyBird::Status->new();
+    my $timestr = $nowtime->strftime('%Y/%m/%d %H:%M:%S');
+    my $text = qq|{"time": "$timestr", "page": $page, "index": $index}|;
     $status->setDateTime($nowtime);
     $status->set(
-        id => 'Test' . $nowtime->epoch . "_$index",
-        text => 'Now ' . $nowtime->strftime('%Y/%m/%d %H:%M:%S') . ", part $index !!",
+        id => 'Test' . $nowtime->epoch . "_${page}_$index",
+        text => $text,
         in_reply_to_screen_name => '',
         'user/screen_name' => 'Test',
         'user/name' => 'Te st',
@@ -47,7 +50,7 @@ sub _getStatuses {
     &bblog("Input::Test::_getStatuses(count => $count, page => $page)");
     ## &bblog($callstack->toString());
 
-    if($page > 0) {
+    if($page >= $self->{page_num}) {
         $callback->();
         return;
     }
@@ -62,7 +65,7 @@ sub _getStatuses {
     my $nowtime = DateTime->now();
     $nowtime->set_time_zone($LOCAL_TZ);
     for(my $i = 0 ; $i < $self->{new_count} ; $i++) {
-        push(@ret, $self->_newStatus($nowtime, $i));
+        push(@ret, $self->_newStatus($nowtime, $page, $i));
     }
     &bblog(sprintf("Input::Test::_getStatus: %d statuses are reported.", int(@ret)));
     ## $callstack->pop(\@ret);
