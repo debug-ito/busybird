@@ -54,17 +54,18 @@ sub _setParams {
     $self->_setParam($params_ref, 'page_count', $DEFAULT_PAGE_COUNT);
     $self->_setParam($params_ref, 'page_max', $DEFAULT_PAGE_MAX);
     $self->_setParam($params_ref, 'no_timefile', 0);
-    $self->_setParam($params_ref, 'on_get_statuses', undef);
+    $self->{on_get_statuses} = [];
 }
 
 sub listenOnGetStatuses {
     my ($self, $callback) = @_;
-    $self->{on_get_statuses} = $callback;
+    push(@{$self->{on_get_statuses}}, $callback);
+        
 }
 
 sub _emitOnGetStatuses {
     my ($self, $statuses) = @_;
-    $self->{on_get_statuses}->($statuses) if defined($self->{on_get_statuses});
+    $_->($statuses) foreach @{$self->{on_get_statuses}};
 }
 
 ## sub _sessionStart {
