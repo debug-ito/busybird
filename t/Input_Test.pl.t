@@ -11,6 +11,7 @@ BEGIN {
     use_ok('JSON');
     use_ok('DateTime');
     use_ok('BusyBird::Status');
+    use_ok('BusyBird::Filter');
     use_ok('BusyBird::Input::Test');
 }
 
@@ -157,5 +158,65 @@ sync 10, sub {
     $trigger->(expect_fire => 0);
     diag("Set Input timestamp to undef");
 };
+
+diag("----- test for filtering");
+my $filter_executed_num = 0;
+sync 10, sub {
+    ($trigger, $input) = &createInput(
+        new_interval => 1, new_count => 2, page_num => 3, page_no_threshold_max => 2,
+    );
+    $input->getFilter->push(
+        sub {
+            my ($statuses, $cb) = @_;
+            my $tw; $tw = AnyEvent->timer(
+                after => 1,
+                cb => sub {
+                    undef $tw;
+                    $filter_executed_num++;
+                    foreach my $status (@$statuses) {
+                        is($status->get('user/screen_name'), 'Test', 'name is Test before the filter');
+                        $status->set('user/screen_name', 'hoge');
+                    }
+                    $cb->($statuses);
+                }
+            );
+        }
+    );
+    $input->getFilter->push(
+        sub {
+            my ($statuses, $cb) = @_;
+            my $new_array = [];
+            $filter_executed_num++;
+            foreach my $status (@$statuses) {
+                is($status->get('user/screen_name'), 'hoge', 'name is changed by a filter.');
+                $status->set('user/screen_name', 'Test');
+                push(@$new_array, $status);
+            }
+            $cb->($new_array);
+        }
+    );
+    $trigger->(expect_fire => 1);
+    $trigger->(expect_fire => 1);
+};
+cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
+
+$filter_executed_num = 0;
+diag("----- If filter deletes all statuses, on_get_statuses event does not occur.");
+sync 10, sub {
+    ($trigger, $input) = &createInput(
+        new_interval => 1, new_count => 3, page_num => 1,
+    );
+    $input->getFilter->push(
+        sub {
+            $filter_executed_num++;
+            $_[1]->([]);
+        },
+    );
+    $trigger->(expect_fire => 0);
+    $trigger->(expect_fire => 0);
+    $trigger->(expect_fire => 0);
+    $trigger->(expect_fire => 0);
+};
+cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
 
 done_testing();
