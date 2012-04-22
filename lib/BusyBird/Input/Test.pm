@@ -18,6 +18,7 @@ sub _setParams {
     $self->_setParam($params_ref, 'new_count', 1);
     $self->_setParam($params_ref, 'page_num', 1);
     $self->{fired_count} = -1;
+    $self->{timestamp} = undef;
 }
 
 sub _newStatus {
@@ -45,6 +46,11 @@ sub _newStatus {
     ##     'ReplyToName' => '');
 }
 
+sub setTimeStamp {
+    my ($self, $ts_datetime) = @_;
+    $self->{timestamp} = $ts_datetime;
+}
+
 sub getStatuses {
     my ($self, $threshold_epoch_time) = @_;
     $self->{fired_count} = ($self->{fired_count} + 1) % $self->{new_interval};
@@ -59,10 +65,10 @@ sub _getStatusesPage {
         return;
     }
     my @ret = ();
-    my $nowtime = DateTime->now();
-    $nowtime->set_time_zone($LOCAL_TZ);
+    my $timestamp = defined($self->{timestamp}) ? $self->{timestamp}->clone() : DateTime->now();
+    $timestamp->set_time_zone($LOCAL_TZ);
     for(my $i = 0 ; $i < $self->{new_count} ; $i++) {
-        push(@ret, $self->_newStatus($nowtime, $page, $i));
+        push(@ret, $self->_newStatus($timestamp, $page, $i));
     }
     ## $callstack->pop(\@ret);
     $callback->(\@ret);
