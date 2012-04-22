@@ -51,11 +51,11 @@ sub new {
 sub _setParams {
     my ($self, $params_ref) = @_;
     $self->_setParam($params_ref, 'name', undef, 1);
-    $self->_setParam($params_ref, 'last_status_epoch_time');
     $self->_setParam($params_ref, 'no_timefile', 0);
     $self->_setParam($params_ref, 'page_count', $DEFAULT_PAGE_COUNT);
     $self->_setParam($params_ref, 'page_max', $DEFAULT_PAGE_MAX);
     $self->_setParam($params_ref, 'page_no_threshold_max', $DEFAULT_PAGE_NO_THRESHOLD_MAX);
+    $self->{last_status_epoch_time} = undef;
     $self->{page_no_threshold_max} = $self->{page_max} if $self->{page_no_threshold_max} > $self->{page_max};
     $self->{on_get_statuses} = [];
 }
