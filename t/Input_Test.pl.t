@@ -14,19 +14,21 @@ BEGIN {
 }
 
 sub createInput {
-    my ($interval, $count, $page, $cv) = @_;
-    my $input = new_ok('BusyBird::Input::Test', [
-        name => 'test', no_timefile => 1, new_interval => $interval,
-        new_count => $count, page_num => $page,
-        page_max => 50,
-        page_no_threshold_max => 50,
-    ]);
+    my ($cv, %params_arg) = @_;
+    my %params = (
+        name => 'test', no_timefile => 1,
+        new_interval => 1, new_count => 1, page_num => 1,
+        %params_arg,
+    );
+    my $input = new_ok('BusyBird::Input::Test', [ %params ]);
+    my ($interval, $count, $page_num, $page_noth_max) =
+        @params{qw(new_interval new_count page_num page_no_threshold_max)};
     $input->listenOnGetStatuses(
         sub {
             my ($statuses) = @_;
-            diag("OnGetStatuses (interval => $interval, count => $count, page_num => $page)");
+            diag("OnGetStatuses (interval => $interval, count => $count, page_num => $page_num)");
             ok(defined($statuses));
-            cmp_ok(int(@$statuses), '==', $count * $page);
+            cmp_ok(int(@$statuses), '==', $count * $page_num);
             my $expect_index = 0;
             my $expect_page = 0;
             foreach my $status (@$statuses) {
@@ -48,7 +50,7 @@ sub createInput {
     my $fire_count = 0;
     my $trigger_func = sub {
         $fire_count++;
-        my $diag_str = "Trigger (interval => $interval, count => $count, page_num => $page)";
+        my $diag_str = "Trigger (interval => $interval, count => $count, page_num => $page_num)";
         if(($fire_count - 1) % $interval == 0) {
             $cv->begin();
             $diag_str .= ": begin";
@@ -76,8 +78,14 @@ my $tw; $tw = AnyEvent->timer(
     }
 );
 
-foreach my $param_set ([1, 1, 1], [1, 5, 1], [1, 2, 3], [3, 2, 1], [2, 2, 3]) {
-    my $trigger = &createInput(@$param_set, $cv);
+foreach my $param_set (
+    {new_interval => 1, new_count => 1, page_num => 1, page_no_threshold_max => 50},
+    {new_interval => 1, new_count => 5, page_num => 1, page_no_threshold_max => 50},
+    {new_interval => 1, new_count => 2, page_num => 3, page_no_threshold_max => 50},
+    {new_interval => 3, new_count => 2, page_num => 1, page_no_threshold_max => 50},
+    {new_interval => 2, new_count => 2, page_num => 3, page_no_threshold_max => 50},
+) {
+    my $trigger = &createInput($cv, %$param_set);
     $trigger->() foreach 1..5;
 }
 
