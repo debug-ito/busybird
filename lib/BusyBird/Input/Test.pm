@@ -17,7 +17,7 @@ sub _setParams {
     $self->_setParam($params_ref, 'new_interval', 1);
     $self->_setParam($params_ref, 'new_count', 1);
     $self->_setParam($params_ref, 'page_num', 1);
-    $self->{fired_count} = 0;
+    $self->{fired_count} = -1;
 }
 
 sub _newStatus {
@@ -45,29 +45,25 @@ sub _newStatus {
     ##     'ReplyToName' => '');
 }
 
+sub getStatuses {
+    my ($self, $threshold_epoch_time) = @_;
+    $self->{fired_count} = ($self->{fired_count} + 1) % $self->{new_interval};
+    return $self->SUPER::getStatuses($threshold_epoch_time);
+}
+
 sub _getStatusesPage {
     my ($self, $count, $page, $callback) = @_;
-    &bblog("Input::Test::_getStatusesPage(count => $count, page => $page)");
     ## &bblog($callstack->toString());
-
-    if($page >= $self->{page_num}) {
+    if($page >= $self->{page_num} || $self->{fired_count} != 0) {
         $callback->();
         return;
     }
-
-    $self->{fired_count}++;
-    if($self->{fired_count} < $self->{new_interval}) {
-        $callback->();
-        return;
-    }
-    $self->{fired_count} = 0;
     my @ret = ();
     my $nowtime = DateTime->now();
     $nowtime->set_time_zone($LOCAL_TZ);
     for(my $i = 0 ; $i < $self->{new_count} ; $i++) {
         push(@ret, $self->_newStatus($nowtime, $page, $i));
     }
-    &bblog(sprintf("Input::Test::_getStatus: %d statuses are reported.", int(@ret)));
     ## $callstack->pop(\@ret);
     $callback->(\@ret);
 

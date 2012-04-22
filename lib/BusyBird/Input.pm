@@ -14,6 +14,7 @@ use BusyBird::Log ('bblog');
 
 my $DEFAULT_PAGE_COUNT = 100;
 my $DEFAULT_PAGE_MAX   = 10;
+my $DEFAULT_PAGE_NO_THRESHOLD_MAX = 1;
 my $THRESHOLD_OFFSET_SEC = 0;
 
 sub setThresholdOffset {
@@ -51,9 +52,11 @@ sub _setParams {
     my ($self, $params_ref) = @_;
     $self->_setParam($params_ref, 'name', undef, 1);
     $self->_setParam($params_ref, 'last_status_epoch_time');
+    $self->_setParam($params_ref, 'no_timefile', 0);
     $self->_setParam($params_ref, 'page_count', $DEFAULT_PAGE_COUNT);
     $self->_setParam($params_ref, 'page_max', $DEFAULT_PAGE_MAX);
-    $self->_setParam($params_ref, 'no_timefile', 0);
+    $self->_setParam($params_ref, 'page_no_threshold_max', $DEFAULT_PAGE_NO_THRESHOLD_MAX);
+    $self->{page_no_threshold_max} = $self->{page_max} if $self->{page_no_threshold_max} > $self->{page_max};
     $self->{on_get_statuses} = [];
 }
 
@@ -126,6 +129,7 @@ sub getStatuses {
     my $ret_array = [];
     $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
     my $callback;
+    my $load_page_max = defined($threshold_epoch_time) ? $self->{page_max} : $self->{page_no_threshold_max};
     $callback = sub {
         my ($statuses) = @_;
         &bblog("Input::_sessionOnGetStatuses");
@@ -149,7 +153,7 @@ sub getStatuses {
             }
         }
         $page++;
-        if($is_complete || !defined($threshold_epoch_time) || $page == $self->{page_max}) {
+        if($is_complete || $page == $load_page_max) {
             if($page == $self->{page_max} && !$is_complete && defined($threshold_epoch_time)) {
                 &bblog("WARNING: page has reached the max value of ".$self->{page_max});
             }
