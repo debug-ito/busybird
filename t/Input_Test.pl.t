@@ -9,12 +9,19 @@ BEGIN {
     use_ok('AnyEvent');
     use_ok('AnyEvent::Strict');
     use_ok('JSON');
+    use_ok('DateTime');
     use_ok('BusyBird::Status');
     use_ok('BusyBird::Input::Test');
 }
 
+my $TRIGGER_DELAY = 2;
+my $total_actual_fire = 0;
+my $total_expect_fire = 0;
+my $gcv;
+
+
 sub createInput {
-    my ($cv, %params_arg) = @_;
+    my (%params_arg) = @_;
     my %params = (
         name => 'test', no_timefile => 1,
         new_interval => 1, new_count => 1, page_num => 1,
@@ -27,6 +34,7 @@ sub createInput {
     $input->listenOnGetStatuses(
         sub {
             my ($statuses) = @_;
+            $total_actual_fire++;
             diag("OnGetStatuses (interval => $interval, count => $count, page_num => $page_num)");
             my $expect_page_num = ($fire_count == 0 and $page_noth_max < $page_num) ? $page_noth_max : $page_num;
             ok(defined($statuses));
@@ -47,54 +55,107 @@ sub createInput {
                 }
             }
             $fire_count++;
-            $cv->end();
+            $gcv->end();
         }
     );
     my $trigger_func = sub {
         my (%param) = @_;
         my $diag_str = "Trigger (interval => $interval, count => $count, page_num => $page_num)";
         if($param{expect_fire}) {
-            $cv->begin();
+            $gcv->begin();
+            $total_expect_fire++;
             $diag_str .= ": expect_fire";
         }
         diag($diag_str);
+        $gcv->begin();
         my $timer; $timer = AnyEvent->timer(
-            after => 1,
+            after => $TRIGGER_DELAY,
             cb => sub {
                 undef $timer;
+                $gcv->end();
                 $input->getStatuses();
             },
         );
     };
-    return $trigger_func;
+    return wantarray ? ($trigger_func, $input) : $trigger_func;
 }
 
-my $cv = AnyEvent->condvar;
-
-my $tw; $tw = AnyEvent->timer(
-    after => 10,
-    cb => sub {
-        undef $tw;
-        fail('Takes too long time. Abort.');
-        $cv->send();
-    }
-);
-
-foreach my $param_set (
-    {new_interval => 1, new_count => 1, page_num => 1, page_no_threshold_max => 50},
-    {new_interval => 1, new_count => 5, page_num => 1, page_no_threshold_max => 50},
-    {new_interval => 1, new_count => 2, page_num => 3, page_no_threshold_max => 50},
-    {new_interval => 3, new_count => 2, page_num => 1, page_no_threshold_max => 50},
-    {new_interval => 2, new_count => 2, page_num => 3, page_no_threshold_max => 50},
-    {new_interval => 2, new_count => 1, page_num => 5, page_no_threshold_max => 1},
-) {
-    my $trigger = &createInput($cv, %$param_set);
-    foreach my $trigger_count (0 .. 4) {
-        $trigger->(expect_fire => ($trigger_count % $param_set->{new_interval} == 0));
-    }
+sub sync ($&) {
+    my ($timeout, $coderef) = @_;
+    $gcv = AnyEvent->condvar;
+    $gcv->begin();
+    my $tw; $tw = AnyEvent->timer(
+        after => $timeout,
+        cb => sub {
+            undef $tw;
+            fail('Takes too long time. Abort.');
+            $gcv->send();
+        }
+    );
+    $coderef->();
+    $gcv->end();
+    $gcv->recv();
+    undef $tw;
+    cmp_ok($total_actual_fire, '==', $total_expect_fire, "expected $total_expect_fire fires.");
 }
 
-$cv->recv();
-undef $tw;
+
+diag("----- test for number of statuses loaded.");
+sync 10, sub {
+    foreach my $param_set (
+        {new_interval => 1, new_count => 1, page_num => 1, page_no_threshold_max => 50},
+        {new_interval => 1, new_count => 5, page_num => 1, page_no_threshold_max => 50},
+        {new_interval => 1, new_count => 2, page_num => 3, page_no_threshold_max => 50},
+        {new_interval => 3, new_count => 2, page_num => 1, page_no_threshold_max => 50},
+        {new_interval => 2, new_count => 2, page_num => 3, page_no_threshold_max => 50},
+        {new_interval => 2, new_count => 1, page_num => 5, page_no_threshold_max => 1},
+    ) {
+        my $trigger = &createInput(%$param_set);
+        foreach my $trigger_count (0 .. 4) {
+            $trigger->(expect_fire => ($trigger_count % $param_set->{new_interval} == 0));
+        }
+    }
+};
+
+
+diag("----- test for timestamp and threshold management.");
+my ($trigger, $input);
+my $old_time = DateTime->now() - DateTime::Duration->new(years => 3);
+sync 10, sub {
+    ($trigger, $input) = &createInput(
+        new_interval => 2, new_count => 3, page_num => 3, page_no_threshold_max => 2,
+    );
+    $input->setTimeStamp($old_time);
+    $trigger->(expect_fire => 1);
+    $trigger->(expect_fire => 0);
+    $trigger->(expect_fire => 1);
+    $trigger->(expect_fire => 0);
+    diag("Initiate Input with old_time");
+};
+
+sync 10, sub {
+    $input->setTimeStamp(DateTime->now());
+    $trigger->(expect_fire => 1);
+    $trigger->(expect_fire => 0);
+    $trigger->(expect_fire => 1);
+    $trigger->(expect_fire => 0);
+    $trigger->(expect_fire => 1);
+    diag("Set Input timestamp to the current time.");
+};
+
+sync 10, sub {
+    $input->setTimeStamp($old_time);
+    $trigger->(expect_fire => 0) foreach 1..5;
+    diag("Set Input timestamp to the old_time");
+};
+
+sync 10, sub {
+    $input->setTimeStamp(undef);
+    $trigger->(expect_fire => 1);
+    $trigger->(expect_fire => 0);
+    $trigger->(expect_fire => 1);
+    $trigger->(expect_fire => 0);
+    diag("Set Input timestamp to undef");
+};
 
 done_testing();
