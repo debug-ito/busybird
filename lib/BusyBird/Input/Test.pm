@@ -45,9 +45,9 @@ sub _newStatus {
     ##     'ReplyToName' => '');
 }
 
-sub _getStatuses {
+sub _getStatusesPage {
     my ($self, $count, $page, $callback) = @_;
-    &bblog("Input::Test::_getStatuses(count => $count, page => $page)");
+    &bblog("Input::Test::_getStatusesPage(count => $count, page => $page)");
     ## &bblog($callstack->toString());
 
     if($page >= $self->{page_num}) {

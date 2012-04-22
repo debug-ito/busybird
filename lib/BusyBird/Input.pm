@@ -54,17 +54,17 @@ sub _setParams {
     $self->_setParam($params_ref, 'page_count', $DEFAULT_PAGE_COUNT);
     $self->_setParam($params_ref, 'page_max', $DEFAULT_PAGE_MAX);
     $self->_setParam($params_ref, 'no_timefile', 0);
-    $self->_setParam($params_ref, 'on_new_statuses', undef);
+    $self->_setParam($params_ref, 'on_get_statuses', undef);
 }
 
-sub listenOnNewStatuses {
+sub listenOnGetStatuses {
     my ($self, $callback) = @_;
-    $self->{on_new_statuses} = $callback;
+    $self->{on_get_statuses} = $callback;
 }
 
-sub _emitOnNewStatuses {
+sub _emitOnGetStatuses {
     my ($self, $statuses) = @_;
-    $self->{on_new_statuses}->($statuses) if defined($self->{on_new_statuses});
+    $self->{on_get_statuses}->($statuses) if defined($self->{on_get_statuses});
 }
 
 ## sub _sessionStart {
@@ -73,7 +73,7 @@ sub _emitOnNewStatuses {
 ##     $kernel->alias_set($self->{session});
 ## }
 
-sub _getStatuses {
+sub _getStatusesPage {
     my ($self, $count, $page, $callback) = @_;
     die sprintf("%s does not support polling.", ref($self));
     
@@ -119,7 +119,7 @@ sub _saveTimeFile {
     $file->close();
 }
 
-sub getNewStatuses {
+sub getStatuses {
     my ($self, $threshold_epoch_time) = @_;
     my $page = 0;
     my $ret_array = [];
@@ -153,12 +153,12 @@ sub getNewStatuses {
                 &bblog("WARNING: page has reached the max value of ".$self->{page_max});
             }
             $self->_saveTimeFile();
-            $self->_emitOnNewStatuses($ret_array) if @$ret_array;
+            $self->_emitOnGetStatuses($ret_array) if @$ret_array;
         }else {
-            $self->_getStatuses($self->{page_count}, $page, $callback);
+            $self->_getStatusesPage($self->{page_count}, $page, $callback);
         }        
     };
-    $self->_getStatuses($self->{page_count}, $page, $callback);
+    $self->_getStatusesPage($self->{page_count}, $page, $callback);
 
     ## my ($self, $callstack, $callback_session, $callback_event, $threshold_epoch_time) = @_;
     ## my $page = 0;

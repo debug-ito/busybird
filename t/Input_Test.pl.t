@@ -18,7 +18,7 @@ sub createInput {
         name => 'test', no_timefile => 1, new_interval => $interval,
         new_count => $count, page_num => $page
     ]);
-    $input->listenOnNewStatuses(
+    $input->listenOnGetStatuses(
         sub {
             my ($statuses) = @_;
             ok(defined($statuses));
@@ -36,7 +36,7 @@ sub createInput {
 sub triggerGet {
     my ($input, $cv) = @_;
     $cv->begin();
-    $input->getNewStatuses();
+    $input->getStatuses();
 }
 
 my $cv = AnyEvent->condvar;
