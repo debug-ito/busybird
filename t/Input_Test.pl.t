@@ -50,13 +50,12 @@ sub createInput {
             $cv->end();
         }
     );
-    my $trigger_count = 0;
     my $trigger_func = sub {
-        $trigger_count++;
+        my (%param) = @_;
         my $diag_str = "Trigger (interval => $interval, count => $count, page_num => $page_num)";
-        if(($trigger_count - 1) % $interval == 0) {
+        if($param{expect_fire}) {
             $cv->begin();
-            $diag_str .= ": begin";
+            $diag_str .= ": expect_fire";
         }
         diag($diag_str);
         my $timer; $timer = AnyEvent->timer(
@@ -90,7 +89,9 @@ foreach my $param_set (
     {new_interval => 2, new_count => 1, page_num => 5, page_no_threshold_max => 1},
 ) {
     my $trigger = &createInput($cv, %$param_set);
-    $trigger->() foreach 1..5;
+    foreach my $trigger_count (0 .. 4) {
+        $trigger->(expect_fire => ($trigger_count % $param_set->{new_interval} == 0));
+    }
 }
 
 $cv->recv();
