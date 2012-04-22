@@ -11,6 +11,7 @@ use IO::File;
 
 use AnyEvent;
 use BusyBird::Log ('bblog');
+use BusyBird::Filter;
 
 my $DEFAULT_PAGE_COUNT = 100;
 my $DEFAULT_PAGE_MAX   = 10;
@@ -58,6 +59,12 @@ sub _setParams {
     $self->{last_status_epoch_time} = undef;
     $self->{page_no_threshold_max} = $self->{page_max} if $self->{page_no_threshold_max} > $self->{page_max};
     $self->{on_get_statuses} = [];
+    $self->{filter} = BusyBird::Filter->new();
+}
+
+sub getFilter {
+    my $self = shift;
+    return $self->{filter};
 }
 
 sub listenOnGetStatuses {
@@ -68,7 +75,15 @@ sub listenOnGetStatuses {
 
 sub _emitOnGetStatuses {
     my ($self, $statuses) = @_;
-    $_->($statuses) foreach @{$self->{on_get_statuses}};
+    $self->getFilter->execute(
+        $statuses,
+        sub {
+            my ($filtered_statuses) = @_;
+            if(defined($filtered_statuses) and @$filtered_statuses) {
+                $_->($filtered_statuses) foreach @{$self->{on_get_statuses}};
+            }
+        },
+    );
 }
 
 ## sub _sessionStart {
@@ -158,7 +173,9 @@ sub getStatuses {
                 &bblog("WARNING: page has reached the max value of ".$self->{page_max});
             }
             $self->_saveTimeFile();
-            $self->_emitOnGetStatuses($ret_array) if @$ret_array;
+            if(@$ret_array) {
+                $self->_emitOnGetStatuses($ret_array);
+            }
         }else {
             $self->_getStatusesPage($self->{page_count}, $page, $callback);
         }        
