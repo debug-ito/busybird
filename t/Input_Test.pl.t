@@ -15,7 +15,7 @@ BEGIN {
     use_ok('BusyBird::Input::Test');
 }
 
-my $TRIGGER_DELAY = 2;
+my $TRIGGER_DELAY = 1;
 my $total_actual_fire = 0;
 my $total_expect_fire = 0;
 my $gcv;
@@ -218,5 +218,25 @@ sync 10, sub {
     $trigger->(expect_fire => 0);
 };
 cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
+
+{
+    my $trigger_num = 5;
+    my $second_event_count = 0;
+    diag("----- test for multiple listener");
+    sync 10, sub {
+        ($trigger, $input) = &createInput(
+            new_interval => 1, new_count => 2, page_num => 2, page_no_threshold_max => 5,
+        );
+        $input->listenOnGetStatuses(
+            sub {
+                my ($statuses) = @_;
+                cmp_ok(int(@$statuses), '==', 4);
+                $second_event_count++;
+            }
+        );
+        $trigger->(expect_fire => 1) foreach 1..$trigger_num;
+    };
+    cmp_ok($second_event_count, '==', $trigger_num, 'second listener is executed properly');
+}
 
 done_testing();
