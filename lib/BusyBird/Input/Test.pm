@@ -8,6 +8,8 @@ use DateTime;
 use BusyBird::Status;
 ## use BusyBird::CallStack;
 use BusyBird::Log ('bblog');
+use AnyEvent;
+
 
 my $LOCAL_TZ = DateTime::TimeZone->new( name => 'local' );
 
@@ -17,6 +19,7 @@ sub _setParams {
     $self->_setParam($params_ref, 'new_interval', 1);
     $self->_setParam($params_ref, 'new_count', 1);
     $self->_setParam($params_ref, 'page_num', 1);
+    $self->_setParam($params_ref, 'load_delay', 0.1);
     $self->{fired_count} = -1;
     $self->{timestamp} = undef;
 }
@@ -60,18 +63,26 @@ sub _getStatusesTriggerTop {
 sub _getStatusesPage {
     my ($self, $count, $page, $callback) = @_;
     ## &bblog($callstack->toString());
-    if($page >= $self->{page_num} || $self->{fired_count} != 0) {
-        $callback->();
-        return;
-    }
-    my @ret = ();
-    my $timestamp = defined($self->{timestamp}) ? $self->{timestamp}->clone() : DateTime->now();
-    $timestamp->set_time_zone($LOCAL_TZ);
-    for(my $i = 0 ; $i < $self->{new_count} ; $i++) {
-        push(@ret, $self->_newStatus($timestamp, $page, $i));
-    }
-    ## $callstack->pop(\@ret);
-    $callback->(\@ret);
+    my $tw; $tw = AnyEvent->timer(
+        after => $self->{load_delay},
+        cb => sub {
+            undef $tw;
+            if($page >= $self->{page_num} || $self->{fired_count} != 0) {
+                $callback->();
+                return;
+            }
+            my @ret = ();
+            my $timestamp = defined($self->{timestamp}) ? $self->{timestamp}->clone() : DateTime->now();
+            $timestamp->set_time_zone($LOCAL_TZ);
+            for(my $i = 0 ; $i < $self->{new_count} ; $i++) {
+                push(@ret, $self->_newStatus($timestamp, $page, $i));
+            }
+            ## $callstack->pop(\@ret);
+            $callback->(\@ret);
+        },
+    );
+    
+
 
     
     ## my ($self, $callstack, $ret_session, $ret_event, $count, $page) = @_;
