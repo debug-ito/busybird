@@ -32,6 +32,7 @@ sub toString {
 }
 
 package BusyBird::HTTPD::PathMatcher::String;
+use base ('BusyBird::HTTPD::PathMatcher');
 use strict;
 use warnings;
 
@@ -42,7 +43,8 @@ sub new {
 
 sub match {
     my ($self, $path) = @_;
-    if($$self cmp $path) {
+    return () if !defined($path);
+    if($$self eq $path) {
         return wantarray ? ($path) : $path;
     }else {
         return ();
@@ -54,6 +56,7 @@ sub toString {
 }
 
 package BusyBird::HTTPD::PathMatcher::Hash;
+use base ('BusyBird::HTTPD::PathMatcher');
 use strict;
 use warnings;
 
@@ -64,9 +67,10 @@ sub new {
 
 sub match {
     my ($self, $path) = @_;
+    return () if !defined($path);
     foreach my $key (keys %$self) {
         my $val = $self->{$key};
-        if($val cmp $path) {
+        if($val eq $path) {
             my @ret = ($path, $key);
             return wantarray ? @ret : $ret[0];
         }
@@ -76,10 +80,11 @@ sub match {
 
 sub toString {
     my ($self) = @_;
-    return sprintf("%s", %$self);
+    return join(',', values %$self);
 }
 
 package BusyBird::HTTPD::PathMatcher::Regexp;
+use base ('BusyBird::HTTPD::PathMatcher');
 use strict;
 use warnings;
 
@@ -105,6 +110,7 @@ sub toString {
 
 
 package BusyBird::HTTPD::PathMatcher::Object;
+use base ('BusyBird::HTTPD::PathMatcher');
 use strict;
 use warnings;
 
