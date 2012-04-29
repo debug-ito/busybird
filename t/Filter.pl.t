@@ -21,11 +21,30 @@ sub checkFilter {
 
 sub filterPlus {
     my $add_amount = shift;
-    return sub { $_ += $add_amount foreach @{$_[0]}; $_[1]->($_[0]) };
+    return sub {
+        my ($statuses, $cb) = @_;
+        $_ += $add_amount foreach @$statuses;
+        my $tw; $tw = AnyEvent->timer(
+            after => 0.1,
+            cb => sub {
+                undef $tw;
+                $cb->($statuses);
+            }
+        );
+    };
 }
 
 sub filterReverse {
-    return sub { $_[1]->( [ reverse(@{$_[0]}) ] ) };
+    return sub {
+        my ($statuses, $cb) = @_;
+        my $tw; $tw = AnyEvent->timer(
+            after => 0.1,
+            cb => sub {
+                undef $tw;
+                $cb->( [reverse(@$statuses)] );
+            }
+        );
+    };
 }
 
 sub filterSleepPush {
