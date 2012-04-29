@@ -16,6 +16,7 @@ use BusyBird::Filter;
 my $DEFAULT_PAGE_COUNT = 100;
 my $DEFAULT_PAGE_MAX   = 10;
 my $DEFAULT_PAGE_NO_THRESHOLD_MAX = 1;
+my $DEFAULT_PAGE_NEXT_DELAY = 0.2;
 my $THRESHOLD_OFFSET_SEC = 0;
 
 sub setThresholdOffset {
@@ -56,10 +57,12 @@ sub _setParams {
     $self->_setParam($params_ref, 'page_count', $DEFAULT_PAGE_COUNT);
     $self->_setParam($params_ref, 'page_max', $DEFAULT_PAGE_MAX);
     $self->_setParam($params_ref, 'page_no_threshold_max', $DEFAULT_PAGE_NO_THRESHOLD_MAX);
+    $self->_setParam($params_ref, 'page_next_delay', $DEFAULT_PAGE_NEXT_DELAY);
     $self->{last_status_epoch_time} = undef;
     $self->{page_no_threshold_max} = $self->{page_max} if $self->{page_no_threshold_max} > $self->{page_max};
     $self->{on_get_statuses} = [];
     $self->{filter} = BusyBird::Filter->new();
+    $self->{trigger_queue} = [];
 }
 
 sub getFilter {
@@ -82,6 +85,7 @@ sub _emitOnGetStatuses {
             if(defined($filtered_statuses) and @$filtered_statuses) {
                 $_->($filtered_statuses) foreach @{$self->{on_get_statuses}};
             }
+            $self->_getStatusesTriggerDone();
         },
     );
 }
@@ -140,6 +144,35 @@ sub _saveTimeFile {
 
 sub getStatuses {
     my ($self, $threshold_epoch_time) = @_;
+    push(@{$self->{trigger_queue}}, [$threshold_epoch_time]);
+    if(@{$self->{trigger_queue}} > 1) {
+        return;
+    }
+    $self->_getStatusesTriggerTop();
+}
+
+sub _getStatusesTriggerDone {
+    my ($self) = @_;
+    return if !@{$self->{trigger_queue}};
+    
+    shift(@{$self->{trigger_queue}});
+    if(@{$self->{trigger_queue}}) {
+        my $tw; $tw = AnyEvent->timer(
+            after => $self->{page_next_delay},
+            cb => sub {
+                undef $tw;
+                $self->_getStatusesTriggerTop();
+            }
+        );
+    }
+}
+
+sub _getStatusesTriggerTop {
+    my ($self) = @_;
+    if(!@{$self->{trigger_queue}}) {
+        die "Input::_getStatusesTriggerTop: trigger_queue is empty.";
+    }
+    my ($threshold_epoch_time) = @{$self->{trigger_queue}->[0]};
     my $page = 0;
     my $ret_array = [];
     $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
@@ -175,9 +208,17 @@ sub getStatuses {
             $self->_saveTimeFile();
             if(@$ret_array) {
                 $self->_emitOnGetStatuses($ret_array);
+            }else {
+                $self->_getStatusesTriggerDone();
             }
         }else {
-            $self->_getStatusesPage($self->{page_count}, $page, $callback);
+            my $tw; $tw = AnyEvent->timer(
+                after => $self->{page_next_delay},
+                cb => sub {
+                    undef $tw;
+                    $self->_getStatusesPage($self->{page_count}, $page, $callback);
+                },
+            );
         }        
     };
     $self->_getStatusesPage($self->{page_count}, $page, $callback);

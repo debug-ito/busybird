@@ -51,10 +51,10 @@ sub setTimeStamp {
     $self->{timestamp} = $ts_datetime;
 }
 
-sub getStatuses {
-    my ($self, $threshold_epoch_time) = @_;
+sub _getStatusesTriggerTop {
+    my ($self) = @_;
     $self->{fired_count} = ($self->{fired_count} + 1) % $self->{new_interval};
-    return $self->SUPER::getStatuses($threshold_epoch_time);
+    return $self->SUPER::_getStatusesTriggerTop();
 }
 
 sub _getStatusesPage {
