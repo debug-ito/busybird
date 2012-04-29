@@ -25,7 +25,7 @@ sub createInput {
     my (%params_arg) = @_;
     my %params = (
         name => 'test', no_timefile => 1,
-        new_interval => 1, new_count => 1, page_num => 1,
+        new_interval => 1, new_count => 1, page_num => 1, page_next_delay => 0.5,
         %params_arg,
     );
     my $input = new_ok('BusyBird::Input::Test', [ %params ]);
@@ -100,9 +100,8 @@ sub sync ($&) {
     cmp_ok($total_actual_fire, '==', $total_expect_fire, "expected $total_expect_fire fires.");
 }
 
-
-diag("----- test for number of statuses loaded.");
-sync 10, sub {
+sync 20, sub {
+    diag("----- test for number of statuses loaded.");
     foreach my $param_set (
         {new_interval => 1, new_count => 1, page_num => 1, page_no_threshold_max => 50},
         {new_interval => 1, new_count => 5, page_num => 1, page_no_threshold_max => 50},
@@ -122,7 +121,7 @@ sync 10, sub {
 diag("----- test for timestamp and threshold management.");
 my ($trigger, $input);
 my $old_time = DateTime->now() - DateTime::Duration->new(years => 3);
-sync 10, sub {
+sync 20, sub {
     ($trigger, $input) = &createInput(
         new_interval => 2, new_count => 3, page_num => 3, page_no_threshold_max => 2,
     );
@@ -134,7 +133,7 @@ sync 10, sub {
     diag("Initiate Input with old_time");
 };
 
-sync 10, sub {
+sync 20, sub {
     $input->setTimeStamp(DateTime->now());
     $trigger->(expect_fire => 1);
     $trigger->(expect_fire => 0);
@@ -144,13 +143,13 @@ sync 10, sub {
     diag("Set Input timestamp to the current time.");
 };
 
-sync 10, sub {
+sync 20, sub {
     $input->setTimeStamp($old_time);
     $trigger->(expect_fire => 0) foreach 1..5;
     diag("Set Input timestamp to the old_time");
 };
 
-sync 10, sub {
+sync 20, sub {
     $input->setTimeStamp(undef);
     $trigger->(expect_fire => 1);
     $trigger->(expect_fire => 0);
@@ -161,7 +160,7 @@ sync 10, sub {
 
 diag("----- test for filtering");
 my $filter_executed_num = 0;
-sync 10, sub {
+sync 20, sub {
     ($trigger, $input) = &createInput(
         new_interval => 1, new_count => 2, page_num => 3, page_no_threshold_max => 2,
     );
@@ -202,7 +201,7 @@ cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
 
 $filter_executed_num = 0;
 diag("----- If filter deletes all statuses, on_get_statuses event does not occur.");
-sync 10, sub {
+sync 20, sub {
     ($trigger, $input) = &createInput(
         new_interval => 1, new_count => 3, page_num => 1,
     );
@@ -210,20 +209,21 @@ sync 10, sub {
         sub {
             $filter_executed_num++;
             $_[1]->([]);
+            $gcv->end();
         },
     );
-    $trigger->(expect_fire => 0);
-    $trigger->(expect_fire => 0);
-    $trigger->(expect_fire => 0);
-    $trigger->(expect_fire => 0);
+    foreach (1..4) {
+        $gcv->begin();
+        $trigger->(expect_fire => 0);
+    }
 };
 cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
 
 {
-    my $trigger_num = 5;
+    my $trigger_num = 3;
     my $second_event_count = 0;
     diag("----- test for multiple listener");
-    sync 10, sub {
+    sync 20, sub {
         ($trigger, $input) = &createInput(
             new_interval => 1, new_count => 2, page_num => 2, page_no_threshold_max => 5,
         );
