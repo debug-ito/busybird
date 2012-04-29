@@ -82,9 +82,11 @@ sub _emitOnGetStatuses {
         $statuses,
         sub {
             my ($filtered_statuses) = @_;
-            if(defined($filtered_statuses) and @$filtered_statuses) {
-                $_->($filtered_statuses) foreach @{$self->{on_get_statuses}};
+            if(!defined($filtered_statuses)) {
+                &bblog('Input::_emitOnGetStatuses: filter output is undef. Use [] instead.');
+                $filtered_statuses = [];
             }
+            $_->($filtered_statuses) foreach @{$self->{on_get_statuses}};
             $self->_getStatusesTriggerDone();
         },
     );
@@ -206,11 +208,7 @@ sub _getStatusesTriggerTop {
                 &bblog("WARNING: page has reached the max value of ".$self->{page_max});
             }
             $self->_saveTimeFile();
-            if(@$ret_array) {
-                $self->_emitOnGetStatuses($ret_array);
-            }else {
-                $self->_getStatusesTriggerDone();
-            }
+            $self->_emitOnGetStatuses($ret_array);
         }else {
             my $tw; $tw = AnyEvent->timer(
                 after => $self->{page_next_delay},

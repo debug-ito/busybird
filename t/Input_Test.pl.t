@@ -25,21 +25,27 @@ sub createInput {
     my (%params_arg) = @_;
     my %params = (
         name => 'test', no_timefile => 1,
-        new_interval => 1, new_count => 1, page_num => 1, page_next_delay => 0.5,
+        new_interval => 1, new_count => 1, page_num => 1,
+        page_next_delay => 0.5, load_delay => 0.2,
         %params_arg,
     );
     my $input = new_ok('BusyBird::Input::Test', [ %params ]);
-    my ($interval, $count, $page_num, $page_noth_max) =
-        @params{qw(new_interval new_count page_num page_no_threshold_max)};
-    my $fire_count = 0;
+    ## my ($interval, $count, $page_num, $page_noth_max) =
+    ##     @params{qw(new_interval new_count page_num page_no_threshold_max)};
+    ## my $fire_count = 0;
+    my @expect_queue = ();
     $input->listenOnGetStatuses(
         sub {
             my ($statuses) = @_;
             $total_actual_fire++;
-            diag("OnGetStatuses (interval => $interval, count => $count, page_num => $page_num)");
-            my $expect_page_num = ($fire_count == 0 and $page_noth_max < $page_num) ? $page_noth_max : $page_num;
+            diag(sprintf("OnGetStatuses (interval => %s, count => %s, page_num => %s)",
+                         @params{qw(new_interval new_count page_num)}));
+            cmp_ok(int(@expect_queue), '>', 0, 'there is an expect_queue entry');
+            my $expect_entry = shift(@expect_queue);
+            ## my $expect_page_num = ($fire_count == 0 and $page_noth_max < $page_num) ? $page_noth_max : $page_num;
+            my ($expect_count, $expect_page_num) = @$expect_entry{'count', 'page_num'};
             ok(defined($statuses));
-            cmp_ok(int(@$statuses), '==', $count * $expect_page_num);
+            cmp_ok(int(@$statuses), '==', $expect_count * $expect_page_num);
             my $expect_index = 0;
             my $expect_page = 0;
             foreach my $status (@$statuses) {
@@ -48,32 +54,30 @@ sub createInput {
                 my $text_obj = decode_json($status->get('text'));
                 cmp_ok($text_obj->{index}, '==', $expect_index, "index == $expect_index");
                 cmp_ok($text_obj->{page}, '==', $expect_page, "page == $expect_page");
-                if($expect_index == $count - 1) {
+                if($expect_index == $expect_count - 1) {
                     $expect_index = 0;
                     $expect_page++;
                 }else {
                     $expect_index++;
                 }
             }
-            $fire_count++;
+            ## $fire_count++;
             $gcv->end();
         }
     );
     my $trigger_func = sub {
-        my (%param) = @_;
-        my $diag_str = "Trigger (interval => $interval, count => $count, page_num => $page_num)";
-        if($param{expect_fire}) {
-            $gcv->begin();
-            $total_expect_fire++;
-            $diag_str .= ": expect_fire";
-        }
-        diag($diag_str);
-        $gcv->begin();
+        my (%trigger_param) = @_;
+        diag(sprintf("Trigger (interval => %s, count => %s, page_num => %s)",
+                 @params{qw(new_interval new_count page_num)}));
+        $gcv->begin(); ## For OnGetStatuses event
+        $total_expect_fire++;
+        $gcv->begin(); ## For the timer below
         my $timer; $timer = AnyEvent->timer(
             after => $TRIGGER_DELAY,
             cb => sub {
                 undef $timer;
                 $gcv->end();
+                push(@expect_queue, {count => $trigger_param{expect_count}, page_num => $trigger_param{expect_page_num}});
                 $input->getStatuses();
             },
         );
@@ -112,7 +116,16 @@ sync 20, sub {
     ) {
         my $trigger = &createInput(%$param_set);
         foreach my $trigger_count (0 .. 4) {
-            $trigger->(expect_fire => ($trigger_count % $param_set->{new_interval} == 0));
+            ## $trigger->(expect_fire => ($trigger_count % $param_set->{new_interval} == 0));
+            my $exp_count = ($trigger_count % $param_set->{new_interval} == 0 ? $param_set->{new_count} : 0);
+            my $exp_page_num;
+            if($trigger_count == 0) {
+                $exp_page_num = $param_set->{page_num} > $param_set->{page_no_threshold_max} ?
+                    $param_set->{page_no_threshold_max} : $param_set->{page_num};
+            }else {
+                $exp_page_num = $param_set->{page_num};
+            }
+            $trigger->(expect_count => $exp_count, expect_page_num => $exp_page_num);
         }
     }
 };
@@ -126,35 +139,35 @@ sync 20, sub {
         new_interval => 2, new_count => 3, page_num => 3, page_no_threshold_max => 2,
     );
     $input->setTimeStamp($old_time);
-    $trigger->(expect_fire => 1);
-    $trigger->(expect_fire => 0);
-    $trigger->(expect_fire => 1);
-    $trigger->(expect_fire => 0);
+    $trigger->(expect_count => 3, expect_page_num => 2);
+    $trigger->(expect_count => 0, expect_page_num => 0);
+    $trigger->(expect_count => 3, expect_page_num => 3);
+    $trigger->(expect_count => 0, expect_page_num => 0);
     diag("Initiate Input with old_time");
 };
 
 sync 20, sub {
     $input->setTimeStamp(DateTime->now());
-    $trigger->(expect_fire => 1);
-    $trigger->(expect_fire => 0);
-    $trigger->(expect_fire => 1);
-    $trigger->(expect_fire => 0);
-    $trigger->(expect_fire => 1);
+    $trigger->(expect_count => 3, expect_page_num => 3);
+    $trigger->(expect_count => 0, expect_page_num => 0);
+    $trigger->(expect_count => 3, expect_page_num => 3);
+    $trigger->(expect_count => 0, expect_page_num => 0);
+    $trigger->(expect_count => 3, expect_page_num => 3);
     diag("Set Input timestamp to the current time.");
 };
 
 sync 20, sub {
     $input->setTimeStamp($old_time);
-    $trigger->(expect_fire => 0) foreach 1..5;
+    $trigger->(expect_count => 0, expect_page_num => 0) foreach 1..5;
     diag("Set Input timestamp to the old_time");
 };
 
 sync 20, sub {
     $input->setTimeStamp(undef);
-    $trigger->(expect_fire => 1);
-    $trigger->(expect_fire => 0);
-    $trigger->(expect_fire => 1);
-    $trigger->(expect_fire => 0);
+    $trigger->(expect_count => 3, expect_page_num => 3);
+    $trigger->(expect_count => 0, expect_page_num => 0);
+    $trigger->(expect_count => 3, expect_page_num => 3);
+    $trigger->(expect_count => 0, expect_page_num => 0);
     diag("Set Input timestamp to undef");
 };
 
@@ -194,27 +207,27 @@ sync 20, sub {
             $cb->($new_array);
         }
     );
-    $trigger->(expect_fire => 1);
-    $trigger->(expect_fire => 1);
+    $trigger->(expect_count => 2, expect_page_num => 2);
+    $trigger->(expect_count => 2, expect_page_num => 3);
 };
 cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
 
 $filter_executed_num = 0;
-diag("----- If filter deletes all statuses, on_get_statuses event does not occur.");
+diag("----- If filter deletes all statuses, OnGetStatuses event occurs with no statuses.");
 sync 20, sub {
     ($trigger, $input) = &createInput(
         new_interval => 1, new_count => 3, page_num => 1,
     );
     $input->getFilter->push(
         sub {
+            my ($statuses, $cb) = @_;
+            cmp_ok(int(@$statuses), '==', 3, 'originally 3 new statuses arrive, but deleted by the filter');
             $filter_executed_num++;
-            $_[1]->([]);
-            $gcv->end();
+            $cb->([]);
         },
     );
     foreach (1..4) {
-        $gcv->begin();
-        $trigger->(expect_fire => 0);
+        $trigger->(expect_count => 0, expect_page_num => 0);
     }
 };
 cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
@@ -234,7 +247,7 @@ cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
                 $second_event_count++;
             }
         );
-        $trigger->(expect_fire => 1) foreach 1..$trigger_num;
+        $trigger->(expect_count => 2, expect_page_num => 2) foreach 1..$trigger_num;
     };
     cmp_ok($second_event_count, '==', $trigger_num, 'second listener is executed properly');
 }
