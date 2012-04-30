@@ -8,10 +8,8 @@ use FindBin;
 use AnyEvent;
 
 use BusyBird::Input;
-use BusyBird::Filter;
 use BusyBird::Output;
 use BusyBird::Timer;
-use BusyBird::HTTPD;
 
 do "config.test.pl";
 
@@ -23,12 +21,7 @@ GetOptions(
 sub main {
     ## ** TODO: support more sophisticated format of threshold offset (other than just seconds).
     BusyBird::Input->setThresholdOffset(int($OPT_THRESHOLD_OFFSET));
-    my @outputs = &configBusyBird();
-
-    BusyBird::HTTPD->init();
-    BusyBird::HTTPD->config(static_root => $FindBin::Bin . "/resources/httpd/");
-    BusyBird::HTTPD->addRequestPoints($_->getRequestPoints()) foreach @outputs;
-    BusyBird::HTTPD->start();
+    &configBusyBird($FindBin::Bin);
     AnyEvent->condvar->recv();
 }
 
