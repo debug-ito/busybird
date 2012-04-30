@@ -13,12 +13,12 @@ my %S = (
     profile_image_section_width => '50px',
 );
 
-my %COMMAND = (
-    NEW_STATUSES => 'new_statuses',
-    CONFIRM => 'confirm',
-    MAINPAGE => 'mainpage',
-    ALL_STATUSES => 'all_statuses',
-);
+## my %COMMAND = (
+##     NEW_STATUSES => 'new_statuses',
+##     CONFIRM => 'confirm',
+##     MAINPAGE => 'mainpage',
+##     ALL_STATUSES => 'all_statuses',
+## );
 
 sub new {
     my ($class, %params) = @_;
@@ -229,7 +229,8 @@ sub _getPointNameForCommand {
 
 ## sub getRequestPoints {
 ##     my ($self) = @_;
-##     return map { $self->_getPointNameForCommand($_) } (values %COMMAND);
+##     my @points = ();
+##     
 ## }
 
 sub _onCompletePushingStatuses {
@@ -282,7 +283,7 @@ sub _requestPointNewStatuses {
             $self->_replyRequestNewStatuses();
         };
     };
-    return ($self->_getPointNameForCommand($COMMAND{NEW_STATUSES}), $handler);
+    return ($self->_getPointNameForCommand('new_statuses'), $handler);
 }
 
 ## sub _replyNewStatuses {
@@ -316,7 +317,7 @@ sub _requestPointConfirm {
             ['Confirm OK'],
         ];
     };
-    return ($self->_getPointNameForCommand($COMMAND{CONFIRM}), $handler);
+    return ($self->_getPointNameForCommand('confirm'), $handler);
 }
 
 sub _requestPointMainPage {
@@ -328,7 +329,7 @@ sub _requestPointMainPage {
             [$self->{mainpage_html}],
         ];
     };
-    return ($self->_getPointNameForCommand($COMMAND{MAINPAGE}), $handler);
+    return ($self->_getPointNameForCommand('mainpage'), $handler);
 }
 
 ## sub _replyMainPage {
@@ -375,7 +376,7 @@ sub _requestPointAllStatuses {
             [$ret],
         ];
     };
-    return ($self->_getPointNameForCommand($COMMAND{ALL_STATUSES}), $handler);
+    return ($self->_getPointNameForCommand('all_statuses'), $handler);
 }
 
 ## sub _replyAllStatuses {
