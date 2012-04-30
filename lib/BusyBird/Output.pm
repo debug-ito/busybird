@@ -1,5 +1,5 @@
 package BusyBird::Output;
-use base ('BusyBird::Object', 'BusyBird::RequestListener');
+use base ('BusyBird::Object');
 use Encode;
 use strict;
 use warnings;
@@ -27,6 +27,9 @@ sub new {
         old_statuses => [],
         status_ids => {},
         mainpage_html => undef,
+        pending_req => {
+            new_statuses => [],
+        }
     }, $class;
     $self->_setParam(\%params, 'name', undef, 1);
     $self->_setParam(\%params, 'max_old_statuses', 1024);
@@ -214,8 +217,9 @@ sub pushStatuses {
     }
     $self->_sort();
     $self->_limitStatusQueueSize($self->{new_statuses}, $self->{max_new_statuses});
-    
-    ## ** we should do classification here, or its better to do it in another method??
+
+    ## ** TODO: implement Nagle algorithm, i.e., delay the complete event a little to accept more statuses.
+    $self->_onCompletePushingStatuses();
 }
 
 sub _getPointNameForCommand {
@@ -223,88 +227,186 @@ sub _getPointNameForCommand {
     return '/' . $self->getName() . '/' . $com_name;
 }
 
-sub getRequestPoints {
+## sub getRequestPoints {
+##     my ($self) = @_;
+##     return map { $self->_getPointNameForCommand($_) } (values %COMMAND);
+## }
+
+sub _onCompletePushingStatuses {
     my ($self) = @_;
-    return map { $self->_getPointNameForCommand($_) } (values %COMMAND);
+    ## BusyBird::HTTPD->replyPoint($self->_getPointNameForCommand($COMMAND{NEW_STATUSES}));
+    $self->_replyRequestNewStatuses();
 }
 
-sub onCompletePushingStatuses {
+## sub reply {
+##     my ($self, $request_point_name, $detail) = @_;
+##     if($request_point_name !~ m|^/([^/]+)/([^/]+)$|) {
+##         return ($self->NOT_FOUND);
+##     }
+##     my ($output_name, $command) = ($1, $2);
+##     if($command eq $COMMAND{NEW_STATUSES}) {
+##         return $self->_replyNewStatuses($detail);
+##     }elsif($command eq $COMMAND{CONFIRM}) {
+##         return $self->_replyConfirm($detail);
+##     }elsif($command eq $COMMAND{MAINPAGE}) {
+##         return $self->_replyMainPage($detail);
+##     }elsif($command eq $COMMAND{ALL_STATUSES}) {
+##         return $self->_replyAllStatuses($detail);
+##     }
+##     return ($self->NOT_FOUND);
+## }
+
+sub _replyRequestNewStatuses {
     my ($self) = @_;
-    BusyBird::HTTPD->replyPoint($self->_getPointNameForCommand($COMMAND{NEW_STATUSES}));
-}
-
-sub reply {
-    my ($self, $request_point_name, $detail) = @_;
-    if($request_point_name !~ m|^/([^/]+)/([^/]+)$|) {
-        return ($self->NOT_FOUND);
-    }
-    my ($output_name, $command) = ($1, $2);
-    if($command eq $COMMAND{NEW_STATUSES}) {
-        return $self->_replyNewStatuses($detail);
-    }elsif($command eq $COMMAND{CONFIRM}) {
-        return $self->_replyConfirm($detail);
-    }elsif($command eq $COMMAND{MAINPAGE}) {
-        return $self->_replyMainPage($detail);
-    }elsif($command eq $COMMAND{ALL_STATUSES}) {
-        return $self->_replyAllStatuses($detail);
-    }
-    return ($self->NOT_FOUND);
-}
-
-sub _replyNewStatuses {
-    my ($self, $detail) = @_;
-    if(!@{$self->{new_statuses}}) {
-        return ($self->HOLD);
+    if(!@{$self->{new_statuses}} or !@{$self->{pending_req}->{new_statuses}}) {
+        return;
     }
     my $json_entries_ref = $self->_getNewStatusesJSONEntries();
     my $ret = "[" . join(",", @$json_entries_ref) . "]";
-    return ($self->REPLIED, \$ret, "application/json; charset=UTF-8");
-}
-
-sub _replyConfirm {
-    my ($self, $detail) = @_;
-    unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
-    $self->{new_statuses} = [];
-    $self->_limitStatusQueueSize($self->{old_statuses}, $self->{max_old_statuses});
-    my $ret = "Confirm OK";
-    return ($self->REPLIED, \$ret, "text/plain");
-}
-
-sub _replyMainPage {
-    my ($self, $detail) = @_;
-    my $html = $self->{mainpage_html};
-    return ($self->REPLIED, \$html, 'text/html');
-}
-
-sub _replyAllStatuses {
-    my ($self, $detail) = @_;
-    my $new_num = int(@{$self->{new_statuses}});
-    my $page = ($detail->{page} or 1) - 1;
-    $page = 0 if $page < 0;
-    my $per_page = $detail->{per_page};
-    my $json_entries;
-    my $start_global_index = 0;
-
-    if($detail->{max_id}) {
-        $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->getID eq $detail->{max_id} });
-        $start_global_index = 0 if !defined($start_global_index);
+    while(my $req = pop(@{$self->{pending_req}->{new_statuses}})) {
+        $req->{'busybird.responder'}->([
+            '200',
+            ['Content-Type' => "application/json; charset=UTF-8"],
+            [$ret],
+        ]);
     }
-    if($per_page) {
-        $json_entries = $self->_getStatusesJSONEntries($start_global_index + $page * $per_page, $per_page);
-    }else {
-        $per_page = 20;
-        if($start_global_index < $new_num) {
-            if($page == 0) {
-                $json_entries = $self->_getStatusesJSONEntries($start_global_index, $per_page + $new_num - $start_global_index);
-            }else {
-                $json_entries = $self->_getStatusesJSONEntries($new_num + $page * $per_page, $per_page);
-            }
-        }else {
-            $json_entries = $self->_getStatusesJSONEntries($start_global_index + $page * $per_page, $per_page);
+}
+
+sub _requestPointNewStatuses {
+    my ($self) = @_;
+    my $handler = sub {
+        my ($request) = @_;
+        return sub {
+            $request->env->{'busybird.responder'} = $_[0];
+            push(@{$self->{pending_req}->{new_statuses}}, $request);
+            $self->_replyRequestNewStatuses();
+        };
+    };
+    return ($self->_getPointNameForCommand($COMMAND{NEW_STATUSES}), $handler);
+}
+
+## sub _replyNewStatuses {
+##     my ($self, $detail) = @_;
+##     if(!@{$self->{new_statuses}}) {
+##         return ($self->HOLD);
+##     }
+##     my $json_entries_ref = $self->_getNewStatusesJSONEntries();
+##     my $ret = "[" . join(",", @$json_entries_ref) . "]";
+##     return ($self->REPLIED, \$ret, "application/json; charset=UTF-8");
+## }
+
+## sub _replyConfirm {
+##     my ($self, $detail) = @_;
+##     unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
+##     $self->{new_statuses} = [];
+##     $self->_limitStatusQueueSize($self->{old_statuses}, $self->{max_old_statuses});
+##     my $ret = "Confirm OK";
+##     return ($self->REPLIED, \$ret, "text/plain");
+## }
+
+sub _requestPointConfirm {
+    my ($self) = @_;
+    my $handler = sub {
+        unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
+        $self->{new_statuses} = [];
+        $self->_limitStatusQueueSize($self->{old_statuses}, $self->{max_old_statuses});
+        return [
+            '200',
+            ['Content-Type' => 'text/plain'],
+            ['Confirm OK'],
+        ];
+    };
+    return ($self->_getPointNameForCommand($COMMAND{CONFIRM}), $handler);
+}
+
+sub _requestPointMainPage {
+    my ($self) = @_;
+    my $handler = sub {
+        return [
+            '200',
+            ['Content-Type' => 'text/html'],
+            [$self->{mainpage_html}],
+        ];
+    };
+    return ($self->_getPointNameForCommand($COMMAND{MAINPAGE}), $handler);
+}
+
+## sub _replyMainPage {
+##     my ($self, $detail) = @_;
+##     my $html = $self->{mainpage_html};
+##     return ($self->REPLIED, \$html, 'text/html');
+## }
+
+sub _requestPointAllStatuses {
+    my ($self) = @_;
+    my $handler = sub {
+        my ($request) = @_;
+        my $detail = $request->parameters;
+        my $new_num = int(@{$self->{new_statuses}});
+        my $page = ($detail->{page} or 1) - 1;
+        $page = 0 if $page < 0;
+        my $per_page = $detail->{per_page};
+        my $json_entries;
+        my $start_global_index = 0;
+
+        if($detail->{max_id}) {
+            $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->getID eq $detail->{max_id} });
+            $start_global_index = 0 if !defined($start_global_index);
         }
-    }
-    my $ret = '['. join(',', @$json_entries) .']';
-    return ($self->REPLIED, \$ret, 'application/json; charset=UTF-8');
+        if($per_page) {
+            $json_entries = $self->_getStatusesJSONEntries($start_global_index + $page * $per_page, $per_page);
+        }else {
+            $per_page = 20;
+            if($start_global_index < $new_num) {
+                if($page == 0) {
+                    $json_entries = $self->_getStatusesJSONEntries($start_global_index, $per_page + $new_num - $start_global_index);
+                }else {
+                    $json_entries = $self->_getStatusesJSONEntries($new_num + $page * $per_page, $per_page);
+                }
+            }else {
+                $json_entries = $self->_getStatusesJSONEntries($start_global_index + $page * $per_page, $per_page);
+            }
+        }
+        my $ret = '['. join(',', @$json_entries) .']';
+        ## return ($self->REPLIED, \$ret, );
+        return [
+            '200',
+            ['Content-Length' => 'application/json; charset=UTF-8'],
+            [$ret],
+        ];
+    };
+    return ($self->_getPointNameForCommand($COMMAND{ALL_STATUSES}), $handler);
 }
+
+## sub _replyAllStatuses {
+##     my ($self, $detail) = @_;
+##     my $new_num = int(@{$self->{new_statuses}});
+##     my $page = ($detail->{page} or 1) - 1;
+##     $page = 0 if $page < 0;
+##     my $per_page = $detail->{per_page};
+##     my $json_entries;
+##     my $start_global_index = 0;
+## 
+##     if($detail->{max_id}) {
+##         $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->getID eq $detail->{max_id} });
+##         $start_global_index = 0 if !defined($start_global_index);
+##     }
+##     if($per_page) {
+##         $json_entries = $self->_getStatusesJSONEntries($start_global_index + $page * $per_page, $per_page);
+##     }else {
+##         $per_page = 20;
+##         if($start_global_index < $new_num) {
+##             if($page == 0) {
+##                 $json_entries = $self->_getStatusesJSONEntries($start_global_index, $per_page + $new_num - $start_global_index);
+##             }else {
+##                 $json_entries = $self->_getStatusesJSONEntries($new_num + $page * $per_page, $per_page);
+##             }
+##         }else {
+##             $json_entries = $self->_getStatusesJSONEntries($start_global_index + $page * $per_page, $per_page);
+##         }
+##     }
+##     my $ret = '['. join(',', @$json_entries) .']';
+##     return ($self->REPLIED, \$ret, 'application/json; charset=UTF-8');
+## }
 
 1;
