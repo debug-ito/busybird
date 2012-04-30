@@ -50,6 +50,13 @@ sub start {
     });
 }
 
+sub addRequestPoints {
+    my ($class_self, @points_array) = @_;
+    foreach my $point_entry (@points_array) {
+        $class_self->addRequestPoint(@$point_entry);
+    }
+}
+
 sub addRequestPoint {
     my ($class_self, $matcher_obj, $listener_coderef) = @_;
     my $self = ref($class_self) ? $class_self : $g_httpd_self;

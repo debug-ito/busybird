@@ -227,11 +227,15 @@ sub _getPointNameForCommand {
     return '/' . $self->getName() . '/' . $com_name;
 }
 
-## sub getRequestPoints {
-##     my ($self) = @_;
-##     my @points = ();
-##     
-## }
+sub getRequestPoints {
+    my ($self) = @_;
+    my @points = ();
+    foreach my $method (map {'_requestPoint'. $_} qw(NewStatuses Confirm MainPage AllStatuses)) {
+        my ($point_path, $handler) = $self->$method();
+        push(@points, [$point_path, $handler]);
+    }
+    return @points;
+}
 
 sub _onCompletePushingStatuses {
     my ($self) = @_;
