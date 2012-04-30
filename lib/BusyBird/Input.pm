@@ -180,13 +180,15 @@ sub _getStatusesTriggerTop {
     $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
     my $callback;
     my $load_page_max = defined($threshold_epoch_time) ? $self->{page_max} : $self->{page_no_threshold_max};
+    &bblog(sprintf("Input %s: getStatuses triggerred.", $self->getName));
     $callback = sub {
         my ($statuses) = @_;
-        &bblog("Input::_sessionOnGetStatuses");
         my $is_complete = 0;
         if(!defined($statuses) || int(@$statuses) == 0) {
+            &bblog(sprintf("Input %s: get page %d [0 statuses]", $self->getName, $page));
             $is_complete = 1;
         }else {
+            &bblog(sprintf("Input %s: get page %d [%d statuses]", $self->getName, $page, int(@$statuses)));
             foreach my $status (@$statuses) {
                 my $datetime = $status->getDateTime();
                 ## ** Update latest status time
