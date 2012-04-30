@@ -269,7 +269,7 @@ sub _replyRequestNewStatuses {
     my $json_entries_ref = $self->_getNewStatusesJSONEntries();
     my $ret = "[" . join(",", @$json_entries_ref) . "]";
     while(my $req = pop(@{$self->{pending_req}->{new_statuses}})) {
-        $req->{'busybird.responder'}->([
+        $req->env->{'busybird.responder'}->([
             '200',
             ['Content-Type' => "application/json; charset=UTF-8"],
             [$ret],
