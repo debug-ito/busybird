@@ -12,7 +12,15 @@ sub new {
         callbacks => [],
     }, $class;
     $self->_setParam(\%params, 'interval', 120);
-    $self->start();
+    $self->_setParam(\%params, 'after', 1);
+    my $tw; $tw = AnyEvent->timer(
+        after => $self->{after},
+        cb => sub {
+            undef $tw;
+            $self->_fire();
+            $self->start();
+        }
+    );
     return $self;
 }
 
@@ -23,12 +31,17 @@ sub start {
         after => $self->{interval},
         cb => sub {
             undef $watcher;
-            foreach my $callback (@{$self->{callbacks}}) {
-                $callback->();
-            }
+            $self->_fire();
             $self->start();
         }
     );
+}
+
+sub _fire {
+    my ($self) = @_;
+    foreach my $callback (@{$self->{callbacks}}) {
+        $callback->();
+    }
 }
 
 sub addOnFire {
