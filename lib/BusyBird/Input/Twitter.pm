@@ -3,12 +3,9 @@ use base ('BusyBird::Input');
 
 use strict;
 use warnings;
-use POE;
 use BusyBird::Status;
-use BusyBird::Worker::Object;
+use BusyBird::Worker::Twitter;
 use BusyBird::Log ('bblog');
-
-use Data::Dumper;
 
 our %MONTH = (
     Jan => 1, Feb => 2,  Mar =>  3, Apr =>  4,
@@ -104,16 +101,33 @@ sub _extractStatusesFromWorkerData {
     return \@statuses;
 }
 
-sub _getStatuses {
-    my ($self, $callstack, $ret_session, $ret_event, $count, $page) = @_;
+sub _getStatusesPage {
+    my ($self, $count, $page, $callback) = @_;
     my $worker_input = $self->_getWorkerInput($count, $page);
     if(!$worker_input) {
-        POE::Kernel->post($ret_session, $ret_event, $callstack, undef);
+        $callback->(undef);
         return;
     }
-    BusyBird::CallStack->newStack($callstack, $ret_session, $ret_event, count => $count, page => $page);
-    $self->{worker}->startJob($callstack, $self->{session}, 'on_worker_complete', $worker_input);
-    return;
+    $worker_input->{cb} = sub {
+        my ($status, @data) = @_;
+        if($status != BusyBird::Worker::Object::STATUS_OK) {
+            &bblog(sprintf("WARNING: Twitter worker returns status %d", $status));
+            $callback->(undef);
+            return;
+        }
+        $callback->($self->_extractStatusesFromWorkerData($data[0]));
+    };
+    $self->{worker}->startJob(%$worker_input);
+
+    ## my ($self, $callstack, $ret_session, $ret_event, $count, $page) = @_;
+    ## my $worker_input = $self->_getWorkerInput($count, $page);
+    ## if(!$worker_input) {
+    ##     POE::Kernel->post($ret_session, $ret_event, $callstack, undef);
+    ##     return;
+    ## }
+    ## BusyBird::CallStack->newStack($callstack, $ret_session, $ret_event, count => $count, page => $page);
+    ## $self->{worker}->startJob($callstack, $self->{session}, 'on_worker_complete', $worker_input);
+    ## return;
     
     ## my ($self, $count, $page) = @_;
     ## my $timeline = $self->_getTimeline($count, $page);
@@ -126,25 +140,25 @@ sub _getStatuses {
     ## return \@ret_stats;
 }
 
-sub _sessionStart {
-    my ($self, $kernel) = @_[OBJECT, KERNEL];
-    $self->SUPER::_sessionStart(@_[1 .. $#_]);
-    $kernel->state('on_worker_complete', $self, '_sessionOnWorkerComplete');
-}
-
-sub _sessionOnWorkerComplete {
-    my ($self, $kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[OBJECT, KERNEL, ARG0 .. ARG3];
-    ## print STDERR ("BusyBird::Input::Twitter: Worker complate!------\n");
-    ## print STDERR (Dumper($output_objs));
-    ## print STDERR ("-----------------\n");
-    my ($worker_status, $worker_data) = ($output_objs->[0]->{status}, $output_objs->[0]->{data});
-    if($worker_status != BusyBird::Worker::Object::STATUS_OK) {
-        &bblog(sprintf("WARNING: Twitter worker returns worker_status %d", $worker_status));
-        $callstack->pop(undef);
-        return;
-    }
-    &bblog(sprintf("DEBUG: Got %d tweets from input %s", int(@$worker_data), $self->getName()));
-    $callstack->pop($self->_extractStatusesFromWorkerData($worker_data));
-}
+## sub _sessionStart {
+##     my ($self, $kernel) = @_[OBJECT, KERNEL];
+##     $self->SUPER::_sessionStart(@_[1 .. $#_]);
+##     $kernel->state('on_worker_complete', $self, '_sessionOnWorkerComplete');
+## }
+## 
+## sub _sessionOnWorkerComplete {
+##     my ($self, $kernel, $callstack, $output_objs, $input_obj, $exit_status) = @_[OBJECT, KERNEL, ARG0 .. ARG3];
+##     ## print STDERR ("BusyBird::Input::Twitter: Worker complate!------\n");
+##     ## print STDERR (Dumper($output_objs));
+##     ## print STDERR ("-----------------\n");
+##     my ($worker_status, $worker_data) = ($output_objs->[0]->{status}, $output_objs->[0]->{data});
+##     if($worker_status != BusyBird::Worker::Object::STATUS_OK) {
+##         &bblog(sprintf("WARNING: Twitter worker returns worker_status %d", $worker_status));
+##         $callstack->pop(undef);
+##         return;
+##     }
+##     &bblog(sprintf("DEBUG: Got %d tweets from input %s", int(@$worker_data), $self->getName()));
+##     $callstack->pop($self->_extractStatusesFromWorkerData($worker_data));
+## }
 
 1;
