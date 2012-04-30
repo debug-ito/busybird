@@ -8,6 +8,7 @@ use BusyBird::HTTPD::PathMatcher;
 
 use Twiggy::Server;
 use Plack::Builder;
+use Plack::Request;
 
 
 my $g_httpd_self = undef;
@@ -68,13 +69,33 @@ sub addRequestPoint {
     return 1;
 }
 
+sub _extractFormat {
+    my ($self, $path) = @_;
+    if($path =~ m{^(.*/[^\.]*)\.([^/]+)$}) {
+        return ($1, $2);
+    }else {
+        return ($path, "");
+    }
+}
+
 sub _createApp {
     my ($self) = @_;
     return sub {
         my ($env) = @_;
-        my $result = "It works!\n";
+        if(substr($env->{PATH_INFO}, -1) eq '/') {
+            $env->{PATH_INFO} .= 'index.html';
+        }
+        @$env{'busybird.pathbody', 'budybird.format'} = $self->_extractFormat($env->{PATH_INFO});
+        foreach my $request_point (values %{$self->{request_points}}) {
+            my @matched = $request_point->{matcher}->match($env->{'busybird.pathbody'});
+            if(@matched) {
+                $env->{'busybird.matched'} = \@matched;
+                return $request_point->{listener}->(Plack::Request->new($env));
+            }
+        }
+        my $result = sprintf("Not Found: path %s", $env->{PATH_INFO});
         return [
-            '200',
+            '404',
             ['Content-Type' => 'text/plain',
              'Content-Length' => length($result)],
             [$result],
