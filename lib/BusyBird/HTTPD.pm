@@ -44,6 +44,7 @@ sub start {
         port => $g_httpd_params{bind_port},
     );
     $self->{backend}->register_service(builder {
+        enable "Plack::Middleware::ContentLength";
         enable "Plack::Middleware::Static", path => qr{^/static/}, root => $g_httpd_params{static_root};
         $self->_createApp();
     });
