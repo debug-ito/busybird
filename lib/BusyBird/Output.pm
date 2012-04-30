@@ -371,7 +371,7 @@ sub _requestPointAllStatuses {
         ## return ($self->REPLIED, \$ret, );
         return [
             '200',
-            ['Content-Length' => 'application/json; charset=UTF-8'],
+            ['Content-Type' => 'application/json; charset=UTF-8'],
             [$ret],
         ];
     };
