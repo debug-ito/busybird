@@ -46,7 +46,7 @@ sub _initMainPage {
   <head>
     <title>$name - BusyBird</title>
     <meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
-    <link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="/static/style.css" type="text/css" media="screen" />
     <style type="text/css"><!--
 
 div#global_header {
@@ -81,11 +81,11 @@ div.status_main {
 }
 
     --></style>
-    <script type="text/javascript" src="/jquery.js"></script>
+    <script type="text/javascript" src="/static/jquery.js"></script>
     <script type="text/javascript"><!--
     function bbGetOutputName() {return "$name"}
 --></script>
-    <script type="text/javascript" src="/main.js"></script>
+    <script type="text/javascript" src="/static/main.js"></script>
   </head>
   <body>
     <div id="global_header">
