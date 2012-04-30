@@ -4,36 +4,16 @@ use strict;
 use warnings;
 
 use Getopt::Long;
-use Scalar::Util qw(refaddr);
-use Encode;
 use FindBin;
-
-sub POE::Kernel::CATCH_EXCEPTIONS () { 0 }
-sub POE::Kernel::ASSERT_DEFAULT    () { 1 }
-use POE;
-
-
-
-use Data::Dumper;
-
-use Net::Twitter;
+use AnyEvent;
 
 use BusyBird::Input;
-use BusyBird::Input::Twitter::HomeTimeline;
-use BusyBird::Input::Twitter::List;
-use BusyBird::Input::Twitter::PublicTimeline;
-use BusyBird::Input::Twitter::Search;
-use BusyBird::Input::Test;
-
 use BusyBird::Filter;
-
 use BusyBird::Output;
 use BusyBird::Timer;
 use BusyBird::HTTPD;
-use BusyBird::Worker::Twitter;
-use BusyBird::Status;
 
-require 'config.test.pl';
+do "config.test.pl";
 
 my $OPT_THRESHOLD_OFFSET = 0;
 GetOptions(
@@ -45,10 +25,11 @@ sub main {
     BusyBird::Input->setThresholdOffset(int($OPT_THRESHOLD_OFFSET));
     my @outputs = &configBusyBird();
 
-    BusyBird::HTTPD->init($FindBin::Bin . "/resources/httpd");
-    BusyBird::HTTPD->registerOutputs(@outputs);
+    BusyBird::HTTPD->init();
+    BusyBird::HTTPD->config(static_root => $FindBin::Bin . "/resources/httpd/");
+    BusyBird::HTTPD->addRequestPoints($_->getRequestPoints()) foreach @outputs;
     BusyBird::HTTPD->start();
-    POE::Kernel->run();
+    AnyEvent->condvar->recv();
 }
 
 &main();
