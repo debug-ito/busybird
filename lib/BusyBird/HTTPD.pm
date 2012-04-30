@@ -111,6 +111,10 @@ sub _createApp {
     };
 }
 
+sub instance {
+    return $g_httpd_self;
+}
+
 ## sub _addListeners {
 ##     my ($self, @listeners) = @_;
 ##     foreach my $listener (@listeners) {

@@ -1,9 +1,11 @@
 package BusyBird::Output;
-use base ('BusyBird::Object');
+use base ('BusyBird::Object', 'BusyBird::Connector');
 use Encode;
 use strict;
 use warnings;
 use DateTime;
+
+use BusyBird::Connector;
 
 my %S = (
     global_header_height => '50px',
@@ -413,5 +415,15 @@ sub _requestPointAllStatuses {
 ##     my $ret = '['. join(',', @$json_entries) .']';
 ##     return ($self->REPLIED, \$ret, 'application/json; charset=UTF-8');
 ## }
+
+sub c {
+    my ($self, $to) = @_;
+    return $self->SUPER::c(
+        $to,
+        'BusyBird::HTTPD' => sub {
+            $to->addRequestPoints($self->getRequestPoints());
+        },
+    );
+}
 
 1;

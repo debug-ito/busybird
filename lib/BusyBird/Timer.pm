@@ -1,5 +1,5 @@
 package BusyBird::Timer;
-use base ('BusyBird::Object');
+use base ('BusyBird::Object', 'BusyBird::Connector');
 use strict;
 use warnings;
 
@@ -47,6 +47,16 @@ sub _fire {
 sub addOnFire {
     my ($self, @callbacks) = @_;
     push(@{$self->{callbacks}}, @callbacks);
+}
+
+sub c{
+    my ($self, $to) = @_;
+    return $self->SUPER::c(
+        $to,
+        'BusyBird::Input' => sub {
+            $self->addOnFire( sub { $to->getStatuses() } );
+        },
+    );
 }
 
 1;

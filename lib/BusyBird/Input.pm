@@ -1,5 +1,5 @@
 package BusyBird::Input;
-use base 'BusyBird::Object';
+use base ('BusyBird::Object', 'BusyBird::Connector');
 
 use strict;
 use warnings;
@@ -311,6 +311,16 @@ sub _getStatusesTriggerTop {
 sub getName {
     my ($self) = @_;
     return $self->{name};
+}
+
+sub c {
+    my ($self, $to) = @_;
+    return $self->SUPER::c(
+        $to,
+        'BusyBird::Output' => sub {
+            $self->listenOnGetStatuses(sub { $to->pushStatuses($_[0]) });
+        },
+    );
 }
 
 1;
