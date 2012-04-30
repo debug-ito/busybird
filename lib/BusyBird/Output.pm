@@ -205,6 +205,9 @@ sub _limitStatusQueueSize {
 sub pushStatuses {
     my ($self, $statuses) = @_;
     $statuses = $self->_uniqStatuses($statuses);
+    if(!@$statuses) {
+        return;
+    }
     unshift(@{$self->{new_statuses}}, @$statuses);
     foreach my $status (@$statuses) {
         $self->{status_ids}{$status->getID()} = 1;
