@@ -63,7 +63,7 @@ sub startJob {
         };
         if($@) {
             ## printf STDERR ("ERROR: %s::%s: %s", ref($target_object), $method_name, $@);
-            return (STATUS_METHOD_DIES, $@);
+            return (STATUS_METHOD_DIES, "$@");
         }
         return @ret;
     } $params{cb};
