@@ -66,8 +66,8 @@ sub request {
 sub checkStatusNum {
     my ($self, $expected_new_num, $expected_old_num) = @_;
     my $output = $self->{output};
-    my $new_entries = $output->_getNewStatusesJSONEntries();
-    my $old_entries = $output->_getOldStatusesJSONEntries();
+    my $new_entries = $output->_getNewStatuses();
+    my $old_entries = $output->_getOldStatuses();
     cmp_ok(int(@$new_entries), '==', $expected_new_num, sprintf("number of new_statuses in %s", $output->getName));
     cmp_ok(int(@$old_entries), '==', $expected_old_num, sprintf("number of old_statuses in %s", $output->getName));
     ## ** it should check is_new flags here, but we need non-JSON interface first.

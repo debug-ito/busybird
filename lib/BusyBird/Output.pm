@@ -150,7 +150,7 @@ sub _getGlobalIndicesForStatuses {
     return wantarray ? @indices : $indices[0];
 }
 
-sub _getSingleStatusesJSONEntries {
+sub _getSingleStatuses {
     my ($self, $statuses_ref, $start_index, $entry_num) = @_;
     my $statuses_num = int(@$statuses_ref);
     $start_index = 0 if !defined($start_index);
@@ -163,11 +163,10 @@ sub _getSingleStatusesJSONEntries {
     }
     my $end_inc_index = $start_index + $entry_num - 1;
     $end_inc_index = $statuses_num - 1 if $end_inc_index >= $statuses_num;
-    my @json_entries = map {$_->format_json} @$statuses_ref[$start_index .. $end_inc_index];
-    return \@json_entries;
+    return [ @$statuses_ref[$start_index .. $end_inc_index] ];
 }
 
-sub _getStatusesJSONEntries {
+sub _getStatuses {
     my ($self, $global_start_index, $entry_num) = @_;
     my $new_num = int(@{$self->{new_statuses}});
     my @entries = ();
@@ -175,27 +174,27 @@ sub _getStatusesJSONEntries {
     $global_start_index = 0 if $global_start_index < 0;
     my $old_entry_num = $entry_num;
     if($global_start_index < $new_num) {
-        my $new_entries = $self->_getSingleStatusesJSONEntries($self->{new_statuses}, $global_start_index, $entry_num);
+        my $new_entries = $self->_getSingleStatuses($self->{new_statuses}, $global_start_index, $entry_num);
         push(@entries, @$new_entries);
         $old_entry_num = $entry_num - int(@$new_entries);
     }
     if($old_entry_num > 0) {
         my $old_start_index = $global_start_index - $new_num;
         $old_start_index = 0 if $old_start_index < 0;
-        my $old_entries = $self->_getSingleStatusesJSONEntries($self->{old_statuses}, $old_start_index, $old_entry_num);
+        my $old_entries = $self->_getSingleStatuses($self->{old_statuses}, $old_start_index, $old_entry_num);
         push(@entries, @$old_entries);
     }
     return \@entries;
 }
 
-sub _getNewStatusesJSONEntries {
+sub _getNewStatuses {
     my ($self, $start_index, $entry_num) = @_;
-    return $self->_getSingleStatusesJSONEntries($self->{new_statuses}, $start_index, $entry_num);
+    return $self->_getSingleStatuses($self->{new_statuses}, $start_index, $entry_num);
 }
 
-sub _getOldStatusesJSONEntries {
+sub _getOldStatuses {
     my ($self, $start_index, $entry_num) = @_;
-    return $self->_getSingleStatusesJSONEntries($self->{old_statuses}, $start_index, $entry_num);
+    return $self->_getSingleStatuses($self->{old_statuses}, $start_index, $entry_num);
 }
 
 sub _limitStatusQueueSize {
@@ -268,8 +267,8 @@ sub _replyRequestNewStatuses {
     if(!@{$self->{new_statuses}} or !@{$self->{pending_req}->{new_statuses}}) {
         return;
     }
-    my $json_entries_ref = $self->_getNewStatusesJSONEntries();
-    my $ret = "[" . join(",", @$json_entries_ref) . "]";
+    my $new_statuses = $self->_getNewStatuses();
+    my $ret = "[" . join(",", map {$_->format_json()} @$new_statuses) . "]";
     while(my $req = pop(@{$self->{pending_req}->{new_statuses}})) {
         $req->env->{'busybird.responder'}->([
             '200',
@@ -354,28 +353,29 @@ sub _requestPointAllStatuses {
         my $page = ($detail->{page} or 1) - 1;
         $page = 0 if $page < 0;
         my $per_page = $detail->{per_page};
-        my $json_entries;
         my $start_global_index = 0;
 
         if($detail->{max_id}) {
             $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->content->{id} eq $detail->{max_id} });
             $start_global_index = 0 if !defined($start_global_index);
         }
+
+        my $statuses;
         if($per_page) {
-            $json_entries = $self->_getStatusesJSONEntries($start_global_index + $page * $per_page, $per_page);
+            $statuses = $self->_getStatuses($start_global_index + $page * $per_page, $per_page);
         }else {
             $per_page = 20;
             if($start_global_index < $new_num) {
                 if($page == 0) {
-                    $json_entries = $self->_getStatusesJSONEntries($start_global_index, $per_page + $new_num - $start_global_index);
+                    $statuses = $self->_getStatuses($start_global_index, $per_page + $new_num - $start_global_index);
                 }else {
-                    $json_entries = $self->_getStatusesJSONEntries($new_num + $page * $per_page, $per_page);
+                    $statuses = $self->_getStatuses($new_num + $page * $per_page, $per_page);
                 }
             }else {
-                $json_entries = $self->_getStatusesJSONEntries($start_global_index + $page * $per_page, $per_page);
+                $statuses = $self->_getStatuses($start_global_index + $page * $per_page, $per_page);
             }
         }
-        my $ret = '['. join(',', @$json_entries) .']';
+        my $ret = '['. join(',', map {$_->format_json()} @$statuses) .']';
         ## return ($self->REPLIED, \$ret, );
         return [
             '200',
