@@ -8,6 +8,7 @@ use DateTime;
 my @MONTH = (undef, qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec));
 my @DAY_OF_WEEK = (undef, qw(Mon Tue Wed Thu Fri Sat Sun));
 
+
 my $STATUS_TIMEZONE = DateTime::TimeZone->new( name => 'local');
 ## my @OUTPUT_FIELDS = (
 ##     qw(id created_at text in_reply_to_screen_name),
@@ -16,11 +17,16 @@ my $STATUS_TIMEZONE = DateTime::TimeZone->new( name => 'local');
 ## );
 
 sub new {
-    my ($class) = @_;
-    return bless {
-        datetime => undef,
-        content => {},
+    my ($class, %params) = @_;
+    my $self = bless {
+        content => { %params }
     }, $class;
+    foreach my $mandatory qw(created_at id) {
+        if(!defined($self->content->{$mandatory})) {
+            die "Param $mandatory is mandatory for Status";
+        }
+    }
+    return $self;
 }
 
 ## sub _getOutputObject [[must be checked...]] {
@@ -51,52 +57,60 @@ sub setTimeZone {
     $STATUS_TIMEZONE = DateTime::TimeZone->new(name => $timezone_str);
 }
 
-sub setDateTime {
-    my ($self, $datetime) = @_;
-    $datetime = DateTime->now if !defined($datetime);
-    $datetime->set_time_zone($STATUS_TIMEZONE);
-    $self->{datetime} = $datetime;
-    $self->content->{created_at} =
-        sprintf("%s %s %s",
-                $DAY_OF_WEEK[$datetime->day_of_week],
-                $MONTH[$datetime->month],
-                $datetime->strftime('%e %H:%M:%S %z %Y'));
+sub getTimeZone {
+    my ($class) = @_;
+    return $STATUS_TIMEZONE;
 }
 
-sub getDateTime {
-    my ($self) = @_;
-    return $self->{datetime};
-}
-
-sub setInputName {
-    my ($self, $input_name) = @_;
-    ## $self->set('busybird/input_name', $input_name);
-    $self->content->{busybird}->{input_name} = $input_name;
-}
-
-sub getInputName {
-    my ($self) = @_;
-    ## return $self->get('busybird/input_name');
-    return $self->content->{busybird}->{input_name};
-}
-
-sub getID {
-    my ($self) = @_;
-    ## return $self->get('id');
-    $self->content->{id};
-}
+## sub setDateTime {
+##     my ($self, $datetime) = @_;
+##     $datetime = DateTime->now if !defined($datetime);
+##     $datetime->set_time_zone($STATUS_TIMEZONE);
+##     $self->{datetime} = $datetime;
+##     $self->content->{created_at} =
+##         sprintf("%s %s %s",
+##                 $DAY_OF_WEEK[$datetime->day_of_week],
+##                 $MONTH[$datetime->month],
+##                 $datetime->strftime('%e %H:%M:%S %z %Y'));
+## }
+## 
+## sub getDateTime {
+##     my ($self) = @_;
+##     return $self->{datetime};
+## }
+## 
+## sub setInputName {
+##     my ($self, $input_name) = @_;
+##     ## $self->set('busybird/input_name', $input_name);
+##     $self->content->{busybird}->{input_name} = $input_name;
+## }
+## 
+## sub getInputName {
+##     my ($self) = @_;
+##     ## return $self->get('busybird/input_name');
+##     return $self->content->{busybird}->{input_name};
+## }
+## 
+## sub getID {
+##     my ($self) = @_;
+##     ## return $self->get('id');
+##     $self->content->{id};
+## }
+## 
 
 sub content {
     my $self = shift;
     return $self->{content};
 }
 
+sub put {
+    my ($self, %params) = @_;
+    @{$self->{content}}{keys %params} = values %params;
+}
+
 sub clone {
     my ($self) = @_;
-    my $clone = ref($self)->new();
-    $clone->{content} = dclone($self->content);
-    $clone->setDateTime($self->{datetime}->clone);
-    return $clone;
+    return dclone($self);
 }
 
 ## sub _find {
@@ -170,28 +184,40 @@ sub clone {
 ##     }
 ## }
 
-## ** Maybe this method should be outside Status.pm.
-sub getJSON {
+sub _formatElements {
+    my ($self, %formatters) = @_;
+    my $content = $self->content;
+    my @unvisited_ref = (\$content);
+    while(my $cur_ref = pop(@unvisited_ref)) {
+        if(ref($$cur_ref) eq 'ARRAY') {
+            push(@unvisited_ref, \$_) foreach @$$cur_ref;
+            next;
+        }elsif(ref($$cur_ref) eq 'HASH') {
+            push(@unvisited_ref, \$_) foreach values %$$cur_ref;
+            next;
+        }elsif(!ref($$cur_ref)) {
+            next;
+        }
+        my @matched_class = grep { $$cur_ref->isa($_) } keys %formatters;
+        if(@matched_class) {
+            $$cur_ref = $formatters{$matched_class[0]}->($$cur_ref);
+        }
+    }
+}
+
+sub format_json {
     my ($self) = @_;
-    return encode_json($self->content);
-    
-    ## my $obj = {
-    ##     bb_input_name => $self->getInputName,
-    ##     bb_datetime => $self->getDateTime->strftime('%Y/%m/%dT%H:%M:%S%z'),
-    ##     id => $self->getID,
-    ##     created_at => sprintf("%s %s %s",
-    ##                           $DAY_OF_WEEK[$self->getDateTime->day_of_week],
-    ##                           $MONTH[$self->getDateTime->month],
-    ##                           $self->getDateTime->strftime('%e %H:%M:%S %z %Y')),
-    ##     text => $self->getText,
-    ##     user => {
-    ##         screen_name => $self->getSourceName,
-    ##         name => $self->getSourceNameAlt,
-    ##         profile_image_url => $self->getIconURL,
-    ##     },
-    ##     in_reply_to_screen_name => $self->getReplyToName,
-    ## };
-    ## return encode_json($obj);
+    my $clone = $self->clone();
+    $clone->_formatElements(
+        'DateTime' => sub {
+            my $dt = shift;
+            return sprintf("%s %s %s",
+                    $DAY_OF_WEEK[$dt->day_of_week],
+                    $MONTH[$dt->month],
+                    $dt->strftime('%e %H:%M:%S %z %Y'));
+        }
+    );
+    return encode_json($clone->content);
 }
 
 1;

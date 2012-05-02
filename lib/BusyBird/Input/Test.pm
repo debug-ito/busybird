@@ -26,12 +26,11 @@ sub _setParams {
 
 sub _newStatus {
     my ($self, $nowtime, $page, $index) = @_;
-    my $status = BusyBird::Status->new();
     my $timestr = $nowtime->strftime('%Y/%m/%d %H:%M:%S');
     my $text = qq|{"time": "$timestr", "page": $page, "index": $index}|;
-    $status->setDateTime($nowtime);
-    %{$status->content} = (
+    my $status = BusyBird::Status->new(
         id => 'Test' . $nowtime->epoch . "_${page}_$index",
+        created_at => $nowtime,
         text => $text,
         in_reply_to_screen_name => '',
         user => {

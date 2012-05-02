@@ -124,7 +124,7 @@ sub _uniqStatuses {
     ## }
     my $uniq_statuses = [];
     foreach my $status (@$statuses) {
-        if(!defined($self->{status_ids}{$status->getID()})) {
+        if(!defined($self->{status_ids}{$status->content->{id}})) {
             push(@$uniq_statuses, $status);
         }
     }
@@ -134,7 +134,7 @@ sub _uniqStatuses {
 sub _sort {
     my ($self) = @_;
     ## my @sorted_statuses = sort {$b->getDateTime()->epoch <=> $a->getDateTime()->epoch} @{$self->{new_statuses}};
-    my @sorted_statuses = sort {DateTime->compare($b->getDateTime(), $a->getDateTime())} @{$self->{new_statuses}};
+    my @sorted_statuses = sort {DateTime->compare($b->content->{created_at}, $a->content->{created_at})} @{$self->{new_statuses}};
     $self->{new_statuses} = \@sorted_statuses;
 }
 
@@ -163,7 +163,7 @@ sub _getSingleStatusesJSONEntries {
     }
     my $end_inc_index = $start_index + $entry_num - 1;
     $end_inc_index = $statuses_num - 1 if $end_inc_index >= $statuses_num;
-    my @json_entries = map {$_->getJSON} @$statuses_ref[$start_index .. $end_inc_index];
+    my @json_entries = map {$_->format_json} @$statuses_ref[$start_index .. $end_inc_index];
     return \@json_entries;
 }
 
@@ -202,7 +202,7 @@ sub _limitStatusQueueSize {
     my ($self, $status_queue, $limit_size) = @_;
     while(int(@$status_queue) > $limit_size) {
         my $discarded_status = pop(@$status_queue);
-        delete $self->{status_ids}->{$discarded_status->getID};
+        delete $self->{status_ids}->{$discarded_status->content->{id}};
     }
 }
 
@@ -214,7 +214,7 @@ sub pushStatuses {
     }
     unshift(@{$self->{new_statuses}}, @$statuses);
     foreach my $status (@$statuses) {
-        $self->{status_ids}{$status->getID()} = 1;
+        $self->{status_ids}{$status->content->{id}} = 1;
         $status->content->{busybird}{is_new} = 1;
     }
     $self->_sort();
@@ -358,7 +358,7 @@ sub _requestPointAllStatuses {
         my $start_global_index = 0;
 
         if($detail->{max_id}) {
-            $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->getID eq $detail->{max_id} });
+            $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->content->{id} eq $detail->{max_id} });
             $start_global_index = 0 if !defined($start_global_index);
         }
         if($per_page) {

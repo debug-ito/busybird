@@ -30,9 +30,7 @@ sub testJSON {
             score => undef,
         },
     };
-    my $status = new_ok('BusyBird::Status');
-    $status->setDateTime($datetime);
-    $status->content->{id} = 'hoge';
+    my $status = new_ok('BusyBird::Status', [id => 'hoge', created_at => $datetime]);
     $status->content->{text} = 'foo bar';
     $status->content->{in_reply_to_screen_name} = undef;
     $status->content->{user}{screen_name} = 'screenName';
@@ -40,8 +38,8 @@ sub testJSON {
     $status->content->{user}{profile_image_url} = undef;
     $status->content->{busybird}{input_name} = 'input';
     $status->content->{busybird}{score} = undef;
-    is($status->getDateTime(), $datetime);
-    my $json_status = $status->getJSON();
+    is($status->content->{created_at}, $datetime);
+    my $json_status = $status->format_json();
     cmp_ok($json_status, 'ne', '');
     my $decoded_json = decode_json($json_status);
     is_deeply($decoded_json, $expected_output);
@@ -49,10 +47,9 @@ sub testJSON {
 
 sub testClone {
     diag("testClone");
-    my $orig = new_ok('BusyBird::Status');
     my $time = DateTime->now();
-    %{$orig->content} = (
-        id => '102023010',
+    my $orig = new_ok('BusyBird::Status', [id => '102023010', created_at => $time]);
+    $orig->put(
         text => 'hoge hoge hoge',
         user => {
             screen_name => 'some_user',
@@ -63,12 +60,11 @@ sub testClone {
             score => 100,
         }
     );
-    $orig->setDateTime($time);
     my $clone = $orig->clone();
     $clone->content->{busybird}{score} = 40;
     cmp_ok($orig ->content->{busybird}{score}, '==', 100, 'original score');
     cmp_ok($clone->content->{busybird}{score}, '==',  40, 'cloned score');
-    cmp_ok(DateTime->compare($orig->getDateTime, $clone->getDateTime), '==', 0, 'time is the same');
+    cmp_ok(DateTime->compare($orig->content->{created_at}, $clone->content->{created_at}), '==', 0, 'time is the same');
     delete $orig ->content->{busybird}{score};
     delete $clone->content->{busybird}{score};
     is_deeply($orig->content, $clone->content, "everything except score is the same");

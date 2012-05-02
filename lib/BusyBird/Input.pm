@@ -190,14 +190,15 @@ sub _getStatusesTriggerTop {
         }else {
             &bblog(sprintf("Input %s: get page %d [%d statuses]", $self->getName, $page, int(@$statuses)));
             foreach my $status (@$statuses) {
-                my $datetime = $status->getDateTime();
+                my $datetime = $status->content->{created_at};
                 ## ** Update latest status time
                 if (!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
                     $self->{last_status_epoch_time} = $datetime->epoch;
                 }
                 ## ** Collect new status
                 if (!defined($threshold_epoch_time) || $datetime->epoch >= $threshold_epoch_time) {
-                    $status->setInputName($self->{name});
+                    ## $status->setInputName($self->{name});
+                    $status->content->{busybird}->{input_name} = $self->{name};
                     push(@{$ret_array}, $status);
                 } else {
                     $is_complete = 1;

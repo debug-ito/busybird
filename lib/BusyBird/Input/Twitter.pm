@@ -85,10 +85,9 @@ sub _extractStatusesFromWorkerData {
     my @statuses = ();
     foreach my $nt_status (@$worker_data) {
         my $text = $self_class->_processEntities($nt_status->{text}, $nt_status->{entities});
-        my $status = BusyBird::Status->new();
-        $status->setDateTime($self_class->_timeStringToDateTime($nt_status->{created_at}));
-        %{$status->content} = (
+        my $status = BusyBird::Status->new(
             id => 'Twitter' . $nt_status->{id},
+            created_at => $self_class->_timeStringToDateTime($nt_status->{created_at}),
             text => $text,
             in_reply_to_screen_name => $nt_status->{in_reply_to_screen_name},
             user => {

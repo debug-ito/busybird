@@ -70,6 +70,7 @@ sub checkStatusNum {
     my $old_entries = $output->_getOldStatusesJSONEntries();
     cmp_ok(int(@$new_entries), '==', $expected_new_num, sprintf("number of new_statuses in %s", $output->getName));
     cmp_ok(int(@$old_entries), '==', $expected_old_num, sprintf("number of old_statuses in %s", $output->getName));
+    ## ** it should check is_new flags here, but we need non-JSON interface first.
 }
 
 sub checkPagination {
@@ -101,15 +102,17 @@ my $next_id = 1;
 
 sub generateStatus {
     my ($id) = @_;
-    my $status = new_ok('BusyBird::Status');
+    
     if(!defined($id)) {
         $id = $next_id;
         $next_id++;
     }elsif($id >= $next_id) {
         $next_id = $id + 1;
     }
-    $status->content->{id} = $id;
-    $status->setDateTime(DateTime->from_epoch(epoch => $id));
+    my $status = new_ok('BusyBird::Status', [
+        id => $id,
+        created_at => DateTime->from_epoch(epoch => $id)
+    ]);
     return $status;
 }
 
