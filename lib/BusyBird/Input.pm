@@ -318,7 +318,13 @@ sub c {
     return $self->SUPER::c(
         $to,
         'BusyBird::Output' => sub {
-            $self->listenOnGetStatuses(sub { $to->pushStatuses($_[0]) });
+            $self->listenOnGetStatuses(
+                sub {
+                    my $statuses = shift;
+                    my $cloned_statuses = [ map {$_->clone()} @$statuses ];
+                    $to->pushStatuses($cloned_statuses);
+                }
+            );
         },
     );
 }
