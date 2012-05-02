@@ -71,6 +71,8 @@ sub checkStatusNum {
     cmp_ok(int(@$new_entries), '==', $expected_new_num, sprintf("number of new_statuses in %s", $output->getName));
     cmp_ok(int(@$old_entries), '==', $expected_old_num, sprintf("number of old_statuses in %s", $output->getName));
     ## ** it should check is_new flags here, but we need non-JSON interface first.
+    ok($_->content->{busybird}{is_new}, "this status is new") foreach @$new_entries;
+    ok(!$_->content->{busybird}{is_new}, "this status is old") foreach @$old_entries;
 }
 
 sub checkPagination {
