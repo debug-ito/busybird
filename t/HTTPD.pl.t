@@ -5,12 +5,19 @@ use warnings;
 use Test::More;
 
 BEGIN {
+    use_ok('Getopt::Long');
     use_ok('FindBin');
     use_ok('AnyEvent');
     use_ok('AnyEvent::Strict');
     use_ok('BusyBird::HTTPD');
 }
 ok(chdir($FindBin::Bin . '/../'), "change the current directory to the base");
+
+my $OPT_WAITTIME = 5;
+
+GetOptions(
+    'w=i' => \$OPT_WAITTIME,
+);
 
 sub testExtractFormat {
     my ($orig, $pathbody, $format) = @_;
@@ -19,11 +26,23 @@ sub testExtractFormat {
     is($got_format, $format, "extracted format");
 }
 
-
 my $cv = AnyEvent->condvar;
+
+if($OPT_WAITTIME > 0) {
+    diag("Wait for $OPT_WAITTIME seconds.");
+    my $tw; $tw = AnyEvent->timer(
+        after => $OPT_WAITTIME,
+        cb => sub {
+            undef $tw;
+            $cv->send();
+        }
+    );
+}else {
+    diag('Wait indefinitely.');
+}
+
 BusyBird::HTTPD->init();
 BusyBird::HTTPD->start();
-
 {
     diag('------ test format extraction');
     foreach my $testcase (
