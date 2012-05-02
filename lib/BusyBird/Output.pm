@@ -310,13 +310,18 @@ sub _requestPointNewStatuses {
 ##     return ($self->REPLIED, \$ret, "text/plain");
 ## }
 
+sub _confirm {
+    my ($self) = @_;
+    $_->content->{busybird}{is_new} = 0 foreach @{$self->{new_statuses}};
+    unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
+    $self->{new_statuses} = [];
+    $self->_limitStatusQueueSize($self->{old_statuses}, $self->{max_old_statuses});
+}
+
 sub _requestPointConfirm {
     my ($self) = @_;
     my $handler = sub {
-        $_->content->{busybird}{is_new} = 0 foreach @{$self->{new_statuses}};
-        unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
-        $self->{new_statuses} = [];
-        $self->_limitStatusQueueSize($self->{old_statuses}, $self->{max_old_statuses});
+        $self->_confirm();
         return [
             '200',
             ['Content-Type' => 'text/plain'],
@@ -344,37 +349,44 @@ sub _requestPointMainPage {
 ##     return ($self->REPLIED, \$html, 'text/html');
 ## }
 
+sub _getPagedStatuses {
+    my ($self, %params) = @_;
+    my $DEFAULT_PER_PAGE = 20;
+    my $new_num = int(@{$self->{new_statuses}});
+    my $page = ($params{page} or 1) - 1;
+    $page = 0 if $page < 0;
+    my $per_page = $params{per_page};
+    my $start_global_index = 0;
+
+    if($params{max_id}) {
+        $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->content->{id} eq $params{max_id} });
+        $start_global_index = 0 if !defined($start_global_index);
+    }
+
+    my $statuses;
+    if($per_page) {
+        $statuses = $self->_getStatuses($start_global_index + $page * $per_page, $per_page);
+    }else {
+        $per_page = $DEFAULT_PER_PAGE;
+        if($start_global_index < $new_num) {
+            if($page == 0) {
+                $statuses = $self->_getStatuses($start_global_index, $per_page + $new_num - $start_global_index);
+            }else {
+                $statuses = $self->_getStatuses($new_num + $page * $per_page, $per_page);
+            }
+        }else {
+            $statuses = $self->_getStatuses($start_global_index + $page * $per_page, $per_page);
+        }
+    }
+    return $statuses;
+}
+
 sub _requestPointAllStatuses {
     my ($self) = @_;
     my $handler = sub {
         my ($request) = @_;
         my $detail = $request->parameters;
-        my $new_num = int(@{$self->{new_statuses}});
-        my $page = ($detail->{page} or 1) - 1;
-        $page = 0 if $page < 0;
-        my $per_page = $detail->{per_page};
-        my $start_global_index = 0;
-
-        if($detail->{max_id}) {
-            $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->content->{id} eq $detail->{max_id} });
-            $start_global_index = 0 if !defined($start_global_index);
-        }
-
-        my $statuses;
-        if($per_page) {
-            $statuses = $self->_getStatuses($start_global_index + $page * $per_page, $per_page);
-        }else {
-            $per_page = 20;
-            if($start_global_index < $new_num) {
-                if($page == 0) {
-                    $statuses = $self->_getStatuses($start_global_index, $per_page + $new_num - $start_global_index);
-                }else {
-                    $statuses = $self->_getStatuses($new_num + $page * $per_page, $per_page);
-                }
-            }else {
-                $statuses = $self->_getStatuses($start_global_index + $page * $per_page, $per_page);
-            }
-        }
+        my $statuses = $self->_getPagedStatuses(%$detail);
         my $ret = '['. join(',', map {$_->format_json()} @$statuses) .']';
         ## return ($self->REPLIED, \$ret, );
         return [
