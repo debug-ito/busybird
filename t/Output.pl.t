@@ -108,7 +108,7 @@ sub generateStatus {
     }elsif($id >= $next_id) {
         $next_id = $id + 1;
     }
-    $status->set(id => $id);
+    $status->content->{id} = $id;
     $status->setDateTime(DateTime->from_epoch(epoch => $id));
     return $status;
 }

@@ -49,9 +49,9 @@ sub createInput {
             my $expect_index = 0;
             my $expect_page = 0;
             foreach my $status (@$statuses) {
-                like($status->get('id'), qr(^Test));
-                is($status->get('user/screen_name'), 'Test');
-                my $text_obj = decode_json($status->get('text'));
+                like($status->content->{id}, qr(^Test));
+                is($status->content->{user}{screen_name}, 'Test');
+                my $text_obj = decode_json($status->content->{text});
                 cmp_ok($text_obj->{index}, '==', $expect_index, "index == $expect_index");
                 cmp_ok($text_obj->{page}, '==', $expect_page, "page == $expect_page");
                 if($expect_index == $expect_count - 1) {
@@ -186,8 +186,8 @@ sync 20, sub {
                     undef $tw;
                     $filter_executed_num++;
                     foreach my $status (@$statuses) {
-                        is($status->get('user/screen_name'), 'Test', 'name is Test before the filter');
-                        $status->set('user/screen_name', 'hoge');
+                        is($status->content->{user}{screen_name}, 'Test', 'name is Test before the filter');
+                        $status->content->{user}{screen_name} = 'hoge';
                     }
                     $cb->($statuses);
                 }
@@ -200,8 +200,8 @@ sync 20, sub {
             my $new_array = [];
             $filter_executed_num++;
             foreach my $status (@$statuses) {
-                is($status->get('user/screen_name'), 'hoge', 'name is changed by a filter.');
-                $status->set('user/screen_name', 'Test');
+                is($status->content->{user}{screen_name}, 'hoge', 'name is changed by a filter.');
+                $status->content->{user}{screen_name} = 'Test';
                 push(@$new_array, $status);
             }
             $cb->($new_array);

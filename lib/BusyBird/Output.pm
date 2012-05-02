@@ -164,7 +164,12 @@ sub _getSingleStatusesJSONEntries {
     }
     my $end_inc_index = $start_index + $entry_num - 1;
     $end_inc_index = $statuses_num - 1 if $end_inc_index >= $statuses_num;
-    my @json_entries = map {$_->getJSON(is_new => $is_new)} @$statuses_ref[$start_index .. $end_inc_index];
+    my @json_entries = ();
+    foreach my $status (@$statuses_ref[$start_index .. $end_inc_index]) {
+        my $clone = $status->clone();
+        $clone->content->{is_new} = $is_new;
+        push(@json_entries, $clone->getJSON);
+    }
     return \@json_entries;
 }
 

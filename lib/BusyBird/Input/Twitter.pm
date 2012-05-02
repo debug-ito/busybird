@@ -87,13 +87,15 @@ sub _extractStatusesFromWorkerData {
         my $text = $self_class->_processEntities($nt_status->{text}, $nt_status->{entities});
         my $status = BusyBird::Status->new();
         $status->setDateTime($self_class->_timeStringToDateTime($nt_status->{created_at}));
-        $status->set(
+        %{$status->content} = (
             id => 'Twitter' . $nt_status->{id},
             text => $text,
             in_reply_to_screen_name => $nt_status->{in_reply_to_screen_name},
-            'user/screen_name' => $nt_status->{user}->{screen_name},
-            'user/name' => $nt_status->{user}->{name},
-            'user/profile_image_url' => $nt_status->{user}->{profile_image_url},
+            user => {
+                'screen_name' => $nt_status->{user}->{screen_name},
+                'name' => $nt_status->{user}->{name},
+                'profile_image_url' => $nt_status->{user}->{profile_image_url},
+            }
         );
         push(@statuses, $status);
     }
