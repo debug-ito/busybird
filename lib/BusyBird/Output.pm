@@ -151,9 +151,8 @@ sub _getGlobalIndicesForStatuses {
 }
 
 sub _getSingleStatusesJSONEntries {
-    my ($self, $statuses_ref, $is_new, $start_index, $entry_num) = @_;
+    my ($self, $statuses_ref, $start_index, $entry_num) = @_;
     my $statuses_num = int(@$statuses_ref);
-    $is_new = $is_new ? 1 : 0;
     $start_index = 0 if !defined($start_index);
     if($start_index >= $statuses_num) {
         return [];
@@ -176,14 +175,14 @@ sub _getStatusesJSONEntries {
     $global_start_index = 0 if $global_start_index < 0;
     my $old_entry_num = $entry_num;
     if($global_start_index < $new_num) {
-        my $new_entries = $self->_getSingleStatusesJSONEntries($self->{new_statuses}, 1, $global_start_index, $entry_num);
+        my $new_entries = $self->_getSingleStatusesJSONEntries($self->{new_statuses}, $global_start_index, $entry_num);
         push(@entries, @$new_entries);
         $old_entry_num = $entry_num - int(@$new_entries);
     }
     if($old_entry_num > 0) {
         my $old_start_index = $global_start_index - $new_num;
         $old_start_index = 0 if $old_start_index < 0;
-        my $old_entries = $self->_getSingleStatusesJSONEntries($self->{old_statuses}, 0, $old_start_index, $old_entry_num);
+        my $old_entries = $self->_getSingleStatusesJSONEntries($self->{old_statuses}, $old_start_index, $old_entry_num);
         push(@entries, @$old_entries);
     }
     return \@entries;
@@ -191,12 +190,12 @@ sub _getStatusesJSONEntries {
 
 sub _getNewStatusesJSONEntries {
     my ($self, $start_index, $entry_num) = @_;
-    return $self->_getSingleStatusesJSONEntries($self->{new_statuses}, 1, $start_index, $entry_num);
+    return $self->_getSingleStatusesJSONEntries($self->{new_statuses}, $start_index, $entry_num);
 }
 
 sub _getOldStatusesJSONEntries {
     my ($self, $start_index, $entry_num) = @_;
-    return $self->_getSingleStatusesJSONEntries($self->{old_statuses}, 0, $start_index, $entry_num);
+    return $self->_getSingleStatusesJSONEntries($self->{old_statuses}, $start_index, $entry_num);
 }
 
 sub _limitStatusQueueSize {
