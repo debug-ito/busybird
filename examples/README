@@ -1,0 +1,5 @@
+1. Move one of the .pl files here as ../config.test.pl.
+2. At the directory of busybird.pl, type
+
+ $ perl -Ilib busybird.pl
+
