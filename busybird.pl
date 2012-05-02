@@ -12,6 +12,10 @@ use BusyBird::Output;
 use BusyBird::Timer;
 
 do "config.test.pl";
+if($@) {
+    print STDERR ("Load config.test.pl error: $@\n");
+    exit 1;
+}
 
 my $OPT_THRESHOLD_OFFSET = 0;
 GetOptions(
