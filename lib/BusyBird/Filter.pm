@@ -18,6 +18,20 @@ sub _setParams {
     $self->{coderefs} = [];
 }
 
+sub pushFilters {
+    my ($self, @filters) = @_;
+    foreach my $filter (@filters) {
+        $self->push(sub { $filter->execute(@_) });
+    }
+}
+
+sub unshiftFilters {
+    my ($self, @filters) = @_;
+    foreach my $filter (@filters) {
+        $self->unshift(sub { $filter->execute(@_) });
+    }
+}
+
 sub push {
     my ($self, @coderefs) = @_;
     CORE::push(@{$self->{coderefs}}, @coderefs);

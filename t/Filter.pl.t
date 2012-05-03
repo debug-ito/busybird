@@ -63,6 +63,21 @@ sub filterSleepPush {
     };
 }
 
+sub filterCheck {
+    my ($expected_seq) = @_;
+    return sub {
+        my ($statuses, $cb) = @_;
+        is_deeply($statuses, $expected_seq, "filterCheck");
+        my $tw; $tw = AnyEvent->timer(
+            after => 0.1,
+            cb => sub {
+                undef $tw;
+                $cb->($statuses);
+            },
+        );
+    }
+}
+
 my $filter = BusyBird::Filter->new();
 &checkFilter($filter, [0..10], [0..10]);
 
@@ -76,11 +91,35 @@ $filter->unshift(&filterReverse());
 $filter->unshift(&filterPlus(3));
 &checkFilter($filter, [0..10], [8..18]);
 
-$filter->push(&filterSleepPush(100, 5));
-$filter->push(&filterSleepPush(300, 2));
-$filter->unshift(&filterSleepPush(2, 10));
+$filter->push(&filterSleepPush(100, 2));
+$filter->push(&filterSleepPush(300, 1));
+$filter->unshift(&filterSleepPush(2, 4));
 &checkFilter($filter, [0..10], [8..18, 10, 100, 300]);
 
+diag("--- nested filters");
+my $granpa = BusyBird::Filter->new();
+my $dad    = BusyBird::Filter->new();
+my $son    = BusyBird::Filter->new();
+my $bro    = BusyBird::Filter->new();
+$granpa->push(&filterPlus(2));
+$granpa->pushFilters($dad);
+$dad->push(&filterPlus(-3));
+$dad->push(&filterReverse());
+$dad->push(&filterCheck([9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1]));
+$dad->pushFilters($son);
+$son->push(&filterSleepPush(100, 1));
+$son->push(&filterPlus(1));
+$son->push(&filterCheck([10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 101]));
+$dad->push(&filterReverse());
+$dad->push(&filterSleepPush(200, 2));
+$dad->pushFilters($bro);
+$bro->push(&filterCheck([101, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 200]));
+$bro->push(&filterReverse());
+$bro->push(&filterPlus(-10));
+$bro->push(&filterSleepPush(300, 2));
+$granpa->push(&filterSleepPush(500, 1));
+
+&checkFilter($granpa, [0..10], [190, 0, -1, -2, -3, -4, -5, -6, -7, -8, -9, -10, 91, 300, 500]);
 
 done_testing();
 
