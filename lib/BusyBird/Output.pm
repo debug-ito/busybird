@@ -220,7 +220,7 @@ sub pushStatuses {
     $self->_limitStatusQueueSize($self->{new_statuses}, $self->{max_new_statuses});
 
     ## ** TODO: implement Nagle algorithm, i.e., delay the complete event a little to accept more statuses.
-    $self->_onCompletePushingStatuses();
+    $self->_replyRequestNewStatuses();
 }
 
 sub _getPointNameForCommand {
@@ -237,30 +237,6 @@ sub getRequestPoints {
     }
     return @points;
 }
-
-sub _onCompletePushingStatuses {
-    my ($self) = @_;
-    ## BusyBird::HTTPD->replyPoint($self->_getPointNameForCommand($COMMAND{NEW_STATUSES}));
-    $self->_replyRequestNewStatuses();
-}
-
-## sub reply {
-##     my ($self, $request_point_name, $detail) = @_;
-##     if($request_point_name !~ m|^/([^/]+)/([^/]+)$|) {
-##         return ($self->NOT_FOUND);
-##     }
-##     my ($output_name, $command) = ($1, $2);
-##     if($command eq $COMMAND{NEW_STATUSES}) {
-##         return $self->_replyNewStatuses($detail);
-##     }elsif($command eq $COMMAND{CONFIRM}) {
-##         return $self->_replyConfirm($detail);
-##     }elsif($command eq $COMMAND{MAINPAGE}) {
-##         return $self->_replyMainPage($detail);
-##     }elsif($command eq $COMMAND{ALL_STATUSES}) {
-##         return $self->_replyAllStatuses($detail);
-##     }
-##     return ($self->NOT_FOUND);
-## }
 
 sub _replyRequestNewStatuses {
     my ($self) = @_;
