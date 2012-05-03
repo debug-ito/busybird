@@ -13,20 +13,17 @@ sub _setParams {
 
 sub _getWorkerInput {
     my ($self, $count, $page) = @_;
-    ## return $self->{nt}->list_statuses({
-    ##     user => $self->{owner_name},
-    ##     list_id => $self->{list_slug_name},
-    ##     per_page => $count,
-    ##     page => $page,
-    ##                                   });
+    my $args = {
+        user => $self->{owner_name},
+        list_id => $self->{list_slug_name},
+        per_page => $count,
+        include_entities => 1,
+    };
+    if(defined($self->{max_id_for_page}[$page])) {
+        $args->{max_id} = $self->{max_id_for_page}[$page];
+    }
     return {method => 'list_statuses', context => 's',
-            args => [{
-                user => $self->{owner_name},
-                list_id => $self->{list_slug_name},
-                per_page => $count,
-                page => $page + 1,
-                include_entities => 1,
-            }]};
+            args => [$args]};
 }
 
 1;
