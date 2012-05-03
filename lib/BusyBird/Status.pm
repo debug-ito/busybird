@@ -26,6 +26,9 @@ sub new {
             die "Param $mandatory is mandatory for Status";
         }
     }
+    if(!defined($self->content->{id_str})) {
+        $self->content->{id_str} = sprintf("%s", $self->content->{id});
+    }
     return $self;
 }
 
