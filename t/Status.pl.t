@@ -17,6 +17,7 @@ sub testJSON {
     isa_ok($datetime, 'DateTime');
     my $expected_output = {
         id => 'hoge',
+        id_str => 'hoge',
         created_at => $exp_created_at,
         text => 'foo bar',
         in_reply_to_screen_name => undef,
