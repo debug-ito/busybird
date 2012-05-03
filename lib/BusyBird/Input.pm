@@ -76,8 +76,25 @@ sub listenOnGetStatuses {
         
 }
 
+sub _uniqStatuses {
+    my ($class_self, $statuses) = @_;
+    return undef if !defined($statuses);
+    my @uniqs = ();
+    return \@uniqs if !@$statuses;
+
+    my %ids = ();
+    foreach my $status (@$statuses) {
+        if(!defined($ids{$status->content->{id}})) {
+            $ids{$status->content->{id}} = 1;
+            push(@uniqs, $status);
+        }
+    }
+    return \@uniqs;
+}
+
 sub _emitOnGetStatuses {
     my ($self, $statuses) = @_;
+    $statuses = $self->_uniqStatuses($statuses);
     $self->getFilter->execute(
         $statuses,
         sub {
