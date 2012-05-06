@@ -72,6 +72,118 @@ sub generateStatus {
     return $status;
 }
 
+sub filterCount {
+    my ($counter_ref) = @_;
+    return sub {
+        my ($statuses, $cb) = @_;
+        my $tw; $tw = AnyEvent->timer(
+            after => 0,
+            cb => sub {
+                undef $tw;
+                is(ref($statuses), 'ARRAY', "statuses is ARRAY");
+                $$counter_ref += int(@$statuses);
+                $cb->($statuses);
+            }
+        );
+    };
+}
+
+sub filterCheck {
+    my ($expected_ids, $check_fields) = @_;
+    $check_fields = [] if !defined($check_fields);
+    return sub {
+        my ($statuses, $cb) = @_;
+        my $tw; $tw = AnyEvent->timer(
+            after => 0,
+            cb => sub {
+                undef $tw;
+                is(ref($statuses), 'ARRAY', 'got ARRAY in filter');
+                cmp_ok(int(@$statuses), '==', int(@$expected_ids), 'number of statuses in filter');
+                foreach my $i (0 .. $#$statuses) {
+                    is($statuses->[$i]->content->{id}, $expected_ids->[$i], "status ID $expected_ids->[$i]");
+                    foreach my $field (@$check_fields) {
+                        ok(defined($statuses->[$i]->content->{$field}), "$field is defined...");
+                        is($statuses->[$i]->content->{$field}, $expected_ids->[$i], "and is expected status ID.");
+                    }
+                }
+                $cb->($statuses);
+            }
+        );
+    };
+}
+
+sub filterField {
+    my ($field_name) = @_;
+    return sub {
+        my ($statuses, $cb) = @_;
+        my $tw; $tw = AnyEvent->timer(
+            after => 0,
+            cb => sub {
+                undef $tw;
+                foreach my $status (@$statuses) {
+                    $status->content->{$field_name} = $status->content->{id};
+                }
+                $cb->($statuses);
+            }
+        );
+    };
+}
+
+sub filterDup {
+    my ($factor) = @_;
+    return sub {
+        my ($statuses, $cb) = @_;
+        my $tw; $tw = AnyEvent->timer(
+            after => 0,
+            cb => sub {
+                undef $tw;
+                my @duped = ();
+                foreach my $status (@$statuses) {
+                    foreach (1 .. $factor) {
+                        push(@duped, $status->clone());
+                    }
+                }
+                $cb->(\@duped);
+            }
+        );
+    }
+}
+
+sub filterDeleteAll {
+    return &filterDup(0);
+}
+
+sub filterAdd {
+    my (@added_ids) = @_;
+    return sub {
+        my ($statuses, $cb) = @_;
+        my $tw; $tw = AnyEvent->timer(
+            after => 0,
+            cb => sub {
+                undef $tw;
+                foreach my $id (@added_ids) {
+                    push(@$statuses, &generateStatus($id));
+                }
+                $cb->($statuses);
+            }
+        );
+    };
+}
+
+sub filterSleep {
+    my ($sleep_time) = @_;
+    return sub {
+        my ($statuses, $cb) = @_;
+        my $tw; $tw = AnyEvent->timer(
+            after => $sleep_time,
+            cb => sub {
+                undef $tw;
+                $cb->($statuses);
+            }
+        );
+    };
+}
+
 sub main {
     my $output;
     eval {
@@ -158,6 +270,20 @@ sub main {
     diag('------ --- With invalid max_id option, pagination should start from index 0');
     &checkPagination($output, {max_id => 'this_does_not_exist', page => 1}, reverse(51 .. 135));
     &checkPagination($output, {max_id => 'this_does_not_exist', page => 2}, reverse(31 .. 50));
+
+    {
+        diag('------ Test Output filters');
+        $output = new_ok('BusyBird::Output', [name => 'filter_test']);
+        $next_id = 1;
+        my ($count_input, $count_new) = (0, 0);
+        $output->getInputFilter()->push(&filterCount(\$count_input));
+        $output->getInputFilter()->push(&filterSleep(1));
+        $output->getNewStatusFilter()->push(&filterCount(\$count_new));
+        my @input_statuses = map {&generateStatus()} 1..20;
+        &pushStatusesSync($output, \@input_statuses);
+        cmp_ok($count_input, "==", 20, "20 statuses went through InputFilter");
+        cmp_ok($count_new, '==', 20, '20 statuses went through NewStatusFilter');
+    }
     
     done_testing();
 }
