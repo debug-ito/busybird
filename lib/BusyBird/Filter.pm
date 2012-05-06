@@ -16,7 +16,6 @@ sub new {
 sub _setParams {
     my ($self, $param_ref) = @_;
     $self->_setParam($param_ref, 'parallel_limit', 1);
-    $self->{parallel_limit} = 1 if $self->{parallel_limit} < 1;
     $self->{coderefs} = [];
     $self->{jobqueue} = [];
     $self->{parallel_current} = 0;
@@ -52,7 +51,7 @@ sub execute {
         $callback->($target);
         return;
     }
-    if($self->{parallel_current} >= $self->{parallel_limit}) {
+    if($self->{parallel_limit} > 0 && $self->{parallel_current} >= $self->{parallel_limit}) {
         CORE::push(@{$self->{jobqueue}}, [$target, $callback]);
         return;
     }
