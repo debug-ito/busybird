@@ -62,13 +62,13 @@ sub _forceExecute {
     my ($self, $target, $callback) = @_;
     my $index = 0;
     my $single_callback;
-    $self->{parallel_count}++;
+    $self->{parallel_current}++;
     $single_callback = sub {
         my ($filtered_target) = @_;
         $index++;
         if($index >= @{$self->{coderefs}}) {
             $callback->($filtered_target);
-            $self->{parallel_count}--;
+            $self->{parallel_current}--;
             if(my $next_job = CORE::shift(@{$self->{jobqueue}})) {
                 $self->_forceExecute(@$next_job);
             }
