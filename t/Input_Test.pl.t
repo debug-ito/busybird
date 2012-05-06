@@ -10,6 +10,7 @@ BEGIN {
     use_ok('AnyEvent::Strict');
     use_ok('JSON');
     use_ok('DateTime');
+    use_ok('BusyBird::Test', qw(CV within));
     use_ok('BusyBird::Status');
     use_ok('BusyBird::Filter');
     use_ok('BusyBird::Input::Test');
@@ -18,8 +19,6 @@ BEGIN {
 my $TRIGGER_DELAY = 1;
 my $total_actual_fire = 0;
 my $total_expect_fire = 0;
-my $gcv;
-
 
 sub createInput {
     my (%params_arg) = @_;
@@ -62,21 +61,21 @@ sub createInput {
                 }
             }
             ## $fire_count++;
-            $gcv->end();
+            CV()->end();
         }
     );
     my $trigger_func = sub {
         my (%trigger_param) = @_;
         diag(sprintf("Trigger (interval => %s, count => %s, page_num => %s)",
                  @params{qw(new_interval new_count page_num)}));
-        $gcv->begin(); ## For OnGetStatuses event
+        CV()->begin(); ## For OnGetStatuses event
         $total_expect_fire++;
-        $gcv->begin(); ## For the timer below
+        CV()->begin(); ## For the timer below
         my $timer; $timer = AnyEvent->timer(
             after => $TRIGGER_DELAY,
             cb => sub {
                 undef $timer;
-                $gcv->end();
+                CV()->end();
                 push(@expect_queue, {count => $trigger_param{expect_count}, page_num => $trigger_param{expect_page_num}});
                 $input->getStatuses();
             },
@@ -85,22 +84,9 @@ sub createInput {
     return wantarray ? ($trigger_func, $input) : $trigger_func;
 }
 
-sub sync ($&) {
+sub sync {
     my ($timeout, $coderef) = @_;
-    $gcv = AnyEvent->condvar;
-    $gcv->begin();
-    my $tw; $tw = AnyEvent->timer(
-        after => $timeout,
-        cb => sub {
-            undef $tw;
-            fail('Takes too long time. Abort.');
-            $gcv->send();
-        }
-    );
-    $coderef->();
-    $gcv->end();
-    $gcv->recv();
-    undef $tw;
+    within $timeout, $coderef;
     cmp_ok($total_actual_fire, '==', $total_expect_fire, "expected $total_expect_fire fires.");
 }
 
