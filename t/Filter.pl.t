@@ -8,6 +8,7 @@ use Test::More;
 BEGIN {
     use_ok('AnyEvent');
     use_ok('AnyEvent::Strict');
+    use_ok('BusyBird::Test', qw(CV within));
     use_ok('BusyBird::Filter');
 }
 
@@ -106,6 +107,70 @@ sub filterDying {
     };
 }
 
+sub checkParallel {
+    my ($parallel_limit, $try_count, $expect_max_parallel, $expect_order_ref) = @_;
+    diag("--- -- checkParallel limit => $parallel_limit, try_count => $try_count, expect_max_parallel => $expect_max_parallel");
+    my $filter = BusyBird::Filter->new(parallel_limit => $parallel_limit);
+    $expect_max_parallel ||= $parallel_limit;
+    my $parallel_count = 0;
+    my $filter_done_count = 0;
+    my $got_max_parallel = 0;
+    $filter->push(
+        sub {
+            my ($target, $cb) = @_;
+            my $tw; $tw = AnyEvent->timer(
+                after => 0,
+                cb => sub {
+                    undef $tw;
+                    $parallel_count++;
+                    if($parallel_limit > 0) {
+                        cmp_ok($parallel_count, '<=', $parallel_limit, "Parallel count <= $parallel_limit");
+                    }
+                    $got_max_parallel = $parallel_count if $parallel_count > $got_max_parallel;
+                    $cb->($target);
+                }
+            );
+        }
+    );
+    $filter->push(
+        sub {
+            my ($target, $cb) = @_;
+            ## ** descending amount of sleep_time
+            my $sleep_time = 3.0 / $target;
+            my $tw; $tw = AnyEvent->timer(
+                after => $sleep_time,
+                cb => sub {
+                    undef $tw;
+                    $cb->($target);
+                }
+            );
+        }
+    );
+    my $got_order_ref = [];
+    within 10, sub {
+        foreach my $order (1 .. $try_count) {
+            CV()->begin();
+            $filter->execute(
+                $order, sub {
+                    my ($filter_result) = @_;
+                    push(@$got_order_ref, $filter_result);
+                    $filter_done_count++;
+                    $parallel_count--;
+                    cmp_ok($parallel_count, ">=", 0, "Parallel count >= 0");
+                    CV()->end();
+                }
+            );
+        }
+    };
+    diag("Got orders: " . join(",", @$got_order_ref));
+    cmp_ok($filter_done_count, "==", $try_count, "filter done count == $try_count");
+    cmp_ok($got_max_parallel, "==", $expect_max_parallel, "max parallel == $expect_max_parallel");
+    if(defined($expect_order_ref)) {
+        cmp_ok(int(@$got_order_ref), "==", int(@$expect_order_ref), "size of got_order_ref is correct");
+        is_deeply($got_order_ref, $expect_order_ref, "got_order_ref is deeply correct");
+    }
+}
+
 {
     my $filter = BusyBird::Filter->new();
     &checkFilter($filter, [0..10], [0..10]);
@@ -168,7 +233,9 @@ sub filterDying {
 
 {
     diag("--- filter parallelism control");
-    fail("test must be written");
+    &checkParallel(2, 6, 2);
+    &checkParallel(1, 7, 1, [1 .. 7]);
+    &checkParallel(0, 8, 8, [reverse(1 .. 8)]);
 }
 
 done_testing();
