@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use DateTime;
 
-use BusyBird::Connector;
+use BusyBird::Filter;
 
 my %S = (
     global_header_height => '50px',
@@ -31,12 +31,16 @@ sub new {
         mainpage_html => undef,
         pending_req => {
             new_statuses => [],
-        }
+        },
+        filters => {
+            map { $_ => BusyBird::Filter->new() } qw(parent_input input new_status)
+        },
     }, $class;
     $self->_setParam(\%params, 'name', undef, 1);
     $self->_setParam(\%params, 'max_old_statuses', 1024);
     $self->_setParam(\%params, 'max_new_statuses', 2048);
     $self->_initMainPage();
+    $self->_initFilters();
     return $self;
 }
 
@@ -110,6 +114,32 @@ div.status_main {
 END
 }
 
+sub _initFilters {
+    my ($self) = @_;
+    $self->{filters}->{parent_input}->pushFilters(
+        $self->{filters}->{input}
+    );
+    $self->{filters}->{parent_input}->push(
+        sub {
+            my ($statuses, $cb) = @_;
+            $cb->($self->_uniqStatuses($statuses));
+        }
+    );
+    $self->{filters}->{parent_input}->pushFilters(
+        $self->{filters}->{new_status}
+    );
+}
+
+sub getInputFilter {
+    my $self = shift;
+    return $self->{filters}->{input};
+}
+
+sub getNewStatusFilter {
+    my $self = shift;
+    return $self->{filters}->{new_status};
+}
+
 sub getName {
     my $self = shift;
     return $self->{name};
@@ -117,11 +147,6 @@ sub getName {
 
 sub _uniqStatuses {
     my ($self, $statuses) = @_;
-    ## my %ids = ();
-    ## foreach my $status (@{$self->{statuses}}) {
-    ##     ## print STDERR Dumper($status);
-    ##     $ids{$status->{bb_id}} = 1;
-    ## }
     my $uniq_statuses = [];
     foreach my $status (@$statuses) {
         if(!defined($self->{status_ids}{$status->content->{id}})) {
@@ -206,21 +231,41 @@ sub _limitStatusQueueSize {
 }
 
 sub pushStatuses {
-    my ($self, $statuses) = @_;
-    $statuses = $self->_uniqStatuses($statuses);
-    if(!@$statuses) {
-        return;
-    }
-    unshift(@{$self->{new_statuses}}, @$statuses);
-    foreach my $status (@$statuses) {
-        $self->{status_ids}{$status->content->{id}} = 1;
-        $status->content->{busybird}{is_new} = 1;
-    }
-    $self->_sort();
-    $self->_limitStatusQueueSize($self->{new_statuses}, $self->{max_new_statuses});
+    my ($self, $statuses, $cb) = @_;
+    $self->{filters}->{parent_input}->execute(
+        $statuses, sub {
+            my ($filtered_statuses) = @_;
+            if(!@$filtered_statuses) {
+                $cb->($filtered_statuses) if defined($cb);
+                return;
+            }
+            unshift(@{$self->{new_statuses}}, @$filtered_statuses);
+            foreach my $status (@$filtered_statuses) {
+                $self->{status_ids}{$status->content->{id}} = 1;
+                $status->content->{busybird}{is_new} = 1;
+            }
+            $self->_sort();
+            $self->_limitStatusQueueSize($self->{new_statuses}, $self->{max_new_statuses});
 
-    ## ** TODO: implement Nagle algorithm, i.e., delay the complete event a little to accept more statuses.
-    $self->_replyRequestNewStatuses();
+            ## ** TODO: implement Nagle algorithm, i.e., delay the complete event a little to accept more statuses.
+            $self->_replyRequestNewStatuses();
+            $cb->($filtered_statuses) if defined($cb);
+        }
+    );
+    #### $statuses = $self->_uniqStatuses($statuses);
+    #### if(!@$statuses) {
+    ####     return;
+    #### }
+    #### unshift(@{$self->{new_statuses}}, @$statuses);
+    #### foreach my $status (@$statuses) {
+    ####     $self->{status_ids}{$status->content->{id}} = 1;
+    ####     $status->content->{busybird}{is_new} = 1;
+    #### }
+    #### $self->_sort();
+    #### $self->_limitStatusQueueSize($self->{new_statuses}, $self->{max_new_statuses});
+    #### 
+    #### ## ** TODO: implement Nagle algorithm, i.e., delay the complete event a little to accept more statuses.
+    #### $self->_replyRequestNewStatuses();
 }
 
 sub _getPointNameForCommand {
