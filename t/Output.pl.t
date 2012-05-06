@@ -5,7 +5,10 @@ use warnings;
 use Test::More;
 
 BEGIN {
+    use_ok('AnyEvent');
+    use_ok('AnyEvent::Strict');
     use_ok('DateTime');
+    use_ok('BusyBird::Test', qw(CV within));
     use_ok('BusyBird::Status');
     use_ok('BusyBird::Output');
 }
@@ -18,6 +21,15 @@ sub checkStatusNum {
     cmp_ok(int(@$old_entries), '==', $expected_old_num, sprintf("number of old_statuses in %s", $output->getName));
     ok($_->content->{busybird}{is_new}, "this status is new") foreach @$new_entries;
     ok(!$_->content->{busybird}{is_new}, "this status is old") foreach @$old_entries;
+}
+
+sub pushStatusesSync {
+    my ($output, $statuses, $timeout) = @_;
+    $timeout ||= 10;
+    within $timeout, sub {
+        CV()->begin();
+        $output->pushStatuses($statuses, sub { CV()->end() });
+    };
 }
 
 sub checkPagination {
@@ -72,29 +84,35 @@ sub main {
     is($output->getName, "sample");
     
     diag('------ pushStatuses() should take new statuses.');
-    $output->pushStatuses([&generateStatus()]) foreach (1..5);
+    
+    &pushStatusesSync($output, [&generateStatus()]) foreach (1..5);
     &checkStatusNum($output, 5, 0);
     my @newones = ();
     push(@newones, &generateStatus()) foreach (1..5);
-    $output->pushStatuses(\@newones);
+    &pushStatusesSync($output, \@newones);
     &checkStatusNum($output, 10, 0);
 
     diag('------ pushStatuses() should uniqify the input.');
-    $output->pushStatuses([&generateStatus($_)]) foreach (1..5);
+    within 10, sub {
+        foreach (1..5) {
+            CV()->begin();
+            $output->pushStatuses([&generateStatus($_)], sub { CV()->end() });
+        }
+    };
     &checkStatusNum($output, 10, 0);
 
     diag('------ _confirm() should make new statuses old.');
     $output->_confirm();
     &checkStatusNum($output, 0, 10);
-    $output->pushStatuses([&generateStatus()]) foreach (1..5);
+    &pushStatusesSync($output, [&generateStatus()]) foreach (1..5);
     &checkStatusNum($output, 5, 10);
-    $output->pushStatuses([&generateStatus($_)]) foreach (1..5);
+    &pushStatusesSync($output, [&generateStatus($_)]) foreach (1..5);
     &checkStatusNum($output, 5, 10);
 
     diag('------ _getPagedStatuses() pagination test.');
-    $output->pushStatuses([&generateStatus()]) foreach (1..55);
+    &pushStatusesSync($output, [&generateStatus()]) foreach (1..55);
     $output->_confirm();
-    $output->pushStatuses([&generateStatus()]) foreach (1..65);
+    &pushStatusesSync($output, [&generateStatus()]) foreach (1..65);
     &checkStatusNum($output, 65, 70);
     
     diag('------ --- Without per_page option, page 1 always includes all of the new statuses. Old statuses are separated by the default per_page value.');
