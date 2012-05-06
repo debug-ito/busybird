@@ -43,23 +43,23 @@ sub unshift {
 }
 
 sub execute {
-    my ($self, $statuses, $callback) = @_;
+    my ($self, $target, $callback) = @_;
     if(@{$self->{coderefs}} == 0) {
-        $callback->($statuses);
+        $callback->($target);
         return;
     }
     my $index = 0;
     my $single_callback;
     $single_callback = sub {
-        my ($filtered_statuses) = @_;
+        my ($filtered_target) = @_;
         $index++;
         if($index >= @{$self->{coderefs}}) {
-            $callback->($filtered_statuses);
+            $callback->($filtered_target);
         }else {
-            $self->{coderefs}->[$index]->($filtered_statuses, $single_callback);
+            $self->{coderefs}->[$index]->($filtered_target, $single_callback);
         }
     };
-    $self->{coderefs}->[$index]->($statuses, $single_callback);
+    $self->{coderefs}->[$index]->($target, $single_callback);
 }
 
 1;
