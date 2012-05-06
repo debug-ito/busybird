@@ -166,6 +166,11 @@ sub filterDying {
     &checkFilter($filter, [0..10], [15, 16, 17, 18, 19, 20, 21, 100]);
 }
 
+{
+    diag("--- filter parallelism control");
+    fail("test must be written");
+}
+
 done_testing();
 
 
