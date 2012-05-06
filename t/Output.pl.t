@@ -112,6 +112,40 @@ sub filterCheck {
     };
 }
 
+my $g_parallel_count = 0;
+
+sub filterCheckParallelBegin {
+    my $PARALLEL_LIMIT = 1;
+    return sub {
+        my ($statuses, $cb) = @_;
+        my $tw; $tw = AnyEvent->timer(
+            after => 0,
+            cb => sub {
+                undef $tw;
+                $g_parallel_count++;
+                cmp_ok($g_parallel_count, "<=", $PARALLEL_LIMIT,
+                       "filters are executed in parallel with up to $PARALLEL_LIMIT pseudo-threads.");
+                $cb->($statuses);
+            }
+        );
+    };
+}
+
+sub filterCheckParallelEnd {
+    return sub {
+        my ($statuses, $cb) = @_;
+        my $tw; $tw = AnyEvent->timer(
+            after => 0,
+            cb => sub {
+                undef $tw;
+                $g_parallel_count--;
+                cmp_ok($g_parallel_count, ">=", 0);
+                $cb->($statuses);
+            }
+        );
+    };
+}
+
 sub filterField {
     my ($field_name) = @_;
     return sub {
@@ -276,13 +310,25 @@ sub main {
         $output = new_ok('BusyBird::Output', [name => 'filter_test']);
         $next_id = 1;
         my ($count_input, $count_new) = (0, 0);
+        $output->getInputFilter()->push(&filterCheckParallelBegin());
         $output->getInputFilter()->push(&filterCount(\$count_input));
         $output->getInputFilter()->push(&filterSleep(1));
         $output->getNewStatusFilter()->push(&filterCount(\$count_new));
+        $output->getNewStatusFilter()->push(&filterCheckParallelEnd());
         my @input_statuses = map {&generateStatus()} 1..20;
         &pushStatusesSync($output, \@input_statuses);
         cmp_ok($count_input, "==", 20, "20 statuses went through InputFilter");
         cmp_ok($count_new, '==', 20, '20 statuses went through NewStatusFilter');
+
+        ($count_input, $count_new) = (0, 0);
+        within 10, sub {
+            foreach (1..20) {
+                CV()->begin();
+                $output->pushStatuses([&generateStatus()], sub { CV()->end() });
+            }
+        };
+        cmp_ok($count_input, "==", 20, "20 statuses went through InputFilter");
+        cmp_ok($count_new, "==", 20, "20 statuses went through NewStatusFilter");
     }
     
     done_testing();
