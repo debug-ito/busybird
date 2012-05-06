@@ -69,7 +69,7 @@ sub _forceExecute {
         if($index >= @{$self->{coderefs}}) {
             $callback->($filtered_target);
             $self->{parallel_count}--;
-            if(my $next_job = CORE::pop(@{$self->{jobqueue}})) {
+            if(my $next_job = CORE::shift(@{$self->{jobqueue}})) {
                 $self->_forceExecute(@$next_job);
             }
         }else {
