@@ -116,16 +116,12 @@ END
 
 sub _initFilters {
     my ($self) = @_;
-    $self->{filters}->{parent_input}->pushFilters(
-        $self->{filters}->{input}
-    );
     $self->{filters}->{parent_input}->push(
+        $self->{filters}->{input},
         sub {
             my ($statuses, $cb) = @_;
             $cb->($self->_uniqStatuses($statuses));
-        }
-    );
-    $self->{filters}->{parent_input}->pushFilters(
+        },
         $self->{filters}->{new_status}
     );
 }

@@ -312,7 +312,7 @@ sub main {
         my ($count_input, $count_new) = (0, 0);
         $output->getInputFilter()->push(&filterCheckParallelBegin());
         $output->getInputFilter()->push(&filterCount(\$count_input));
-        $output->getInputFilter()->push(&filterSleep(1));
+        $output->getInputFilter()->push(&filterSleep(0.3));
         $output->getNewStatusFilter()->push(&filterCount(\$count_new));
         $output->getNewStatusFilter()->push(&filterCheckParallelEnd());
         my @input_statuses = map {&generateStatus()} 1..20;

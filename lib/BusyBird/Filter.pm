@@ -21,28 +21,41 @@ sub _setParams {
     $self->{parallel_current} = 0;
 }
 
-sub pushFilters {
-    my ($self, @filters) = @_;
-    foreach my $filter (@filters) {
-        $self->push(sub { $filter->execute(@_) });
-    }
+sub filterElement {
+    my ($self) = @_;
+    return sub { $self->execute(@_) };
 }
 
-sub unshiftFilters {
-    my ($self, @filters) = @_;
-    foreach my $filter (@filters) {
-        $self->unshift(sub { $filter->execute(@_) });
+sub _addFilterElements {
+    my ($self, $elems_ref, $add_method) = @_;
+    foreach my $filter_elem (@$elems_ref) {
+        die "A filter element must be either coderef or object." if !ref($filter_elem);
+        if(ref($filter_elem) eq 'CODE') {
+            $add_method->($self->{coderefs}, $filter_elem);
+        }else {
+            $add_method->($self->{coderefs}, $filter_elem->filterElement());
+        }
     }
 }
 
 sub push {
-    my ($self, @coderefs) = @_;
-    CORE::push(@{$self->{coderefs}}, @coderefs);
+    my ($self, @elems) = @_;
+    $self->_addFilterElements(
+        \@elems, sub {
+            my ($a, $elem) = @_;
+            CORE::push(@$a, $elem);
+        }
+    );
 }
 
 sub unshift {
-    my ($self, @coderefs) = @_;
-    CORE::unshift(@{$self->{coderefs}}, @coderefs);
+    my ($self, @elems) = @_;
+    $self->_addFilterElements(
+        \@elems, sub {
+            my ($a, $elem) = @_;
+            CORE::unshift(@$a, $elem);
+        }
+    );
 }
 
 sub execute {

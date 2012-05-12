@@ -198,17 +198,19 @@ sub checkParallel {
     my $son    = BusyBird::Filter->new();
     my $bro    = BusyBird::Filter->new();
     $granpa->push(&filterPlus(2));
-    $granpa->pushFilters($dad);
-    $dad->push(&filterPlus(-3));
-    $dad->push(&filterReverse());
-    $dad->push(&filterCheck([9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1]));
-    $dad->pushFilters($son);
+    $granpa->push($dad);
+    $dad->push(
+        &filterPlus(-3),
+        &filterReverse(),
+        &filterCheck([9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1]),
+        $son
+    );
     $son->push(&filterSleepPush(100, 1));
     $son->push(&filterPlus(1));
     $son->push(&filterCheck([10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 101]));
     $dad->push(&filterReverse());
     $dad->push(&filterSleepPush(200, 2));
-    $dad->pushFilters($bro);
+    $dad->push($bro);
     $bro->push(&filterCheck([101, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 200]));
     $bro->push(&filterReverse());
     $bro->push(&filterPlus(-10));
