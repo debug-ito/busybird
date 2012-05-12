@@ -16,6 +16,8 @@ sub new {
 sub _setParams {
     my ($self, $param_ref) = @_;
     $self->_setParam($param_ref, 'parallel_limit', 1);
+    $self->_setParam($param_ref, 'delay', 0);
+    $self->{delay} = 0 if $self->{delay} < 0;
     $self->{coderefs} = [];
     $self->{jobqueue} = [];
     $self->{parallel_current} = 0;
@@ -79,15 +81,27 @@ sub _forceExecute {
     $single_callback = sub {
         my ($filtered_target) = @_;
         $index++;
+        my $next_move;
         if($index >= @{$self->{coderefs}}) {
-            $callback->($filtered_target);
-            $self->{parallel_current}--;
-            if(my $next_job = CORE::shift(@{$self->{jobqueue}})) {
-                $self->_forceExecute(@$next_job);
-            }
+            $next_move = sub {
+                $callback->($filtered_target);
+                $self->{parallel_current}--;
+                if(my $next_job = CORE::shift(@{$self->{jobqueue}})) {
+                    $self->_forceExecute(@$next_job);
+                }
+            };
         }else {
-            $self->{coderefs}->[$index]->($filtered_target, $single_callback);
+            $next_move = sub {
+                $self->{coderefs}->[$index]->($filtered_target, $single_callback);
+            };
         }
+        my $tw; $tw = AnyEvent->timer(
+            after => $self->{delay},
+            cb => sub {
+                undef $tw;
+                $next_move->();
+            },
+        );
     };
     $self->{coderefs}->[$index]->($target, $single_callback);
 }

@@ -66,7 +66,7 @@ sub filterSleepPush {
     my ($pushval, $sleep) = @_;
     return sub {
         my ($in, $cb) = @_;
-        diag(sprintf('filterSleepPush with pushval => %s, sleep => %s', $pushval, $sleep));
+        note(sprintf('filterSleepPush with pushval => %s, sleep => %s', $pushval, $sleep));
         my $tw; $tw = AnyEvent->timer(
             after => $sleep,
             cb => sub {
@@ -113,7 +113,7 @@ sub filterDying {
                     }
                 };
                 if($@) {
-                    diag("filterDying dies: $@");
+                    note("filterDying dies: $@");
                 }
                 $cb->($is_in_place ? $statuses : \@new_statuses);
             }
@@ -123,7 +123,7 @@ sub filterDying {
 
 sub checkParallel {
     my ($parallel_limit, $try_count, $expect_max_parallel, $expect_order_ref) = @_;
-    diag("--- -- checkParallel limit => $parallel_limit, try_count => $try_count, expect_max_parallel => $expect_max_parallel");
+    note("--- -- checkParallel limit => $parallel_limit, try_count => $try_count, expect_max_parallel => $expect_max_parallel");
     my $filter = BusyBird::Filter->new(parallel_limit => $parallel_limit);
     $expect_max_parallel ||= $parallel_limit;
     my $parallel_count = 0;
@@ -176,7 +176,7 @@ sub checkParallel {
             );
         }
     };
-    diag("Got orders: " . join(",", @$got_order_ref));
+    note("Got orders: " . join(",", @$got_order_ref));
     cmp_ok($filter_done_count, "==", $try_count, "filter done count == $try_count");
     cmp_ok($got_max_parallel, "==", $expect_max_parallel, "max parallel == $expect_max_parallel");
     if(defined($expect_order_ref)) {
@@ -186,27 +186,29 @@ sub checkParallel {
 }
 
 {
-    my $filter = BusyBird::Filter->new();
-    &checkFilter($filter, [0..10], [0..10]);
+    foreach my $delay (0, 0.2) {
+        my $filter = BusyBird::Filter->new(delay => $delay);
+        &checkFilter($filter, [0..10], [0..10]);
 
-    $filter->push(&filterPlus(5));
-    &checkFilter($filter, [0..10], [5..15]);
+        $filter->push(&filterPlus(5));
+        &checkFilter($filter, [0..10], [5..15]);
 
-    $filter->push(&filterReverse());
-    &checkFilter($filter, [0..10], [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5]);
+        $filter->push(&filterReverse());
+        &checkFilter($filter, [0..10], [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5]);
 
-    $filter->unshift(&filterReverse());
-    $filter->unshift(&filterPlus(3));
-    &checkFilter($filter, [0..10], [8..18]);
+        $filter->unshift(&filterReverse());
+        $filter->unshift(&filterPlus(3));
+        &checkFilter($filter, [0..10], [8..18]);
 
-    $filter->push(&filterSleepPush(100, 2));
-    $filter->push(&filterSleepPush(300, 1));
-    $filter->unshift(&filterSleepPush(2, 4));
-    &checkFilter($filter, [0..10], [8..18, 10, 100, 300]);
+        $filter->push(&filterSleepPush(100, 0.2));
+        $filter->push(&filterSleepPush(300, 0.1));
+        $filter->unshift(&filterSleepPush(2, 0.4));
+        &checkFilter($filter, [0..10], [8..18, 10, 100, 300]);
+    }
 }
 
 {
-    diag("--- nested filters");
+    note("--- nested filters");
     my $granpa = BusyBird::Filter->new();
     my $dad    = BusyBird::Filter->new();
     my $son    = BusyBird::Filter->new();
@@ -235,8 +237,8 @@ sub checkParallel {
 }
 
 {
-    diag("--- filter callbacks must not raise exceptions.");
-    diag("--- It is limitation of AnyEvent.");
+    note("--- filter callbacks must not raise exceptions.");
+    note("--- It is limitation of AnyEvent.");
     my $filter = BusyBird::Filter->new();
     $filter->push(&filterPlus(5));
     $filter->push(&filterSleepPush(16, 1));
@@ -248,7 +250,7 @@ sub checkParallel {
 }
 
 {
-    diag("--- filter parallelism control");
+    note("--- filter parallelism control");
     &checkParallel(2, 6, 2);
     &checkParallel(1, 7, 1, [1 .. 7]);
     &checkParallel(0, 8, 8, [reverse(1 .. 8)]);
@@ -256,7 +258,7 @@ sub checkParallel {
 
 {
     my $filter = BusyBird::Filter->new();
-    diag("--- What if I pushed some junks to a filter?");
+    note("--- What if I pushed some junks to a filter?");
     dies_ok {$filter->push(undef)} 'Do not push undef';
     dies_ok {$filter->unshift(undef)} 'Do not unshift undef';
     dies_ok {$filter->push(1)} 'Do not push a scalar';
