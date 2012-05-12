@@ -22,6 +22,13 @@ sub _setParams {
     $self->_setParam($params_ref, 'load_delay', 0.1);
     $self->{fired_count} = -1;
     $self->{timestamp} = undef;
+    $self->{status_loader}->unshift(
+        sub {
+            my ($input, $cb) = @_;
+            $self->{fired_count} = ($self->{fired_count} + 1) % $self->{new_interval};
+            $cb->($input);
+        }
+    );
 }
 
 sub _newStatus {
@@ -55,11 +62,11 @@ sub setTimeStamp {
     $self->{timestamp} = $ts_datetime;
 }
 
-sub _getStatusesTriggerTop {
-    my ($self) = @_;
-    $self->{fired_count} = ($self->{fired_count} + 1) % $self->{new_interval};
-    return $self->SUPER::_getStatusesTriggerTop();
-}
+## sub _getStatusesTriggerTop {
+##     my ($self) = @_;
+##     $self->{fired_count} = ($self->{fired_count} + 1) % $self->{new_interval};
+##     return $self->SUPER::_getStatusesTriggerTop();
+## }
 
 sub _getStatusesPage {
     my ($self, $count, $page, $callback) = @_;

@@ -62,7 +62,7 @@ sub _setParams {
     $self->{page_no_threshold_max} = $self->{page_max} if $self->{page_no_threshold_max} > $self->{page_max};
     $self->{on_get_statuses} = [];
     $self->{filter} = BusyBird::Filter->new();
-    $self->{trigger_queue} = [];
+    $self->{status_loader} = $self->_initLoader()
 }
 
 sub getFilter {
@@ -104,7 +104,7 @@ sub _emitOnGetStatuses {
                 $filtered_statuses = [];
             }
             $_->($filtered_statuses) foreach @{$self->{on_get_statuses}};
-            $self->_getStatusesTriggerDone();
+            ## $self->_getStatusesTriggerDone();
         },
     );
 }
@@ -163,130 +163,200 @@ sub _saveTimeFile {
 
 sub getStatuses {
     my ($self, $threshold_epoch_time) = @_;
-    push(@{$self->{trigger_queue}}, [$threshold_epoch_time]);
-    if(@{$self->{trigger_queue}} > 1) {
-        return;
-    }
-    $self->_getStatusesTriggerTop();
-}
+    ## push(@{$self->{trigger_queue}}, [$threshold_epoch_time]);
+    ## if(@{$self->{trigger_queue}} > 1) {
+    ##     return;
+    ## }
+    ## $self->_getStatusesTriggerTop();
 
-sub _getStatusesTriggerDone {
-    my ($self) = @_;
-    return if !@{$self->{trigger_queue}};
-    
-    shift(@{$self->{trigger_queue}});
-    if(@{$self->{trigger_queue}}) {
-        my $tw; $tw = AnyEvent->timer(
-            after => $self->{page_next_delay},
-            cb => sub {
-                undef $tw;
-                $self->_getStatusesTriggerTop();
-            }
-        );
-    }
-}
-
-sub _getStatusesTriggerTop {
-    my ($self) = @_;
-    if(!@{$self->{trigger_queue}}) {
-        die "Input::_getStatusesTriggerTop: trigger_queue is empty.";
-    }
-    my ($threshold_epoch_time) = @{$self->{trigger_queue}->[0]};
-    my $page = 0;
-    my $ret_array = [];
-    $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
-    my $callback;
-    my $load_page_max = defined($threshold_epoch_time) ? $self->{page_max} : $self->{page_no_threshold_max};
-    &bblog(sprintf("Input %s: getStatuses triggerred.", $self->getName));
-    $callback = sub {
-        my ($statuses) = @_;
-        my $is_complete = 0;
-        if(!defined($statuses) || int(@$statuses) == 0) {
-            &bblog(sprintf("Input %s: get page %d [0 statuses]", $self->getName, $page));
-            $is_complete = 1;
-        }else {
-            &bblog(sprintf("Input %s: get page %d [%d statuses]", $self->getName, $page, int(@$statuses)));
-            foreach my $status (@$statuses) {
-                my $datetime = $status->content->{created_at};
-                ## ** Update latest status time
-                if (!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
-                    $self->{last_status_epoch_time} = $datetime->epoch;
-                }
-                ## ** Collect new status
-                if (!defined($threshold_epoch_time) || $datetime->epoch >= $threshold_epoch_time) {
-                    ## $status->setInputName($self->{name});
-                    $status->content->{busybird}->{input_name} = $self->{name};
-                    push(@{$ret_array}, $status);
-                } else {
-                    $is_complete = 1;
-                }
-            }
+    ## ** status_loader is in charge of loading statuses. It manages job queue.
+    $self->{status_loader}->execute(
+        $threshold_epoch_time,
+        sub {
+            my $result_statuses = shift;
+            $self->_emitOnGetStatuses($result_statuses);
         }
-        $page++;
-        if($is_complete || $page == $load_page_max) {
-            if($page == $self->{page_max} && !$is_complete && defined($threshold_epoch_time)) {
-                &bblog("WARNING: page has reached the max value of ".$self->{page_max});
-            }
-            $self->_saveTimeFile();
-            $self->_emitOnGetStatuses($ret_array);
-        }else {
-            my $tw; $tw = AnyEvent->timer(
-                after => $self->{page_next_delay},
-                cb => sub {
-                    undef $tw;
-                    $self->_getStatusesPage($self->{page_count}, $page, $callback);
-                },
-            );
-        }        
-    };
-    $self->_getStatusesPage($self->{page_count}, $page, $callback);
-
-    ## my ($self, $callstack, $callback_session, $callback_event, $threshold_epoch_time) = @_;
-    ## my $page = 0;
-    ## &bblog("Input::getNewStatuses(callback_session => $callback_session, callback_event => $callback_event)");
-    ## $callstack = BusyBird::CallStack->newStack($callstack, $callback_session, $callback_event,
-    ##                                            threshold_epoch_time =>
-    ##                                                defined($threshold_epoch_time) ? $threshold_epoch_time : $self->{last_status_epoch_time},
-    ##                                            page => $page,
-    ##                                            ret_array => [],
-    ##                                        );
-    ## $self->_getStatuses($callstack, $self->{session}, 'on_get_statuses', $self->{page_count}, $page);
-    ## return;
-
-    #### ################
-    #### 
-    #### my $ret_array = [];
-    #### $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
-    #### my $page;
-    #### for($page = 0 ; $page < $self->{page_max} ; $page++) {
-    ####     my $statuses = $self->_getStatuses($self->{page_count}, $page);
-    ####     my $is_complete = 0;
-    ####     last if !defined($statuses);
-    ####     foreach my $status (@$statuses) {
-    ####         my $datetime = $status->getDateTime()->clone();
-    ####         $datetime->set_time_zone($TIMEZONE);
-    ####         ## ** Update latest status time
-    ####         if(!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
-    ####             $self->{last_status_epoch_time} = $datetime->epoch;
-    ####         }
-    ####         ## ** Collect new status
-    ####         if(!defined($threshold_epoch_time) || $datetime->epoch >= $threshold_epoch_time) {
-    ####             $status->setInputName($self->{name});
-    ####             push(@$ret_array, $status);
-    ####         }else {
-    ####             $is_complete = 1;
-    ####         }
-    ####     }
-    ####     if($is_complete || !defined($threshold_epoch_time)) {
-    ####         last;
-    ####     }
-    #### }
-    #### if($page == $self->{page_max}) {
-    ####     print STDERR ("WARNING: page has reached the max value of ".$self->{page_max}."\n");
-    #### }
-    #### $self->_saveTimeFile();
-    #### return $ret_array;
+    );
 }
+
+sub _initLoader {
+    my ($self) = @_;
+    my $loader = BusyBird::Filter->new(delay => $self->{page_next_delay});
+    $loader->push(
+        sub {
+            my ($threshold_epoch_time, $done) = @_;
+            my $page = 0;
+            my $ret_array = [];
+            $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
+            my $callback;
+            my $load_page_max = defined($threshold_epoch_time) ? $self->{page_max} : $self->{page_no_threshold_max};
+            &bblog(sprintf("Input %s: getStatuses triggerred.", $self->getName));
+            $callback = sub {
+                my ($statuses) = @_;
+                my $is_complete = 0;
+                if(!defined($statuses) || int(@$statuses) == 0) {
+                    &bblog(sprintf("Input %s: get page %d [0 statuses]", $self->getName, $page));
+                    $is_complete = 1;
+                }else {
+                    &bblog(sprintf("Input %s: get page %d [%d statuses]", $self->getName, $page, int(@$statuses)));
+                    foreach my $status (@$statuses) {
+                        my $datetime = $status->content->{created_at};
+                        ## ** Update latest status time
+                        if (!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
+                            $self->{last_status_epoch_time} = $datetime->epoch;
+                        }
+                        ## ** Collect new status
+                        if (!defined($threshold_epoch_time) || $datetime->epoch >= $threshold_epoch_time) {
+                            ## $status->setInputName($self->{name});
+                            $status->content->{busybird}->{input_name} = $self->{name};
+                            push(@{$ret_array}, $status);
+                        } else {
+                            $is_complete = 1;
+                        }
+                    }
+                }
+                $page++;
+                if($is_complete || $page == $load_page_max) {
+                    if($page == $self->{page_max} && !$is_complete && defined($threshold_epoch_time)) {
+                        &bblog("WARNING: page has reached the max value of ".$self->{page_max});
+                    }
+                    $self->_saveTimeFile();
+                    $done->($ret_array);
+                    ## $self->_emitOnGetStatuses($ret_array);
+                }else {
+                    my $tw; $tw = AnyEvent->timer(
+                        after => $self->{page_next_delay},
+                        cb => sub {
+                            undef $tw;
+                            $self->_getStatusesPage($self->{page_count}, $page, $callback);
+                        },
+                    );
+                }        
+            };
+            $self->_getStatusesPage($self->{page_count}, $page, $callback);
+        }
+    );
+    return $loader;
+}
+
+
+## sub _getStatusesTriggerDone {
+##     my ($self) = @_;
+##     return if !@{$self->{trigger_queue}};
+##     
+##     shift(@{$self->{trigger_queue}});
+##     if(@{$self->{trigger_queue}}) {
+##         my $tw; $tw = AnyEvent->timer(
+##             after => $self->{page_next_delay},
+##             cb => sub {
+##                 undef $tw;
+##                 $self->_getStatusesTriggerTop();
+##             }
+##         );
+##     }
+## }
+
+## sub _getStatusesTriggerTop {
+##     my ($self) = @_;
+##     if(!@{$self->{trigger_queue}}) {
+##         die "Input::_getStatusesTriggerTop: trigger_queue is empty.";
+##     }
+##     my ($threshold_epoch_time) = @{$self->{trigger_queue}->[0]};
+##     my $page = 0;
+##     my $ret_array = [];
+##     $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
+##     my $callback;
+##     my $load_page_max = defined($threshold_epoch_time) ? $self->{page_max} : $self->{page_no_threshold_max};
+##     &bblog(sprintf("Input %s: getStatuses triggerred.", $self->getName));
+##     $callback = sub {
+##         my ($statuses) = @_;
+##         my $is_complete = 0;
+##         if(!defined($statuses) || int(@$statuses) == 0) {
+##             &bblog(sprintf("Input %s: get page %d [0 statuses]", $self->getName, $page));
+##             $is_complete = 1;
+##         }else {
+##             &bblog(sprintf("Input %s: get page %d [%d statuses]", $self->getName, $page, int(@$statuses)));
+##             foreach my $status (@$statuses) {
+##                 my $datetime = $status->content->{created_at};
+##                 ## ** Update latest status time
+##                 if (!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
+##                     $self->{last_status_epoch_time} = $datetime->epoch;
+##                 }
+##                 ## ** Collect new status
+##                 if (!defined($threshold_epoch_time) || $datetime->epoch >= $threshold_epoch_time) {
+##                     ## $status->setInputName($self->{name});
+##                     $status->content->{busybird}->{input_name} = $self->{name};
+##                     push(@{$ret_array}, $status);
+##                 } else {
+##                     $is_complete = 1;
+##                 }
+##             }
+##         }
+##         $page++;
+##         if($is_complete || $page == $load_page_max) {
+##             if($page == $self->{page_max} && !$is_complete && defined($threshold_epoch_time)) {
+##                 &bblog("WARNING: page has reached the max value of ".$self->{page_max});
+##             }
+##             $self->_saveTimeFile();
+##             $self->_emitOnGetStatuses($ret_array);
+##         }else {
+##             my $tw; $tw = AnyEvent->timer(
+##                 after => $self->{page_next_delay},
+##                 cb => sub {
+##                     undef $tw;
+##                     $self->_getStatusesPage($self->{page_count}, $page, $callback);
+##                 },
+##             );
+##         }        
+##     };
+##     $self->_getStatusesPage($self->{page_count}, $page, $callback);
+## 
+##     ## my ($self, $callstack, $callback_session, $callback_event, $threshold_epoch_time) = @_;
+##     ## my $page = 0;
+##     ## &bblog("Input::getNewStatuses(callback_session => $callback_session, callback_event => $callback_event)");
+##     ## $callstack = BusyBird::CallStack->newStack($callstack, $callback_session, $callback_event,
+##     ##                                            threshold_epoch_time =>
+##     ##                                                defined($threshold_epoch_time) ? $threshold_epoch_time : $self->{last_status_epoch_time},
+##     ##                                            page => $page,
+##     ##                                            ret_array => [],
+##     ##                                        );
+##     ## $self->_getStatuses($callstack, $self->{session}, 'on_get_statuses', $self->{page_count}, $page);
+##     ## return;
+## 
+##     #### ################
+##     #### 
+##     #### my $ret_array = [];
+##     #### $threshold_epoch_time = $self->{last_status_epoch_time} if !defined($threshold_epoch_time);
+##     #### my $page;
+##     #### for($page = 0 ; $page < $self->{page_max} ; $page++) {
+##     ####     my $statuses = $self->_getStatuses($self->{page_count}, $page);
+##     ####     my $is_complete = 0;
+##     ####     last if !defined($statuses);
+##     ####     foreach my $status (@$statuses) {
+##     ####         my $datetime = $status->getDateTime()->clone();
+##     ####         $datetime->set_time_zone($TIMEZONE);
+##     ####         ## ** Update latest status time
+##     ####         if(!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
+##     ####             $self->{last_status_epoch_time} = $datetime->epoch;
+##     ####         }
+##     ####         ## ** Collect new status
+##     ####         if(!defined($threshold_epoch_time) || $datetime->epoch >= $threshold_epoch_time) {
+##     ####             $status->setInputName($self->{name});
+##     ####             push(@$ret_array, $status);
+##     ####         }else {
+##     ####             $is_complete = 1;
+##     ####         }
+##     ####     }
+##     ####     if($is_complete || !defined($threshold_epoch_time)) {
+##     ####         last;
+##     ####     }
+##     #### }
+##     #### if($page == $self->{page_max}) {
+##     ####     print STDERR ("WARNING: page has reached the max value of ".$self->{page_max}."\n");
+##     #### }
+##     #### $self->_saveTimeFile();
+##     #### return $ret_array;
+## }
 
 ## sub _sessionOnGetStatuses {
 ##     my ($self, $kernel, $callstack, $statuses) = @_[OBJECT, KERNEL, ARG0 .. ARG1];
