@@ -1,9 +1,23 @@
 #!/usr/bin/perl -w
 
+package BusyBird::Test::Fake::FilterElem;
+use strict;
+use warnings;
+
+sub new {
+    my $class = shift;
+    return bless {}, $class;
+}
+
+
+package main;
+
+
 use strict;
 use warnings;
 
 use Test::More;
+use Test::Exception;
 
 BEGIN {
     use_ok('AnyEvent');
@@ -238,6 +252,18 @@ sub checkParallel {
     &checkParallel(2, 6, 2);
     &checkParallel(1, 7, 1, [1 .. 7]);
     &checkParallel(0, 8, 8, [reverse(1 .. 8)]);
+}
+
+{
+    my $filter = BusyBird::Filter->new();
+    diag("--- What if I pushed some junks to a filter?");
+    dies_ok {$filter->push(undef)} 'Do not push undef';
+    dies_ok {$filter->unshift(undef)} 'Do not unshift undef';
+    dies_ok {$filter->push(1)} 'Do not push a scalar';
+    dies_ok {$filter->push([10, 20, 30])} 'Do not push an array ref';
+    dies_ok {$filter->push({foo => 1, bar => 2})} 'Do not push a hash ref';
+    my $fake_elem = new_ok('BusyBird::Test::Fake::FilterElem');
+    dies_ok {$filter->push($fake_elem)} 'Do not push an object that is not provide filterElement';
 }
 
 done_testing();
