@@ -18,7 +18,7 @@ my $cv = AnyEvent->condvar;
 $timer->addOnFire(
     sub {
         $counter++;
-        diag("counter: $counter");
+        note("counter: $counter");
         if($counter >= 5) {
             $cv->send();
         }
@@ -32,7 +32,7 @@ my $another_counter = 0;
 $timer->addOnFire(
     sub {
         $another_counter++;
-        diag("another: $another_counter");
+        note("another: $another_counter");
         if($another_counter >= 5) {
             $another_cv->send();
         }

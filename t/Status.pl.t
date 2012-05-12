@@ -13,7 +13,7 @@ BEGIN {
 
 sub testJSON {
     my ($datetime, $exp_created_at) = @_;
-    diag("testJSON");
+    note("testJSON");
     isa_ok($datetime, 'DateTime');
     my $expected_output = {
         id => 'hoge',
@@ -47,7 +47,7 @@ sub testJSON {
 }
 
 sub testClone {
-    diag("testClone");
+    note("testClone");
     my $time = DateTime->now();
     my $orig = new_ok('BusyBird::Status', [id => '102023010', created_at => $time]);
     $orig->put(

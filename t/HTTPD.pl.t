@@ -29,7 +29,7 @@ sub testExtractFormat {
 my $cv = AnyEvent->condvar;
 
 if($OPT_WAITTIME > 0) {
-    diag("Wait for $OPT_WAITTIME seconds.");
+    note("Wait for $OPT_WAITTIME seconds.");
     my $tw; $tw = AnyEvent->timer(
         after => $OPT_WAITTIME,
         cb => sub {
@@ -38,13 +38,13 @@ if($OPT_WAITTIME > 0) {
         }
     );
 }else {
-    diag('Wait indefinitely.');
+    note('Wait indefinitely.');
 }
 
 BusyBird::HTTPD->init();
 BusyBird::HTTPD->start();
 {
-    diag('------ test format extraction');
+    note('------ test format extraction');
     foreach my $testcase (
         [qw(/usr/lib/src/main.c /usr/lib/src/main c)],
         [qw(/hoge/compressed.tar.gz /hoge/compressed tar.gz)],

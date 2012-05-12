@@ -24,7 +24,7 @@ sub checkMatch {
 }
 
 {
-    diag('------ match normal string');
+    note('------ match normal string');
     my $match_path = "/exactly/this/path.html";
     my $matcher = new_ok('BusyBird::HTTPD::PathMatcher', [$match_path]);
     isa_ok($matcher, 'BusyBird::HTTPD::PathMatcher::String');
@@ -42,7 +42,7 @@ sub checkHashMatch{
 }
 
 {
-    diag('------ match hash');
+    note('------ match hash');
     my $match_obj = {
         finn => '/species/human',
         jake => '/species/dog',
@@ -64,7 +64,7 @@ sub checkHashMatch{
 }
 
 {
-    diag('------ match array');
+    note('------ match array');
     my $match_obj = ['/count/zero', '/count/one', '/count/two'];
     my $matcher = new_ok('BusyBird::HTTPD::PathMatcher', [$match_obj]);
     isa_ok($matcher, 'BusyBird::HTTPD::PathMatcher::Hash');
@@ -74,7 +74,7 @@ sub checkHashMatch{
 }
 
 {
-    diag('------ match regexp');
+    note('------ match regexp');
     my $matcher = new_ok('BusyBird::HTTPD::PathMatcher', [qr!/(this|that)/dir/list(\.([^/]+))?$!]);
     isa_ok($matcher, 'BusyBird::HTTPD::PathMatcher::Regexp');
     &checkMatch($matcher, '/this/dir/list.json', [qw(/this/dir/list.json this .json json)], 'matched and extract path elems');

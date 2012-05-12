@@ -40,7 +40,7 @@ sub checkPagination {
     while(my ($key, $val) = each(%$detail)) {
         $detail_str .= "$key => $val, ";
     }
-    diag(sprintf("checkPagination: output: %s, %s", $output->getName(), $detail_str));
+    note(sprintf("checkPagination: output: %s, %s", $output->getName(), $detail_str));
     ## is(ref($result), 'ARRAY', 'AllStatuses result is an array ref...');
     ## cmp_ok(int(@$result), ">=", 3, "and it has at least 3 elements.");
     ## my %headers = ( @{$result->[1]} );
@@ -229,7 +229,7 @@ sub main {
     $output = new_ok('BusyBird::Output', [name => "sample"]);
     is($output->getName, "sample");
     
-    diag('------ pushStatuses() should take new statuses.');
+    note('------ pushStatuses() should take new statuses.');
     
     &pushStatusesSync($output, [&generateStatus()]) foreach (1..5);
     &checkStatusNum($output, 5, 0);
@@ -238,7 +238,7 @@ sub main {
     &pushStatusesSync($output, \@newones);
     &checkStatusNum($output, 10, 0);
 
-    diag('------ pushStatuses() should uniqify the input.');
+    note('------ pushStatuses() should uniqify the input.');
     within 10, sub {
         foreach (1..5) {
             CV()->begin();
@@ -247,7 +247,7 @@ sub main {
     };
     &checkStatusNum($output, 10, 0);
 
-    diag('------ _confirm() should make new statuses old.');
+    note('------ _confirm() should make new statuses old.');
     $output->_confirm();
     &checkStatusNum($output, 0, 10);
     &pushStatusesSync($output, [&generateStatus()]) foreach (1..5);
@@ -255,13 +255,13 @@ sub main {
     &pushStatusesSync($output, [&generateStatus($_)]) foreach (1..5);
     &checkStatusNum($output, 5, 10);
 
-    diag('------ _getPagedStatuses() pagination test.');
+    note('------ _getPagedStatuses() pagination test.');
     &pushStatusesSync($output, [&generateStatus()]) foreach (1..55);
     $output->_confirm();
     &pushStatusesSync($output, [&generateStatus()]) foreach (1..65);
     &checkStatusNum($output, 65, 70);
     
-    diag('------ --- Without per_page option, page 1 always includes all of the new statuses. Old statuses are separated by the default per_page value.');
+    note('------ --- Without per_page option, page 1 always includes all of the new statuses. Old statuses are separated by the default per_page value.');
     &checkPagination($output, {}, reverse(51 .. 135));
     &checkPagination($output, {page => 0}, reverse(51 .. 135));
     &checkPagination($output, {page => 1}, reverse(51 .. 135));
@@ -279,7 +279,7 @@ sub main {
     &checkPagination($output, {max_id => 60,  page => 3}, reverse(1 .. 20));
     &checkPagination($output, {max_id => 60,  page => 4}, ());
 
-    diag('------ --- With per_page option, new and old statuses are treated as a single status line.');
+    note('------ --- With per_page option, new and old statuses are treated as a single status line.');
     &checkPagination($output, {per_page => 30, page => 0}, reverse(106 .. 135));
     &checkPagination($output, {per_page => 30, page => 1}, reverse(106 .. 135));
     &checkPagination($output, {per_page => 30, page => 2}, reverse(76 .. 105));
@@ -301,12 +301,12 @@ sub main {
     &checkPagination($output, {max_id => 60, per_page => 40, page => 2}, reverse(1  .. 20));
     &checkPagination($output, {max_id => 60, per_page => 40, page => 3}, ());
 
-    diag('------ --- With invalid max_id option, pagination should start from index 0');
+    note('------ --- With invalid max_id option, pagination should start from index 0');
     &checkPagination($output, {max_id => 'this_does_not_exist', page => 1}, reverse(51 .. 135));
     &checkPagination($output, {max_id => 'this_does_not_exist', page => 2}, reverse(31 .. 50));
 
     {
-        diag('------ Test Output filters');
+        note('------ Test Output filters');
         $output = new_ok('BusyBird::Output', [name => 'filter_test']);
         $next_id = 1;
         my ($count_input, $count_new) = (0, 0);

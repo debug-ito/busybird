@@ -37,7 +37,7 @@ sub createInput {
         sub {
             my ($statuses) = @_;
             $total_actual_fire++;
-            diag(sprintf("OnGetStatuses (interval => %s, count => %s, page_num => %s)",
+            note(sprintf("OnGetStatuses (interval => %s, count => %s, page_num => %s)",
                          @params{qw(new_interval new_count page_num)}));
             cmp_ok(int(@expect_queue), '>', 0, 'there is an expect_queue entry');
             my $expect_entry = shift(@expect_queue);
@@ -66,7 +66,7 @@ sub createInput {
     );
     my $trigger_func = sub {
         my (%trigger_param) = @_;
-        diag(sprintf("Trigger (interval => %s, count => %s, page_num => %s)",
+        note(sprintf("Trigger (interval => %s, count => %s, page_num => %s)",
                  @params{qw(new_interval new_count page_num)}));
         CV()->begin(); ## For OnGetStatuses event
         $total_expect_fire++;
@@ -91,7 +91,7 @@ sub sync {
 }
 
 sync 20, sub {
-    diag("----- test for number of statuses loaded.");
+    note("----- test for number of statuses loaded.");
     foreach my $param_set (
         {new_interval => 1, new_count => 1, page_num => 1, page_no_threshold_max => 50},
         {new_interval => 1, new_count => 5, page_num => 1, page_no_threshold_max => 50},
@@ -117,7 +117,7 @@ sync 20, sub {
 };
 
 
-diag("----- test for timestamp and threshold management.");
+note("----- test for timestamp and threshold management.");
 my ($trigger, $input);
 my $old_time = DateTime->now() - DateTime::Duration->new(years => 3);
 sync 20, sub {
@@ -129,7 +129,7 @@ sync 20, sub {
     $trigger->(expect_count => 0, expect_page_num => 0);
     $trigger->(expect_count => 3, expect_page_num => 3);
     $trigger->(expect_count => 0, expect_page_num => 0);
-    diag("Initiate Input with old_time");
+    note("Initiate Input with old_time");
 };
 
 sync 20, sub {
@@ -139,13 +139,13 @@ sync 20, sub {
     $trigger->(expect_count => 3, expect_page_num => 3);
     $trigger->(expect_count => 0, expect_page_num => 0);
     $trigger->(expect_count => 3, expect_page_num => 3);
-    diag("Set Input timestamp to the current time.");
+    note("Set Input timestamp to the current time.");
 };
 
 sync 20, sub {
     $input->setTimeStamp($old_time);
     $trigger->(expect_count => 0, expect_page_num => 0) foreach 1..5;
-    diag("Set Input timestamp to the old_time");
+    note("Set Input timestamp to the old_time");
 };
 
 sync 20, sub {
@@ -154,10 +154,10 @@ sync 20, sub {
     $trigger->(expect_count => 0, expect_page_num => 0);
     $trigger->(expect_count => 3, expect_page_num => 3);
     $trigger->(expect_count => 0, expect_page_num => 0);
-    diag("Set Input timestamp to undef");
+    note("Set Input timestamp to undef");
 };
 
-diag("----- test for filtering");
+note("----- test for filtering");
 my $filter_executed_num = 0;
 sync 20, sub {
     ($trigger, $input) = &createInput(
@@ -199,7 +199,7 @@ sync 20, sub {
 cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
 
 $filter_executed_num = 0;
-diag("----- If filter deletes all statuses, OnGetStatuses event occurs with no statuses.");
+note("----- If filter deletes all statuses, OnGetStatuses event occurs with no statuses.");
 sync 20, sub {
     ($trigger, $input) = &createInput(
         new_interval => 1, new_count => 3, page_num => 1,
@@ -221,7 +221,7 @@ cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
 {
     my $trigger_num = 3;
     my $second_event_count = 0;
-    diag("----- test for multiple listener");
+    note("----- test for multiple listener");
     sync 20, sub {
         ($trigger, $input) = &createInput(
             new_interval => 1, new_count => 2, page_num => 2, page_no_threshold_max => 5,
