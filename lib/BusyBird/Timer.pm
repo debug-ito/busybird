@@ -11,33 +11,32 @@ sub new {
     my $self = bless {
         interval => undef,
         executer => undef,
+        timer => undef,
     }, $class;
     $self->_setParam(\%params, 'interval', 120);
     $self->_setParam(\%params, 'after', 1);
     $self->_setParam(\%params, 'callback_interval', 0);
     $self->{executer} = BusyBird::Filter->new(delay => $self->{callback_interval});
-    my $tw; $tw = AnyEvent->timer(
-        after => $self->{after},
-        cb => sub {
-            undef $tw;
-            $self->_fire();
-            $self->start();
-        }
-    );
+    $self->start();
     return $self;
 }
 
 sub start {
-    my ($self) = @_;
-    my $watcher;
-    $watcher = AnyEvent->timer(
-        after => $self->{interval},
+    my ($self, $after) = @_;
+    $after = $self->{after} if !defined($after);
+    $self->{timer} = AnyEvent->timer(
+        after => $after,
         cb => sub {
-            undef $watcher;
+            delete $self->{timer};
             $self->_fire();
-            $self->start();
+            $self->start($self->{interval});
         }
     );
+}
+
+sub stop {
+    my ($self) = @_;
+    delete $self->{timer};
 }
 
 sub _fire {
