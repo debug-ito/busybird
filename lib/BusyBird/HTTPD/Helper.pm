@@ -6,12 +6,12 @@ use base ('Exporter');
 our @EXPORT_OK = qw(httpResSimple);
 
 sub httpResSimple {
-    my ($status, $message_ref, $mime) = @_;
+    my ($status, $message, $mime) = @_;
     $mime ||= 'text/plain';
     return [
         "$status",
         ['Content-Type' => $mime],
-        [$$message_ref],
+        [ref($message) ? $$message : $message],
     ];
 }
 
