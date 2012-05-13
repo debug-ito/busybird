@@ -227,7 +227,7 @@ my %FORMATTERS = (
             $clone->_formatElements(
                 'DateTime' => \&_datetimeFormatTwitter,
             );
-            push(@json_entries, encode_json($clone->content));
+            push(@json_entries, to_json($clone->content));
         }
         return '[' . join(",", @json_entries) . ']';
     },

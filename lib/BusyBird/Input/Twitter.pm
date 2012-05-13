@@ -6,6 +6,7 @@ use warnings;
 use BusyBird::Status;
 use BusyBird::Worker::Twitter;
 use BusyBird::Log ('bblog');
+use Encode;
 
 our %MONTH = (
     Jan => 1, Feb => 2,  Mar =>  3, Apr =>  4,
@@ -75,24 +76,29 @@ sub _getWorkerInput {
     return undef;
 }
 
+sub _enc {
+    my ($decoded_text) = @_;
+    return Encode::encode('utf8', $decoded_text);
+}
+
 sub _extractStatusesFromWorkerData {
     my ($self_class, $worker_data) = @_;
     my @statuses = ();
     foreach my $nt_status (@$worker_data) {
         my $text = $self_class->_processEntities($nt_status->{text}, $nt_status->{entities});
         my $status = BusyBird::Status->new(
-            id => 'Twitter' . $nt_status->{id},
-            created_at => $self_class->_timeStringToDateTime($nt_status->{created_at}),
-            text => $text,
-            in_reply_to_screen_name => $nt_status->{in_reply_to_screen_name},
+            id => 'Twitter' . _enc($nt_status->{id}),
+            created_at => $self_class->_timeStringToDateTime(_enc($nt_status->{created_at})),
+            text => _enc($text),
+            in_reply_to_screen_name => _enc($nt_status->{in_reply_to_screen_name}),
             user => {
-                'screen_name' => $nt_status->{user}->{screen_name},
-                'name' => $nt_status->{user}->{name},
-                'profile_image_url' => $nt_status->{user}->{profile_image_url},
+                'screen_name' => _enc($nt_status->{user}->{screen_name}),
+                'name' => _enc($nt_status->{user}->{name}),
+                'profile_image_url' => _enc($nt_status->{user}->{profile_image_url}),
             },
             busybird => {
-                original_id => $nt_status->{id},
-                original_id_str => $nt_status->{id_str},
+                original_id => _enc($nt_status->{id}),
+                original_id_str => _enc($nt_status->{id_str}),
             },
         );
         push(@statuses, $status);
