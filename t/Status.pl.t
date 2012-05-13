@@ -40,10 +40,10 @@ sub testJSON {
     $status->content->{busybird}{input_name} = 'input';
     $status->content->{busybird}{score} = undef;
     is($status->content->{created_at}, $datetime);
-    my $json_status = $status->format_json();
-    cmp_ok($json_status, 'ne', '');
-    my $decoded_json = decode_json($json_status);
-    is_deeply($decoded_json, $expected_output);
+    my $json_statuses = BusyBird::Status->format('json', [$status]);
+    cmp_ok($json_statuses, 'ne', '');
+    my $decoded_json = decode_json($json_statuses);
+    is_deeply($decoded_json, [$expected_output]);
 }
 
 sub testClone {

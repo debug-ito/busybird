@@ -208,19 +208,35 @@ sub _formatElements {
     }
 }
 
-sub format_json {
-    my ($self) = @_;
-    my $clone = $self->clone();
-    $clone->_formatElements(
-        'DateTime' => sub {
-            my $dt = shift;
-            return sprintf("%s %s %s",
-                    $DAY_OF_WEEK[$dt->day_of_week],
-                    $MONTH[$dt->month],
-                    $dt->strftime('%e %H:%M:%S %z %Y'));
+my %FORMATTERS = (
+    json => sub {
+        my ($statuses_ref) = @_;
+        my @json_entries = ();
+        foreach my $status (@$statuses_ref) {
+            my $clone = $status->clone();
+            $clone->_formatElements(
+                'DateTime' => sub {
+                    my $dt = shift;
+                    return sprintf("%s %s %s",
+                                   $DAY_OF_WEEK[$dt->day_of_week],
+                                   $MONTH[$dt->month],
+                                   $dt->strftime('%e %H:%M:%S %z %Y'));
+                }
+            );
+            push(@json_entries, encode_json($clone->content));
         }
-    );
-    return encode_json($clone->content);
+        return '[' . join(",", @json_entries) . ']';
+    }
+);
+
+sub format {
+    my ($class, $format, $statuses_ref) = @_;
+    $format ||= 'json';
+    if(!defined($FORMATTERS{$format})) {
+        &bblog(sprintf("%s: No such format as $format", __PACKAGE__));
+        return undef;
+    }
+    return $FORMATTERS{$format}->($statuses_ref);
 }
 
 1;
