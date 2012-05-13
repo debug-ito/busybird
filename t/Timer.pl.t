@@ -9,37 +9,38 @@ BEGIN {
     use_ok('AnyEvent');
     use_ok('AnyEvent::Strict');
     use_ok('BusyBird::Timer');
+    use_ok('BusyBird::Test', qw(CV within));
 }
 
 my $timer = new_ok('BusyBird::Timer', [interval => 1]);
 my $counter = 0;
-my $cv = AnyEvent->condvar;
 
 $timer->addOnFire(
     sub {
         $counter++;
         note("counter: $counter");
-        if($counter >= 5) {
-            $cv->send();
-        }
-    });
+        CV()->end();
+    }
+);
 
-$cv->recv();
+within 10, sub {
+    CV()->begin() foreach 1..5;
+};
 cmp_ok($counter, "==", 5);
 
-my $another_cv = AnyEvent->condvar;
 my $another_counter = 0;
 $timer->addOnFire(
     sub {
         $another_counter++;
         note("another: $another_counter");
-        if($another_counter >= 5) {
-            $another_cv->send();
-        }
+        CV()->end();
     }
 );
 
-$another_cv->recv();
+within 10, sub {
+    CV()->begin() foreach 1..10;
+};
+
 cmp_ok($counter, "==", 10);
 cmp_ok($another_counter, "==", 5);
 

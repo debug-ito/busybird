@@ -4,15 +4,18 @@ use strict;
 use warnings;
 
 use AnyEvent;
+use BusyBird::Filter;
 
 sub new {
     my ($class, %params) = @_;
     my $self = bless {
         interval => undef,
-        callbacks => [],
+        executer => undef,
     }, $class;
     $self->_setParam(\%params, 'interval', 120);
     $self->_setParam(\%params, 'after', 1);
+    $self->_setParam(\%params, 'callback_interval', 0);
+    $self->{executer} = BusyBird::Filter->new(delay => $self->{callback_interval});
     my $tw; $tw = AnyEvent->timer(
         after => $self->{after},
         cb => sub {
@@ -39,14 +42,14 @@ sub start {
 
 sub _fire {
     my ($self) = @_;
-    foreach my $callback (@{$self->{callbacks}}) {
-        $callback->();
-    }
+    $self->{executer}->execute();
 }
 
 sub addOnFire {
     my ($self, @callbacks) = @_;
-    push(@{$self->{callbacks}}, @callbacks);
+    foreach my $callback (@callbacks) {
+        $self->{executer}->push( sub { $callback->(); $_[1]->($_[0]); } );
+    }
 }
 
 sub c{
