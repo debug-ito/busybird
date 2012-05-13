@@ -2,6 +2,7 @@ package BusyBird::Status;
 use strict;
 use warnings;
 use JSON;
+use XML::Simple;
 use Storable ('dclone');
 use DateTime;
 
@@ -208,6 +209,14 @@ sub _formatElements {
     }
 }
 
+sub _datetimeFormatTwitter {
+    my $dt = shift;
+    return sprintf("%s %s %s",
+                   $DAY_OF_WEEK[$dt->day_of_week],
+                   $MONTH[$dt->month],
+                   $dt->strftime('%e %H:%M:%S %z %Y'));
+}
+
 my %FORMATTERS = (
     json => sub {
         my ($statuses_ref) = @_;
@@ -215,18 +224,24 @@ my %FORMATTERS = (
         foreach my $status (@$statuses_ref) {
             my $clone = $status->clone();
             $clone->_formatElements(
-                'DateTime' => sub {
-                    my $dt = shift;
-                    return sprintf("%s %s %s",
-                                   $DAY_OF_WEEK[$dt->day_of_week],
-                                   $MONTH[$dt->month],
-                                   $dt->strftime('%e %H:%M:%S %z %Y'));
-                }
+                'DateTime' => \&_datetimeFormatTwitter,
             );
             push(@json_entries, encode_json($clone->content));
         }
         return '[' . join(",", @json_entries) . ']';
-    }
+    },
+    xml => sub {
+        my ($statuses_ref) = @_;
+        my @xml_entries = ();
+        foreach my $status (@$statuses_ref) {
+            my $clone = $status->clone();
+            $clone->_formatElements(
+                'DateTime' => \&_datetimeFormatTwitter,
+            );
+            push(@xml_entries, XMLout($clone->content, NoAttr => 1, RootName => 'status', SuppressEmpty => undef));
+        }
+        return qq(<statuses type="array">\n) . join("", @xml_entries) . qq(</statuses>\n);
+    },
 );
 
 sub format {
