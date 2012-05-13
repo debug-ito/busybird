@@ -93,7 +93,7 @@ sub _createApp {
         if(substr($env->{PATH_INFO}, -1) eq '/') {
             $env->{PATH_INFO} .= 'index.html';
         }
-        @$env{'busybird.pathbody', 'budybird.format'} = $self->_extractFormat($env->{PATH_INFO});
+        @$env{'busybird.pathbody', 'busybird.format'} = $self->_extractFormat($env->{PATH_INFO});
         foreach my $request_point (values %{$self->{request_points}}) {
             my @matched = $request_point->{matcher}->match($env->{'busybird.pathbody'});
             if(@matched) {
