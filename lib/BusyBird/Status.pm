@@ -5,6 +5,7 @@ use JSON;
 use XML::Simple;
 use Storable ('dclone');
 use DateTime;
+use BusyBird::Log qw(bblog);
 
 my @MONTH = (undef, qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec));
 my @DAY_OF_WEEK = (undef, qw(Mon Tue Wed Thu Fri Sat Sun));
@@ -244,6 +245,11 @@ my %FORMATTERS = (
     },
 );
 
+my %MIMES = (
+    json => 'application/json; charset=UTF-8',
+    xml => 'application/xml',
+);
+
 sub format {
     my ($class, $format, $statuses_ref) = @_;
     $format ||= 'json';
@@ -252,6 +258,16 @@ sub format {
         return undef;
     }
     return $FORMATTERS{$format}->($statuses_ref);
+}
+
+sub mime {
+    my ($class, $format) = @_;
+    $format ||= 'json';
+    if(!defined($MIMES{$format})) {
+        &bblog(sprintf("%s: No such format as $format", __PACKAGE__));
+        return undef;
+    }
+    return $MIMES{$format};
 }
 
 1;

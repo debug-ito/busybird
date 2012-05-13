@@ -288,11 +288,10 @@ sub _replyRequestNewStatuses {
     my $new_statuses = $self->_getNewStatuses();
     ## my $ret = "[" . join(",", map {$_->format_json()} @$new_statuses) . "]";
     while(my $req = pop(@{$self->{pending_req}->{new_statuses}})) {
-        my $detail = $req->parameters;
-        my $ret = BusyBird::Status->format($detail->{'busybird.format'}, $new_statuses);
+        my $ret = BusyBird::Status->format($req->env->{'busybird.format'}, $new_statuses);
         if(defined($ret)) {
             $req->env->{'busybird.responder'}->(httpResSimple(
-                200, \$ret, "application/json; charset=UTF-8"
+                200, \$ret, BusyBird::Status->mime($req->env->{'busybird.format'})
             ));
         }else {
             $req->env->{'busybird.responder'}->(httpResSimple(
@@ -403,11 +402,11 @@ sub _requestPointAllStatuses {
         my ($request) = @_;
         my $detail = $request->parameters;
         my $statuses = $self->_getPagedStatuses(%$detail);
-        my $ret = BusyBird::Status->format($detail->{'busybird.format'}, $statuses);
+        my $ret = BusyBird::Status->format($request->env->{'busybird.format'}, $statuses);
         if(!defined($ret)) {
             return httpResSimple(400, 'Unsupported format');
         }
-        return httpResSimple(200, \$ret, 'application/json; charset=UTF-8');
+        return httpResSimple(200, \$ret, BusyBird::Status->mime($request->env->{'busybird.format'}));
     };
     return ($self->_getPointNameForCommand('all_statuses'), $handler);
 }
