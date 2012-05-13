@@ -6,6 +6,7 @@ use warnings;
 use DateTime;
 
 use BusyBird::Filter;
+use BusyBird::HTTPD::Helper qw(httpResSimple);
 
 my %S = (
     global_header_height => '50px',
@@ -285,13 +286,19 @@ sub _replyRequestNewStatuses {
         return;
     }
     my $new_statuses = $self->_getNewStatuses();
-    my $ret = "[" . join(",", map {$_->format_json()} @$new_statuses) . "]";
+    ## my $ret = "[" . join(",", map {$_->format_json()} @$new_statuses) . "]";
     while(my $req = pop(@{$self->{pending_req}->{new_statuses}})) {
-        $req->env->{'busybird.responder'}->([
-            '200',
-            ['Content-Type' => "application/json; charset=UTF-8"],
-            [$ret],
-        ]);
+        my $detail = $req->parameters;
+        my $ret = BusyBird::Status->format($detail->{'busybird.format'}, $new_statuses);
+        if(defined($ret)) {
+            $req->env->{'busybird.responder'}->(httpResSimple(
+                200, \$ret, "application/json; charset=UTF-8"
+            ));
+        }else {
+            $req->env->{'busybird.responder'}->(httpResSimple(
+                400, 'Unsupported format.'
+            ));
+        }
     }
 }
 
@@ -339,11 +346,7 @@ sub _requestPointConfirm {
     my ($self) = @_;
     my $handler = sub {
         $self->_confirm();
-        return [
-            '200',
-            ['Content-Type' => 'text/plain'],
-            ['Confirm OK'],
-        ];
+        return httpResSimple(200, "Confirm OK");
     };
     return ($self->_getPointNameForCommand('confirm'), $handler);
 }
@@ -351,11 +354,7 @@ sub _requestPointConfirm {
 sub _requestPointMainPage {
     my ($self) = @_;
     my $handler = sub {
-        return [
-            '200',
-            ['Content-Type' => 'text/html'],
-            [$self->{mainpage_html}],
-        ];
+        return httpResSimple(200, \$self->{mainpage_html}, 'text/html');
     };
     return ($self->_getPointNameForCommand('mainpage'), $handler);
 }
@@ -404,13 +403,11 @@ sub _requestPointAllStatuses {
         my ($request) = @_;
         my $detail = $request->parameters;
         my $statuses = $self->_getPagedStatuses(%$detail);
-        my $ret = '['. join(',', map {$_->format_json()} @$statuses) .']';
-        ## return ($self->REPLIED, \$ret, );
-        return [
-            '200',
-            ['Content-Type' => 'application/json; charset=UTF-8'],
-            [$ret],
-        ];
+        my $ret = BusyBird::Status->format($detail->{'busybird.format'}, $statuses);
+        if(!defined($ret)) {
+            return httpResSimple(400, 'Unsupported format');
+        }
+        return httpResSimple(200, \$ret, 'application/json; charset=UTF-8');
     };
     return ($self->_getPointNameForCommand('all_statuses'), $handler);
 }
