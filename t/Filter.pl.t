@@ -259,6 +259,11 @@ sub checkParallel {
 {
     note("--- No big deal if nothing is given to a filter");
     my %filters = map { $_ => BusyBird::Filter->new() } qw(empty_filter single_filter);
+    my %expected_filter_counters = (
+        empty_filter => 0,
+        single_filter => 3,
+    );
+    my $filter_counter = 0;
     $filters{single_filter}->push(
         sub {
             my ($data, $done) = @_;
@@ -266,6 +271,8 @@ sub checkParallel {
                 after => 0.01,
                 cb => sub {
                     undef $tw;
+                    $filter_counter++;
+                    CV()->end();
                     $done->($data);
                 }
             );
@@ -275,6 +282,10 @@ sub checkParallel {
         my $callback_counter = 0;
         within 10, sub {
             my $filter = $filters{$key};
+            $filter_counter = 0;
+            if($key eq 'single_filter') {
+                CV()->begin() foreach 1..3;
+            }
             lives_ok {
                 $filter->execute();
             } "$key: no input, no callback";
@@ -287,6 +298,7 @@ sub checkParallel {
             } "$key: no input";
         };
         cmp_ok($callback_counter, "==", 1, "1 callback execution");
+        cmp_ok($filter_counter, '==', $expected_filter_counters{$key}, "$expected_filter_counters{$key} filter element execution.");
     }
 }
 
