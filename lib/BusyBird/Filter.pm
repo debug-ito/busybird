@@ -63,7 +63,7 @@ sub unshift {
 sub execute {
     my ($self, $target, $callback) = @_;
     if(@{$self->{coderefs}} == 0) {
-        $callback->($target);
+        $callback->($target) if defined($callback);
         return;
     }
     if($self->{parallel_limit} > 0 && $self->{parallel_current} >= $self->{parallel_limit}) {
@@ -84,7 +84,7 @@ sub _forceExecute {
         my $next_move;
         if($index >= @{$self->{coderefs}}) {
             $next_move = sub {
-                $callback->($filtered_target);
+                $callback->($filtered_target) if defined($callback);
                 $self->{parallel_current}--;
                 if(my $next_job = CORE::shift(@{$self->{jobqueue}})) {
                     $self->_forceExecute(@$next_job);

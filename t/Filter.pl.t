@@ -257,15 +257,49 @@ sub checkParallel {
 }
 
 {
+    note("--- No big deal if nothing is given to a filter");
+    my %filters = map { $_ => BusyBird::Filter->new() } qw(empty_filter single_filter);
+    $filters{single_filter}->push(
+        sub {
+            my ($data, $done) = @_;
+            my $tw; $tw = AnyEvent->timer(
+                after => 0.01,
+                cb => sub {
+                    undef $tw;
+                    $done->($data);
+                }
+            );
+        }
+    );
+    foreach my $key (keys %filters) {
+        my $callback_counter = 0;
+        within 10, sub {
+            my $filter = $filters{$key};
+            lives_ok {
+                $filter->execute();
+            } "$key: no input, no callback";
+            lives_ok {
+                $filter->execute(1);
+            } "$key: no callback";
+            lives_ok {
+                CV()->begin();
+                $filter->execute(undef, sub { $callback_counter++; CV()->end() });
+            } "$key: no input";
+        };
+        cmp_ok($callback_counter, "==", 1, "1 callback execution");
+    }
+}
+
+{
     my $filter = BusyBird::Filter->new();
-    note("--- What if I pushed some junks to a filter?");
+    note("--- What if I push some junks to a filter?");
     dies_ok {$filter->push(undef)} 'Do not push undef';
     dies_ok {$filter->unshift(undef)} 'Do not unshift undef';
     dies_ok {$filter->push(1)} 'Do not push a scalar';
     dies_ok {$filter->push([10, 20, 30])} 'Do not push an array ref';
     dies_ok {$filter->push({foo => 1, bar => 2})} 'Do not push a hash ref';
     my $fake_elem = new_ok('BusyBird::Test::Fake::FilterElem');
-    dies_ok {$filter->push($fake_elem)} 'Do not push an object that is not provide filterElement';
+    dies_ok {$filter->push($fake_elem)} 'Do not push an object that does not provide filterElement';
 }
 
 done_testing();
