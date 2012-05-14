@@ -23,7 +23,7 @@ sub new {
     my $self = bless {
         content => { %params }
     }, $class;
-    foreach my $mandatory qw(created_at id) {
+    foreach my $mandatory (qw(created_at id)) {
         if(!defined($self->content->{$mandatory})) {
             die "Param $mandatory is mandatory for Status";
         }
