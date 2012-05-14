@@ -131,7 +131,8 @@ sub _getStatusesPage {
     $worker_input->{cb} = sub {
         my ($status, @data) = @_;
         if($status != BusyBird::Worker::Object::STATUS_OK) {
-            &bblog(sprintf("WARNING: Twitter worker returns status %d", $status));
+            $data[0] = "undef" if !defined($data[0]);
+            &bblog(sprintf("WARNING: Twitter worker returns status %d: %s", $status, $data[0]));
             $callback->(undef);
             return;
         }
