@@ -121,11 +121,11 @@ foreach my $testpair (
         year   => 2011,
         month  => 6,
         day    => 14,
-        hour   => 9,
+        hour   => 10,
         minute => 45,
         second => 11,
-        time_zone => '+0000',
-    ), 'Tue Jun 14 09:45:11 +0000 2011']
+        time_zone => '+0900',
+    ), 'Tue Jun 14 01:45:11 +0000 2011']
 ) {
     &testJSON(@$testpair);
     &testXML(@$testpair);

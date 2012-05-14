@@ -212,6 +212,7 @@ sub _formatElements {
 
 sub _datetimeFormatTwitter {
     my $dt = shift;
+    $dt->set_time_zone($STATUS_TIMEZONE);
     return sprintf("%s %s %s",
                    $DAY_OF_WEEK[$dt->day_of_week],
                    $MONTH[$dt->month],
