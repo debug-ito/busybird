@@ -88,7 +88,7 @@ sub _datetimeFormatTwitter {
     return sprintf("%s %s %s",
                    $DAY_OF_WEEK[$dt->day_of_week],
                    $MONTH[$dt->month],
-                   $dt->strftime('%e %H:%M:%S %z %Y'));
+                   $dt->strftime('%d %H:%M:%S %z %Y'));
 }
 
 my %FORMATTERS = (
