@@ -137,7 +137,7 @@ sub _XMLFormatEntities {
             hashtags => 'hashtag',
             user_mentions => 'user_mention',
             media => 'creative', ## What's going on !!??
-        },
+        }, NoIndent => 1,
         KeyAttr => [],
     );
 }
@@ -177,7 +177,7 @@ my %FORMATTERS = (
             );
             push(@xml_entries, XMLout(
                 $clone->content, NoAttr => 1, RootName => 'status',
-                SuppressEmpty => undef, KeyAttr => [], NoEscape => 1,
+                SuppressEmpty => undef, KeyAttr => [], NoEscape => 1, NoIndent => 1,
             ));
         }
         return qq(<statuses type="array">) . join("", @xml_entries) . qq(</statuses>\n);
