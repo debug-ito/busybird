@@ -303,6 +303,90 @@ my @statuses_for_test = (
   </user>
 </status>}
         }
+    },
+    {
+        status => new_ok('BusyBird::Status', [
+            id => "Twitter_http://my.twitter.local/api_200101",
+            id_str => "Twitter_http://my.twitter.local/api_200101",
+            created_at => DateTime->new(
+                year => 2012, month => 2, day => 29, hour => 0, minute => 0, second => 3, time_zone => '-0200',
+            ),
+            text => "http://foo.com/ http://bar.com/ It's test for \"quotes\" and entities.",
+            entities => {
+                "urls" => [
+                    {
+                        "url" => "http://foo.com/",
+                        "expanded_url" => "http://www.foo.com/",
+                        "indices" => [ 0,  15],
+                    },
+                    {
+                        "url" => "http://bar.com/",
+                        "expanded_url" => undef,
+                        "indices" => [ 16, 31 ],
+                    },
+                ]
+            },
+            busybird => {
+                original => {
+                    id => 200101,
+                    id_str => "200101",
+                }
+            },
+        ]),
+        expect_format => {
+            json => q{
+{
+    "id": "Twitter_http://my.twitter.local/api_200101",
+    "id_str": "Twitter_http://my.twitter.local/api_200101",
+    "created_at": "Wed Feb 29 02:00:03 +0000 2012",
+    "text": "http://foo.com/ http://bar.com/ It's test for \"quotes\" and entities.",
+    "entities": {
+        "urls": [
+            {
+                "url": "http://foo.com/",
+                "expanded_url": "http://www.foo.com/",
+                "indices": [ 0,  15]
+            },
+            {
+                "url": "http://bar.com/",
+                "expanded_url": null,
+                "indices": [ 16, 31 ]
+            }
+        ]
+    },
+    "busybird": {
+        "original": {
+            "id": 200101,
+            "id_str": "200101"
+        }
+    }
+}
+},
+            xml => qq{<status>
+  <busybird>
+    <original>
+      <id>200101</id>
+      <id_str>200101</id_str>
+    </original>
+  </busybird>
+  <created_at>Wed Feb 29 02:00:03 +0000 2012</created_at>
+  <entities>
+    <urls>
+      <url start="0" end="15">
+        <expanded_url>http://www.foo.com/</expanded_url>
+        <url>http://foo.com/</url>
+      </url>
+      <url start="16" end="31">
+        <expanded_url />
+        <url>http://bar.com/</url>
+      </url>
+    </urls>
+  </entities>
+  <id>Twitter_http://my.twitter.local/api_200101</id>
+  <id_str>Twitter_http://my.twitter.local/api_200101</id_str>
+  <text>http://foo.com/ http://bar.com/ It's test for "quotes" and entities.</text>
+</status>}
+        }
     }
 );
 
