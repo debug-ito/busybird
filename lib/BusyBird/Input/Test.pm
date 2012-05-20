@@ -12,6 +12,7 @@ use AnyEvent;
 
 
 my $LOCAL_TZ = DateTime::TimeZone->new( name => 'local' );
+my $g_next_serial_num = 0;
 
 sub _setParams {
     my ($self, $params_ref) = @_;
@@ -20,6 +21,8 @@ sub _setParams {
     $self->_setParam($params_ref, 'new_count', 1);
     $self->_setParam($params_ref, 'page_num', 1);
     $self->_setParam($params_ref, 'load_delay', 0.1);
+    $self->{serial_num} = $g_next_serial_num;
+    $g_next_serial_num++;
     $self->{fired_count} = -1;
     $self->{timestamp} = undef;
     $self->{status_loader}->unshift(
@@ -35,8 +38,10 @@ sub _newStatus {
     my ($self, $nowtime, $page, $index) = @_;
     my $timestr = $nowtime->strftime('%Y/%m/%d %H:%M:%S');
     my $text = qq|{"time": "$timestr", "page": $page, "index": $index}|;
+    my $status_id = 'Test' . $self->{serial_num} ."_"  . $nowtime->epoch . "_${page}_$index";
     my $status = BusyBird::Status->new(
-        id => 'Test' . $nowtime->epoch . "_${page}_$index",
+        id => $status_id,
+        id_str => $status_id,
         created_at => $nowtime,
         text => $text,
         in_reply_to_screen_name => '',
