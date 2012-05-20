@@ -31,7 +31,7 @@ sub testXML {
     note("--- testXML");
     cmp_ok((grep { defined($_->{expect_format}{xml}) } @test_statuses), '==', int(@test_statuses),
            'All test_statuses have expected XML entries.');
-    my $exp_xml = '<statuses type="array">' . join("", map {$_->{expect_format}{xml}} @test_statuses) . '</statuses>';
+    my $exp_xml = '<statuses type="array">' . join("", map {$_->{expect_format}{xml} . "\n"} @test_statuses) . "</statuses>";
     my $got_xml = BusyBird::Status->format('xml', [ map {$_->{status}} @test_statuses ]);
     xml_valid $got_xml, 'Valid XML document';
     xml_node $got_xml, '/statuses', 'XML node /statuses exists';
@@ -114,8 +114,7 @@ my @statuses_for_test = (
     }
 }
 },
-            xml => qq{
-<status>
+            xml => qq{<status>
   <id>hoge</id>
   <busybird>
     <input_name>input</input_name>
@@ -167,8 +166,7 @@ my @statuses_for_test = (
     }
 }
 },
-            xml => qq{
-<status>
+            xml => qq{<status>
   <id>99239</id>
   <busybird>
     <input_name>Input</input_name>
@@ -230,8 +228,7 @@ my @statuses_for_test = (
     }
 }
 },
-            xml => qq{
-<status>
+            xml => qq{<status>
   <id>SomeSource_101105</id>
   <busybird>
     <original>
@@ -248,6 +245,61 @@ my @statuses_for_test = (
     <create_at>Sat Nov 01 16:33:00 +0000 2008</create_at>
     <name>ほげ ユーザ</name>
     <screen_name>hogeuser</screen_name>
+  </user>
+</status>}
+        }
+    },
+    {
+        status => new_ok('BusyBird::Status', [
+            id => "99332",
+            id_str => "99332",
+            created_at => DateTime->new(
+                year => 2009, month => 1, day => 1, hour => 3, minute => 0, second => 0, time_zone => '+0900',
+            ),
+            user => {
+                screen_name => 'tito',
+                created_at => DateTime->new(
+                    year => 2007, month => 12, day => 31, hour => 22, minute => 6, second => 46, time_zone => '-0500',
+                ),
+            },
+            busybird => {
+                original => {
+                    id => 9322,
+                    id_str => '9322',
+                }
+            }
+        ]),
+        expect_format => {
+            json => qq{
+{
+    "id": "99332",
+    "id_str": "99332",
+    "created_at": "Wed Dec 31 18:00:00 +0000 2008",
+    "user": {
+        "screen_name": "tito",
+        "created_at": "Tue Jan 01 03:06:46 +0000 2008"
+    },
+    "busybird": {
+        "original": {
+            "id": 9322,
+            "id_str": "9322"
+        }
+    }
+}
+},
+            xml => qq{<status>
+  <id>99332</id>
+  <busybird>
+    <original>
+      <id>9322</id>
+      <id_str>9322</id_str>
+    </original>
+  </busybird>
+  <created_at>Wed Dec 31 18:00:00 +0000 2008</created_at>
+  <id_str>99332</id_str>
+  <user>
+    <created_at>Tue Jan 01 03:06:46 +0000 2008</created_at>
+    <screen_name>tito</screen_name>
   </user>
 </status>}
         }

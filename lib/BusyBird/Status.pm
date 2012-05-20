@@ -116,7 +116,7 @@ my %FORMATTERS = (
             );
             push(@xml_entries, XMLout($clone->content, NoAttr => 1, RootName => 'status', SuppressEmpty => undef));
         }
-        return qq(<statuses type="array">\n) . join("", @xml_entries) . qq(</statuses>\n);
+        return qq(<statuses type="array">) . join("", @xml_entries) . qq(</statuses>\n);
     },
 );
 
