@@ -81,16 +81,27 @@ sub _enc {
     return Encode::encode('utf8', $decoded_text);
 }
 
+sub _createStatusID {
+    my ($self, $nt_status, $id_key_base) = @_;
+    my $str_key = "${id_key_base}_str";
+    my $orig_id = (defined($nt_status->{$str_key}) ? $nt_status->{$str_key} : $nt_status->{$id_key_base});
+    if(!defined($orig_id)) {
+        die "No Net::Twitter ID for the key $id_key_base or $str_key";
+    }
+    return 'Twitter' . $self->{worker}->getAPIURL() . _enc($orig_id);
+}
+
 sub _extractStatusesFromWorkerData {
-    my ($self_class, $worker_data) = @_;
+    my ($self, $worker_data) = @_;
     my @statuses = ();
     foreach my $nt_status (@$worker_data) {
-        my $text = $self_class->_processEntities($nt_status->{text}, $nt_status->{entities});
+        my $text = $self->_processEntities($nt_status->{text}, $nt_status->{entities});
         my $status = BusyBird::Status->new(
-            id => 'Twitter' . _enc(defined($nt_status->{id_str}) ? $nt_status->{id_str} : $nt_status->{id}),
-            created_at => $self_class->_timeStringToDateTime(_enc($nt_status->{created_at})),
+            id => $self->_createStatusID($nt_status, 'id'),
+            created_at => $self->_timeStringToDateTime(_enc($nt_status->{created_at})),
             text => _enc($text),
             in_reply_to_screen_name => _enc($nt_status->{in_reply_to_screen_name}),
+            in_reply_to_status_id => $self->_createStatusID($nt_status, 'in_reply_to_status_id'),
             user => {
                 'screen_name' => _enc($nt_status->{user}->{screen_name}),
                 'name' => _enc($nt_status->{user}->{name}),

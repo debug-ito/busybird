@@ -10,7 +10,14 @@ sub new {
     $net_twitter_params{traits} ||= [qw(API::REST API::Lists)];
     $net_twitter_params{ssl}    = 1 if !defined($net_twitter_params{ssl});
     my $nt = Net::Twitter->new(%net_twitter_params);
-    return $class->SUPER::new($nt);
+    my $self = $class->SUPER::new($nt);
+    $self->{apiurl} = ($net_twitter_params{apiurl} or '__DEFAULT__');
+    return $self;
+}
+
+sub getAPIURL {
+    my $self = shift;
+    return $self->{apiurl};
 }
 
 1;
