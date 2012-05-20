@@ -7,6 +7,8 @@ use Storable ('dclone');
 use DateTime;
 use BusyBird::Log qw(bblog);
 
+$XML::Simple::PREFERRED_PARSER = 'XML::Parser';
+
 my @MONTH = (undef, qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec));
 my %MONTH_FROM_STR = ( map { $MONTH[$_] => $_ } 1..12);
 my @DAY_OF_WEEK = (undef, qw(Mon Tue Wed Thu Fri Sat Sun));
