@@ -63,13 +63,28 @@ sub clone {
 
 sub _translateTreeNodes {
     my ($class_self, $root, %translate_rules) = @_;
-    my @unvisited_ref = (\$root);
-    while(my $cur_ref = pop(@unvisited_ref)) {
+    my @unvisited_entries = (['_root', \$root]);
+    while(my $cur_entry = pop(@unvisited_entries)) {
+        my ($label, $cur_ref) = @$cur_entry;
+        my $label_key = '.' . $label;
+        if(defined($translate_rules{$label_key})) {
+            $$cur_ref = $translate_rules{$label_key}->($$cur_ref);
+            next;
+        }
         if(ref($$cur_ref) eq 'ARRAY') {
-            push(@unvisited_ref, \$_) foreach @$$cur_ref;
+            my $i = 0;
+            foreach my $ref (@$$cur_ref) {
+                push(@unvisited_entries, [$i, \$ref]);
+                $i++;
+            }
             next;
         }elsif(ref($$cur_ref) eq 'HASH') {
-            push(@unvisited_ref, \$_) foreach values %$$cur_ref;
+            foreach my $key (keys %$$cur_ref) {
+                push(@unvisited_entries, [$key, \$$$cur_ref{$key}]);
+            }
+            ## while(my ($key, $val) = each()) {
+            ##     push(@unvisited_entries, [$key, \$val]);
+            ## }
             next;
         }elsif(!ref($$cur_ref)) {
             if(defined($translate_rules{_SCALAR_ELEM})) {
@@ -91,6 +106,40 @@ sub _datetimeFormatTwitter {
                    $DAY_OF_WEEK[$dt->day_of_week],
                    $MONTH[$dt->month],
                    $dt->strftime('%d %H:%M:%S %z %Y'));
+}
+
+sub _XMLFormatEntities {
+    my ($entities_ref) = @_;
+    my $root = {};
+    foreach my $field_key (keys %$entities_ref) {
+        $root->{$field_key} = [];
+        ## my $entity_key = substr($field_key, 0, -1);
+        foreach my $entity (@{$entities_ref->{$field_key}}) {
+            my $translated_entity = {%$entity};
+            my ($start, $end) = @{$entity->{indices}};
+            __PACKAGE__->_translateTreeNodes(
+                $translated_entity,
+                _SCALAR_ELEM => sub {
+                    my ($scalar) = @_;
+                    return {content => $scalar};
+                }
+            );
+            $translated_entity->{start} = $start;
+            $translated_entity->{end} = $end;
+            delete $translated_entity->{indices};
+            push(@{$root->{$field_key}}, $translated_entity);
+        }
+    }
+    return XMLout(
+        $root, RootName => undef,
+        GroupTags => {
+            urls => 'url',
+            hashtags => 'hashtag',
+            user_mentions => 'user_mention',
+            media => 'creative', ## What's going on !!??
+        },
+        KeyAttr => [],
+    );
 }
 
 my %FORMATTERS = (
@@ -115,8 +164,21 @@ my %FORMATTERS = (
             $clone->_translateTreeNodes(
                 $clone->content,
                 'DateTime' => \&_datetimeFormatTwitter,
+                '.entities' => \&_XMLFormatEntities,
+                '_SCALAR_ELEM' => sub {
+                    my $scalar = shift;
+                    return undef if !defined($scalar);
+                    $scalar =~ s|<|&lt;|g;
+                    $scalar =~ s|>|&gt;|g;
+                    $scalar =~ s|&|&amp;|g;
+                    $scalar =~ s|'|&quot;|g;
+                    return $scalar;
+                }
             );
-            push(@xml_entries, XMLout($clone->content, NoAttr => 1, RootName => 'status', SuppressEmpty => undef, KeyAttr => []));
+            push(@xml_entries, XMLout(
+                $clone->content, NoAttr => 1, RootName => 'status',
+                SuppressEmpty => undef, KeyAttr => [], NoEscape => 1,
+            ));
         }
         return qq(<statuses type="array">) . join("", @xml_entries) . qq(</statuses>\n);
     },
