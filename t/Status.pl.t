@@ -16,7 +16,7 @@ BEGIN {
 sub createTestStatus {
     my ($datetime) = @_;
     isa_ok($datetime, 'DateTime');
-    my $status = new_ok('BusyBird::Status', [id => 'hoge', created_at => $datetime]);
+    my $status = new_ok('BusyBird::Status', [id => 'hoge', id_str => 'hoge', created_at => $datetime]);
     $status->content->{text} = 'foo bar';
     $status->content->{in_reply_to_screen_name} = undef;
     $status->content->{user}{screen_name} = 'screenName';
@@ -93,7 +93,7 @@ sub testXML {
 sub testClone {
     note("--- testClone");
     my $time = DateTime->now();
-    my $orig = new_ok('BusyBird::Status', [id => '102023010', created_at => $time]);
+    my $orig = new_ok('BusyBird::Status', [id => '102023010', id_str => '102023010', created_at => $time]);
     $orig->put(
         text => 'hoge hoge hoge',
         user => {
