@@ -115,12 +115,12 @@ my @statuses_for_test = (
 }
 },
             xml => qq{<status>
-  <id>hoge</id>
   <busybird>
     <input_name>input</input_name>
     <score />
   </busybird>
   <created_at>Tue Jun 14 01:45:11 +0000 2011</created_at>
+  <id>hoge</id>
   <id_str>hoge</id_str>
   <in_reply_to_screen_name />
   <text>foo bar</text>
@@ -167,11 +167,11 @@ my @statuses_for_test = (
 }
 },
             xml => qq{<status>
-  <id>99239</id>
   <busybird>
     <input_name>Input</input_name>
   </busybird>
   <created_at>Sun May 20 03:22:11 +0000 2012</created_at>
+  <id>99239</id>
   <id_str>99239</id_str>
   <text>some text</text>
   <user>
@@ -229,7 +229,6 @@ my @statuses_for_test = (
 }
 },
             xml => qq{<status>
-  <id>SomeSource_101105</id>
   <busybird>
     <original>
       <id>101105</id>
@@ -239,10 +238,11 @@ my @statuses_for_test = (
     </original>
   </busybird>
   <created_at>Sun Apr 22 12:05:45 +0000 2012</created_at>
+  <id>SomeSource_101105</id>
   <id_str>SomeSource_101105</id_str>
   <text>UTF8 てきすと </text>
   <user>
-    <create_at>Sat Nov 01 16:33:00 +0000 2008</create_at>
+    <created_at>Sat Nov 01 16:33:00 +0000 2008</created_at>
     <name>ほげ ユーザ</name>
     <screen_name>hogeuser</screen_name>
   </user>
@@ -288,7 +288,6 @@ my @statuses_for_test = (
 }
 },
             xml => qq{<status>
-  <id>99332</id>
   <busybird>
     <original>
       <id>9322</id>
@@ -296,6 +295,7 @@ my @statuses_for_test = (
     </original>
   </busybird>
   <created_at>Wed Dec 31 18:00:00 +0000 2008</created_at>
+  <id>99332</id>
   <id_str>99332</id_str>
   <user>
     <created_at>Tue Jan 01 03:06:46 +0000 2008</created_at>

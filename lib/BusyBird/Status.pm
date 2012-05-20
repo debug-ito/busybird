@@ -114,7 +114,7 @@ my %FORMATTERS = (
                 $clone->content,
                 'DateTime' => \&_datetimeFormatTwitter,
             );
-            push(@xml_entries, XMLout($clone->content, NoAttr => 1, RootName => 'status', SuppressEmpty => undef));
+            push(@xml_entries, XMLout($clone->content, NoAttr => 1, RootName => 'status', SuppressEmpty => undef, KeyAttr => []));
         }
         return qq(<statuses type="array">) . join("", @xml_entries) . qq(</statuses>\n);
     },
