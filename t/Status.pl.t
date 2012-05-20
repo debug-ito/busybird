@@ -13,44 +13,13 @@ BEGIN {
     use_ok('BusyBird::Status');
 }
 
-sub createTestStatus {
-    my ($datetime) = @_;
-    isa_ok($datetime, 'DateTime');
-    my $status = new_ok('BusyBird::Status', [id => 'hoge', id_str => 'hoge', created_at => $datetime]);
-    $status->content->{text} = 'foo bar';
-    $status->content->{in_reply_to_screen_name} = undef;
-    $status->content->{user}{screen_name} = 'screenName';
-    $status->content->{user}{name} = 'na me';
-    $status->content->{user}{profile_image_url} = undef;
-    $status->content->{busybird}{input_name} = 'input';
-    $status->content->{busybird}{score} = undef;
-    is($status->content->{created_at}, $datetime);
-    return $status;
-}
-
 sub testJSON {
-    my ($datetime, $exp_created_at) = @_;
+    my (@test_statuses) = @_;
     note("--- testJSON");
-    my $status = &createTestStatus($datetime);
-    my $exp_statuses_json = qq{
-[{
-    "id": "hoge",
-    "id_str": "hoge",
-    "created_at": "$exp_created_at",
-    "text": "foo bar",
-    "in_reply_to_screen_name": null,
-    "user": {
-        "screen_name": "screenName",
-        "name": "na me",
-        "profile_image_url": null
-    },
-    "busybird": {
-        "input_name": "input",
-        "score": null
-    }
-}]
-};
-    my $json_statuses = BusyBird::Status->format('json', [$status]);
+    cmp_ok((grep { defined($_->{expect_format}{json}) } @test_statuses), "==", int(@test_statuses),
+           "All test_statuses have expected JSON entries.");
+    my $exp_statuses_json = "[". join(",", map { $_->{expect_format}{json} } @test_statuses) ."]";
+    my $json_statuses = BusyBird::Status->format('json', [ map {$_->{status}} @test_statuses ]);
     cmp_ok($json_statuses, 'ne', '');
     my $decoded_got_json = decode_json($json_statuses);
     my $decoded_exp_json = decode_json($exp_statuses_json);
@@ -58,30 +27,12 @@ sub testJSON {
 }
 
 sub testXML {
-    my ($datetime, $exp_created_at) = @_;
+    my (@test_statuses) = @_;
     note("--- testXML");
-    my $status = &createTestStatus($datetime);
-    my $exp_xml = qq{
-<statuses type="array">
-<status>
-  <id>hoge</id>
-  <busybird>
-    <input_name>input</input_name>
-    <score />
-  </busybird>
-  <created_at>$exp_created_at</created_at>
-  <id_str>hoge</id_str>
-  <in_reply_to_screen_name />
-  <text>foo bar</text>
-  <user>
-    <name>na me</name>
-    <profile_image_url />
-    <screen_name>screenName</screen_name>
-  </user>
-</status>
-</statuses>
-};
-    my $got_xml = BusyBird::Status->format('xml', [$status]);
+    cmp_ok((grep { defined($_->{expect_format}{xml}) } @test_statuses), '==', int(@test_statuses),
+           'All test_statuses have expected XML entries.');
+    my $exp_xml = '<statuses type="array">' . join("", map {$_->{expect_format}{xml}} @test_statuses) . '</statuses>';
+    my $got_xml = BusyBird::Status->format('xml', [ map {$_->{status}} @test_statuses ]);
     xml_valid $got_xml, 'Valid XML document';
     xml_node $got_xml, '/statuses', 'XML node /statuses exists';
     xml_is_deeply $got_xml, '/statuses', $exp_xml, 'XML content is what is expected' or do {
@@ -91,33 +42,28 @@ sub testXML {
 }
 
 sub testClone {
+    my ($test_status) = @_;
     note("--- testClone");
-    my $time = DateTime->now();
-    my $orig = new_ok('BusyBird::Status', [id => '102023010', id_str => '102023010', created_at => $time]);
-    $orig->put(
-        text => 'hoge hoge hoge',
-        user => {
-            screen_name => 'some_user',
-            name => 'Some User',
-        },
-        busybird => {
-            input_name => 'Input',
-            score => 100,
-        }
-    );
-    my $clone = $orig->clone();
-    $clone->content->{busybird}{score} = 40;
-    cmp_ok($orig ->content->{busybird}{score}, '==', 100, 'original score');
-    cmp_ok($clone->content->{busybird}{score}, '==',  40, 'cloned score');
-    cmp_ok(DateTime->compare($orig->content->{created_at}, $clone->content->{created_at}), '==', 0, 'time is the same');
-    delete $orig ->content->{busybird}{score};
-    delete $clone->content->{busybird}{score};
-    is_deeply($orig->content, $clone->content, "everything except score is the same");
+    my $status = $test_status->{status};
+    my $clone = $status->clone();
+    is_deeply($status, $clone, "clone is exactly the same as the original");
+    cmp_ok(DateTime->compare($status->content->{created_at}, $clone->content->{created_at}), "==", 0, "... created_at is exactly the same.");
+    my ($orig_id, $orig_id_str) = @{$status->content}{'id', 'id_str'};
+    my $orig_screen_name = $status->content->{user}->{screen_name};
+    $clone->put(id => "foobar", id_str => "foobar");
+    $clone->content->{user}->{screen_name} = "HOGE_SCREEN_NAME";
+    is($status->content->{id}, $orig_id, "original and clone is independent (id, original)");
+    is($clone->content->{id}, 'foobar',"... (id, clone)");
+    is($status->content->{id_str}, $orig_id_str, "... (id_str, original)");
+    is($clone->content->{id_str}, 'foobar', "... (id_str, clone)");
+    is($status->content->{user}->{screen_name}, $orig_screen_name, "... (user/screen_name, original)");
+    is($clone->content->{user}->{screen_name}, "HOGE_SCREEN_NAME", "... (user/screen_name, clone)");
 }
 
 sub testSerialize {
-    my ($statuses) = @_;
+    my (@test_statuses) = @_;
     note("--- testSerialize");
+    my $statuses = [ map {$_->{status}} @test_statuses ];
     my $serialized = BusyBird::Status->serialize($statuses);
     ok(defined($serialized), "serialize() returns a defined value");
     ok(!ref($serialized), "... and it's a scalar");
@@ -129,64 +75,194 @@ sub testSerialize {
 
 BusyBird::Status->setTimeZone('UTC');
 
-foreach my $testpair (
-    [DateTime->new(
-        year   => 2011,
-        month  => 6,
-        day    => 14,
-        hour   => 10,
-        minute => 45,
-        second => 11,
-        time_zone => '+0900',
-    ), 'Tue Jun 14 01:45:11 +0000 2011']
-) {
-    &testJSON(@$testpair);
-    &testXML(@$testpair);
+my @statuses_for_test = (
+    {
+        status => new_ok('BusyBird::Status', [
+            id => 'hoge',
+            id_str => 'hoge',
+            created_at => DateTime->new(
+                year => 2011, month => 6, day => 14, hour => 10, minute => 45, second => 11, time_zone => '+0900',
+            ),
+            text => 'foo bar',
+            in_reply_to_screen_name => undef,
+            user => {
+                screen_name => 'screenName',
+                name => 'na me',
+                profile_image_url => undef,
+            },
+            busybird => {
+                input_name => 'input',
+                score => undef,
+            }
+        ]),
+        expect_format => {
+            json => qq{
+{
+    "id": "hoge",
+    "id_str": "hoge",
+    "created_at": "Tue Jun 14 01:45:11 +0000 2011",
+    "text": "foo bar",
+    "in_reply_to_screen_name": null,
+    "user": {
+        "screen_name": "screenName",
+        "name": "na me",
+        "profile_image_url": null
+    },
+    "busybird": {
+        "input_name": "input",
+        "score": null
+    }
+}
+},
+            xml => qq{
+<status>
+  <id>hoge</id>
+  <busybird>
+    <input_name>input</input_name>
+    <score />
+  </busybird>
+  <created_at>Tue Jun 14 01:45:11 +0000 2011</created_at>
+  <id_str>hoge</id_str>
+  <in_reply_to_screen_name />
+  <text>foo bar</text>
+  <user>
+    <name>na me</name>
+    <profile_image_url />
+    <screen_name>screenName</screen_name>
+  </user>
+</status>}
+        }
+    },
+    {
+        status => new_ok('BusyBird::Status', [
+            id => 99239,
+            id_str => '99239',
+            created_at => DateTime->new(
+                year => 2012, month => 5, day => 20, hour => 12, minute => 22, second => 11, time_zone => '+0900'
+            ),
+            text => 'some text',
+            user => {
+                screen_name => 'toshio_ito',
+                name => 'Toshio ITO',
+                profile_image_url => undef,
+            },
+            busybird => {
+                input_name => "Input",
+            },
+        ]),
+        expect_format => {
+            json => qq{
+{
+    "id": 99239,
+    "id_str": "99239",
+    "created_at": "Sun May 20 03:22:11 +0000 2012",
+    "text": "some text",
+    "user": {
+        "screen_name": "toshio_ito",
+        "name": "Toshio ITO",
+        "profile_image_url": null
+    },
+    "busybird": {
+        "input_name": "Input"
+    }
+}
+},
+            xml => qq{
+<status>
+  <id>99239</id>
+  <busybird>
+    <input_name>Input</input_name>
+  </busybird>
+  <created_at>Sun May 20 03:22:11 +0000 2012</created_at>
+  <id_str>99239</id_str>
+  <text>some text</text>
+  <user>
+    <name>Toshio ITO</name>
+    <profile_image_url />
+    <screen_name>toshio_ito</screen_name>
+  </user>
+</status>}
+        }
+    },
+    {
+        status => new_ok('BusyBird::Status', [
+            id => "SomeSource_101105",
+            id_str => "SomeSource_101105",
+            created_at => DateTime->new(
+                year => 2012, month => 4, day => 22, hour => 2, minute => 5, second => 45, time_zone => '-1000',
+            ),
+            text => 'UTF8 てきすと ',
+            user => {
+                screen_name => "hogeuser",
+                name => "ほげ ユーザ",
+                created_at => DateTime->new(
+                    year => 2008, month => 11, day => 1, hour => 16, minute => 33, second => 0, time_zone => '+0000',
+                ),
+            },
+            busybird => {
+                original => {
+                    id => 101105,
+                    id_str => "101105",
+                    in_reply_to_status_id => undef,
+                    in_reply_to_status_id_str => undef,
+                }
+            },
+        ]),
+        expect_format => {
+            json => qq{
+{
+    "id": "SomeSource_101105",
+    "id_str": "SomeSource_101105",
+    "created_at": "Sun Apr 22 12:05:45 +0000 2012",
+    "text": "UTF8 てきすと ",
+    "user": {
+        "screen_name": "hogeuser",
+        "name": "ほげ ユーザ",
+        "created_at": "Sat Nov 01 16:33:00 +0000 2008"
+    },
+    "busybird": {
+        "original": {
+            "id": 101105,
+            "id_str": "101105",
+            "in_reply_to_status_id": null,
+            "in_reply_to_status_id_str": null
+        }
+    }
+}
+},
+            xml => qq{
+<status>
+  <id>SomeSource_101105</id>
+  <busybird>
+    <original>
+      <id>101105</id>
+      <id_str>101105</id_str>
+      <in_reply_to_status_id />
+      <in_reply_to_status_id_str />
+    </original>
+  </busybird>
+  <created_at>Sun Apr 22 12:05:45 +0000 2012</created_at>
+  <id_str>SomeSource_101105</id_str>
+  <text>UTF8 てきすと </text>
+  <user>
+    <create_at>Sat Nov 01 16:33:00 +0000 2008</create_at>
+    <name>ほげ ユーザ</name>
+    <screen_name>hogeuser</screen_name>
+  </user>
+</status>}
+        }
+    }
+);
+
+
+foreach my $tester (\&testJSON, \&testXML, \&testSerialize) {
+    $tester->(@statuses_for_test);
+    $tester->(@statuses_for_test[(0)]);
+    $tester->();
 }
 
+&testClone($_) foreach @statuses_for_test;
 
-&testClone();
-
-
-&testSerialize([
-    BusyBird::Status->new(
-        id => 99239,
-        id_str => '99239',
-        created_at => DateTime->new(
-            year => 2012, month => 5, day => 20, hour => 12, minute => 22, second => 11, time_zone => '+0900'
-        ),
-        text => 'some text',
-        user => {
-            screen_name => 'toshio_ito',
-            name => 'Toshio ITO',
-            profile_image_url => undef,
-        },
-        busybird => {
-            input_name => "Input",
-        },
-    ),
-    BusyBird::Status->new(
-        id => "SomeSource_101105",
-        id_str => "SomeSource_101105",
-        created_at => DateTime->new(
-            year => 2012, month => 4, day => 22, hour => 2, minute => 5, second => 45, time_zone => '-1000',
-        ),
-        text => 'UTF8 てきすと ',
-        user => {
-            screen_name => "hogeuser",
-            name => "ほげ ユーザ",
-            created_at => DateTime->new(
-                year => 2008, month => 11, day => 1, hour => 16, minute => 33, second => 0, time_zone => '+0000',
-            ),
-        },
-        busybird => {
-            original => {
-                id => 101105,
-                id_str => "101105",
-            }
-        },
-    ),
-]);
 
 done_testing();
 
