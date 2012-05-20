@@ -8,7 +8,15 @@ use DateTime;
 use BusyBird::Log qw(bblog);
 
 my @MONTH = (undef, qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec));
+my %MONTH_FROM_STR = ( map { $MONTH[$_] => $_ } 1..12);
 my @DAY_OF_WEEK = (undef, qw(Mon Tue Wed Thu Fri Sat Sun));
+
+my $DATETIME_STR_MATCHER;
+{
+    my $month_selector = join('|', @MONTH[1..12]);
+    my $dow_selector = join('|', @DAY_OF_WEEK[1..7]);
+    $DATETIME_STR_MATCHER = qr!^($dow_selector) +($month_selector) +(\d{2}) +(\d{2}):(\d{2}):(\d{2}) +([\-\+]\d{4}) +(\d+)$!;
+}
 
 
 my $STATUS_TIMEZONE = DateTime::TimeZone->new( name => 'local');
@@ -135,6 +143,54 @@ sub mime {
         return undef;
     }
     return $MIMES{$format};
+}
+
+sub serialize {
+    my ($class, $statuses_ref) = @_;
+    return $class->format('json', $statuses_ref);
+}
+
+sub deserialize {
+    my ($class, $string) = @_;
+    my $raw_statuses = from_json($string);
+    if(ref($raw_statuses) ne 'ARRAY') {
+        $raw_statuses = [$raw_statuses];
+    }
+    my @statuses = ();
+    foreach my $raw_status (@$raw_statuses) {
+        $class->_translateTreeNodes(
+            $raw_status,
+            _SCALAR_ELEM => sub {
+                my ($elem) = @_;
+                if(!defined($elem)) {
+                    return $elem;
+                }
+                my ($dow, $month_str, $dom, $h, $m, $s, $tz_str, $year) = ($elem =~ $DATETIME_STR_MATCHER);
+                if($dow) {
+                    return DateTime->new(
+                        year      => $year,
+                        month     => $MONTH_FROM_STR{$month_str},
+                        day       => $dom,
+                        hour      => $h,
+                        minute    => $m,
+                        second    => $s,
+                        time_zone => $tz_str,
+                    );
+                }
+                return $elem;
+            },
+        );
+        my $status;
+        eval {
+            $status = BusyBird::Status->new(%$raw_status);
+        };
+        if($@) {
+            &bblog("Failed to deserialize a status. Skip: $@");
+            next;
+        }
+        push(@statuses, $status);
+    }
+    return \@statuses;
 }
 
 1;

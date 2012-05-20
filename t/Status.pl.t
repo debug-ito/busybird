@@ -115,6 +115,18 @@ sub testClone {
     is_deeply($orig->content, $clone->content, "everything except score is the same");
 }
 
+sub testSerialize {
+    my ($statuses) = @_;
+    note("--- testSerialize");
+    my $serialized = BusyBird::Status->serialize($statuses);
+    ok(defined($serialized), "serialize() returns a defined value");
+    ok(!ref($serialized), "... and it's a scalar");
+    my $des_statuses = BusyBird::Status->deserialize($serialized);
+    ok(defined($des_statuses), "deserialize() returns defined value");
+    is(ref($des_statuses), 'ARRAY', "... and it's an array ref.");
+    is_deeply($des_statuses, $statuses, "statuses are restored perfectly.");
+}
+
 BusyBird::Status->setTimeZone('UTC');
 
 foreach my $testpair (
@@ -134,6 +146,47 @@ foreach my $testpair (
 
 
 &testClone();
+
+
+&testSerialize([
+    BusyBird::Status->new(
+        id => 99239,
+        id_str => '99239',
+        created_at => DateTime->new(
+            year => 2012, month => 5, day => 20, hour => 12, minute => 22, second => 11, time_zone => '+0900'
+        ),
+        text => 'some text',
+        user => {
+            screen_name => 'toshio_ito',
+            name => 'Toshio ITO',
+            profile_image_url => undef,
+        },
+        busybird => {
+            input_name => "Input",
+        },
+    ),
+    BusyBird::Status->new(
+        id => "SomeSource_101105",
+        id_str => "SomeSource_101105",
+        created_at => DateTime->new(
+            year => 2012, month => 4, day => 22, hour => 2, minute => 5, second => 45, time_zone => '-1000',
+        ),
+        text => 'UTF8 てきすと ',
+        user => {
+            screen_name => "hogeuser",
+            name => "ほげ ユーザ",
+            created_at => DateTime->new(
+                year => 2008, month => 11, day => 1, hour => 16, minute => 33, second => 0, time_zone => '+0000',
+            ),
+        },
+        busybird => {
+            original => {
+                id => 101105,
+                id_str => "101105",
+            }
+        },
+    ),
+]);
 
 done_testing();
 
