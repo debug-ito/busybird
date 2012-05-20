@@ -51,10 +51,9 @@ sub clone {
     return dclone($self);
 }
 
-sub _formatElements {
-    my ($self, %formatters) = @_;
-    my $content = $self->content;
-    my @unvisited_ref = (\$content);
+sub _translateTreeNodes {
+    my ($class_self, $root, %translate_rules) = @_;
+    my @unvisited_ref = (\$root);
     while(my $cur_ref = pop(@unvisited_ref)) {
         if(ref($$cur_ref) eq 'ARRAY') {
             push(@unvisited_ref, \$_) foreach @$$cur_ref;
@@ -63,11 +62,14 @@ sub _formatElements {
             push(@unvisited_ref, \$_) foreach values %$$cur_ref;
             next;
         }elsif(!ref($$cur_ref)) {
+            if(defined($translate_rules{_SCALAR_ELEM})) {
+                $$cur_ref = $translate_rules{_SCALAR_ELEM}->($$cur_ref);
+            }
             next;
         }
-        my @matched_class = grep { $$cur_ref->isa($_) } keys %formatters;
+        my @matched_class = grep { $$cur_ref->isa($_) } keys %translate_rules;
         if(@matched_class) {
-            $$cur_ref = $formatters{$matched_class[0]}->($$cur_ref);
+            $$cur_ref = $translate_rules{$matched_class[0]}->($$cur_ref);
         }
     }
 }
@@ -87,7 +89,8 @@ my %FORMATTERS = (
         my @json_entries = ();
         foreach my $status (@$statuses_ref) {
             my $clone = $status->clone();
-            $clone->_formatElements(
+            $clone->_translateTreeNodes(
+                $clone->content,
                 'DateTime' => \&_datetimeFormatTwitter,
             );
             push(@json_entries, to_json($clone->content));
@@ -99,7 +102,8 @@ my %FORMATTERS = (
         my @xml_entries = ();
         foreach my $status (@$statuses_ref) {
             my $clone = $status->clone();
-            $clone->_formatElements(
+            $clone->_translateTreeNodes(
+                $clone->content,
                 'DateTime' => \&_datetimeFormatTwitter,
             );
             push(@xml_entries, XMLout($clone->content, NoAttr => 1, RootName => 'status', SuppressEmpty => undef));
