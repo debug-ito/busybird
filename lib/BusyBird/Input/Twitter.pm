@@ -86,9 +86,9 @@ sub _createStatusID {
     my $str_key = "${id_key_base}_str";
     my $orig_id = (defined($nt_status->{$str_key}) ? $nt_status->{$str_key} : $nt_status->{$id_key_base});
     if(!defined($orig_id)) {
-        die "No Net::Twitter ID for the key $id_key_base or $str_key";
+        return undef;
     }
-    return 'Twitter' . $self->{worker}->getAPIURL() . _enc($orig_id);
+    return 'Twitter_' . $self->{worker}->getAPIURL() . "_" . _enc($orig_id);
 }
 
 sub _extractStatusesFromWorkerData {
@@ -96,20 +96,25 @@ sub _extractStatusesFromWorkerData {
     my @statuses = ();
     foreach my $nt_status (@$worker_data) {
         my $text = $self->_processEntities($nt_status->{text}, $nt_status->{entities});
+        my $status_id = $self->_createStatusID($nt_status, 'id');
+        my $status_rep_id = $self->_createStatusID($nt_status, 'in_reply_to_status_id');
         my $status = BusyBird::Status->new(
-            id => $self->_createStatusID($nt_status, 'id'),
+            id => $status_id,
+            id_str => defined($status_id) ? "$status_id" : undef,
             created_at => $self->_timeStringToDateTime(_enc($nt_status->{created_at})),
             text => _enc($text),
             in_reply_to_screen_name => _enc($nt_status->{in_reply_to_screen_name}),
-            in_reply_to_status_id => $self->_createStatusID($nt_status, 'in_reply_to_status_id'),
+            in_reply_to_status_id => $status_rep_id,
+            in_reply_to_status_id_str => defined($status_rep_id) ? "$status_rep_id" : undef,
             user => {
                 'screen_name' => _enc($nt_status->{user}->{screen_name}),
                 'name' => _enc($nt_status->{user}->{name}),
                 'profile_image_url' => _enc($nt_status->{user}->{profile_image_url}),
             },
             busybird => {
-                original_id => _enc($nt_status->{id}),
-                original_id_str => _enc($nt_status->{id_str}),
+                original => {
+                    map { $_ => _enc($nt_status->{$_}) } qw(id id_str in_reply_to_status_id in_reply_to_status_id_str),
+                },
             },
         );
         push(@statuses, $status);
