@@ -19,7 +19,7 @@ my $DATETIME_STR_MATCHER;
 }
 
 
-my $STATUS_TIMEZONE = DateTime::TimeZone->new( name => 'local');
+our $_STATUS_TIMEZONE = DateTime::TimeZone->new( name => 'local');
 
 sub new {
     my ($class, %params) = @_;
@@ -36,12 +36,12 @@ sub new {
 
 sub setTimeZone {
     my ($class, $timezone_str) = @_;
-    $STATUS_TIMEZONE = DateTime::TimeZone->new(name => $timezone_str);
+    $_STATUS_TIMEZONE = DateTime::TimeZone->new(name => $timezone_str);
 }
 
 sub getTimeZone {
     my ($class) = @_;
-    return $STATUS_TIMEZONE;
+    return $_STATUS_TIMEZONE;
 }
 
 sub content {
@@ -84,7 +84,7 @@ sub _translateTreeNodes {
 
 sub _datetimeFormatTwitter {
     my $dt = shift;
-    $dt->set_time_zone($STATUS_TIMEZONE);
+    $dt->set_time_zone($_STATUS_TIMEZONE) if defined($_STATUS_TIMEZONE);
     return sprintf("%s %s %s",
                    $DAY_OF_WEEK[$dt->day_of_week],
                    $MONTH[$dt->month],
@@ -147,6 +147,7 @@ sub mime {
 
 sub serialize {
     my ($class, $statuses_ref) = @_;
+    local $_STATUS_TIMEZONE = undef;
     return $class->format('json', $statuses_ref);
 }
 
