@@ -126,7 +126,7 @@ sub _getStatusesPage {
 
 sub _getTimeFilePath {
     my ($self) = @_;
-    return "busybird_" . $self->{name} . ".time";
+    return "bbinput_" . $self->{name} . ".time";
 }
 
 ## synchronous...
