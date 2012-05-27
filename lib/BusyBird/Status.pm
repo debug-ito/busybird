@@ -110,6 +110,7 @@ sub _datetimeFormatTwitter {
 
 sub _XMLFormatEntities {
     my ($entities_ref) = @_;
+    return undef if !defined($entities_ref);
     my $root = {};
     foreach my $field_key (keys %$entities_ref) {
         $root->{$field_key} = [];
@@ -137,8 +138,8 @@ sub _XMLFormatEntities {
             hashtags => 'hashtag',
             user_mentions => 'user_mention',
             media => 'creative', ## What's going on !!??
-        }, NoIndent => 1,
-        KeyAttr => [],
+        }, NoIndent => 1, SuppressEmpty => undef,
+        KeyAttr => ['start', 'end'],
     );
 }
 
@@ -180,7 +181,7 @@ my %FORMATTERS = (
                 SuppressEmpty => undef, KeyAttr => [], NoEscape => 1, NoIndent => 1,
             ));
         }
-        return qq(<statuses type="array">) . join("", @xml_entries) . qq(</statuses>\n);
+        return qq(<statuses type="array">) . join("", @xml_entries) . qq(</statuses>);
     },
 );
 
