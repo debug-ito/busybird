@@ -6,12 +6,11 @@ use warnings;
 use Scalar::Util ('blessed');
 use DateTime;
 use IO::File;
-## use POE;
-## use BusyBird::CallStack;
 
 use AnyEvent;
 use BusyBird::Log ('bblog');
 use BusyBird::Filter;
+use BusyBird::ComponentManager;
 
 my $DEFAULT_PAGE_COUNT = 100;
 my $DEFAULT_PAGE_MAX   = 10;
@@ -28,25 +27,7 @@ sub new {
     my ($class, %params) = @_;
     my $self = bless {}, $class;
     $self->_setParams(\%params);
-    eval {
-        $self->_loadTimeFile();
-    };
-    if($@) {
-        &bblog("WARNING: $@Time file is not loaded.");
-    }
-    ## POE::Session->create(
-    ##     object_states => [
-    ##         $self => {
-    ##             _start => '_sessionStart',
-    ##             on_get_statuses => '_sessionOnGetStatuses',
-    ##         },
-    ##     ],
-    ##     inline_states => {
-    ##         _stop => sub {
-    ##             ;
-    ##         },
-    ##     },
-    ## );
+    BusyBird::ComponentManager->register('input', $self);
     return $self;
 }
 
@@ -130,9 +111,9 @@ sub _getTimeFilePath {
 }
 
 ## synchronous...
-sub _loadTimeFile {
-    my ($self) = @_;
-    return if $self->{no_timefile};
+sub loadTimeFile {
+    my ($self, $force) = @_;
+    return if $self->{no_timefile} && !$force;
     my $filepath = $self->_getTimeFilePath();
     my $file = IO::File->new();
     if(!$file->open($filepath, "r")) {
@@ -155,9 +136,9 @@ sub _loadTimeFile {
 }
 
 ## synchronous...
-sub _saveTimeFile {
-    my ($self) = @_;
-    return if $self->{no_timefile};
+sub saveTimeFile {
+    my ($self, $force) = @_;
+    return if $self->{no_timefile} && !$force;
     my $filepath = $self->_getTimeFilePath();
     my $file = IO::File->new();
     if(!$file->open($filepath, "w")) {
@@ -226,7 +207,7 @@ sub _initLoader {
                     if($page == $self->{page_max} && !$is_complete && defined($threshold_epoch_time)) {
                         &bblog("WARNING: page has reached the max value of ".$self->{page_max});
                     }
-                    $self->_saveTimeFile();
+                    $self->saveTimeFile();
                     $done->($ret_array);
                     ## $self->_emitOnGetStatuses($ret_array);
                 }else {

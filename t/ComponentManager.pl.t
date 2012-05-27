@@ -9,10 +9,12 @@ BEGIN {
     use_ok('AnyEvent');
     use_ok('AnyEvent::Strict');
     use_ok('BusyBird::Output');
+    use_ok('BusyBird::Input');
     use_ok('BusyBird::ComponentManager');
 }
 
 my @output_names = qw(foo bar);
+my @input_names = qw(hoge fuga);
 
 sub main {
     my $pid = fork();
@@ -27,9 +29,16 @@ sub main {
 sub child {
     BusyBird::ComponentManager->init();
     new_ok('BusyBird::Output', [name => $_]) foreach @output_names;
+    new_ok('BusyBird::Input', [name => $_]) foreach @input_names;
     BusyBird::ComponentManager->initComponents();
     AnyEvent->condvar->recv();
     done_testing();
+}
+
+sub checkFileAndRemove {
+    my ($filename) = @_;
+    ok(-r $filename, "File $filename exists") or return;
+    unlink($filename);
 }
 
 sub parent {
@@ -42,10 +51,8 @@ sub parent {
     cmp_ok($? >> 8, "==", 0, "... and its return status is 0.");
 
     my @exp_output_files = map { "bboutput_${_}_statuses.json" } @output_names;
-    foreach my $exp_output_file (@exp_output_files) {
-        ok(-r $exp_output_file, "Output status file $exp_output_file exists.") or next;
-        unlink($exp_output_file);
-    }
+    my @exp_input_files = map {"bbinput_${_}.time"} @input_names;
+    &checkFileAndRemove($_) foreach (@exp_output_files, @exp_input_files);
     done_testing();
 }
 

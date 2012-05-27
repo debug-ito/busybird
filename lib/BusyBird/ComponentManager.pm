@@ -5,6 +5,7 @@ use warnings;
 
 use AnyEvent;
 use BusyBird::Output;
+use BusyBird::Input;
 use BusyBird::Log qw(bblog);
 
 my $g_self = undef;
@@ -52,7 +53,20 @@ sub _handlerQuit {
     my ($class_self) = @_;
     my $self = $class_self->_self or return;
     foreach my $output (@{$self->{output}}) {
-        $output->saveStatuses();
+        eval {
+            $output->saveStatuses();
+        };
+        if($@) {
+            &bblog($@);
+        }
+    }
+    foreach my $input (@{$self->{input}}) {
+        eval {
+            $input->saveTimeFile();
+        };
+        if($@) {
+            &bblog($@);
+        }
     }
     exit;
 }
@@ -65,7 +79,15 @@ sub initComponents {
             $output->loadStatuses();
         };
         if($@) {
-            &bblog(sprintf("WARNING: Cannot load statuses file for Output %s", $output->getName));
+            &bblog(sprintf("WARNING: Cannot load statuses file for Output %s: %s", $output->getName, $@));
+        }
+    }
+    foreach my $input (@{$self->{input}}) {
+        eval {
+            $input->loadTimeFile();
+        };
+        if($@) {
+            &bblog(sprintf("WARNING: Cannot load time file for Input %s: %s", $input->getName, $@));
         }
     }
 }
