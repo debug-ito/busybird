@@ -169,9 +169,9 @@ my %FORMATTERS = (
                 '_SCALAR_ELEM' => sub {
                     my $scalar = shift;
                     return undef if !defined($scalar);
+                    $scalar =~ s|&|&amp;|g;
                     $scalar =~ s|<|&lt;|g;
                     $scalar =~ s|>|&gt;|g;
-                    $scalar =~ s|&|&amp;|g;
                     $scalar =~ s|'|&quot;|g;
                     return $scalar;
                 }
