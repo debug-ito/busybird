@@ -27,8 +27,9 @@ sub new {
     my ($class, %params) = @_;
     my $self = bless {
         new_statuses => [],
+        new_ids => {},
         old_statuses => [],
-        status_ids => {},
+        old_ids => {},
         mainpage_html => undef,
         pending_req => {
             new_statuses => [],
@@ -142,11 +143,17 @@ sub getName {
     return $self->{name};
 }
 
+sub _isUniqueID {
+    my ($self, $id) = @_;
+    return (!defined($self->{old_ids}{$id})
+                && !defined($self->{new_ids}{$id}));
+}
+
 sub _uniqStatuses {
     my ($self, $statuses) = @_;
     my $uniq_statuses = [];
     foreach my $status (@$statuses) {
-        if(!defined($self->{status_ids}{$status->content->{id}})) {
+        if($self->_isUniqueID($status->content->{id})) {
             push(@$uniq_statuses, $status);
         }
     }
@@ -220,10 +227,11 @@ sub _getOldStatuses {
 }
 
 sub _limitStatusQueueSize {
-    my ($self, $status_queue, $limit_size) = @_;
+    my ($self, $queue_name) = @_;
+    my ($status_queue, $limit_size, $id_dict) = @{$self}{"${queue_name}_statuses", "max_${queue_name}_statuses", "${queue_name}_ids"};
     while(int(@$status_queue) > $limit_size) {
         my $discarded_status = pop(@$status_queue);
-        delete $self->{status_ids}->{$discarded_status->content->{id}};
+        delete $id_dict->{$discarded_status->content->{id}};
     }
 }
 
@@ -238,11 +246,12 @@ sub pushStatuses {
             }
             unshift(@{$self->{new_statuses}}, @$filtered_statuses);
             foreach my $status (@$filtered_statuses) {
-                $self->{status_ids}{$status->content->{id}} = 1;
+                $self->{new_ids}{$status->content->{id}} = 1;
                 $status->content->{busybird}{is_new} = 1;
             }
             $self->_sort();
-            $self->_limitStatusQueueSize($self->{new_statuses}, $self->{max_new_statuses});
+            ## $self->_limitStatusQueueSize($self->{new_statuses}, $self->{max_new_statuses});
+            $self->_limitStatusQueueSize('new');
 
             ## ** TODO: implement Nagle algorithm, i.e., delay the complete event a little to accept more statuses.
             $self->_replyRequestNewStatuses();
@@ -337,8 +346,13 @@ sub _confirm {
     my ($self) = @_;
     $_->content->{busybird}{is_new} = 0 foreach @{$self->{new_statuses}};
     unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
+    foreach my $id (keys %{$self->{new_ids}}) {
+        $self->{old_ids}{$id} = 1;
+    }
     $self->{new_statuses} = [];
-    $self->_limitStatusQueueSize($self->{old_statuses}, $self->{max_old_statuses});
+    $self->{new_ids} = {};
+    ## $self->_limitStatusQueueSize($self->{old_statuses}, $self->{max_old_statuses});
+    $self->_limitStatusQueueSize('old');
 }
 
 sub _requestPointConfirm {
