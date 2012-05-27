@@ -127,7 +127,7 @@ sub _getStatusesFilePath {
 sub saveStatuses {
     my ($self, $force) = @_;
     return if $self->{no_persistent} && !$force;
-    my $serialized_statuses = BusyBird::Status->serialized(
+    my $serialized_statuses = BusyBird::Status->serialize(
         [@{$self->{new_statuses}}, @{$self->{old_statuses}}]
     );
     my $filepath = $self->_getStatusesFilePath();
