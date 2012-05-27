@@ -158,6 +158,7 @@ my @statuses_for_test = (
             },
             busybird => {
                 input_name => "Input",
+                is_new => 0,
             },
         ]),
         expect_format => {
@@ -173,13 +174,15 @@ my @statuses_for_test = (
         "profile_image_url": null
     },
     "busybird": {
-        "input_name": "Input"
+        "input_name": "Input",
+        "is_new": 0
     }
 }
 },
             xml => qq{<status>
   <busybird>
     <input_name>Input</input_name>
+    <is_new>0</is_new>
   </busybird>
   <created_at>Sun May 20 03:22:11 +0000 2012</created_at>
   <id>99239</id>
@@ -209,6 +212,7 @@ my @statuses_for_test = (
                 ),
             },
             busybird => {
+                is_new => 1,
                 original => {
                     id => 101105,
                     id_str => "101105",
@@ -230,6 +234,7 @@ my @statuses_for_test = (
         "created_at": "Sat Nov 01 16:33:00 +0000 2008"
     },
     "busybird": {
+        "is_new": 1,
         "original": {
             "id": 101105,
             "id_str": "101105",
@@ -241,6 +246,7 @@ my @statuses_for_test = (
 },
             xml => qq{<status>
   <busybird>
+    <is_new>1</is_new>
     <original>
       <id>101105</id>
       <id_str>101105</id_str>
