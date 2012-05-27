@@ -113,7 +113,7 @@ sub _extractStatusesFromWorkerData {
             },
             busybird => {
                 original => {
-                    map { $_ => _enc($nt_status->{$_}) } qw(id id_str in_reply_to_status_id in_reply_to_status_id_str),
+                    map { $_ => $nt_status->{$_} } qw(id id_str in_reply_to_status_id in_reply_to_status_id_str),
                 },
             },
         );
