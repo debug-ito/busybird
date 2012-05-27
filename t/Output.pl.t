@@ -333,6 +333,28 @@ sub main {
         cmp_ok($count_input, "==", 20, "20 statuses went through InputFilter");
         cmp_ok($count_new, "==", 20, "20 statuses went through NewStatusFilter");
     }
+
+    {
+        note('------ Test save and load status file');
+        $output = new_ok('BusyBird::Output', [name => 'save_load_test']);
+        &pushStatusesSync($output, [map {&generateStatus()} 1..20]);
+        $output->_confirm;
+        &pushStatusesSync($output, [map {&generateStatus()} 1..10]);
+        &checkStatusNum($output, 10, 20);
+        my $filepath = $output->_getStatusesFilePath;
+        eval {
+            like($filepath, qr/statuses\.json$/, "Statuses file path $filepath seems correct.") or die "";
+            ok(unlink($filepath), "remove $filepath") if -f $filepath;
+            $output->saveStatuses();
+            ok(-r $filepath, "Statuses file $filepath created.") or die "";
+            $output = new_ok('BusyBird::Output', [name => 'save_load_test']);
+            &checkStatusNum($output, 0, 0);
+            $output->loadStatuses();
+            &checkStatusNum($output, 10, 20);
+        };
+        ok(!$@, "save and load status file test successful");
+        ok(unlink($filepath), "remove $filepath") if -f $filepath;
+    }
     
     done_testing();
 }
