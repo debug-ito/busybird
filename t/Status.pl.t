@@ -31,12 +31,23 @@ sub testXML {
     note("--- testXML");
     cmp_ok((grep { defined($_->{expect_format}{xml}) } @test_statuses), '==', int(@test_statuses),
            'All test_statuses have expected XML entries.');
-    my $exp_xml = '<statuses type="array">' . join("", map {$_->{expect_format}{xml} . "\n"} @test_statuses) . "</statuses>";
+    my $exp_xml = '<statuses type="array">' . join("", map {$_->{expect_format}{xml}} @test_statuses) . "</statuses>";
+    
+    ## ** Remove unnecessary spaces
+    my $replaced = 1;
+    while($replaced) {
+        $replaced = 0;
+        $exp_xml =~ s!>\s+(< *[^/][^>]*>)!>$1!gs and $replaced = 1;
+        $exp_xml =~ s!(< */[^>]*>)\s+(< */[^>]*>)!$1$2!gs and $replaced = 1;
+        $exp_xml =~ s!/ *>\s+(< */[^>]*>)!/>$1!gs and $replaced = 1;
+    }
+    
     my $got_xml = BusyBird::Status->format('xml', [ map {$_->{status}} @test_statuses ]);
     xml_valid $got_xml, 'Valid XML document';
     xml_node $got_xml, '/statuses', 'XML node /statuses exists';
     xml_is_deeply $got_xml, '/statuses', $exp_xml, 'XML content is what is expected' or do {
         diag("GOT XML: $got_xml");
+        diag("EXP XML: $exp_xml");
         fail('xml_is_deeply failed.');
     };
 }
