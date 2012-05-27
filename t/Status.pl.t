@@ -398,6 +398,65 @@ my @statuses_for_test = (
   <text>http://foo.com/ http://bar.com/ It&quot;s test for "quotes" and entities.</text>
 </status>}
         }
+    },
+    {
+        status => new_ok('BusyBird::Status', [
+            id => "RSS_http://some.site.com/feed?format=rss_998223",
+            id_str => "RSS_http://some.site.com/feed?format=rss_998223",
+            created_at => DateTime->new(
+                year => 2012, month => 5, day => 8, hour => 10, minute => 2, second => 14, time_zone => "+0000",
+            ),
+            text => 'Check out this <a href="http://external.site.com/hoge/page">page</a>.',
+            entities => {
+                hashtags => [],
+                user_mentions => [],
+                urls => [],
+            },
+            busybird => {
+                original => {
+                    id => 998223,
+                    id_str => "998223",
+                }
+            }
+        ]),
+        expect_format => {
+            json => q{
+{
+    "id": "RSS_http://some.site.com/feed?format=rss_998223",
+    "id_str": "RSS_http://some.site.com/feed?format=rss_998223",
+    "created_at": "Tue May 08 10:02:14 +0000 2012",
+    "text": "Check out this <a href=\"http://external.site.com/hoge/page\">page</a>.",
+    "entities": {
+        "hashtags": [],
+        "user_mentions": [],
+        "urls": []
+    },
+    "busybird": {
+        "original": {
+            "id": 998223,
+            "id_str": "998223"
+        }
+    }
+}
+},
+            xml => q{<status>
+<busybird>
+  <original>
+    <id>998223</id>
+    <id_str>998223</id_str>
+  </original>
+</busybird>
+<created_at>Tue May 08 10:02:14 +0000 2012</created_at>
+<entities>
+  <hashtags />
+  <urls />
+  <user_mentions />
+</entities>
+<id>RSS_http://some.site.com/feed?format=rss_998223</id>
+<id_str>RSS_http://some.site.com/feed?format=rss_998223</id_str>
+<text>Check out this &lt;a href="http://external.site.com/hoge/page"&gt;page&lt;/a&gt;.</text>
+</status>},
+        }
     }
 );
 
