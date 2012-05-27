@@ -82,6 +82,8 @@ sub testSerialize {
     ok(defined($des_statuses), "deserialize() returns defined value");
     is(ref($des_statuses), 'ARRAY', "... and it's an array ref.");
     is_deeply($des_statuses, $statuses, "statuses are restored perfectly.");
+    my $serialized_again = BusyBird::Status->serialize($des_statuses);
+    is($serialized_again, $serialized, "serialization is consistent.");
 }
 
 BusyBird::Status->setTimeZone('UTC');
