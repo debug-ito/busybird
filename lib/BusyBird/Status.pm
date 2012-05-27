@@ -246,15 +246,7 @@ sub deserialize {
                 return $elem;
             },
         );
-        my $status;
-        eval {
-            $status = BusyBird::Status->new(%$raw_status);
-        };
-        if($@) {
-            &bblog("Failed to deserialize a status. Skip: $@");
-            next;
-        }
-        push(@statuses, $status);
+        push(@statuses, BusyBird::Status->new(%$raw_status));
     }
     return \@statuses;
 }
