@@ -10,6 +10,7 @@ use BusyBird::Filter;
 use BusyBird::HTTPD::Helper qw(httpResSimple);
 use BusyBird::Status;
 use BusyBird::ComponentManager;
+use BusyBird::Log qw(bblog);
 
 my %S = (
     global_header_height => '50px',
@@ -139,6 +140,7 @@ sub saveStatuses {
     }
     $file->print($serialized_statuses);
     $file->close();
+    &bblog("Output " . $self->getName . ": Statuses are saved to $filepath.");
 }
 
 sub loadStatuses {
@@ -165,6 +167,7 @@ sub loadStatuses {
         push(@$queue, $des_status);
         $dict->{$des_status->content->{id}} = 1;
     }
+    &bblog("Output " . $self->getName() . ": statuses are loaded from $filepath.");
 }
 
 sub _initFilters {

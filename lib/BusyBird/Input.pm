@@ -127,11 +127,11 @@ sub loadTimeFile {
     $epoch_time =~ s/[ \t\r\n]+$//;
     if($epoch_time =~ /^\d+$/) {
         $self->{last_status_epoch_time} = int($epoch_time) - $THRESHOLD_OFFSET_SEC;
+        &bblog("Input " . $self->getName() . ": time file is loaded from $filepath.");
     }else {
         $self->{last_status_epoch_time} = undef;
         &bblog("Input " . $self->getName() . ": time file is loaded but no timestamp is there.");
     }
-    
     $file->close();
 }
 
