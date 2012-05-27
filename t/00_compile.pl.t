@@ -15,6 +15,7 @@ BEGIN {
               Input::Test
               Log Object Output Status Timer
               Worker::Exec Worker::Object Worker::Twitter
+              ComponentManager
       )
     ) {
         use_ok('BusyBird::' . $bb_package);

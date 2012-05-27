@@ -9,6 +9,7 @@ use IO::File;
 use BusyBird::Filter;
 use BusyBird::HTTPD::Helper qw(httpResSimple);
 use BusyBird::Status;
+use BusyBird::ComponentManager;
 
 my %S = (
     global_header_height => '50px',
@@ -46,6 +47,7 @@ sub new {
     $self->_setParam(\%params, 'no_persistent', 0);
     $self->_initMainPage();
     $self->_initFilters();
+    BusyBird::ComponentManager->register('output', $self);
     return $self;
 }
 
