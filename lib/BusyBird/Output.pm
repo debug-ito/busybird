@@ -4,9 +4,11 @@ use Encode;
 use strict;
 use warnings;
 use DateTime;
+use IO::File;
 
 use BusyBird::Filter;
 use BusyBird::HTTPD::Helper qw(httpResSimple);
+use BusyBird::Status;
 
 my %S = (
     global_header_height => '50px',
@@ -41,6 +43,7 @@ sub new {
     $self->_setParam(\%params, 'name', undef, 1);
     $self->_setParam(\%params, 'max_old_statuses', 1024);
     $self->_setParam(\%params, 'max_new_statuses', 2048);
+    $self->_setParam(\%params, 'no_persistent', 0);
     $self->_initMainPage();
     $self->_initFilters();
     return $self;
@@ -114,6 +117,52 @@ div.status_main {
   </body>
 </html>
 END
+}
+
+sub _getStatusesFilePath {
+    my ($self) = @_;
+    return "bboutput_" . $self->getName() . "_statuses.json";
+}
+
+sub saveStatuses {
+    my ($self, $force) = @_;
+    return if $self->{no_persistent} && !$force;
+    my $serialized_statuses = BusyBird::Status->serialized(
+        [@{$self->{new_statuses}}, @{$self->{old_statuses}}]
+    );
+    my $filepath = $self->_getStatusesFilePath();
+    my $file = IO::File->new();
+    if(!$file->open($filepath, "w")) {
+        die "Cannot open $filepath to write to.";
+    }
+    $file->print($serialized_statuses);
+    $file->close();
+}
+
+sub loadStatuses {
+    my ($self, $force) = @_;
+    return if $self->{no_persistent} && !$force;
+    my $filepath = $self->_getStatusesFilePath();
+    my $file = IO::File->new();
+    if(!$file->open($filepath, "r")) {
+        die "Cannot open $filepath to read.";
+    }
+    my $data;
+    {
+        local $/ = undef;
+        $data = $file->getline();
+    }
+    $file->close();
+    my $deserialized = BusyBird::Status->deserialize($data);
+    foreach my $des_status (@$deserialized) {
+        my $is_new = $des_status->content->{busybird}{is_new};
+        die "Loaded status does not have busybird/is_new flag." if !defined($is_new);
+        my ($queue, $dict) = ($is_new)
+            ? ($self->{new_statuses}, $self->{new_ids})
+                : ($self->{old_statuses}, $self->{old_ids});
+        push(@$queue, $des_status);
+        $dict->{$des_status->content->{id}} = 1;
+    }
 }
 
 sub _initFilters {
