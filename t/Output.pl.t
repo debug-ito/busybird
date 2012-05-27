@@ -7,12 +7,28 @@ use lib 't/lib';
 use Test::More;
 
 BEGIN {
+    use_ok('IO::File');
     use_ok('AnyEvent');
     use_ok('AnyEvent::Strict');
     use_ok('DateTime');
     use_ok('BusyBird::Test', qw(CV within));
     use_ok('BusyBird::Status');
     use_ok('BusyBird::Output');
+}
+
+sub readFile {
+    my ($filepath) = @_;
+    my $file = IO::File->new();
+    if(!$file->open($filepath, "r")) {
+        die "Cannot open $filepath: $!";
+    }
+    my $data;
+    {
+        local $/ = undef;
+        $data = $file->getline();
+    }
+    $file->close();
+    return $data;
 }
 
 sub checkStatusNum {
@@ -347,10 +363,14 @@ sub main {
             ok(unlink($filepath), "remove $filepath") if -f $filepath;
             $output->saveStatuses();
             ok(-r $filepath, "Statuses file $filepath created.") or die "";
+            my $before_savedfile = &readFile($filepath);
             $output = new_ok('BusyBird::Output', [name => 'save_load_test']);
             &checkStatusNum($output, 0, 0);
             $output->loadStatuses();
             &checkStatusNum($output, 10, 20);
+            $output->saveStatuses();
+            my $after_savedfile = &readFile($filepath);
+            is($after_savedfile, $before_savedfile, "The serialization is consistent.");
         };
         ok(!$@, "save and load status file test successful");
         ok(unlink($filepath), "remove $filepath") if -f $filepath;
