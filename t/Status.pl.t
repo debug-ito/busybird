@@ -403,8 +403,13 @@ my @statuses_for_test = (
 
 
 foreach my $tester (\&testJSON, \&testXML, \&testSerialize) {
+    foreach my $i (0 .. $#statuses_for_test) {
+        note("Test status $i");
+        $tester->(@statuses_for_test[($i)]);
+    }
+    note("Test status all");
     $tester->(@statuses_for_test);
-    $tester->(@statuses_for_test[(0)]);
+    note("Test empty status");
     $tester->();
 }
 
