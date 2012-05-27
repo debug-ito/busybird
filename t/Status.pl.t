@@ -395,7 +395,7 @@ my @statuses_for_test = (
   </entities>
   <id>Twitter_http://my.twitter.local/api_200101</id>
   <id_str>Twitter_http://my.twitter.local/api_200101</id_str>
-  <text>http://foo.com/ http://bar.com/ It's test for "quotes" and entities.</text>
+  <text>http://foo.com/ http://bar.com/ It&quot;s test for "quotes" and entities.</text>
 </status>}
         }
     }
