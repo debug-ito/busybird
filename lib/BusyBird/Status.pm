@@ -227,10 +227,11 @@ sub deserialize {
         $class->_translateTreeNodes(
             $raw_status,
             _SCALAR_ELEM => sub {
-                my ($elem) = @_;
-                if(!defined($elem)) {
-                    return $elem;
+                my ($elem_orig) = @_;
+                if(!defined($elem_orig)) {
+                    return $elem_orig;
                 }
+                my $elem = $elem_orig;
                 my ($dow, $month_str, $dom, $h, $m, $s, $tz_str, $year) = ($elem =~ $DATETIME_STR_MATCHER);
                 if($dow) {
                     return DateTime->new(
@@ -243,7 +244,7 @@ sub deserialize {
                         time_zone => $tz_str,
                     );
                 }
-                return $elem;
+                return $elem_orig;
             },
         );
         push(@statuses, BusyBird::Status->new(%$raw_status));

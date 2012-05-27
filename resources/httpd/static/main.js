@@ -28,7 +28,7 @@ function bbFormatStatus(status) {
     ret += '  <div class="status_header">';
     ret += '    <span class="status_user_name">' + status.user.screen_name + '</span>';
     ret += '    <span class="status_created_at"> at '+ status.created_at + '</span>';
-    ret += '    <span>&nbsp;' + (status.busybird.is_new != 0 ? 'NEW' : 'OLD') + '</span>';
+    ret += '    <span>&nbsp;' + (status.busybird.is_new ? 'NEW' : 'OLD') + '</span>';
     ret += '  </div>'
     ret += '  <div class="status_text">'+ bbLinkify(status.text) + '</div>';
     ret += '</div>'
