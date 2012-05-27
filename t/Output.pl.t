@@ -69,6 +69,7 @@ sub generateStatus {
     }
     my $status = new_ok('BusyBird::Status', [
         id => $id,
+        id_str => "$id",
         created_at => DateTime->from_epoch(epoch => $id)
     ]);
     return $status;
