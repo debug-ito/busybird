@@ -395,6 +395,20 @@ sub main {
         &pushStatusesSync($output, [map {&generateStatus($_)} (20 .. 29)]);
         &checkStatusNum($output, 10, 0);
     }
+
+    {
+        note('------ Test auto_confirm option.');
+        $output = new_ok('BusyBird::Output', [name => 'test_auto_confirm', auto_confirm => 1]);
+        $next_id = 1;
+        foreach my $num (1..5) {
+            &pushStatusesSync($output, [&generateStatus()]);
+            &checkStatusNum($output, 0, $num);
+        }
+        &pushStatusesSync($output, [map {&generateStatus()} (1..10)]);
+        &checkStatusNum($output, 0, 15);
+        &pushStatusesSync($output, [map {&generateStatus($_)} (10 .. 25)]);
+        &checkStatusNum($output, 0, 25);
+    }
     
     done_testing();
 }

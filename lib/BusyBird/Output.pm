@@ -47,6 +47,7 @@ sub new {
     $self->_setParam(\%params, 'max_new_statuses', 2048);
     $self->_setParam(\%params, 'no_persistent', 0);
     $self->_setParam(\%params, 'sync_with_input', 0);
+    $self->_setParam(\%params, 'auto_confirm', 0);
     $self->_initMainPage();
     $self->_initFilters();
     BusyBird::ComponentManager->register('output', $self);
@@ -333,6 +334,7 @@ sub pushStatuses {
 
             ## ** TODO: implement Nagle algorithm, i.e., delay the complete event a little to accept more statuses.
             $self->_replyRequestNewStatuses();
+            $self->_confirm if $self->{auto_confirm};
             $cb->($filtered_statuses) if defined($cb);
         }
     );
