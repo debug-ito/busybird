@@ -46,6 +46,7 @@ sub new {
     $self->_setParam(\%params, 'max_old_statuses', 1024);
     $self->_setParam(\%params, 'max_new_statuses', 2048);
     $self->_setParam(\%params, 'no_persistent', 0);
+    $self->_setParam(\%params, 'sync_with_input', 0);
     $self->_initMainPage();
     $self->_initFilters();
     BusyBird::ComponentManager->register('output', $self);
@@ -170,10 +171,33 @@ sub loadStatuses {
     &bblog("Output " . $self->getName() . ": statuses are loaded from $filepath.");
 }
 
+sub _syncFilter {
+    my ($self) = @_;
+    return sub {
+        my ($statuses, $cb) = @_;
+        my %input_ids = map { $_->content->{id} => 1 } @$statuses;
+        foreach my $queue_name ('new', 'old') {
+            my ($queue, $id_dict) = @{$self}{"${queue_name}_statuses", "${queue_name}_ids"};
+            my @new_queue = ();
+            my %new_dict = ();
+            foreach my $status (@$queue) {
+                if(defined($input_ids{$status->content->{id}})) {
+                    push(@new_queue, $status);
+                    $new_dict{$status->content->{id}} = 1;
+                }
+            }
+            @$queue = @new_queue;
+            %$id_dict = %new_dict;
+        }
+        $cb->($statuses);
+    };
+}
+
 sub _initFilters {
     my ($self) = @_;
     $self->{filters}->{parent_input}->push(
         $self->{filters}->{input},
+        $self->{sync_with_input} ? $self->_syncFilter : undef,
         sub {
             my ($statuses, $cb) = @_;
             $cb->($self->_uniqStatuses($statuses));

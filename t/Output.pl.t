@@ -375,6 +375,26 @@ sub main {
         ok(!$@, "save and load status file test successful");
         ok(unlink($filepath), "remove $filepath") if -f $filepath;
     }
+
+    {
+        note('------ Test sync_with_input option.');
+        $output = new_ok('BusyBird::Output', [name => 'test_sync', sync_with_input => 1]);
+        $next_id = 1;
+        foreach (1..5) {
+            &pushStatusesSync($output, [&generateStatus()]);
+            &checkStatusNum($output, 1, 0);
+        }
+        &pushStatusesSync($output, [map {&generateStatus()} (1..10)]);
+        &checkStatusNum($output, 10, 0);
+        &pushStatusesSync($output, [map {&generateStatus($_)} (10 .. 15)]);
+        &checkStatusNum($output, 6, 0);
+        $output->_confirm();
+        &checkStatusNum($output, 0, 6);
+        &pushStatusesSync($output, [map {&generateStatus($_)} (13 .. 18)]);
+        &checkStatusNum($output, 3, 3);
+        &pushStatusesSync($output, [map {&generateStatus($_)} (20 .. 29)]);
+        &checkStatusNum($output, 10, 0);
+    }
     
     done_testing();
 }
