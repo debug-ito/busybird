@@ -31,6 +31,7 @@ sub filterElement {
 sub _addFilterElements {
     my ($self, $elems_ref, $add_method) = @_;
     foreach my $filter_elem (@$elems_ref) {
+        next if !defined($filter_elem);
         die "A filter element must be either coderef or object." if !ref($filter_elem);
         if(ref($filter_elem) eq 'CODE') {
             $add_method->($self->{coderefs}, $filter_elem);

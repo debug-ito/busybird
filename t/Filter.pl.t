@@ -306,8 +306,8 @@ sub checkParallel {
 {
     my $filter = BusyBird::Filter->new();
     note("--- What if I push some junks to a filter?");
-    dies_ok {$filter->push(undef)} 'Do not push undef';
-    dies_ok {$filter->unshift(undef)} 'Do not unshift undef';
+    lives_ok {$filter->push(undef)} 'push(undef) is ignored.';
+    lives_ok {$filter->unshift(undef)} 'unshift(undef) is ignored.';
     dies_ok {$filter->push(1)} 'Do not push a scalar';
     dies_ok {$filter->push([10, 20, 30])} 'Do not push an array ref';
     dies_ok {$filter->push({foo => 1, bar => 2})} 'Do not push a hash ref';
