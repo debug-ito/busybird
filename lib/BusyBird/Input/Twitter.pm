@@ -156,7 +156,7 @@ sub _getStatusesPage {
         }
         my $bb_status = $self->_extractStatusesFromWorkerData($data[0]);
         if(@$bb_status) {
-            $self->{max_id_for_page}->[$page + 1] = $bb_status->[$#$bb_status]->content->{busybird}{original_id_str};
+            $self->{max_id_for_page}->[$page + 1] = $bb_status->[$#$bb_status]->content->{busybird}{original}{id_str};
         }
         $callback->($bb_status);
     };
