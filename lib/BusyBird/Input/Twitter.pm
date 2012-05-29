@@ -163,5 +163,23 @@ sub _getStatusesPage {
     $self->{worker}->startJob(%$worker_input);
 }
 
+sub fetchStatus {
+    my ($self, $status_id, $callback) = @_;
+    $self->{worker}->startJob(
+        method => 'show_status',
+        args => [{id => $status_id, include_entities => 1}],
+        cb => sub {
+            my ($status, $data) = @_;
+            if($status != BusyBird::Worker::Object::STATUS_OK) {
+                &bblog("WARNING: fetchStatus(): Twitter worker returns $status.");
+                $callback->(undef);
+                return;
+            }
+            my $converted_arrayref = $self->_extractStatusesFromWorkerData([$data]);
+            $callback->($converted_arrayref->[0]);
+        }
+    );
+}
+
 
 1;
