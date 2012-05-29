@@ -136,7 +136,9 @@ sub _getStatusesPage {
     if($page <= 0) {
         @{$self->{max_id_for_page}} = ();
     }elsif(!defined($self->{max_id_for_page}[$page])) {
-        &bblog(sprintf("%s: max_id for page $page is undefined. Something's wrong."), __PACKAGE__);
+        &bblog(sprintf("%s: max_id for page $page is undefined. Something's wrong.", __PACKAGE__));
+        $callback->(undef);
+        return;
     }
     my $worker_input = $self->_getWorkerInput($count, $page);
     if(!$worker_input) {
