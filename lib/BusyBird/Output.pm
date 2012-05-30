@@ -20,13 +20,6 @@ my %S = (
     profile_image_section_width => '50px',
 );
 
-## my %COMMAND = (
-##     NEW_STATUSES => 'new_statuses',
-##     CONFIRM => 'confirm',
-##     MAINPAGE => 'mainpage',
-##     ALL_STATUSES => 'all_statuses',
-## );
-
 sub new {
     my ($class, %params) = @_;
     my $self = bless {
@@ -449,7 +442,7 @@ sub _requestPointMainPage {
     my $handler = sub {
         return httpResSimple(200, \$self->{mainpage_html}, 'text/html');
     };
-    return ($self->_getPointNameForCommand('mainpage'), $handler);
+    return ($self->_getPointNameForCommand('index'), $handler);
 }
 
 ## sub _replyMainPage {
