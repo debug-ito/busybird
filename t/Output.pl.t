@@ -33,8 +33,8 @@ sub readFile {
 
 sub checkStatusNum {
     my ($output, $expected_new_num, $expected_old_num) = @_;
-    my $new_entries = $output->_getNewStatuses();
-    my $old_entries = $output->_getOldStatuses();
+    my $new_entries = $output->getNewStatuses();
+    my $old_entries = $output->getOldStatuses();
     cmp_ok(int(@$new_entries), '==', $expected_new_num, sprintf("number of new_statuses in %s", $output->getName));
     cmp_ok(int(@$old_entries), '==', $expected_old_num, sprintf("number of old_statuses in %s", $output->getName));
     ok($_->content->{busybird}{is_new}, "this status is new") foreach @$new_entries;

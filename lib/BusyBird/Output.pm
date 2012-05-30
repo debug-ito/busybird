@@ -295,12 +295,12 @@ sub _getStatuses {
     return \@entries;
 }
 
-sub _getNewStatuses {
+sub getNewStatuses {
     my ($self, $start_index, $entry_num) = @_;
     return $self->_getSingleStatuses($self->{new_statuses}, $start_index, $entry_num);
 }
 
-sub _getOldStatuses {
+sub getOldStatuses {
     my ($self, $start_index, $entry_num) = @_;
     return $self->_getSingleStatuses($self->{old_statuses}, $start_index, $entry_num);
 }
@@ -374,7 +374,7 @@ sub _replyRequestNewStatuses {
     if(!@{$self->{new_statuses}} or !@{$self->{pending_req}->{new_statuses}}) {
         return;
     }
-    my $new_statuses = $self->_getNewStatuses();
+    my $new_statuses = $self->getNewStatuses();
     ## my $ret = "[" . join(",", map {$_->format_json()} @$new_statuses) . "]";
     while(my $req = pop(@{$self->{pending_req}->{new_statuses}})) {
         my $ret = BusyBird::Status->format($req->env->{'busybird.format'}, $new_statuses);
@@ -408,7 +408,7 @@ sub _requestPointNewStatuses {
 ##     if(!@{$self->{new_statuses}}) {
 ##         return ($self->HOLD);
 ##     }
-##     my $json_entries_ref = $self->_getNewStatusesJSONEntries();
+##     my $json_entries_ref = $self->getNewStatusesJSONEntries();
 ##     my $ret = "[" . join(",", @$json_entries_ref) . "]";
 ##     return ($self->REPLIED, \$ret, "application/json; charset=UTF-8");
 ## }
