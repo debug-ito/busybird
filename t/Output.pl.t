@@ -56,7 +56,7 @@ sub checkPagination {
     ## my ($result_code, $result_ref, $mime) = $output->_replyAllStatuses($detail);
     my $detail_str = "";
     while(my ($key, $val) = each(%$detail)) {
-        $detail_str .= "$key => $val, ";
+        $detail_str .= sprintf("$key => %s, ", defined($val) ? $val : '[undef]');
     }
     note(sprintf("checkPagination: output: %s, %s", $output->getName(), $detail_str));
     ## is(ref($result), 'ARRAY', 'AllStatuses result is an array ref...');
@@ -325,9 +325,9 @@ sub main {
     &checkPagination($output, {max_id => 'this_does_not_exist', page => 2}, reverse(31 .. 50));
 
     note('------ --- With invalid per_page option, pagination falls back to the default.');
-    &checkPagination($output, {page => 0, per_page => 'not_a_number'}, reverse(51 .. 135));
-    &checkPagination($output, {page => 1, per_page => undef}, reverse(31 .. 50));
-    &checkPagination($output, {page => 2, per_page => 0}, reverse(11 .. 30));
+    &checkPagination($output, {page => 1, per_page => 'not_a_number'}, reverse(51 .. 135));
+    &checkPagination($output, {page => 2, per_page => undef}, reverse(31 .. 50));
+    &checkPagination($output, {page => 3, per_page => 0}, reverse(11 .. 30));
 
     note('------ --- With invalid page option, it is considered to be 0.');
     &checkPagination($output, {page => 'not_a_number', max_id => 100}, reverse(51 .. 100));
