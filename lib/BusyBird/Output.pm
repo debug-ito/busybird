@@ -9,6 +9,7 @@ use IO::File;
 use BusyBird::Filter;
 use BusyBird::HTTPD::Helper qw(httpResSimple);
 use BusyBird::Status;
+use BusyBird::Status::Buffer;
 use BusyBird::ComponentManager;
 use BusyBird::Log qw(bblog);
 
@@ -22,11 +23,11 @@ my %S = (
 
 sub new {
     my ($class, %params) = @_;
+    $params{max_old_statuses} ||= 1024;
+    $params{max_new_statuses} ||= 2048;
     my $self = bless {
-        new_statuses => [],
-        new_ids => {},
-        old_statuses => [],
-        old_ids => {},
+        new_status_buffer => BusyBird::Status::Buffer->new(max_size => $params{max_new_statuses}),
+        old_status_buffer => BusyBird::Status::Buffer->new(max_size => $params{max_old_statuses}),
         mainpage_html => undef,
         pending_req => {
             new_statuses => [],
@@ -36,8 +37,6 @@ sub new {
         },
     }, $class;
     $self->_setParam(\%params, 'name', undef, 1);
-    $self->_setParam(\%params, 'max_old_statuses', 1024);
-    $self->_setParam(\%params, 'max_new_statuses', 2048);
     $self->_setParam(\%params, 'no_persistent', 0);
     $self->_setParam(\%params, 'sync_with_input', 0);
     $self->_setParam(\%params, 'auto_confirm', 0);
@@ -126,7 +125,7 @@ sub saveStatuses {
     my ($self, $force) = @_;
     return if $self->{no_persistent} && !$force;
     my $serialized_statuses = BusyBird::Status->serialize(
-        [@{$self->{new_statuses}}, @{$self->{old_statuses}}]
+        [@{$self->{new_status_buffer}->get}, @{$self->{old_status_buffer}->get}]
     );
     my $filepath = $self->_getStatusesFilePath();
     my $file = IO::File->new();
@@ -153,15 +152,24 @@ sub loadStatuses {
     }
     $file->close();
     my $deserialized = BusyBird::Status->deserialize($data);
+    my @new_temp = ();
+    my @old_temp = ();
     foreach my $des_status (@$deserialized) {
         my $is_new = $des_status->{busybird}{is_new};
         die "Loaded status does not have busybird/is_new flag." if !defined($is_new);
-        my ($queue, $dict) = ($is_new)
-            ? ($self->{new_statuses}, $self->{new_ids})
-                : ($self->{old_statuses}, $self->{old_ids});
-        push(@$queue, $des_status);
-        $dict->{$des_status->{id}} = 1;
+        if($is_new) {
+            push(@new_temp, $des_status);
+        }else {
+            push(@old_temp, $des_status);
+        }
+        ## my ($queue, $dict) = ($is_new)
+        ##     ? ($self->{new_statuses}, $self->{new_ids})
+        ##         : ($self->{old_statuses}, $self->{old_ids});
+        ## push(@$queue, $des_status);
+        ## $dict->{$des_status->{id}} = 1;
     }
+    $self->{new_status_buffer}->clear->unshift(@new_temp);
+    $self->{old_status_buffer}->clear->unshift(@old_temp);
     &bblog("Output " . $self->getName() . ": statuses are loaded from $filepath.");
 }
 
@@ -170,19 +178,28 @@ sub _syncFilter {
     return sub {
         my ($statuses, $cb) = @_;
         my %input_ids = map { $_->{id} => 1 } @$statuses;
-        foreach my $queue_name ('new', 'old') {
-            my ($queue, $id_dict) = @{$self}{"${queue_name}_statuses", "${queue_name}_ids"};
+        foreach my $buffer ($self->{new_status_buffer}, $self->{old_status_buffer}) {
             my @new_queue = ();
-            my %new_dict = ();
-            foreach my $status (@$queue) {
+            foreach my $status (@{$buffer->get}) {
                 if(defined($input_ids{$status->{id}})) {
                     push(@new_queue, $status);
-                    $new_dict{$status->{id}} = 1;
                 }
             }
-            @$queue = @new_queue;
-            %$id_dict = %new_dict;
+            $buffer->clear->unshift(@new_queue);
         }
+        ## foreach my $queue_name ('new', 'old') {
+        ##     my ($queue, $id_dict) = @{$self}{"${queue_name}_statuses", "${queue_name}_ids"};
+        ##     my @new_queue = ();
+        ##     my %new_dict = ();
+        ##     foreach my $status (@$queue) {
+        ##         if(defined($input_ids{$status->{id}})) {
+        ##             push(@new_queue, $status);
+        ##             $new_dict{$status->{id}} = 1;
+        ##         }
+        ##     }
+        ##     @$queue = @new_queue;
+        ##     %$id_dict = %new_dict;
+        ## }
         $cb->($statuses);
     };
 }
@@ -217,8 +234,9 @@ sub getName {
 
 sub _isUniqueID {
     my ($self, $id) = @_;
-    return (!defined($self->{old_ids}{$id})
-                && !defined($self->{new_ids}{$id}));
+    return (!$self->{new_status_buffer}->contains($id) && !$self->{old_status_buffer}->contains($id));
+    ## return (!defined($self->{old_ids}{$id})
+    ##             && !defined($self->{new_ids}{$id}));
 }
 
 sub _uniqStatuses {
@@ -234,16 +252,17 @@ sub _uniqStatuses {
 
 sub _sort {
     my ($self) = @_;
+    $self->{new_status_buffer}->sort();
     ## my @sorted_statuses = sort {$b->getDateTime()->epoch <=> $a->getDateTime()->epoch} @{$self->{new_statuses}};
-    my @sorted_statuses = sort {DateTime->compare($b->{created_at}, $a->{created_at})} @{$self->{new_statuses}};
-    $self->{new_statuses} = \@sorted_statuses;
+    ## my @sorted_statuses = sort {DateTime->compare($b->{created_at}, $a->{created_at})} @{$self->{new_statuses}};
+    ## $self->{new_statuses} = \@sorted_statuses;
 }
 
 sub _getGlobalIndicesForStatuses {
     my ($self, $condition_func) = @_;
     my @indices = ();
     my $global_index = 0;
-    foreach my $status (@{$self->{new_statuses}}, @{$self->{old_statuses}}) {
+    foreach my $status (@{$self->{new_status_buffer}->get}, @{$self->{old_status_buffer}->get}) {
         local $_ = $status;
         push(@indices, $global_index) if &$condition_func();
         $global_index++;
@@ -251,38 +270,38 @@ sub _getGlobalIndicesForStatuses {
     return wantarray ? @indices : $indices[0];
 }
 
-sub _getSingleStatuses {
-    my ($self, $statuses_ref, $start_index, $entry_num) = @_;
-    my $statuses_num = int(@$statuses_ref);
-    $start_index = 0 if !defined($start_index);
-    if($start_index >= $statuses_num) {
-        return [];
-    }
-    $entry_num = $statuses_num - $start_index if !defined($entry_num);
-    if($entry_num <= 0) {
-        return [];
-    }
-    my $end_inc_index = $start_index + $entry_num - 1;
-    $end_inc_index = $statuses_num - 1 if $end_inc_index >= $statuses_num;
-    return [ @$statuses_ref[$start_index .. $end_inc_index] ];
-}
+## sub _getSingleStatuses {
+##     my ($self, $statuses_ref, $start_index, $entry_num) = @_;
+##     my $statuses_num = int(@$statuses_ref);
+##     $start_index = 0 if !defined($start_index);
+##     if($start_index >= $statuses_num) {
+##         return [];
+##     }
+##     $entry_num = $statuses_num - $start_index if !defined($entry_num);
+##     if($entry_num <= 0) {
+##         return [];
+##     }
+##     my $end_inc_index = $start_index + $entry_num - 1;
+##     $end_inc_index = $statuses_num - 1 if $end_inc_index >= $statuses_num;
+##     return [ @$statuses_ref[$start_index .. $end_inc_index] ];
+## }
 
 sub _getStatuses {
     my ($self, $global_start_index, $entry_num) = @_;
-    my $new_num = int(@{$self->{new_statuses}});
+    my $new_num = $self->{new_status_buffer}->size;
     my @entries = ();
     return \@entries if $entry_num <= 0;
     $global_start_index = 0 if $global_start_index < 0;
     my $old_entry_num = $entry_num;
     if($global_start_index < $new_num) {
-        my $new_entries = $self->_getSingleStatuses($self->{new_statuses}, $global_start_index, $entry_num);
+        my $new_entries = $self->{new_status_buffer}->get($global_start_index, $entry_num);
         push(@entries, @$new_entries);
         $old_entry_num = $entry_num - int(@$new_entries);
     }
     if($old_entry_num > 0) {
         my $old_start_index = $global_start_index - $new_num;
         $old_start_index = 0 if $old_start_index < 0;
-        my $old_entries = $self->_getSingleStatuses($self->{old_statuses}, $old_start_index, $old_entry_num);
+        my $old_entries = $self->{old_status_buffer}->get($old_start_index, $old_entry_num);
         push(@entries, @$old_entries);
     }
     return \@entries;
@@ -290,22 +309,24 @@ sub _getStatuses {
 
 sub getNewStatuses {
     my ($self, $start_index, $entry_num) = @_;
-    return $self->_getSingleStatuses($self->{new_statuses}, $start_index, $entry_num);
+    ## return $self->_getSingleStatuses($self->{new_statuses}, $start_index, $entry_num);
+    return $self->{new_status_buffer}->get($start_index, $entry_num);
 }
 
 sub getOldStatuses {
     my ($self, $start_index, $entry_num) = @_;
-    return $self->_getSingleStatuses($self->{old_statuses}, $start_index, $entry_num);
+    ## return $self->_getSingleStatuses($self->{old_statuses}, $start_index, $entry_num);
+    return $self->{old_status_buffer}->get($start_index, $entry_num);
 }
 
-sub _limitStatusQueueSize {
-    my ($self, $queue_name) = @_;
-    my ($status_queue, $limit_size, $id_dict) = @{$self}{"${queue_name}_statuses", "max_${queue_name}_statuses", "${queue_name}_ids"};
-    while(int(@$status_queue) > $limit_size) {
-        my $discarded_status = pop(@$status_queue);
-        delete $id_dict->{$discarded_status->{id}};
-    }
-}
+## sub _limitStatusQueueSize {
+##     my ($self, $queue_name) = @_;
+##     my ($status_queue, $limit_size, $id_dict) = @{$self}{"${queue_name}_statuses", "max_${queue_name}_statuses", "${queue_name}_ids"};
+##     while(int(@$status_queue) > $limit_size) {
+##         my $discarded_status = pop(@$status_queue);
+##         delete $id_dict->{$discarded_status->{id}};
+##     }
+## }
 
 sub pushStatuses {
     my ($self, $statuses, $cb) = @_;
@@ -316,14 +337,16 @@ sub pushStatuses {
                 $cb->($filtered_statuses) if defined($cb);
                 return;
             }
-            unshift(@{$self->{new_statuses}}, @$filtered_statuses);
+            ## unshift(@{$self->{new_statuses}}, @$filtered_statuses);
             foreach my $status (@$filtered_statuses) {
-                $self->{new_ids}{$status->{id}} = 1;
+                ## $self->{new_ids}{$status->{id}} = 1;
                 $status->{busybird}{is_new} = 1;
             }
-            $self->_sort();
-            ## $self->_limitStatusQueueSize($self->{new_statuses}, $self->{max_new_statuses});
-            $self->_limitStatusQueueSize('new');
+            $self->{new_status_buffer}->unshift(@$filtered_statuses)->sort->truncate;
+            
+            ## $self->_sort();
+            ## ## $self->_limitStatusQueueSize($self->{new_statuses}, $self->{max_new_statuses});
+            ## $self->_limitStatusQueueSize('new');
 
             ## ** TODO: implement Nagle algorithm, i.e., delay the complete event a little to accept more statuses.
             $self->_replyRequestNewStatuses();
@@ -364,13 +387,13 @@ sub getRequestPoints {
 
 sub _replyRequestNewStatuses {
     my ($self) = @_;
-    if(!@{$self->{new_statuses}} or !@{$self->{pending_req}->{new_statuses}}) {
+    if($self->{new_status_buffer}->size <= 0 or !@{$self->{pending_req}->{new_statuses}}) {
         return;
     }
-    my $new_statuses = $self->getNewStatuses();
+    ## my $new_statuses = $self->getNewStatuses();
     ## my $ret = "[" . join(",", map {$_->format_json()} @$new_statuses) . "]";
     while(my $req = pop(@{$self->{pending_req}->{new_statuses}})) {
-        my $ret = BusyBird::Status->format($req->env->{'busybird.format'}, $new_statuses);
+        my $ret = BusyBird::Status->format($req->env->{'busybird.format'}, $self->{new_status_buffer}->get);
         if(defined($ret)) {
             $req->env->{'busybird.responder'}->(httpResSimple(
                 200, \$ret, BusyBird::Status->mime($req->env->{'busybird.format'})
@@ -417,15 +440,18 @@ sub _requestPointNewStatuses {
 
 sub _confirm {
     my ($self) = @_;
-    $_->{busybird}{is_new} = 0 foreach @{$self->{new_statuses}};
-    unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
-    foreach my $id (keys %{$self->{new_ids}}) {
-        $self->{old_ids}{$id} = 1;
-    }
-    $self->{new_statuses} = [];
-    $self->{new_ids} = {};
+    my $new_statuses = $self->{new_status_buffer}->get;
+    $_->{busybird}{is_new} = 0 foreach @$new_statuses;
+    $self->{old_status_buffer}->unshift(@$new_statuses)->truncate;
+    ## unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
+    ## foreach my $id (keys %{$self->{new_ids}}) {
+    ##     $self->{old_ids}{$id} = 1;
+    ## }
+    $self->{new_status_buffer}->clear;
+    ## $self->{new_statuses} = [];
+    ## $self->{new_ids} = {};
     ## $self->_limitStatusQueueSize($self->{old_statuses}, $self->{max_old_statuses});
-    $self->_limitStatusQueueSize('old');
+    ## $self->_limitStatusQueueSize('old');
 }
 
 sub _requestPointConfirm {
@@ -454,7 +480,8 @@ sub _requestPointMainPage {
 sub _getPagedStatuses {
     my ($self, %params) = @_;
     my $DEFAULT_PER_PAGE = 20;
-    my $new_num = int(@{$self->{new_statuses}});
+    ## my $new_num = int(@{$self->{new_statuses}});
+    my $new_num = $self->{new_status_buffer}->size;
     my $page = $params{page};
     if($page && $page =~ /^[0-9]+$/) {
         $page = $page - 1;
