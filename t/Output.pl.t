@@ -327,11 +327,14 @@ sub main {
     note('------ --- With invalid per_page option, pagination falls back to the default.');
     &checkPagination($output, {page => 1, per_page => 'not_a_number'}, reverse(51 .. 135));
     &checkPagination($output, {page => 2, per_page => undef}, reverse(31 .. 50));
+    &checkPagination($output, {page => 2, per_page => -10}, reverse(31 .. 50));
     &checkPagination($output, {page => 3, per_page => 0}, reverse(11 .. 30));
+    &checkPagination($output, {page => 3, per_page => 1}, (133));
 
     note('------ --- With invalid page option, it is considered to be 0.');
     &checkPagination($output, {page => 'not_a_number', max_id => 100}, reverse(51 .. 100));
     &checkPagination($output, {page => undef, max_id => 100}, reverse(51 .. 100));
+    &checkPagination($output, {page => -1, max_id => 100}, reverse(51 .. 100));
 
     note('------ --- since_id option controls the oldest status returned');
     &checkPagination($output, {since_id => 10}, reverse(51 .. 135));
