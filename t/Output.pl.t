@@ -324,6 +324,52 @@ sub main {
     &checkPagination($output, {max_id => 'this_does_not_exist', page => 1}, reverse(51 .. 135));
     &checkPagination($output, {max_id => 'this_does_not_exist', page => 2}, reverse(31 .. 50));
 
+    note('------ --- With invalid per_page option, pagination falls back to the default.');
+    &checkPagination($output, {page => 0, per_page => 'not_a_number'}, reverse(51 .. 135));
+    &checkPagination($output, {page => 1, per_page => undef}, reverse(31 .. 50));
+    &checkPagination($output, {page => 2, per_page => 0}, reverse(11 .. 30));
+
+    note('------ --- With invalid page option, it is considered to be 0.');
+    &checkPagination($output, {page => 'not_a_number', max_id => 100}, reverse(51 .. 100));
+    &checkPagination($output, {page => undef, max_id => 100}, reverse(51 .. 100));
+
+    note('------ --- since_id option controls the oldest status returned');
+    &checkPagination($output, {since_id => 10}, reverse(51 .. 135));
+    &checkPagination($output, {since_id => 50}, reverse(51 .. 135));
+    &checkPagination($output, {since_id => 100}, reverse(101 .. 135));
+    &checkPagination($output, {since_id => 51}, reverse(52 .. 135));
+    &checkPagination($output, {since_id => 135}, ());
+    &checkPagination($output, {since_id => 136}, reverse(51 .. 135));
+    &checkPagination($output, {since_id => 'this_does_not_exist'}, reverse(51 .. 135));
+    &checkPagination($output, {page => 2, since_id => 40}, reverse(41 .. 50));
+    &checkPagination($output, {page => 2, since_id => 10}, reverse(31 .. 50));
+    &checkPagination($output, {page => 2, since_id => 49}, (50));
+    &checkPagination($output, {page => 2, since_id => 50}, ());
+    &checkPagination($output, {page => 2, since_id => 100}, ());
+    &checkPagination($output, {page => 3, since_id => 10}, reverse(11 .. 30));
+    &checkPagination($output, {page => 3, since_id => 40}, ());
+    &checkPagination($output, {page => 3, since_id => 130}, ());
+    &checkPagination($output, {page => 3, since_id => 136}, reverse(11 .. 30));
+    &checkPagination($output, {max_id => 100, page => 1, since_id => 65}, reverse(66 .. 100));
+    &checkPagination($output, {max_id => 100, page => 1, since_id => 100}, ());
+    &checkPagination($output, {max_id => 100, page => 1, since_id => 120}, ());
+    &checkPagination($output, {max_id => 100, page => 1, since_id => 140}, reverse(51 .. 100));
+    &checkPagination($output, {max_id => 100, page => 2, since_id => 65}, ());
+    &checkPagination($output, {max_id => 60, page => 1, since_id => 30}, reverse(41 .. 60));
+    &checkPagination($output, {max_id => 60, page => 2, since_id => 30}, reverse(31 .. 40));
+    &checkPagination($output, {max_id => 60, page => 3, since_id => 30}, ());
+    &checkPagination($output, {per_page => 40, page => 1, since_id => 93}, reverse(96 .. 135));
+    &checkPagination($output, {per_page => 40, page => 2, since_id => 93}, reverse(94 .. 95));
+    &checkPagination($output, {per_page => 40, page => 3, since_id => 93}, ());
+    &checkPagination($output, {per_page => 40, page => 4, since_id => 93}, ());
+    &checkPagination($output, {per_page => 40, page => 4, since_id => 2000}, reverse(1 .. 15));
+    &checkPagination($output, {per_page => 500, page => 1, since_id => 10}, reverse(11 .. 135));
+    &checkPagination($output, {per_page => 500, page => 2, since_id => 10}, ());
+    &checkPagination($output, {max_id => 125, per_page => 40, since_id => 32, page => 1}, reverse(86 .. 125));
+    &checkPagination($output, {max_id => 125, per_page => 40, since_id => 32, page => 2}, reverse(46 .. 85));
+    &checkPagination($output, {max_id => 125, per_page => 40, since_id => 32, page => 3}, reverse(33 .. 45));
+    &checkPagination($output, {max_id => 125, per_page => 40, since_id => 32, page => 4}, ());
+
     {
         note('------ Test Output filters');
         $output = new_ok('BusyBird::Output', [name => 'filter_test']);
