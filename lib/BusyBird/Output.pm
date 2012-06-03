@@ -455,8 +455,14 @@ sub _getPagedStatuses {
     my ($self, %params) = @_;
     my $DEFAULT_PER_PAGE = 20;
     my $new_num = int(@{$self->{new_statuses}});
-    my $page = ($params{page} or 1) - 1;
+    my $page = $params{page};
+    if($page && $page =~ /^[0-9]+$/) {
+        $page = $page - 1;
+    }else {
+        $page = 0;
+    }
     $page = 0 if $page < 0;
+    
     my $per_page = $params{per_page};
     my $start_global_index = 0;
 
@@ -466,7 +472,7 @@ sub _getPagedStatuses {
     }
 
     my $statuses;
-    if($per_page) {
+    if($per_page && $per_page =~ /^[0-9]+$/) {
         $statuses = $self->_getStatuses($start_global_index + $page * $per_page, $per_page);
     }else {
         $per_page = $DEFAULT_PER_PAGE;
