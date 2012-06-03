@@ -65,8 +65,8 @@ sub _uniqStatuses {
 
     my %ids = ();
     foreach my $status (@$statuses) {
-        if(!defined($ids{$status->content->{id}})) {
-            $ids{$status->content->{id}} = 1;
+        if(!defined($ids{$status->{id}})) {
+            $ids{$status->{id}} = 1;
             push(@uniqs, $status);
         }
     }
@@ -187,7 +187,7 @@ sub _initLoader {
                 }else {
                     &bblog(sprintf("Input %s: get page %d [%d statuses]", $self->getName, $page, int(@$statuses)));
                     foreach my $status (@$statuses) {
-                        my $datetime = $status->content->{created_at};
+                        my $datetime = $status->{created_at};
                         ## ** Update latest status time
                         if (!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
                             $self->{last_status_epoch_time} = $datetime->epoch;
@@ -195,7 +195,7 @@ sub _initLoader {
                         ## ** Collect new status
                         if (!defined($threshold_epoch_time) || $datetime->epoch >= $threshold_epoch_time) {
                             ## $status->setInputName($self->{name});
-                            $status->content->{busybird}->{input_name} = $self->{name};
+                            $status->{busybird}->{input_name} = $self->{name};
                             push(@{$ret_array}, $status);
                         } else {
                             $is_complete = 1;

@@ -154,13 +154,13 @@ sub loadStatuses {
     $file->close();
     my $deserialized = BusyBird::Status->deserialize($data);
     foreach my $des_status (@$deserialized) {
-        my $is_new = $des_status->content->{busybird}{is_new};
+        my $is_new = $des_status->{busybird}{is_new};
         die "Loaded status does not have busybird/is_new flag." if !defined($is_new);
         my ($queue, $dict) = ($is_new)
             ? ($self->{new_statuses}, $self->{new_ids})
                 : ($self->{old_statuses}, $self->{old_ids});
         push(@$queue, $des_status);
-        $dict->{$des_status->content->{id}} = 1;
+        $dict->{$des_status->{id}} = 1;
     }
     &bblog("Output " . $self->getName() . ": statuses are loaded from $filepath.");
 }
@@ -169,15 +169,15 @@ sub _syncFilter {
     my ($self) = @_;
     return sub {
         my ($statuses, $cb) = @_;
-        my %input_ids = map { $_->content->{id} => 1 } @$statuses;
+        my %input_ids = map { $_->{id} => 1 } @$statuses;
         foreach my $queue_name ('new', 'old') {
             my ($queue, $id_dict) = @{$self}{"${queue_name}_statuses", "${queue_name}_ids"};
             my @new_queue = ();
             my %new_dict = ();
             foreach my $status (@$queue) {
-                if(defined($input_ids{$status->content->{id}})) {
+                if(defined($input_ids{$status->{id}})) {
                     push(@new_queue, $status);
-                    $new_dict{$status->content->{id}} = 1;
+                    $new_dict{$status->{id}} = 1;
                 }
             }
             @$queue = @new_queue;
@@ -225,7 +225,7 @@ sub _uniqStatuses {
     my ($self, $statuses) = @_;
     my $uniq_statuses = [];
     foreach my $status (@$statuses) {
-        if($self->_isUniqueID($status->content->{id})) {
+        if($self->_isUniqueID($status->{id})) {
             push(@$uniq_statuses, $status);
         }
     }
@@ -235,7 +235,7 @@ sub _uniqStatuses {
 sub _sort {
     my ($self) = @_;
     ## my @sorted_statuses = sort {$b->getDateTime()->epoch <=> $a->getDateTime()->epoch} @{$self->{new_statuses}};
-    my @sorted_statuses = sort {DateTime->compare($b->content->{created_at}, $a->content->{created_at})} @{$self->{new_statuses}};
+    my @sorted_statuses = sort {DateTime->compare($b->{created_at}, $a->{created_at})} @{$self->{new_statuses}};
     $self->{new_statuses} = \@sorted_statuses;
 }
 
@@ -303,7 +303,7 @@ sub _limitStatusQueueSize {
     my ($status_queue, $limit_size, $id_dict) = @{$self}{"${queue_name}_statuses", "max_${queue_name}_statuses", "${queue_name}_ids"};
     while(int(@$status_queue) > $limit_size) {
         my $discarded_status = pop(@$status_queue);
-        delete $id_dict->{$discarded_status->content->{id}};
+        delete $id_dict->{$discarded_status->{id}};
     }
 }
 
@@ -318,8 +318,8 @@ sub pushStatuses {
             }
             unshift(@{$self->{new_statuses}}, @$filtered_statuses);
             foreach my $status (@$filtered_statuses) {
-                $self->{new_ids}{$status->content->{id}} = 1;
-                $status->content->{busybird}{is_new} = 1;
+                $self->{new_ids}{$status->{id}} = 1;
+                $status->{busybird}{is_new} = 1;
             }
             $self->_sort();
             ## $self->_limitStatusQueueSize($self->{new_statuses}, $self->{max_new_statuses});
@@ -417,7 +417,7 @@ sub _requestPointNewStatuses {
 
 sub _confirm {
     my ($self) = @_;
-    $_->content->{busybird}{is_new} = 0 foreach @{$self->{new_statuses}};
+    $_->{busybird}{is_new} = 0 foreach @{$self->{new_statuses}};
     unshift(@{$self->{old_statuses}}, @{$self->{new_statuses}});
     foreach my $id (keys %{$self->{new_ids}}) {
         $self->{old_ids}{$id} = 1;
@@ -468,11 +468,11 @@ sub _getPagedStatuses {
     my $end_global_index;
 
     if($params{max_id}) {
-        $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->content->{id} eq $params{max_id} });
+        $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->{id} eq $params{max_id} });
         $start_global_index = 0 if !defined($start_global_index);
     }
     if($params{since_id}) {
-        $end_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->content->{id} eq $params{since_id} });
+        $end_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->{id} eq $params{since_id} });
     }
 
     my ($get_start, $get_num);

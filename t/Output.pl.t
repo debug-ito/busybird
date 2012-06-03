@@ -37,8 +37,8 @@ sub checkStatusNum {
     my $old_entries = $output->getOldStatuses();
     cmp_ok(int(@$new_entries), '==', $expected_new_num, sprintf("number of new_statuses in %s", $output->getName));
     cmp_ok(int(@$old_entries), '==', $expected_old_num, sprintf("number of old_statuses in %s", $output->getName));
-    ok($_->content->{busybird}{is_new}, "this status is new") foreach @$new_entries;
-    ok(!$_->content->{busybird}{is_new}, "this status is old") foreach @$old_entries;
+    ok($_->{busybird}{is_new}, "this status is new") foreach @$new_entries;
+    ok(!$_->{busybird}{is_new}, "this status is old") foreach @$old_entries;
 }
 
 sub pushStatusesSync {
@@ -68,7 +68,7 @@ sub checkPagination {
     is(ref($got_statuses), 'ARRAY', "returned an array-ref");
     cmp_ok(int(@$got_statuses), "==", int(@expected_ids), "number of statuses is what is expected.");
     foreach my $i (0 .. $#expected_ids) {
-        is($got_statuses->[$i]->content->{id}, $expected_ids[$i], "ID is " . $expected_ids[$i]);
+        is($got_statuses->[$i]->{id}, $expected_ids[$i], "ID is " . $expected_ids[$i]);
     }
 }
 
@@ -119,10 +119,10 @@ sub filterCheck {
                 is(ref($statuses), 'ARRAY', 'got ARRAY in filter');
                 cmp_ok(int(@$statuses), '==', int(@$expected_ids), 'number of statuses in filter');
                 foreach my $i (0 .. $#$statuses) {
-                    is($statuses->[$i]->content->{id}, $expected_ids->[$i], "status ID $expected_ids->[$i]");
+                    is($statuses->[$i]->{id}, $expected_ids->[$i], "status ID $expected_ids->[$i]");
                     foreach my $field (@$check_fields) {
-                        ok(defined($statuses->[$i]->content->{$field}), "$field is defined...");
-                        is($statuses->[$i]->content->{$field}, $expected_ids->[$i], "and is expected status ID.");
+                        ok(defined($statuses->[$i]->{$field}), "$field is defined...");
+                        is($statuses->[$i]->{$field}, $expected_ids->[$i], "and is expected status ID.");
                     }
                 }
                 $cb->($statuses);
@@ -174,7 +174,7 @@ sub filterField {
             cb => sub {
                 undef $tw;
                 foreach my $status (@$statuses) {
-                    $status->content->{$field_name} = $status->content->{id};
+                    $status->{$field_name} = $status->{id};
                 }
                 $cb->($statuses);
             }

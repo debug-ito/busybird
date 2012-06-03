@@ -20,16 +20,16 @@ my $DATETIME_STR_MATCHER;
     $DATETIME_STR_MATCHER = qr!^($dow_selector) +($month_selector) +(\d{2}) +(\d{2}):(\d{2}):(\d{2}) +([\-\+]\d{4}) +(\d+)$!;
 }
 
-
+our $FORMAT_JSON_SORTED = 0;
 our $_STATUS_TIMEZONE = DateTime::TimeZone->new( name => 'local');
 
 sub new {
-    my ($class, %params) = @_;
+    my ($class, @args) = @_;
     my $self = bless {
-        content => { %params }
+        int(@args) == 1 ? %{$args[0]} : (@args)
     }, $class;
     foreach my $mandatory (qw(created_at id id_str)) {
-        if(!defined($self->content->{$mandatory})) {
+        if(!defined($self->{$mandatory})) {
             die "Param $mandatory is mandatory for Status";
         }
     }
@@ -46,15 +46,16 @@ sub getTimeZone {
     return $_STATUS_TIMEZONE;
 }
 
-sub content {
-    my $self = shift;
-    return $self->{content};
-}
+## sub content {
+##     my $self = shift;
+##     return $self->{content};
+## }
 
-sub put {
-    my ($self, %params) = @_;
-    @{$self->{content}}{keys %params} = values %params;
-}
+## sub put {
+##     my ($self, %params) = @_;
+##     ## @{$self->{content}}{keys %params} = values %params;
+##     @{$self}{keys %params} = values %params;
+## }
 
 sub clone {
     my ($self) = @_;
@@ -78,7 +79,7 @@ sub _translateTreeNodes {
                 $i++;
             }
             next;
-        }elsif(ref($$cur_ref) eq 'HASH') {
+        }elsif(ref($$cur_ref) eq 'HASH' || ref($$cur_ref) eq 'BusyBird::Status') {
             foreach my $key (keys %$$cur_ref) {
                 push(@unvisited_entries, [$key, \$$$cur_ref{$key}]);
             }
@@ -150,10 +151,12 @@ my %FORMATTERS = (
         foreach my $status (@$statuses_ref) {
             my $clone = $status->clone();
             $clone->_translateTreeNodes(
-                $clone->content,
+                ## $clone->content,
+                $clone,
                 'DateTime' => \&_datetimeFormatTwitter,
             );
-            push(@json_entries, to_json($clone->content));
+            ## push(@json_entries, to_json($clone->content));
+            push(@json_entries, to_json({%$clone}, {canonical => $FORMAT_JSON_SORTED})); ## ** Unbless the hash object
         }
         return '[' . join(",", @json_entries) . ']';
     },
@@ -163,7 +166,8 @@ my %FORMATTERS = (
         foreach my $status (@$statuses_ref) {
             my $clone = $status->clone();
             $clone->_translateTreeNodes(
-                $clone->content,
+                ## $clone->content,
+                $clone,
                 'DateTime' => \&_datetimeFormatTwitter,
                 '.entities' => \&_XMLFormatEntities,
                 '_SCALAR_ELEM' => sub {
@@ -177,7 +181,9 @@ my %FORMATTERS = (
                 }
             );
             push(@xml_entries, XMLout(
-                $clone->content, NoAttr => 1, RootName => 'status',
+                ## $clone->content,
+                $clone,
+                NoAttr => 1, RootName => 'status',
                 SuppressEmpty => undef, KeyAttr => [], NoEscape => 1, NoIndent => 1,
             ));
         }
@@ -247,7 +253,7 @@ sub deserialize {
                 return $elem_orig;
             },
         );
-        push(@statuses, BusyBird::Status->new(%$raw_status));
+        push(@statuses, BusyBird::Status->new($raw_status));
     }
     return \@statuses;
 }

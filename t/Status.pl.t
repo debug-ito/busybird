@@ -58,17 +58,18 @@ sub testClone {
     my $status = $test_status->{status};
     my $clone = $status->clone();
     is_deeply($status, $clone, "clone is exactly the same as the original");
-    cmp_ok(DateTime->compare($status->content->{created_at}, $clone->content->{created_at}), "==", 0, "... created_at is exactly the same.");
-    my ($orig_id, $orig_id_str) = @{$status->content}{'id', 'id_str'};
-    my $orig_screen_name = $status->content->{user}->{screen_name};
-    $clone->put(id => "foobar", id_str => "foobar");
-    $clone->content->{user}->{screen_name} = "HOGE_SCREEN_NAME";
-    is($status->content->{id}, $orig_id, "original and clone is independent (id, original)");
-    is($clone->content->{id}, 'foobar',"... (id, clone)");
-    is($status->content->{id_str}, $orig_id_str, "... (id_str, original)");
-    is($clone->content->{id_str}, 'foobar', "... (id_str, clone)");
-    is($status->content->{user}->{screen_name}, $orig_screen_name, "... (user/screen_name, original)");
-    is($clone->content->{user}->{screen_name}, "HOGE_SCREEN_NAME", "... (user/screen_name, clone)");
+    cmp_ok(DateTime->compare($status->{created_at}, $clone->{created_at}), "==", 0, "... created_at is exactly the same.");
+    my ($orig_id, $orig_id_str) = @{$status}{'id', 'id_str'};
+    my $orig_screen_name = $status->{user}{screen_name};
+    $clone->{id} = "foobar";
+    $clone->{id_str} = "foobar";
+    $clone->{user}{screen_name} = "HOGE_SCREEN_NAME";
+    is($status->{id}, $orig_id, "original and clone is independent (id, original)");
+    is($clone->{id}, 'foobar',"... (id, clone)");
+    is($status->{id_str}, $orig_id_str, "... (id_str, original)");
+    is($clone->{id_str}, 'foobar', "... (id_str, clone)");
+    is($status->{user}{screen_name}, $orig_screen_name, "... (user/screen_name, original)");
+    is($clone->{user}{screen_name}, "HOGE_SCREEN_NAME", "... (user/screen_name, clone)");
 }
 
 sub testSerialize {
@@ -87,6 +88,7 @@ sub testSerialize {
 }
 
 BusyBird::Status->setTimeZone('UTC');
+$BusyBird::Status::FORMAT_JSON_SORTED = 1;
 
 my @statuses_for_test = (
     {
