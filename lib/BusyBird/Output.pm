@@ -465,28 +465,38 @@ sub _getPagedStatuses {
     
     my $per_page = $params{per_page};
     my $start_global_index = 0;
+    my $end_global_index;
 
     if($params{max_id}) {
         $start_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->content->{id} eq $params{max_id} });
         $start_global_index = 0 if !defined($start_global_index);
     }
+    if($params{since_id}) {
+        $end_global_index = $self->_getGlobalIndicesForStatuses(sub { $_->content->{id} eq $params{since_id} });
+    }
 
-    my $statuses;
+    my ($get_start, $get_num);
     if($per_page && $per_page =~ /^[0-9]+$/) {
-        $statuses = $self->_getStatuses($start_global_index + $page * $per_page, $per_page);
+        ($get_start, $get_num) = ($start_global_index + $page * $per_page, $per_page);
     }else {
         $per_page = $DEFAULT_PER_PAGE;
         if($start_global_index < $new_num) {
             if($page == 0) {
-                $statuses = $self->_getStatuses($start_global_index, $per_page + $new_num - $start_global_index);
+                ($get_start, $get_num) = ($start_global_index, $per_page + $new_num - $start_global_index);
             }else {
-                $statuses = $self->_getStatuses($new_num + $page * $per_page, $per_page);
+                ($get_start, $get_num) = ($new_num + $page * $per_page, $per_page);
             }
         }else {
-            $statuses = $self->_getStatuses($start_global_index + $page * $per_page, $per_page);
+            ($get_start, $get_num) = ($start_global_index + $page * $per_page, $per_page);
         }
     }
-    return $statuses;
+
+    if(defined($end_global_index)) {
+        my $num_to_end = $end_global_index - $get_start;
+        $get_num = $num_to_end if $num_to_end < $get_num;
+    }
+
+    return $self->_getStatuses($get_start, $get_num);
 }
 
 sub _requestPointAllStatuses {
