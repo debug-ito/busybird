@@ -343,6 +343,7 @@ sub main {
     &checkPagination($output, {since_id => 51}, reverse(52 .. 135));
     &checkPagination($output, {since_id => 135}, ());
     &checkPagination($output, {since_id => 136}, reverse(51 .. 135));
+    &checkPagination($output, {since_id => undef}, reverse(51 .. 135));
     &checkPagination($output, {since_id => 'this_does_not_exist'}, reverse(51 .. 135));
     &checkPagination($output, {page => 2, since_id => 40}, reverse(41 .. 50));
     &checkPagination($output, {page => 2, since_id => 10}, reverse(31 .. 50));
