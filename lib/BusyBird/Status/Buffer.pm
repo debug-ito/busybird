@@ -22,12 +22,23 @@ sub get {
     if($start_index >= $statuses_num) {
         return [];
     }
+    if($start_index < 0) {
+        $start_index += $statuses_num;
+        if($start_index < 0) {
+            return [];
+        }
+    }
     $entry_num = $statuses_num - $start_index if !defined($entry_num);
-    if($entry_num <= 0) {
+    if($entry_num == 0) {
         return [];
     }
-    my $end_inc_index = $start_index + $entry_num - 1;
-    $end_inc_index = $statuses_num - 1 if $end_inc_index >= $statuses_num;
+    my $end_inc_index;
+    if($entry_num > 0) {
+        $end_inc_index = $start_index + $entry_num - 1;
+        $end_inc_index = $statuses_num - 1 if $end_inc_index >= $statuses_num;
+    }else {
+        $end_inc_index = $statuses_num - 1 + $entry_num;
+    }
     return [ @{$self->{buffer}}[$start_index .. $end_inc_index] ];
 }
 
