@@ -6,6 +6,7 @@ use XML::Simple;
 use Storable ('dclone');
 use DateTime;
 use BusyBird::Log qw(bblog);
+use Encode;
 
 $XML::Simple::PREFERRED_PARSER = 'XML::Parser';
 
@@ -156,7 +157,14 @@ my %FORMATTERS = (
                 'DateTime' => \&_datetimeFormatTwitter,
             );
             ## push(@json_entries, to_json($clone->content));
-            push(@json_entries, to_json({%$clone}, {canonical => $FORMAT_JSON_SORTED})); ## ** Unbless the hash object
+            push(
+                @json_entries,
+                to_json(
+                    {%$clone},  ## ** Unbless the hash object
+                    {canonical => $FORMAT_JSON_SORTED,
+                     ascii => 1}
+                )
+            );
         }
         return '[' . join(",", @json_entries) . ']';
     },
@@ -187,7 +195,7 @@ my %FORMATTERS = (
                 SuppressEmpty => undef, KeyAttr => [], NoEscape => 1, NoIndent => 1,
             ));
         }
-        return qq(<statuses type="array">) . join("", @xml_entries) . qq(</statuses>);
+        return qq(<statuses type="array">) . Encode::encode('utf8', join("", @xml_entries)) . qq(</statuses>);
     },
 );
 
@@ -224,7 +232,7 @@ sub serialize {
 
 sub deserialize {
     my ($class, $string) = @_;
-    my $raw_statuses = from_json($string);
+    my $raw_statuses = decode_json($string);
     if(ref($raw_statuses) ne 'ARRAY') {
         $raw_statuses = [$raw_statuses];
     }

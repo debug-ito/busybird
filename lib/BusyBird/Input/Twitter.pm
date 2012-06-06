@@ -6,7 +6,6 @@ use warnings;
 use BusyBird::Status;
 use BusyBird::Worker::Twitter;
 use BusyBird::Log ('bblog');
-use Encode;
 
 our %MONTH = (
     Jan => 1, Feb => 2,  Mar =>  3, Apr =>  4,
@@ -14,7 +13,7 @@ our %MONTH = (
     Sep => 9, Oct => 10, Nov => 11, Dec => 12,
 );
 
-sub _timeStringToDateTime() {
+sub _timeStringToDateTime {
     my ($class_self, $time_str) = @_;
     my ($weekday, $monthname, $day, $time, $timezone, $year) = split(/\s+/, $time_str);
     my ($hour, $minute, $second) = split(/:/, $time);
@@ -76,11 +75,6 @@ sub _getWorkerInput {
     return undef;
 }
 
-sub _enc {
-    my ($decoded_text) = @_;
-    return Encode::encode('utf8', $decoded_text);
-}
-
 sub _createStatusID {
     my ($self, $nt_status, $id_key_base) = @_;
     my $str_key = "${id_key_base}_str";
@@ -88,7 +82,7 @@ sub _createStatusID {
     if(!defined($orig_id)) {
         return undef;
     }
-    return 'Twitter_' . $self->{worker}->getAPIURL() . "_" . _enc($orig_id);
+    return 'Twitter_' . $self->{worker}->getAPIURL() . "_" . $orig_id;
 }
 
 sub _extractStatusesFromWorkerData {
@@ -101,15 +95,15 @@ sub _extractStatusesFromWorkerData {
         my $status = BusyBird::Status->new(
             id => $status_id,
             id_str => defined($status_id) ? "$status_id" : undef,
-            created_at => $self->_timeStringToDateTime(_enc($nt_status->{created_at})),
-            text => _enc($text),
-            in_reply_to_screen_name => _enc($nt_status->{in_reply_to_screen_name}),
+            created_at => $self->_timeStringToDateTime($nt_status->{created_at}),
+            text => $text,
+            in_reply_to_screen_name => $nt_status->{in_reply_to_screen_name},
             in_reply_to_status_id => $status_rep_id,
             in_reply_to_status_id_str => defined($status_rep_id) ? "$status_rep_id" : undef,
             user => {
-                'screen_name' => _enc($nt_status->{user}->{screen_name}),
-                'name' => _enc($nt_status->{user}->{name}),
-                'profile_image_url' => _enc($nt_status->{user}->{profile_image_url}),
+                'screen_name' => $nt_status->{user}->{screen_name},
+                'name' => $nt_status->{user}->{name},
+                'profile_image_url' => $nt_status->{user}->{profile_image_url},
             },
             busybird => {
                 original => {

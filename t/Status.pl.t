@@ -3,11 +3,13 @@
 use strict;
 use warnings;
 use lib 't/lib';
+use utf8;
 
 use Test::More;
 
 BEGIN {
     use_ok('JSON');
+    use_ok('Encode');
     use_ok('Test::XML::Simple');
     use_ok('DateTime');
     use_ok('BusyBird::Status');
@@ -22,7 +24,7 @@ sub testJSON {
     my $json_statuses = BusyBird::Status->format('json', [ map {$_->{status}} @test_statuses ]);
     cmp_ok($json_statuses, 'ne', '');
     my $decoded_got_json = decode_json($json_statuses);
-    my $decoded_exp_json = decode_json($exp_statuses_json);
+    my $decoded_exp_json = from_json($exp_statuses_json);
     is_deeply($decoded_got_json, $decoded_exp_json);
 }
 
@@ -31,7 +33,10 @@ sub testXML {
     note("--- testXML");
     cmp_ok((grep { defined($_->{expect_format}{xml}) } @test_statuses), '==', int(@test_statuses),
            'All test_statuses have expected XML entries.');
-    my $exp_xml = '<statuses type="array">' . join("", map {$_->{expect_format}{xml}} @test_statuses) . "</statuses>";
+    my $exp_xml = Encode::encode(
+        'utf8',
+        '<statuses type="array">' . join("", map {$_->{expect_format}{xml}} @test_statuses) . "</statuses>"
+    );
     
     ## ** Remove unnecessary spaces
     my $replaced = 1;
