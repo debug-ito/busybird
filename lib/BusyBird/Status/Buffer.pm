@@ -79,8 +79,13 @@ sub contains {
 }
 
 sub sort {
-    my ($self) = @_;
-    my @sorted_statuses = CORE::sort {DateTime->compare($b->{created_at}, $a->{created_at})} @{$self->{buffer}};
+    my ($self, $sorter) = @_;
+    my @sorted_statuses;
+    if(defined($sorter)) {
+        @sorted_statuses = CORE::sort { $sorter->($a, $b) } @{$self->{buffer}};
+    }else {
+        @sorted_statuses = CORE::sort { DateTime->compare($b->{created_at}, $a->{created_at}) } @{$self->{buffer}};
+    }
     $self->{buffer} = \@sorted_statuses;
     return $self;
 }
