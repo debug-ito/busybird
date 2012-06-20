@@ -5,13 +5,14 @@ use warnings;
 use lib 't/lib';
 
 use Test::More;
+use Test::AnyEvent::Time;
 
 BEGIN {
     use_ok('AnyEvent');
     use_ok('AnyEvent::Strict');
     use_ok('JSON');
     use_ok('DateTime');
-    use_ok('BusyBird::Test', qw(CV within));
+    ## use_ok('BusyBird::Test', qw(CV within));
     use_ok('BusyBird::Status');
     use_ok('BusyBird::Filter');
     use_ok('BusyBird::Input::Test');
@@ -22,7 +23,7 @@ my $total_actual_fire = 0;
 my $total_expect_fire = 0;
 
 sub createInput {
-    my (%params_arg) = @_;
+    my ($cv, %params_arg) = @_;
     my %params = (
         name => 'test', no_timefile => 1,
         new_interval => 1, new_count => 1, page_num => 1,
@@ -62,36 +63,41 @@ sub createInput {
                 }
             }
             ## $fire_count++;
-            CV()->end();
+            $cv->end();
         }
     );
     my $trigger_func = sub {
         my (%trigger_param) = @_;
         note(sprintf("Trigger (interval => %s, count => %s, page_num => %s)",
                  @params{qw(new_interval new_count page_num)}));
-        CV()->begin(); ## For OnGetStatuses event
+        $cv->begin(); ## For OnGetStatuses event
         $total_expect_fire++;
-        CV()->begin(); ## For the timer below
+        ## $cv->begin(); ## For the timer below
         my $timer; $timer = AnyEvent->timer(
             after => $TRIGGER_DELAY,
             cb => sub {
                 undef $timer;
-                CV()->end();
+                ## $cv->end();
                 push(@expect_queue, {count => $trigger_param{expect_count}, page_num => $trigger_param{expect_page_num}});
                 $input->getStatuses();
             },
         );
     };
-    return wantarray ? ($trigger_func, $input) : $trigger_func;
+    my $cv_setter = sub {
+        $cv = shift;
+    };
+    return wantarray ? ($trigger_func, $input, $cv_setter) : $trigger_func;
 }
 
 sub sync {
     my ($timeout, $coderef) = @_;
-    within $timeout, $coderef;
+    ## within $timeout, $coderef;
+    time_within_ok $coderef, $timeout;
     cmp_ok($total_actual_fire, '==', $total_expect_fire, "expected $total_expect_fire fires.");
 }
 
 sync 20, sub {
+    my $cv = shift;
     note("----- test for number of statuses loaded.");
     foreach my $param_set (
         {new_interval => 1, new_count => 1, page_num => 1, page_no_threshold_max => 50},
@@ -101,7 +107,7 @@ sync 20, sub {
         {new_interval => 2, new_count => 2, page_num => 3, page_no_threshold_max => 50},
         {new_interval => 2, new_count => 1, page_num => 5, page_no_threshold_max => 1},
     ) {
-        my $trigger = &createInput(%$param_set);
+        my $trigger = &createInput($cv, %$param_set);
         foreach my $trigger_count (0 .. 4) {
             ## $trigger->(expect_fire => ($trigger_count % $param_set->{new_interval} == 0));
             my $exp_count = ($trigger_count % $param_set->{new_interval} == 0 ? $param_set->{new_count} : 0);
@@ -119,10 +125,12 @@ sync 20, sub {
 
 
 note("----- test for timestamp and threshold management.");
-my ($trigger, $input);
+my ($trigger, $input, $cv_setter);
 my $old_time = DateTime->now() - DateTime::Duration->new(years => 3);
 sync 20, sub {
-    ($trigger, $input) = &createInput(
+    my $cv = shift;
+    ($trigger, $input, $cv_setter) = &createInput(
+        $cv,
         new_interval => 2, new_count => 3, page_num => 3, page_no_threshold_max => 2,
     );
     $input->setTimeStamp($old_time);
@@ -134,6 +142,9 @@ sync 20, sub {
 };
 
 sync 20, sub {
+    my $cv = shift;
+    $cv_setter->($cv);
+    note("----- -- setTimeStamp(now)");
     $input->setTimeStamp(DateTime->now());
     $trigger->(expect_count => 3, expect_page_num => 3);
     $trigger->(expect_count => 0, expect_page_num => 0);
@@ -144,12 +155,18 @@ sync 20, sub {
 };
 
 sync 20, sub {
+    my $cv = shift;
+    $cv_setter->($cv);
+    note("----- -- setTimeStamp(old_time)");
     $input->setTimeStamp($old_time);
     $trigger->(expect_count => 0, expect_page_num => 0) foreach 1..5;
     note("Set Input timestamp to the old_time");
 };
 
 sync 20, sub {
+    my $cv = shift;
+    $cv_setter->($cv);
+    note("----- -- setTimeStamp(undef)");
     $input->setTimeStamp(undef);
     $trigger->(expect_count => 3, expect_page_num => 3);
     $trigger->(expect_count => 0, expect_page_num => 0);
@@ -161,7 +178,9 @@ sync 20, sub {
 note("----- test for filtering");
 my $filter_executed_num = 0;
 sync 20, sub {
+    my $cv = shift;
     ($trigger, $input) = &createInput(
+        $cv,
         new_interval => 1, new_count => 2, page_num => 3, page_no_threshold_max => 2,
     );
     $input->getFilter->push(
@@ -202,7 +221,9 @@ cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
 $filter_executed_num = 0;
 note("----- If filter deletes all statuses, OnGetStatuses event occurs with no statuses.");
 sync 20, sub {
+    my $cv = shift;
     ($trigger, $input) = &createInput(
+        $cv,
         new_interval => 1, new_count => 3, page_num => 1,
     );
     $input->getFilter->push(
@@ -224,7 +245,9 @@ cmp_ok($filter_executed_num, '==', 4, 'filter is executed properly');
     my $second_event_count = 0;
     note("----- test for multiple listener");
     sync 20, sub {
+        my $cv = shift;
         ($trigger, $input) = &createInput(
+            $cv,
             new_interval => 1, new_count => 2, page_num => 2, page_no_threshold_max => 5,
         );
         $input->listenOnGetStatuses(
