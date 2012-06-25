@@ -1,10 +1,10 @@
-package BusyBird::Input::Twitter::HomeTimeline;
+package BusyBird::InputDriver::Twitter::HomeTimeline;
 
 use strict;
 use warnings;
-use base ('BusyBird::Input::Twitter');
+use base ('BusyBird::InputDriver::Twitter');
 
-sub _getWorkerInput {
+sub getWorkerInput {
     my ($self, $count, $page) = @_;
     my $args = {
         count => $count,

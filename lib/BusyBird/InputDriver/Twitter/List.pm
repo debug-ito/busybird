@@ -1,17 +1,19 @@
-package BusyBird::Input::Twitter::List;
+package BusyBird::InputDriver::Twitter::List;
 
 use strict;
 use warnings;
-use base ('BusyBird::Input::Twitter');
+use base ('BusyBird::InputDriver::Twitter');
+use BusyBird::Util ('setParam');
 
-sub _setParams {
-    my ($self, $params_ref) = @_;
-    $self->SUPER::_setParams($params_ref);
-    $self->_setParam($params_ref, 'owner_name', undef, 1);
-    $self->_setParam($params_ref, 'list_slug_name', undef, 1);
+sub new {
+    my ($class, %params) = @_;
+    my $self = $class->SUPER::new(%params);
+    $self->setParam(\%params, 'owner_name', undef, 1);
+    $self->setParam(\%params, 'list_slug_name', undef, 1);
+    return $self;
 }
 
-sub _getWorkerInput {
+sub getWorkerInput {
     my ($self, $count, $page) = @_;
     my $args = {
         user => $self->{owner_name},

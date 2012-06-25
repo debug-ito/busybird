@@ -6,7 +6,7 @@ use Test::AnyEvent::Time;
 
 BEGIN {
     use_ok('BusyBird::Worker::Twitter');
-    use_ok('BusyBird::Input::Twitter');
+    use_ok('BusyBird::Input');
     use_ok('BusyBird::Status');
 }
 
@@ -15,7 +15,8 @@ my $env_switch = 'BUSYBIRD_TEST_TWITTER';
 my $worker = new_ok('BusyBird::Worker::Twitter', [
     ssl => 0
 ]);
-my $input = new_ok('BusyBird::Input::Twitter', [
+my $input = new_ok('BusyBird::Input', [
+    driver => 'BusyBird::InputDriver::Twitter',
     name => 'test_twitter', no_timefile => 1, worker => $worker,
 ]);
 

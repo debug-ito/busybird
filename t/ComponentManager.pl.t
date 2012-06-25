@@ -29,7 +29,7 @@ sub main {
 sub child {
     BusyBird::ComponentManager->init();
     new_ok('BusyBird::Output', [name => $_]) foreach @output_names;
-    new_ok('BusyBird::Input', [name => $_]) foreach @input_names;
+    new_ok('BusyBird::Input', [name => $_, driver => 'BusyBird::InputDriver::Test']) foreach @input_names;
     BusyBird::ComponentManager->initComponents();
     AnyEvent->condvar->recv();
     done_testing();

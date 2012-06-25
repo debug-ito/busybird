@@ -14,7 +14,7 @@ BEGIN {
     ## use_ok('BusyBird::Test', qw(CV within));
     use_ok('BusyBird::Status');
     use_ok('BusyBird::Filter');
-    use_ok('BusyBird::Input::Test');
+    use_ok('BusyBird::Input');
 }
 
 my $TRIGGER_DELAY = 1;
@@ -24,12 +24,13 @@ my $total_expect_fire = 0;
 sub createInput {
     my ($cv, %params_arg) = @_;
     my %params = (
+        driver => 'BusyBird::InputDriver::Test',
         name => 'test', no_timefile => 1,
         new_interval => 1, new_count => 1, page_num => 1,
         page_next_delay => 0.5, load_delay => 0.2,
         %params_arg,
     );
-    my $input = new_ok('BusyBird::Input::Test', [ %params ]);
+    my $input = new_ok('BusyBird::Input', [ %params ]);
     ## my ($interval, $count, $page_num, $page_noth_max) =
     ##     @params{qw(new_interval new_count page_num page_no_threshold_max)};
     ## my $fire_count = 0;
@@ -94,6 +95,7 @@ sub sync {
     time_within_ok $coderef, $timeout;
     cmp_ok($total_actual_fire, '==', $total_expect_fire, "expected $total_expect_fire fires.");
 }
+
 
 sync 20, sub {
     my $cv = shift;

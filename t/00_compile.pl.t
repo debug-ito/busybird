@@ -9,11 +9,11 @@ BEGIN {
     foreach my $bb_package (
         qw(
               Connector Filter HTTPD HTTPD::PathMatcher
-              Input Input::Twitter Input::Twitter::PublicTimeline
-              Input::Twitter::HomeTimeline Input::Twitter::List
-              Input::Twitter::Search
-              Input::Test
-              Log Object Output Status Timer
+              Input InputDriver::Twitter InputDriver::Twitter::PublicTimeline
+              InputDriver::Twitter::HomeTimeline InputDriver::Twitter::List
+              InputDriver::Twitter::Search
+              InputDriver::Test
+              Log Util Output Status Timer
               Worker::Exec Worker::Object Worker::Twitter
               ComponentManager
       )

@@ -1,16 +1,17 @@
-package BusyBird::Input::Twitter::Search;
-use base ('BusyBird::Input::Twitter');
+package BusyBird::InputDriver::Twitter::Search;
+use base ('BusyBird::InputDriver::Twitter');
 use strict;
 use warnings;
+use BusyBird::Util ('setParam');
 
-sub _setParams {
-    my ($self, $params_ref) = @_;
-    $self->SUPER::_setParams($params_ref);
-    $self->_setParam($params_ref, 'query', undef, 1);
-    $self->_setParam($params_ref, 'lang', undef);
+sub new {
+    my ($class, %params) = @_;
+    my $self = $class->SUPER::new(%params);
+    $self->setParam(\%params, 'query', undef, 1);
+    $self->setParam(\%params, 'lang', undef);
 }
 
-sub _getWorkerInput {
+sub getWorkerInput {
     my ($self, $count, $page) = @_;
     return {method => 'search', context => 's',
             args => [{

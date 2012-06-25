@@ -1,7 +1,6 @@
 use BusyBird::Worker::Twitter;
 use BusyBird::Timer;
-use BusyBird::Input::Twitter::List;
-use BusyBird::Input::Test;
+use BusyBird::Input;
 use BusyBird::Output;
 use BusyBird::HTTPD;
 
@@ -12,13 +11,17 @@ sub configBusyBird {
         ssl => 1,
     );
     my $timer = BusyBird::Timer->new(interval => 120);
-    my $input  = BusyBird::Input::Twitter::List->new(
+    my $input  = BusyBird::Input->new(
+        driver => 'BusyBird::InputDriver::Twitter::List',
         name => 'tv_networks', worker => $twitter_worker,
         owner_name => 'shoflowapp', list_slug_name => 'networks'
     );
 
     my $fast_timer = BusyBird::Timer->new(interval => 30);
-    my $test_input = BusyBird::Input::Test->new(name => 'test', no_timefile => 1);
+    my $test_input = BusyBird::Input->new(
+        driver => 'BusyBird::InputDriver::Test',
+        name => 'test', no_timefile => 1
+    );
 
     my $output = BusyBird::Output->new(name => 'default');
     

@@ -1,17 +1,35 @@
-package BusyBird::Input::Twitter;
-use base ('BusyBird::Input');
-
+package BusyBird::InputDriver::Twitter;
 use strict;
 use warnings;
+
 use BusyBird::Status;
 use BusyBird::Worker::Twitter;
 use BusyBird::Log ('bblog');
+use BusyBird::Util ('setParam');
 
 our %MONTH = (
     Jan => 1, Feb => 2,  Mar =>  3, Apr =>  4,
     May => 5, Jun => 6,  Jul =>  7, Aug =>  8,
     Sep => 9, Oct => 10, Nov => 11, Dec => 12,
 );
+
+sub new {
+    my ($class, %params) = @_;
+    my $self = bless {}, $class;
+    $self->_setParams(\%params);
+    return $self;
+}
+
+sub provide {
+    my ($self) = @_;
+    return qw(fetchStatus);
+}
+
+sub _setParams {
+    my ($self, $params_ref) = @_;
+    $self->setParam($params_ref, 'worker', undef, 1);
+    $self->{max_id_for_page} = [];
+}
 
 sub _timeStringToDateTime {
     my ($class_self, $time_str) = @_;
@@ -62,14 +80,7 @@ sub _entityExpandURL {
     return $text;
 }
 
-sub _setParams {
-    my ($self, $params_ref) = @_;
-    $self->SUPER::_setParams($params_ref);
-    $self->_setParam($params_ref, 'worker', undef, 1);
-    $self->{max_id_for_page} = [];
-}
-
-sub _getWorkerInput {
+sub getWorkerInput {
     my ($self, $count, $page) = @_;
     ## MUST BE IMPLEMENTED IN SUBCLASSES
     return undef;
@@ -125,7 +136,7 @@ sub _logWorkerInput {
     ));
 }
 
-sub _getStatusesPage {
+sub getStatusesPage {
     my ($self, $count, $page, $callback) = @_;
     if($page <= 0) {
         @{$self->{max_id_for_page}} = ();
@@ -134,7 +145,7 @@ sub _getStatusesPage {
         $callback->(undef);
         return;
     }
-    my $worker_input = $self->_getWorkerInput($count, $page);
+    my $worker_input = $self->getWorkerInput($count, $page);
     if(!$worker_input) {
         $callback->(undef);
         return;

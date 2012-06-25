@@ -1,6 +1,6 @@
 use BusyBird::Worker::Twitter;
 use BusyBird::Timer;
-use BusyBird::Input::Twitter::PublicTimeline;
+use BusyBird::Input;
 use BusyBird::Output;
 use BusyBird::HTTPD;
 
@@ -11,7 +11,10 @@ sub configBusyBird {
         ssl => 1,
     );
     my $timer = BusyBird::Timer->new(interval => 120);
-    my $input  = BusyBird::Input::Twitter::PublicTimeline->new(name => 'public_tl', worker => $twitter_worker, no_timefile => 1);
+    my $input  = BusyBird::Input->new(
+        driver => 'BusyBird::InputDriver::Twitter::PublicTimeline',
+        name => 'public_tl', worker => $twitter_worker, no_timefile => 1
+    );
     my $output = BusyBird::Output->new(name => 'default');
 
     BusyBird::HTTPD->init();
