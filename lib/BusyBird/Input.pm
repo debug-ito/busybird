@@ -85,7 +85,7 @@ sub _uniqStatuses {
     return \@uniqs;
 }
 
-sub _emitOnGetStatuses {
+sub emitOnGetStatuses {
     my ($self, $statuses) = @_;
     $statuses = $self->_uniqStatuses($statuses);
     $self->getFilter->execute(
@@ -93,7 +93,7 @@ sub _emitOnGetStatuses {
         sub {
             my ($filtered_statuses) = @_;
             if(!defined($filtered_statuses)) {
-                &bblog('Input::_emitOnGetStatuses: filter output is undef. Use [] instead.');
+                &bblog('Input::emitOnGetStatuses: filter output is undef. Use [] instead.');
                 $filtered_statuses = [];
             }
             $_->($filtered_statuses) foreach @{$self->{on_get_statuses}};
@@ -153,7 +153,7 @@ sub getStatuses {
         $threshold_epoch_time,
         sub {
             my $result_statuses = shift;
-            $self->_emitOnGetStatuses($result_statuses);
+            $self->emitOnGetStatuses($result_statuses);
         }
     );
 }
@@ -201,7 +201,6 @@ sub _initLoader {
                     }
                     $self->saveTimeFile();
                     $done->($ret_array);
-                    ## $self->_emitOnGetStatuses($ret_array);
                 }else {
                     my $tw; $tw = AnyEvent->timer(
                         after => $self->{page_next_delay},
