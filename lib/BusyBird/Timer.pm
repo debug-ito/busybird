@@ -1,10 +1,11 @@
 package BusyBird::Timer;
-use base ('BusyBird::Object', 'BusyBird::Connector');
+use base ('BusyBird::Connector');
 use strict;
 use warnings;
 
 use AnyEvent;
 use BusyBird::Filter;
+use BusyBird::Util ('setParam');
 
 sub new {
     my ($class, %params) = @_;
@@ -13,9 +14,9 @@ sub new {
         executer => undef,
         timer => undef,
     }, $class;
-    $self->_setParam(\%params, 'interval', 120);
-    $self->_setParam(\%params, 'after', 1);
-    $self->_setParam(\%params, 'callback_interval', 0);
+    $self->setParam(\%params, 'interval', 120);
+    $self->setParam(\%params, 'after', 1);
+    $self->setParam(\%params, 'callback_interval', 0);
     $self->{executer} = BusyBird::Filter->new(delay => $self->{callback_interval});
     $self->start();
     return $self;

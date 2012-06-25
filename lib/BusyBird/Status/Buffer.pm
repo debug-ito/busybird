@@ -1,9 +1,9 @@
 package BusyBird::Status::Buffer;
-use base ('BusyBird::Object');
 
 use strict;
 use warnings;
 use BusyBird::Status;
+use BusyBird::Util ('setParam');
 
 sub new {
     my ($class, %params) = @_;
@@ -11,7 +11,7 @@ sub new {
         buffer => [],
         dict => {},
     }, $class;
-    $self->_setParam(\%params, 'max_size', 0);
+    $self->setParam(\%params, 'max_size', 0);
     return $self;
 }
 

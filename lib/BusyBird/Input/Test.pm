@@ -9,6 +9,7 @@ use BusyBird::Status;
 ## use BusyBird::CallStack;
 use BusyBird::Log ('bblog');
 use AnyEvent;
+use BusyBird::Util ('setParam');
 
 
 my $LOCAL_TZ = DateTime::TimeZone->new( name => 'local' );
@@ -17,10 +18,10 @@ my $g_next_serial_num = 0;
 sub _setParams {
     my ($self, $params_ref) = @_;
     $self->SUPER::_setParams($params_ref);
-    $self->_setParam($params_ref, 'new_interval', 1);
-    $self->_setParam($params_ref, 'new_count', 1);
-    $self->_setParam($params_ref, 'page_num', 1);
-    $self->_setParam($params_ref, 'load_delay', 0.1);
+    $self->setParam($params_ref, 'new_interval', 1);
+    $self->setParam($params_ref, 'new_count', 1);
+    $self->setParam($params_ref, 'page_num', 1);
+    $self->setParam($params_ref, 'load_delay', 0.1);
     $self->{serial_num} = $g_next_serial_num;
     $g_next_serial_num++;
     $self->{fired_count} = -1;

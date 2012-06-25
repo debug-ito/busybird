@@ -1,10 +1,9 @@
 package BusyBird::Filter;
-use base ("BusyBird::Object");
-
 use strict;
 use warnings;
 
 use AnyEvent;
+use BusyBird::Util ('setParam');
 
 sub new {
     my ($class, %params) = @_;
@@ -15,8 +14,8 @@ sub new {
 
 sub _setParams {
     my ($self, $param_ref) = @_;
-    $self->_setParam($param_ref, 'parallel_limit', 1);
-    $self->_setParam($param_ref, 'delay', 0);
+    $self->setParam($param_ref, 'parallel_limit', 1);
+    $self->setParam($param_ref, 'delay', 0);
     $self->{delay} = 0 if $self->{delay} < 0;
     $self->{coderefs} = [];
     $self->{jobqueue} = [];

@@ -1,5 +1,5 @@
 package BusyBird::Output;
-use base ('BusyBird::Object', 'BusyBird::Connector');
+use base ('BusyBird::Connector');
 use Encode;
 use strict;
 use warnings;
@@ -12,6 +12,7 @@ use BusyBird::Status;
 use BusyBird::Status::Buffer;
 use BusyBird::ComponentManager;
 use BusyBird::Log qw(bblog);
+use BusyBird::Util ('setParam');
 
 my %S = (
     global_header_height => '50px',
@@ -36,10 +37,10 @@ sub new {
             map { $_ => BusyBird::Filter->new() } qw(parent_input input new_status)
         },
     }, $class;
-    $self->_setParam(\%params, 'name', undef, 1);
-    $self->_setParam(\%params, 'no_persistent', 0);
-    $self->_setParam(\%params, 'sync_with_input', 0);
-    $self->_setParam(\%params, 'auto_confirm', 0);
+    $self->setParam(\%params, 'name', undef, 1);
+    $self->setParam(\%params, 'no_persistent', 0);
+    $self->setParam(\%params, 'sync_with_input', 0);
+    $self->setParam(\%params, 'auto_confirm', 0);
     $self->_initMainPage();
     $self->_initFilters();
     BusyBird::ComponentManager->register('output', $self);

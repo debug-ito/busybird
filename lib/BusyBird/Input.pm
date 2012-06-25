@@ -1,5 +1,5 @@
 package BusyBird::Input;
-use base ('BusyBird::Object', 'BusyBird::Connector');
+use base ('BusyBird::Connector');
 
 use strict;
 use warnings;
@@ -11,6 +11,7 @@ use AnyEvent;
 use BusyBird::Log ('bblog');
 use BusyBird::Filter;
 use BusyBird::ComponentManager;
+use BusyBird::Util ('setParam');
 
 my $DEFAULT_PAGE_COUNT = 100;
 my $DEFAULT_PAGE_MAX   = 10;
@@ -33,12 +34,12 @@ sub new {
 
 sub _setParams {
     my ($self, $params_ref) = @_;
-    $self->_setParam($params_ref, 'name', undef, 1);
-    $self->_setParam($params_ref, 'no_timefile', 0);
-    $self->_setParam($params_ref, 'page_count', $DEFAULT_PAGE_COUNT);
-    $self->_setParam($params_ref, 'page_max', $DEFAULT_PAGE_MAX);
-    $self->_setParam($params_ref, 'page_no_threshold_max', $DEFAULT_PAGE_NO_THRESHOLD_MAX);
-    $self->_setParam($params_ref, 'page_next_delay', $DEFAULT_PAGE_NEXT_DELAY);
+    $self->setParam($params_ref, 'name', undef, 1);
+    $self->setParam($params_ref, 'no_timefile', 0);
+    $self->setParam($params_ref, 'page_count', $DEFAULT_PAGE_COUNT);
+    $self->setParam($params_ref, 'page_max', $DEFAULT_PAGE_MAX);
+    $self->setParam($params_ref, 'page_no_threshold_max', $DEFAULT_PAGE_NO_THRESHOLD_MAX);
+    $self->setParam($params_ref, 'page_next_delay', $DEFAULT_PAGE_NEXT_DELAY);
     $self->{last_status_epoch_time} = undef;
     $self->{page_no_threshold_max} = $self->{page_max} if $self->{page_no_threshold_max} > $self->{page_max};
     $self->{on_get_statuses} = [];
