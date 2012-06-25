@@ -33,22 +33,10 @@ sub _setParams {
     $self->{max_id_for_page} = [];
 }
 
-sub timeStringToDateTime {
-    my ($class_self, $time_str, $type) = @_;
-    $type ||= 'normal';
-    $type = lc($type);
-    my ($year, $monthname, $day, $hour, $minute, $second, $timezone);
-    if($type eq 'normal') {
-        my ($weekday, $time);
-        ($weekday, $monthname, $day, $time, $timezone, $year) = split(/\s+/, $time_str);
-        ($hour, $minute, $second) = split(/:/, $time);
-    }elsif($type eq 'search') {
-        my ($weekday, $time);
-        ($weekday, $day, $monthname, $year, $time, $timezone) = split(/[\s,]+/, $time_str);
-        ($hour, $minute, $second) = split(/:/, $time);
-    }else {
-        croak("Unknown type string: $type");
-    }
+sub convertNormalDateTime {
+    my ($class_self, $time_str) = @_;
+    my ($weekday, $monthname, $day, $time, $timezone, $year) = split(/\s+/, $time_str);
+    my ($hour, $minute, $second) = split(/:/, $time);
     my $dt = DateTime->new(
         year      => $year,
         month     => $MONTH{$monthname},
@@ -61,25 +49,25 @@ sub timeStringToDateTime {
     return $dt;
 }
 
-sub _processEntities {
+sub processEntities {
     my ($class_self, $text, $entities) = @_;
     if(!defined($entities)) {
         return $text;
     }
     if(defined($entities->{media})) {
         foreach my $entity (@{$entities->{media}}) {
-            $text = $class_self->_entityExpandURL($text, $entity);
+            $text = $class_self->entityExpandURL($text, $entity);
         }
     }
     if(defined($entities->{urls})) {
         foreach my $entity (@{$entities->{urls}}) {
-            $text = $class_self->_entityExpandURL($text, $entity);
+            $text = $class_self->entityExpandURL($text, $entity);
         }
     }
     return $text;
 }
 
-sub _entityExpandURL {
+sub entityExpandURL {
     my ($class_self, $text, $entity) = @_;
     if(!defined($entity) || !defined($entity->{expanded_url}) || !defined($entity->{indices})) {
         return $text;
@@ -100,7 +88,7 @@ sub getWorkerInput {
     return undef;
 }
 
-sub _createStatusID {
+sub createStatusID {
     my ($self, $nt_status, $id_key_base) = @_;
     my $str_key = "${id_key_base}_str";
     my $orig_id = (defined($nt_status->{$str_key}) ? $nt_status->{$str_key} : $nt_status->{$id_key_base});
@@ -112,13 +100,13 @@ sub _createStatusID {
 
 sub convertNormalStatus {
     my ($self, $nt_status) = @_;
-    my $text = $self->_processEntities($nt_status->{text}, $nt_status->{entities});
-    my $status_id = $self->_createStatusID($nt_status, 'id');
-    my $status_rep_id = $self->_createStatusID($nt_status, 'in_reply_to_status_id');
+    my $text = $self->processEntities($nt_status->{text}, $nt_status->{entities});
+    my $status_id = $self->createStatusID($nt_status, 'id');
+    my $status_rep_id = $self->createStatusID($nt_status, 'in_reply_to_status_id');
     return BusyBird::Status->new(
         id => $status_id,
         id_str => defined($status_id) ? "$status_id" : undef,
-        created_at => $self->timeStringToDateTime($nt_status->{created_at}),
+        created_at => $self->convertNormalDateTime($nt_status->{created_at}),
         text => $text,
         in_reply_to_screen_name => $nt_status->{in_reply_to_screen_name},
         in_reply_to_status_id => $status_rep_id,
@@ -150,7 +138,7 @@ sub _logWorkerInput {
     my $argref = $worker_input->{args}->[0];
     &bblog(sprintf(
         "%s: method: %s, args: %s", __PACKAGE__, $worker_input->{method},
-        join(", ", map {"$_: " . $argref->{$_}} keys %$argref)
+        join(", ", map {"$_: " . (defined($argref->{$_}) ? $argref->{$_} : "[undef]")} keys %$argref)
     ));
 }
 
