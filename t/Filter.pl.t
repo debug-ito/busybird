@@ -1,5 +1,3 @@
-#!/usr/bin/perl -w
-
 package BusyBird::Test::Fake::FilterElem;
 use strict;
 use warnings;
@@ -15,15 +13,14 @@ package main;
 
 use strict;
 use warnings;
-use lib 't/lib';
 
 use Test::More;
 use Test::Exception;
+use Test::AnyEvent::Time;
 
 BEGIN {
     use_ok('AnyEvent');
     use_ok('AnyEvent::Strict');
-    use_ok('BusyBird::Test', qw(CV within));
     use_ok('BusyBird::Filter');
 }
 
@@ -162,9 +159,10 @@ sub checkParallel {
         }
     );
     my $got_order_ref = [];
-    within 10, sub {
+    time_within_ok sub {
+        my $cv = shift;
         foreach my $order (1 .. $try_count) {
-            CV()->begin();
+            $cv->begin();
             $filter->execute(
                 $order, sub {
                     my ($filter_result) = @_;
@@ -172,11 +170,11 @@ sub checkParallel {
                     $filter_done_count++;
                     $parallel_count--;
                     cmp_ok($parallel_count, ">=", 0, "Parallel count >= 0");
-                    CV()->end();
+                    $cv->end();
                 }
             );
         }
-    };
+    }, 10;
     note("Got orders: " . join(",", @$got_order_ref));
     cmp_ok($filter_done_count, "==", $try_count, "filter done count == $try_count");
     cmp_ok($got_max_parallel, "==", $expect_max_parallel, "max parallel == $expect_max_parallel");
@@ -265,6 +263,7 @@ sub checkParallel {
         single_filter => 3,
     );
     my $filter_counter = 0;
+    my $single_filter_cv;
     $filters{single_filter}->push(
         sub {
             my ($data, $done) = @_;
@@ -273,7 +272,7 @@ sub checkParallel {
                 cb => sub {
                     undef $tw;
                     $filter_counter++;
-                    CV()->end();
+                    $single_filter_cv->end();
                     $done->($data);
                 }
             );
@@ -281,11 +280,13 @@ sub checkParallel {
     );
     foreach my $key (keys %filters) {
         my $callback_counter = 0;
-        within 10, sub {
+        time_within_ok sub {
+            my $cv = shift;
+            $single_filter_cv = $cv;
             my $filter = $filters{$key};
             $filter_counter = 0;
             if($key eq 'single_filter') {
-                CV()->begin() foreach 1..3;
+                $cv->begin() foreach 1..3;
             }
             lives_ok {
                 $filter->execute();
@@ -294,10 +295,10 @@ sub checkParallel {
                 $filter->execute(1);
             } "$key: no callback";
             lives_ok {
-                CV()->begin();
-                $filter->execute(undef, sub { $callback_counter++; CV()->end() });
+                $cv->begin();
+                $filter->execute(undef, sub { $callback_counter++; $cv->end() });
             } "$key: no input";
-        };
+        }, 10;
         cmp_ok($callback_counter, "==", 1, "1 callback execution");
         cmp_ok($filter_counter, '==', $expected_filter_counters{$key}, "$expected_filter_counters{$key} filter element execution.");
     }

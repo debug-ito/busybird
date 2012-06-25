@@ -2,16 +2,15 @@
 
 use strict;
 use warnings;
-use lib 't/lib';
 
 use Test::More;
+use Test::AnyEvent::Time;
 
 BEGIN {
     use_ok('IO::File');
     use_ok('AnyEvent');
     use_ok('AnyEvent::Strict');
     use_ok('DateTime');
-    use_ok('BusyBird::Test', qw(CV within));
     use_ok('BusyBird::Status');
     use_ok('BusyBird::Output');
 }
@@ -44,10 +43,11 @@ sub checkStatusNum {
 sub pushStatusesSync {
     my ($output, $statuses, $timeout) = @_;
     $timeout ||= 10;
-    within $timeout, sub {
-        CV()->begin();
-        $output->pushStatuses($statuses, sub { CV()->end() });
-    };
+    time_within_ok sub {
+        my $cv = shift;
+        $cv->begin();
+        $output->pushStatuses($statuses, sub { $cv->end() });
+    }, $timeout;
 }
 
 sub checkPagination {
@@ -258,12 +258,13 @@ sub main {
     &checkStatusNum($output, 10, 0);
 
     note('------ pushStatuses() should uniqify the input.');
-    within 10, sub {
+    time_within_ok sub {
+        my $cv = shift;
         foreach (1..5) {
-            CV()->begin();
-            $output->pushStatuses([&generateStatus($_)], sub { CV()->end() });
+            $cv->begin();
+            $output->pushStatuses([&generateStatus($_)], sub { $cv->end() });
         }
-    };
+    }, 10;
     &checkStatusNum($output, 10, 0);
 
     note('------ _confirm() should make new statuses old.');
@@ -390,12 +391,13 @@ sub main {
         cmp_ok($count_new, '==', 20, '20 statuses went through NewStatusFilter');
 
         ($count_input, $count_new) = (0, 0);
-        within 10, sub {
+        time_within_ok sub {
+            my $cv = shift;
             foreach (1..20) {
-                CV()->begin();
-                $output->pushStatuses([&generateStatus()], sub { CV()->end() });
+                $cv->begin();
+                $output->pushStatuses([&generateStatus()], sub { $cv->end() });
             }
-        };
+        }, 10;
         cmp_ok($count_input, "==", 20, "20 statuses went through InputFilter");
         cmp_ok($count_new, "==", 20, "20 statuses went through NewStatusFilter");
     }

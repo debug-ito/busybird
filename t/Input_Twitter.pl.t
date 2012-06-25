@@ -1,11 +1,8 @@
-
 use strict;
 use warnings;
 
-use lib 't/lib';
-
 use Test::More;
-use BusyBird::Test qw(CV within);
+use Test::AnyEvent::Time;
 
 BEGIN {
     use_ok('BusyBird::Worker::Twitter');
@@ -27,19 +24,19 @@ SKIP: {
         skip "Set $env_switch environment to true to test communication with twitter.com", 1;
     }
     my $result_status;
-    within 30, sub {
-        CV()->begin();
+    time_within_ok sub {
+        my $cv = shift;
         $input->fetchStatus(
             '112652479837110273', sub {
                 $result_status = shift;
-                CV()->end();
+                $cv->send();
             }
         );
-    };
+    }, 30;
     ok(defined($result_status), 'Got a status');
     isa_ok($result_status, 'BusyBird::Status');
-    like($result_status->content->{id}, qr(112652479837110273$));
-    cmp_ok($result_status->content->{text}, "ne", "");
+    like($result_status->{id}, qr(112652479837110273$));
+    cmp_ok($result_status->{text}, "ne", "");
 }
 
 done_testing();

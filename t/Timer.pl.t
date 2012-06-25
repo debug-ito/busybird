@@ -2,15 +2,14 @@
 
 use strict;
 use warnings;
-use lib 't/lib';
 
 use Test::More;
+use Test::AnyEvent::Time;
 
 BEGIN {
     use_ok('AnyEvent');
     use_ok('AnyEvent::Strict');
     use_ok('BusyBird::Timer');
-    use_ok('BusyBird::Test', qw(CV within));
 }
 
 sub testTimer {
@@ -19,17 +18,20 @@ sub testTimer {
     my $timer = new_ok('BusyBird::Timer', [%params]);
     my $counter = 0;
 
+    my $timer_cv;
     $timer->addOnFire(
         sub {
             $counter++;
             note("counter: $counter");
-            CV()->end();
+            $timer_cv->end();
         }
     );
 
-    within 10, sub {
-        CV()->begin() foreach 1..5;
-    };
+    time_within_ok sub {
+        my $cv = shift;
+        $timer_cv = $cv;
+        $cv->begin() foreach 1..5;
+    }, 10;
     cmp_ok($counter, "==", 5);
 
     my $another_counter = 0;
@@ -37,13 +39,15 @@ sub testTimer {
         sub {
             $another_counter++;
             note("another: $another_counter");
-            CV()->end();
+            $timer_cv->end();
         }
     );
 
-    within 10, sub {
-        CV()->begin() foreach 1..10;
-    };
+    time_within_ok sub {
+        my $cv = shift;
+        $timer_cv = $cv;
+        $cv->begin() foreach 1..10;
+    }, 10;
     cmp_ok($counter, "==", 10);
     cmp_ok($another_counter, "==", 5);
     $timer->stop();
