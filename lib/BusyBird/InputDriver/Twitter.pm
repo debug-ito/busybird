@@ -2,6 +2,8 @@ package BusyBird::InputDriver::Twitter;
 use strict;
 use warnings;
 
+
+use Carp;
 use BusyBird::Status;
 use BusyBird::Worker::Twitter;
 use BusyBird::Log ('bblog');
@@ -31,10 +33,22 @@ sub _setParams {
     $self->{max_id_for_page} = [];
 }
 
-sub _timeStringToDateTime {
-    my ($class_self, $time_str) = @_;
-    my ($weekday, $monthname, $day, $time, $timezone, $year) = split(/\s+/, $time_str);
-    my ($hour, $minute, $second) = split(/:/, $time);
+sub timeStringToDateTime {
+    my ($class_self, $time_str, $type) = @_;
+    $type ||= 'normal';
+    $type = lc($type);
+    my ($year, $monthname, $day, $hour, $minute, $second, $timezone);
+    if($type eq 'normal') {
+        my ($weekday, $time);
+        ($weekday, $monthname, $day, $time, $timezone, $year) = split(/\s+/, $time_str);
+        ($hour, $minute, $second) = split(/:/, $time);
+    }elsif($type eq 'search') {
+        my ($weekday, $time);
+        ($weekday, $day, $monthname, $year, $time, $timezone) = split(/[\s,]+/, $time_str);
+        ($hour, $minute, $second) = split(/:/, $time);
+    }else {
+        croak("Unknown type string: $type");
+    }
     my $dt = DateTime->new(
         year      => $year,
         month     => $MONTH{$monthname},
@@ -96,33 +110,37 @@ sub _createStatusID {
     return 'Twitter_' . $self->{worker}->getAPIURL() . "_" . $orig_id;
 }
 
-sub _extractStatusesFromWorkerData {
+sub convertNormalStatus {
+    my ($self, $nt_status) = @_;
+    my $text = $self->_processEntities($nt_status->{text}, $nt_status->{entities});
+    my $status_id = $self->_createStatusID($nt_status, 'id');
+    my $status_rep_id = $self->_createStatusID($nt_status, 'in_reply_to_status_id');
+    return BusyBird::Status->new(
+        id => $status_id,
+        id_str => defined($status_id) ? "$status_id" : undef,
+        created_at => $self->timeStringToDateTime($nt_status->{created_at}),
+        text => $text,
+        in_reply_to_screen_name => $nt_status->{in_reply_to_screen_name},
+        in_reply_to_status_id => $status_rep_id,
+        in_reply_to_status_id_str => defined($status_rep_id) ? "$status_rep_id" : undef,
+        user => {
+            'screen_name' => $nt_status->{user}->{screen_name},
+            'name' => $nt_status->{user}->{name},
+            'profile_image_url' => $nt_status->{user}->{profile_image_url},
+        },
+        busybird => {
+            original => {
+                map { $_ => $nt_status->{$_} } qw(id id_str in_reply_to_status_id in_reply_to_status_id_str),
+            },
+        },
+    );
+}
+
+sub extractStatusesFromWorkerData {
     my ($self, $worker_data) = @_;
     my @statuses = ();
     foreach my $nt_status (@$worker_data) {
-        my $text = $self->_processEntities($nt_status->{text}, $nt_status->{entities});
-        my $status_id = $self->_createStatusID($nt_status, 'id');
-        my $status_rep_id = $self->_createStatusID($nt_status, 'in_reply_to_status_id');
-        my $status = BusyBird::Status->new(
-            id => $status_id,
-            id_str => defined($status_id) ? "$status_id" : undef,
-            created_at => $self->_timeStringToDateTime($nt_status->{created_at}),
-            text => $text,
-            in_reply_to_screen_name => $nt_status->{in_reply_to_screen_name},
-            in_reply_to_status_id => $status_rep_id,
-            in_reply_to_status_id_str => defined($status_rep_id) ? "$status_rep_id" : undef,
-            user => {
-                'screen_name' => $nt_status->{user}->{screen_name},
-                'name' => $nt_status->{user}->{name},
-                'profile_image_url' => $nt_status->{user}->{profile_image_url},
-            },
-            busybird => {
-                original => {
-                    map { $_ => $nt_status->{$_} } qw(id id_str in_reply_to_status_id in_reply_to_status_id_str),
-                },
-            },
-        );
-        push(@statuses, $status);
+        push(@statuses, $self->convertNormalStatus($nt_status));
     }
     return \@statuses;
 }
@@ -159,7 +177,7 @@ sub getStatusesPage {
             $callback->(undef);
             return;
         }
-        my $bb_status = $self->_extractStatusesFromWorkerData($data[0]);
+        my $bb_status = $self->extractStatusesFromWorkerData($data[0]);
         if(@$bb_status) {
             $self->{max_id_for_page}->[$page + 1] = $bb_status->[$#$bb_status]->{busybird}{original}{id_str};
         }
@@ -180,8 +198,7 @@ sub fetchStatus {
                 $callback->(undef);
                 return;
             }
-            my $converted_arrayref = $self->_extractStatusesFromWorkerData([$data]);
-            $callback->($converted_arrayref->[0]);
+            $callback->($self->convertNormalStatus($data));
         }
     );
 }

@@ -22,7 +22,7 @@ sub getWorkerInput {
             }]};
 }
 
-sub _extractStatusesFromWorkerData {
+sub extractStatusesFromWorkerData {
     my ($self_class, $worker_data) = @_;
     my @statuses = map { BusyBird::Status::Twitter->new($_) } @{$worker_data->{results}};
     return \@statuses;
