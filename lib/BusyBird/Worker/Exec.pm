@@ -5,20 +5,21 @@ use warnings;
 
 use AnyEvent;
 use AnyEvent::Util;
+use Carp;
 
 sub startJob {
     my ($self_class, %params) = @_;
     my $stdout = '';
     my $stderr = '';
     if(!defined($params{command})) {
-        die "No command param.";
+        croak "No command param.";
     }
     my $stdin = undef;
     if(defined($params{input_data})) {
         $stdin = \$params{input_data};
     }
     if(!defined($params{cb})) {
-        die "No cb param.";
+        croak "No cb param.";
     }
     my $cb = $params{cb};
     my %run_cmd_params = (

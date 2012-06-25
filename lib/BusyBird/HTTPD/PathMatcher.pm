@@ -1,6 +1,7 @@
 package BusyBird::HTTPD::PathMatcher;
 use strict;
 use warnings;
+use Carp;
 
 sub new {
     my ($class, $match_obj) = @_;
@@ -21,13 +22,13 @@ sub new {
 
 sub match {
     my ($self, $path) = @_;
-    die 'Must be implemented in subclasses';
+    croak 'Must be implemented in subclasses';
     return 0;
 }
 
 sub toString {
     my ($self) = @_;
-    die 'Must be implemented in subclasses';
+    croak 'Must be implemented in subclasses';
     return '';
 }
 

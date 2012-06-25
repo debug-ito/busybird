@@ -3,7 +3,6 @@ use base ('BusyBird::Connector');
 
 use strict;
 use warnings;
-use Scalar::Util ('blessed');
 use DateTime;
 use IO::File;
 use Module::Load;
@@ -28,6 +27,7 @@ sub setThresholdOffset {
 
 sub new {
     my ($class, %params) = @_;
+    push(local @BusyBird::Util::CARP_NOT, __PACKAGE__);
     my $self = bless {}, $class;
     $self->_setParams(\%params);
     BusyBird::ComponentManager->register('input', $self);
@@ -114,12 +114,12 @@ sub loadTimeFile {
     my $filepath = $self->_getTimeFilePath();
     my $file = IO::File->new();
     if(!$file->open($filepath, "r")) {
-        die "Cannot open $filepath to read";
+        croak "Cannot open $filepath to read";
     }
     my $epoch_time = $file->getline();
     if(!defined($epoch_time)) {
         $file->close();
-        die "Invalid time file $filepath";
+        croak "Invalid time file $filepath";
     }
     $epoch_time =~ s/[ \t\r\n]+$//;
     if($epoch_time =~ /^\d+$/) {
@@ -139,7 +139,7 @@ sub saveTimeFile {
     my $filepath = $self->_getTimeFilePath();
     my $file = IO::File->new();
     if(!$file->open($filepath, "w")) {
-        die "Cannot open $filepath to write to.";
+        croak "Cannot open $filepath to write to.";
     }
     $file->printf("%s\n", (defined($self->{last_status_epoch_time}) ? $self->{last_status_epoch_time} : "null"));
     $file->close();

@@ -1,6 +1,7 @@
 package BusyBird::Status;
 use strict;
 use warnings;
+use Carp;
 use JSON;
 use XML::Simple;
 use Storable ('dclone');
@@ -31,7 +32,7 @@ sub new {
     }, $class;
     foreach my $mandatory (qw(created_at id id_str)) {
         if(!defined($self->{$mandatory})) {
-            die "Param $mandatory is mandatory for Status";
+            croak "Param $mandatory is mandatory for Status";
         }
     }
     return $self;

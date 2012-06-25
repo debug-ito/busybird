@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use DateTime;
 use IO::File;
+use Carp;
 
 use BusyBird::Filter;
 use BusyBird::HTTPD::Helper qw(httpResSimple);
@@ -24,6 +25,7 @@ my %S = (
 
 sub new {
     my ($class, %params) = @_;
+    push(local @BusyBird::Util::CARP_NOT, __PACKAGE__);
     $params{max_old_statuses} ||= 1024;
     $params{max_new_statuses} ||= 2048;
     my $self = bless {
@@ -131,7 +133,7 @@ sub saveStatuses {
     my $filepath = $self->_getStatusesFilePath();
     my $file = IO::File->new();
     if(!$file->open($filepath, "w")) {
-        die "Cannot open $filepath to write to.";
+        croak "Cannot open $filepath to write to.";
     }
     $file->print($serialized_statuses);
     $file->close();
@@ -144,7 +146,7 @@ sub loadStatuses {
     my $filepath = $self->_getStatusesFilePath();
     my $file = IO::File->new();
     if(!$file->open($filepath, "r")) {
-        die "Cannot open $filepath to read.";
+        croak "Cannot open $filepath to read.";
     }
     my $data;
     {
@@ -157,7 +159,7 @@ sub loadStatuses {
     my @old_temp = ();
     foreach my $des_status (@$deserialized) {
         my $is_new = $des_status->{busybird}{is_new};
-        die "Loaded status does not have busybird/is_new flag." if !defined($is_new);
+        croak "Loaded status does not have busybird/is_new flag." if !defined($is_new);
         if($is_new) {
             push(@new_temp, $des_status);
         }else {

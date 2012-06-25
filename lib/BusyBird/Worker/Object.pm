@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use AnyEvent;
 use AnyEvent::Util;
+use Carp;
 
 sub STATUS_OK { 0 };
 sub STATUS_NO_METHOD { 1 };
@@ -38,10 +39,10 @@ sub getTargetObject {
 sub startJob {
     my ($self, %params) = @_;
     if(!defined($params{method})) {
-        die "No method param.";
+        croak "No method param.";
     }
     if(!defined($params{cb})) {
-        die "No cb param.";
+        croak "No cb param.";
     }
     my $target_object = $self->{target_object};
     fork_call {

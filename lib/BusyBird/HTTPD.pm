@@ -2,6 +2,7 @@ package BusyBird::HTTPD;
 use strict;
 use warnings;
 
+use Carp;
 use AnyEvent;
 use BusyBird::Log ('bblog');
 use BusyBird::HTTPD::PathMatcher;
@@ -36,7 +37,7 @@ sub config {
 sub start {
     my ($class) = @_;
     if(!defined($g_httpd_self)) {
-        die 'Call init() before start()';
+        croak 'Call init() before start()';
     }
     my $self = $g_httpd_self;
     $self->{backend} = Twiggy::Server->new(
@@ -62,12 +63,12 @@ sub addRequestPoint {
     my $self = ref($class_self) ? $class_self : $g_httpd_self;
     my $matcher = BusyBird::HTTPD::PathMatcher->new($matcher_obj);
     if(!defined($matcher)) {
-        die "Cannot create PathMatcher from matcher_obj $matcher_obj.";
+        croak "Cannot create PathMatcher from matcher_obj $matcher_obj.";
         return 0;
     }
     my $pointkey = $matcher->toString();
     if(defined($self->{request_points}->{$pointkey})) {
-        die "request_point key $pointkey is already defined";
+        croak "request_point key $pointkey is already defined";
         return 0;
     }
     $self->{request_points}->{$pointkey} = {
