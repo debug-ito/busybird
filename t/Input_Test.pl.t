@@ -132,7 +132,7 @@ sync 20, sub {
         $cv,
         new_interval => 2, new_count => 3, page_num => 3, page_no_threshold_max => 2,
     );
-    $input->setTimeStamp($old_time);
+    $input->getDriver->setTimeStamp($old_time);
     $trigger->(expect_count => 3, expect_page_num => 2);
     $trigger->(expect_count => 0, expect_page_num => 0);
     $trigger->(expect_count => 3, expect_page_num => 3);
@@ -144,7 +144,7 @@ sync 20, sub {
     my $cv = shift;
     $cv_setter->($cv);
     note("----- -- setTimeStamp(now)");
-    $input->setTimeStamp(DateTime->now());
+    $input->getDriver->setTimeStamp(DateTime->now());
     $trigger->(expect_count => 3, expect_page_num => 3);
     $trigger->(expect_count => 0, expect_page_num => 0);
     $trigger->(expect_count => 3, expect_page_num => 3);
@@ -157,7 +157,7 @@ sync 20, sub {
     my $cv = shift;
     $cv_setter->($cv);
     note("----- -- setTimeStamp(old_time)");
-    $input->setTimeStamp($old_time);
+    $input->getDriver->setTimeStamp($old_time);
     $trigger->(expect_count => 0, expect_page_num => 0) foreach 1..5;
     note("Set Input timestamp to the old_time");
 };
@@ -166,7 +166,7 @@ sync 20, sub {
     my $cv = shift;
     $cv_setter->($cv);
     note("----- -- setTimeStamp(undef)");
-    $input->setTimeStamp(undef);
+    $input->getDriver->setTimeStamp(undef);
     $trigger->(expect_count => 3, expect_page_num => 3);
     $trigger->(expect_count => 0, expect_page_num => 0);
     $trigger->(expect_count => 3, expect_page_num => 3);

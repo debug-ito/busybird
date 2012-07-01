@@ -34,11 +34,6 @@ sub new {
     $params{busybird_input} = $self;
     load $self->{driver};
     $self->{driver} = $self->{driver}->new(%params);
-    if($self->{driver}->can('provide')) {
-        $self->{driver_delegated_methods} = { map {$_ => 1} $self->{driver}->provide };
-    }else {
-        $self->{driver_delegated_methods} = {};
-    }
     return $self;
 }
 
@@ -243,22 +238,6 @@ sub c {
             );
         },
     );
-}
-
-sub DESTROY {
-    ;
-}
-
-sub AUTOLOAD {
-    our $AUTOLOAD;
-    my $funcname = $AUTOLOAD;
-    my $self = $_[0];
-    $funcname =~ s/.*:://;
-    if(!defined($self) || !defined($self->{driver_delegated_methods}{$funcname})) {
-        croak(qq(Can't locate or delegate "$AUTOLOAD"));
-    }
-    shift @_;
-    return $self->{driver}->$funcname(@_);
 }
 
 1;

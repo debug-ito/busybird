@@ -19,10 +19,6 @@ sub new {
     return $self;
 }
 
-sub provide {
-    return qw(setTimeStamp);
-}
-
 sub _setParams {
     my ($self, $params_ref) = @_;
     $self->setParam($params_ref, 'new_interval', 1);

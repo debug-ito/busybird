@@ -27,7 +27,7 @@ SKIP: {
     my $result_status;
     time_within_ok sub {
         my $cv = shift;
-        $input->fetchStatus(
+        $input->getDriver->fetchStatus(
             '112652479837110273', sub {
                 $result_status = shift;
                 $cv->send();

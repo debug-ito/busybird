@@ -22,11 +22,6 @@ sub new {
     return $self;
 }
 
-sub provide {
-    my ($self) = @_;
-    return qw(fetchStatus);
-}
-
 sub _setParams {
     my ($self, $params_ref) = @_;
     $self->setParam($params_ref, 'worker', undef, 1);
