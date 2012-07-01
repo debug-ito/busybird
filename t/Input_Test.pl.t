@@ -71,14 +71,12 @@ sub createInput {
         note(sprintf("Trigger (interval => %s, count => %s, page_num => %s)",
                  @params{qw(new_interval new_count page_num)}));
         $cv->begin(); ## For OnGetStatuses event
+        push(@expect_queue, {count => $trigger_param{expect_count}, page_num => $trigger_param{expect_page_num}});
         $total_expect_fire++;
-        ## $cv->begin(); ## For the timer below
         my $timer; $timer = AnyEvent->timer(
             after => $TRIGGER_DELAY,
             cb => sub {
                 undef $timer;
-                ## $cv->end();
-                push(@expect_queue, {count => $trigger_param{expect_count}, page_num => $trigger_param{expect_page_num}});
                 $input->getStatuses();
             },
         );
