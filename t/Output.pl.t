@@ -52,7 +52,7 @@ sub pushStatusesSync {
 
 sub checkPagination {
     my ($output, $detail, @expected_ids) = @_;
-    my $got_statuses = $output->_getPagedStatuses(%$detail);
+    my $got_statuses = $output->getPagedStatuses(%$detail);
     ## my ($result_code, $result_ref, $mime) = $output->_replyAllStatuses($detail);
     my $detail_str = "";
     while(my ($key, $val) = each(%$detail)) {
@@ -267,17 +267,17 @@ sub main {
     }, 10;
     &checkStatusNum($output, 10, 0);
 
-    note('------ _confirm() should make new statuses old.');
-    $output->_confirm();
+    note('------ confirm() should make new statuses old.');
+    $output->confirm();
     &checkStatusNum($output, 0, 10);
     &pushStatusesSync($output, [&generateStatus()]) foreach (1..5);
     &checkStatusNum($output, 5, 10);
     &pushStatusesSync($output, [&generateStatus($_)]) foreach (1..5);
     &checkStatusNum($output, 5, 10);
 
-    note('------ _getPagedStatuses() pagination test.');
+    note('------ getPagedStatuses() pagination test.');
     &pushStatusesSync($output, [&generateStatus()]) foreach (1..55);
-    $output->_confirm();
+    $output->confirm();
     &pushStatusesSync($output, [&generateStatus()]) foreach (1..65);
     &checkStatusNum($output, 65, 70);
     
@@ -406,7 +406,7 @@ sub main {
         note('------ Test save and load status file');
         $output = new_ok('BusyBird::Output', [name => 'save_load_test']);
         &pushStatusesSync($output, [map {&generateStatus()} 1..20]);
-        $output->_confirm;
+        $output->confirm;
         &pushStatusesSync($output, [map {&generateStatus()} 1..10]);
         &checkStatusNum($output, 10, 20);
         my $filepath = $output->_getStatusesFilePath;
@@ -440,7 +440,7 @@ sub main {
         &checkStatusNum($output, 10, 0);
         &pushStatusesSync($output, [map {&generateStatus($_)} (10 .. 15)]);
         &checkStatusNum($output, 6, 0);
-        $output->_confirm();
+        $output->confirm();
         &checkStatusNum($output, 0, 6);
         &pushStatusesSync($output, [map {&generateStatus($_)} (13 .. 18)]);
         &checkStatusNum($output, 3, 3);

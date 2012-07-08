@@ -353,7 +353,7 @@ sub pushStatuses {
 
             ## ** TODO: implement Nagle algorithm, i.e., delay the complete event a little to accept more statuses.
             $self->_replyRequestNewStatuses();
-            $self->_confirm if $self->{auto_confirm};
+            $self->confirm if $self->{auto_confirm};
             $cb->($filtered_statuses) if defined($cb);
         }
     );
@@ -441,7 +441,7 @@ sub _requestPointNewStatuses {
 ##     return ($self->REPLIED, \$ret, "text/plain");
 ## }
 
-sub _confirm {
+sub confirm {
     my ($self) = @_;
     my $new_statuses = $self->{new_status_buffer}->get;
     $_->{busybird}{is_new} = 0 foreach @$new_statuses;
@@ -460,7 +460,7 @@ sub _confirm {
 sub _requestPointConfirm {
     my ($self) = @_;
     my $handler = sub {
-        $self->_confirm();
+        $self->confirm();
         return httpResSimple(200, "Confirm OK");
     };
     return ($self->_getPointNameForCommand('confirm'), $handler);
@@ -480,7 +480,7 @@ sub _requestPointMainPage {
 ##     return ($self->REPLIED, \$html, 'text/html');
 ## }
 
-sub _getPagedStatuses {
+sub getPagedStatuses {
     my ($self, %params) = @_;
     my $DEFAULT_PER_PAGE = 20;
     ## my $new_num = int(@{$self->{new_statuses}});
@@ -534,7 +534,7 @@ sub _requestPointAllStatuses {
     my $handler = sub {
         my ($request) = @_;
         my $detail = $request->parameters;
-        my $statuses = $self->_getPagedStatuses(%$detail);
+        my $statuses = $self->getPagedStatuses(%$detail);
         my $ret = BusyBird::Status->format($request->env->{'busybird.format'}, $statuses);
         if(!defined($ret)) {
             return httpResSimple(400, 'Unsupported format');
