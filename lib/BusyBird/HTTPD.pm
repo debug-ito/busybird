@@ -13,11 +13,6 @@ use Plack::Request;
 
 
 my $g_httpd_self = undef;
-my %g_httpd_params = (
-    bind_address => '127.0.0.1',
-    bind_port    => 8888,
-    static_root  => './resources/httpd/',
-);
 
 sub init {
     my ($class) = @_;
@@ -27,28 +22,27 @@ sub init {
     }, $class;
 }
 
-sub config {
-    my ($class, %params) = @_;
-    while(my ($key, $val) = each(%params)) {
-        $g_httpd_params{$key} = $val;
-    }
-}
+$g_httpd_self = __PACKAGE__->init();
 
 sub start {
-    my ($class) = @_;
+    my ($class, %params) = @_;
     if(!defined($g_httpd_self)) {
         croak 'Call init() before start()';
     }
     my $self = $g_httpd_self;
     $self->{backend} = Twiggy::Server->new(
-        host => $g_httpd_params{bind_address},
-        port => $g_httpd_params{bind_port},
+        host => $params{bind_address} || '127.0.0.1',
+        port => $params{bind_port} || 8888,
     );
-    $self->{backend}->register_service(builder {
+    my $app = builder {
         enable "Plack::Middleware::ContentLength";
-        enable "Plack::Middleware::Static", path => qr{^/static/}, root => $g_httpd_params{static_root};
-        $self->_createApp();
-    });
+        enable "Plack::Middleware::Static", path => qr{^/static/}, root => $params{static_root} || './resources/httpd/';
+        $self->_createApp()
+    };
+    if(defined($params{customize})) {
+        $app = $params{customize}->($app);
+    }
+    $self->{backend}->register_service($app);
 }
 
 sub addRequestPoints {
@@ -115,25 +109,6 @@ sub _createApp {
 sub instance {
     return $g_httpd_self;
 }
-
-## sub _addListeners {
-##     my ($self, @listeners) = @_;
-##     foreach my $listener (@listeners) {
-##         foreach my $point ($listener->getRequestPoints()) {
-##             $self->_addRequestPoint($point, $listener);
-##         }
-##     }
-## }
-## 
-## sub _addRequestPoint {
-##     my ($self, $point_name, $listener) = @_;
-##     if($self->_isPointDefined($point_name)) {
-##         die "Point $point_name is already defined.";
-##     }
-##     $self->{request_points}{$point_name} = {listener => $listener,
-##                                             requests => {}};
-##     &bblog("Register request point: $point_name");
-## }
 
 1;
 

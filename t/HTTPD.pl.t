@@ -41,7 +41,6 @@ if($OPT_WAITTIME > 0) {
     note('Wait indefinitely.');
 }
 
-BusyBird::HTTPD->init();
 BusyBird::HTTPD->start();
 {
     note('------ test format extraction');

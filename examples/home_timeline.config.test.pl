@@ -23,12 +23,9 @@ sub configBusyBird {
     my $output = BusyBird::Output->new(name => 'default');
     
 
-    BusyBird::HTTPD->init();
-    BusyBird::HTTPD->config(static_root => $script_dir . "/resources/httpd/");
-
     $t_timer->c($t_input)->c($output);
     $output->c(BusyBird::HTTPD->instance);
     
-    BusyBird::HTTPD->start();
+    BusyBird::HTTPD->start(static_root => $script_dir . "/resources/httpd/");
 }
 
