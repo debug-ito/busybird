@@ -1,9 +1,11 @@
+<!DOCTYPE html>
 <html>
   <? my %S = @_; ?>
   <head>
     <title><?= $S{name} ?> - BusyBird</title>
     <meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
     <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="/static/busybird.css" type="text/css" media="screen" />
     <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-responsive.min.css" type="text/css" media="screen" />
   </head>
   <body>
@@ -15,7 +17,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="#">Project name</a>
+          <a class="brand" href="#">BusyBird</a>
           <div class="nav-collapse">
             <ul class="nav">
               <li class="active"><a href="#">Home</a></li>
@@ -28,23 +30,22 @@
     </div>
 
     <div class="container">
-      <div id="global_header">
-      </div>
-      <div id="global_side">
-      </div>
-      <div id="side_container">
-      </div>
-      <div id="optional_container">
-      </div>
-      <div id="main_container">
-        <ul id="statuses">
-        </ul>
-        <div id="main_footer">
-          <button id="more_button" type="button" onclick="" >More...</button>
+      <div class="row">
+        <div class="span4">
+          place holder..
+        </div>
+        <div class="span6">
+          <ul id="statuses" class="unstyled">
+          </ul>
+          <div id="main_footer">
+            <button class="btn" id="more_button" type="button" onclick="" >More...</button>
+          </div>
         </div>
       </div>
-      <div id="footer">
-        Powered by <a href="http://twitter.github.com/bootstrap/">Bootstrap, from Twitter</a>
+      <div class="row">
+        <div class="span12">
+          Powered by <a href="http://twitter.github.com/bootstrap/">Bootstrap, from Twitter</a>
+        </div>
       </div>
     </div>
     
