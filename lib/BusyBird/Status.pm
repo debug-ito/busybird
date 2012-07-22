@@ -146,28 +146,25 @@ sub _XMLFormatEntities {
     );
 }
 
+sub convertForJSON {
+    my ($self) = @_;
+    my $clone = $self->clone();
+    $clone->_translateTreeNodes(
+        $clone,
+        'DateTime' => \&_datetimeFormatTwitter,
+    );
+    return {%$clone}; ## ** Unbless the hash object
+}
+
 my %FORMATTERS = (
     json => sub {
         my ($statuses_ref) = @_;
-        my @json_entries = ();
-        foreach my $status (@$statuses_ref) {
-            my $clone = $status->clone();
-            $clone->_translateTreeNodes(
-                ## $clone->content,
-                $clone,
-                'DateTime' => \&_datetimeFormatTwitter,
-            );
-            ## push(@json_entries, to_json($clone->content));
-            push(
-                @json_entries,
-                to_json(
-                    {%$clone},  ## ** Unbless the hash object
-                    {canonical => $FORMAT_JSON_SORTED,
-                     ascii => 1}
-                )
-            );
-        }
-        return '[' . join(",", @json_entries) . ']';
+        my @statuses_for_json = map { $_->convertForJSON } @$statuses_ref;
+        return to_json(
+            \@statuses_for_json,
+            {canonical => $FORMAT_JSON_SORTED,
+             ascii => 1}
+        );
     },
     xml => sub {
         my ($statuses_ref) = @_;
