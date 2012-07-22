@@ -106,6 +106,7 @@ sub loadStatuses {
     $self->{new_status_buffer}->clear->unshift(@new_temp);
     $self->{old_status_buffer}->clear->unshift(@old_temp);
     &bblog("Output " . $self->getName() . ": statuses are loaded from $filepath.");
+    $self->{selector}->trigger('new_statuses');
 }
 
 sub _syncFilter {
@@ -267,6 +268,7 @@ sub confirm {
     $_->{busybird}{is_new} = 0 foreach @$new_statuses;
     $self->{old_status_buffer}->unshift(@$new_statuses)->truncate;
     $self->{new_status_buffer}->clear;
+    $self->{selector}->trigger('new_statuses');
 }
 
 sub getPagedStatuses {
