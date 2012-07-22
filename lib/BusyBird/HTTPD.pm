@@ -9,6 +9,7 @@ use BusyBird::Log ('bblog');
 use BusyBird::HTTPD::PathMatcher;
 use BusyBird::HTTPD::Helper qw(httpResSimple);
 use BusyBird::Output;
+use BusyBird::Status::Buffer;
 
 use Twiggy::Server;
 use Plack::Builder;
@@ -93,8 +94,8 @@ sub addOutput {
                 $output->select(
                     sub {
                         my ($id, %res) = @_;
-                        my $statuses = $res{new_statuses};
-                        my $ret = BusyBird::Status->format($req->env->{'busybird.format'}, $statuses);
+                        my $status_buffer = $res{new_statuses};
+                        my $ret = BusyBird::Status->format($req->env->{'busybird.format'}, $status_buffer->get);
                         if(defined($ret)) {
                             $responder->(httpResSimple(
                                 200, \$ret, BusyBird::Status->mime($req->env->{'busybird.format'})
