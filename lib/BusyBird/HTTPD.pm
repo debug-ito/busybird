@@ -38,7 +38,7 @@ sub start {
     );
     my $app = builder {
         enable "Plack::Middleware::ContentLength";
-        enable "Plack::Middleware::Static", path => qr{^/static/}, root => $params{static_root} || './resources/httpd/';
+        enable "Plack::Middleware::Static", path => qr{^/static/}, root => $params{document_root} || './resources/httpd/';
         $self->_createApp()
     };
     if(defined($params{customize})) {
