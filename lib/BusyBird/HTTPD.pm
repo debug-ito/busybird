@@ -10,6 +10,7 @@ use BusyBird::HTTPD::PathMatcher;
 use BusyBird::HTTPD::Helper qw(httpResSimple);
 use BusyBird::Output;
 use BusyBird::Status::Buffer;
+use JSON;
 
 use Twiggy::Server;
 use Plack::Builder;
@@ -142,6 +143,27 @@ sub addOutput {
                 name => $output->getName(),
             );
             return httpResSimple(200, \$page, 'text/html');
+        }
+    );
+    $self->addRequestPoint(
+        '/' . $output->getName() . '/state', sub {
+            my $req = shift;
+            return sub {
+                my $responder = shift;
+                $output->select(
+                    sub {
+                        my ($id, %res) = @_;
+                        my $json_result = to_json(
+                            \%res, {ascii => 1, allow_blessed => 1, convert_blessed => 1}
+                        );
+                        $responder->(httpResSimple(
+                            200, \$json_result, 'application/json'
+                        ));
+                        return 1;
+                    },
+                    %{$req->query_parameters}
+                );
+            };
         }
     );
 }

@@ -113,7 +113,7 @@ sub loadStatuses {
     $self->{new_status_buffer}->clear->unshift(@new_temp);
     $self->{old_status_buffer}->clear->unshift(@old_temp);
     &bblog("Output " . $self->getName() . ": statuses are loaded from $filepath.");
-    $self->{selector}->trigger('new_statuses');
+    $self->{selector}->trigger(qw(new_statuses new_statuses_num));
 }
 
 sub _syncFilter {
@@ -256,7 +256,7 @@ sub pushStatuses {
             ## $self->_limitStatusQueueSize('new');
 
             ## ** TODO: implement Nagle algorithm, i.e., delay the complete event a little to accept more statuses.
-            $self->{selector}->trigger('new_statuses');
+            $self->{selector}->trigger(qw(new_statuses new_statuses_num));
             &bblog(sprintf("Output %s: triggered. Now %d selections.", $self->getName, int($self->{selector}->selections)));
             $self->confirm if $self->{auto_confirm};
             $cb->($filtered_statuses) if defined($cb);
@@ -275,7 +275,7 @@ sub confirm {
     $_->{busybird}{is_new} = 0 foreach @$new_statuses;
     $self->{old_status_buffer}->unshift(@$new_statuses)->truncate;
     $self->{new_status_buffer}->clear;
-    $self->{selector}->trigger('new_statuses');
+    $self->{selector}->trigger(qw(new_statuses new_statuses_num));
 }
 
 sub getPagedStatuses {
