@@ -29,12 +29,18 @@ sub _setParams {
     $g_next_serial_num++;
     $self->{fired_count} = -1;
     $self->{timestamp} = undef;
+    $self->{input_name} = 'UNKNOWN';
+    if(defined($params_ref->{busybird_input})) {
+        $self->{input_name} = $params_ref->{busybird_input}->getName();
+    }
+    
 }
 
 sub _newStatus {
     my ($self, $nowtime, $page, $index) = @_;
     my $timestr = $nowtime->strftime('%Y/%m/%d %H:%M:%S');
-    my $text = qq|{"time": "$timestr", "page": $page, "index": $index}|;
+    my $name = $self->{input_name};
+    my $text = qq|{"name": "$name", "time": "$timestr", "page": $page, "index": $index}|;
     my $status_id = 'Test' . $self->{serial_num} ."_"  . $nowtime->epoch . "_${page}_$index";
     my $status = BusyBird::Status->new(
         id => $status_id,
