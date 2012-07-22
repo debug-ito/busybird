@@ -150,7 +150,7 @@ sub addOutput {
             my $req = shift;
             return sub {
                 my $responder = shift;
-                $output->select(
+                my $select_ok = $output->select(
                     sub {
                         my ($id, %res) = @_;
                         my $json_result = to_json(
@@ -163,6 +163,12 @@ sub addOutput {
                     },
                     %{$req->query_parameters}
                 );
+                if(!$select_ok) {
+                    my $error_msg = 'You tried to get unknown resource state.';
+                    $responder->(httpResSimple(
+                        400, \$error_msg, 'text/plain'
+                    ));
+                }
             };
         }
     );

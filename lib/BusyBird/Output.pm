@@ -164,7 +164,13 @@ sub getName {
 
 sub select {
     my ($self, $callback, %selections) = @_;
+    return 0 if !%selections;
+    my %resource_names = map { $_ => 1 } $self->{selector}->resources;
+    foreach my $selected_resource (keys %selections) {
+        return 0 if not defined($resource_names{$selected_resource});
+    }
     $self->{selector}->select($callback, %selections);
+    return 1;
 }
 
 sub _isUniqueID {
