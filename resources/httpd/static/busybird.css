@@ -2,3 +2,45 @@ body {
     padding: 50px 0 0 0;
 }
 
+ul#statuses {
+    margin: 0;
+    padding: 5px 20px;
+    width: auto;
+}
+
+ul#statuses li {
+    border-width: 1px 0 0 0;
+    border-color: black;
+    border-style: solid;
+    margin: 2px 0;
+    padding: 3px 0 3px 3px;
+    list-style-type: none;
+}
+
+div.status_profile_image {
+    float: left;
+    text-align: center;
+    width: 48px;
+}
+
+div.status_main {
+    margin-left: 54px;
+}
+
+div.status_header {
+    border-width: 0 0 1px 0;
+    border-color: #999;
+    border-style: solid;
+    padding: 3px;
+}
+
+div.status_text {
+    padding: 8px;
+}
+
+span.status_created_at {
+    color: #333;
+    font-size: small;
+}
+
+

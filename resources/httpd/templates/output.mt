@@ -31,10 +31,10 @@
 
     <div class="container">
       <div class="row">
-        <div class="span4">
+        <div class="span2">
           place holder..
         </div>
-        <div class="span6">
+        <div class="span8">
           <ul id="statuses" class="unstyled">
           </ul>
           <div id="main_footer">

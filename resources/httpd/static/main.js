@@ -22,7 +22,7 @@ function bbLinkify(text) {
 }
 
 function bbFormatStatus(status) {
-    var ret = "<li>";
+    var ret = '<li>';
     ret += '<div class="status_profile_image"><img class="status_profile_image" src="'+ status.user.profile_image_url +'" width="48" height="48" /></div>';
     ret += '<div class="status_main">'
     ret += '  <div class="status_header">';
