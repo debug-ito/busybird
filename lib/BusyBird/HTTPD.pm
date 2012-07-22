@@ -166,7 +166,19 @@ sub _createApp {
             my @matched = $request_point->{matcher}->match($env->{'busybird.pathbody'});
             if(@matched) {
                 $env->{'busybird.matched'} = \@matched;
-                return $request_point->{listener}->(Plack::Request->new($env));
+                my $result = undef;
+                eval {
+                    $result = $request_point->{listener}->(Plack::Request->new($env));
+                };
+                if($@) {
+                    my $error = "$@";
+                    return [
+                        '500',
+                        ['Content-Type' => 'text/plain', 'Content-Length' => length($error)],
+                        ["Error:\n", $error]
+                    ];
+                }
+                return $result;
             }
         }
         my $result = sprintf("Not Found: path %s", $env->{PATH_INFO});
