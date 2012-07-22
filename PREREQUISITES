@@ -7,6 +7,7 @@ Net::Twitter
 Plack
 Twiggy::Server
 XML::Simple
+Text::MicroTemplate::Extended
 
 ## Core module
 Encode
