@@ -249,6 +249,7 @@ sub pushStatuses {
 
             ## ** TODO: implement Nagle algorithm, i.e., delay the complete event a little to accept more statuses.
             $self->{selector}->trigger('new_statuses');
+            &bblog(sprintf("Output %s: triggered. Now %d selections.", $self->getName, int($self->{selector}->selections)));
             $self->confirm if $self->{auto_confirm};
             $cb->($filtered_statuses) if defined($cb);
         }
