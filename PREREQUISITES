@@ -1,0 +1,24 @@
+## non-core module
+AnyEvent
+Async::Selector
+DateTime
+JSON
+Net::Twitter
+Plack
+Twiggy::Server
+XML::Simple
+
+## Core module
+Encode
+Carp
+Module::Load
+Exporter
+IO::File
+Storable
+Scalar::Util
+
+### Required in Test
+Test::AnyEvent::Time
+Test::Exception
+Test::More
+Test::SharedFork
