@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use JSON;
 
 BEGIN {
     use_ok('DateTime');
@@ -105,6 +106,24 @@ sub checkGotStatuses {
     checkGotStatuses($buf, undef, undef, reverse(1..30));
     $buf->truncate();
     checkGotStatuses($buf, undef, undef, reverse(21..30));
+}
+
+{
+    note("--- test JSONize");
+    my $buf = new_ok("BusyBird::Status::Buffer", [max_size => 200]);
+    $next_id = 1;
+    $buf->unshift(&createStatus($_, "val$_")) foreach 1..30;
+    my $json_text = to_json($buf, {ascii => 1, allow_blessed => 1, convert_blessed => 1});
+    my $decoded = from_json($json_text);
+    is(ref($decoded), "ARRAY", '$decoded is an arrayref');
+    is(int(@$decoded), 30, "... and has 30 items.");
+    foreach my $i (0 .. $#$decoded) {
+        my $status = $decoded->[$i];
+        my $exp_id = 30 - $i;
+        my $exp_val = "val$exp_id";
+        is($status->{id}, $exp_id, "Status index $i has ID $exp_id.");
+        is($status->{val}, $exp_val, "... and val $exp_val");
+    }
 }
 
 done_testing();

@@ -89,6 +89,11 @@ sub sort {
     $self->{buffer} = \@sorted_statuses;
     return $self;
 }
+
+sub TO_JSON {
+    my ($self) = @_;
+    return [ map {$_->convertForJSON} @{$self->{buffer}} ];
+}
     
 
 1;
