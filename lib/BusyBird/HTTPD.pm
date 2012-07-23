@@ -38,7 +38,7 @@ sub start {
     }
     my $self = $g_httpd_self;
     $self->{backend} = Twiggy::Server->new(
-        host => $params{bind_address} || '127.0.0.1',
+        host => exists($params{bind_address}) ? $params{bind_address}  : '127.0.0.1',
         port => $params{bind_port} || 8888,
     );
     $params{document_root} ||= DEFAULT_DOCUMENT_ROOT;
