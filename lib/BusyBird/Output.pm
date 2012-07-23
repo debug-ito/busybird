@@ -44,7 +44,7 @@ sub _initSelector {
         new_statuses => sub {
             my $in = shift;
             $in = int($in);
-            return $self->{new_status_buffer}->size > $in
+            return $self->{new_status_buffer}->size != $in
                 ? $self->{new_status_buffer}
                     : undef;
         },
