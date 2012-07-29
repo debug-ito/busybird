@@ -15,6 +15,7 @@ ul#statuses li {
     margin: 2px 0;
     padding: 3px 0 3px 3px;
     list-style-type: none;
+    min-height: 52px;
 }
 
 div.status_profile_image {
