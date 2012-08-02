@@ -50,9 +50,7 @@
     </div>
     
     <script type="text/javascript" src="/static/jquery.js"></script>
-    <script type="text/javascript"><!--
-    function bbGetOutputName() {return "<?= $S{name} ?>"}
---></script>
+    <script type="text/javascript" src="/static/jsdeferred.nodoc.js"></script>
     <script type="text/javascript" src="/static/main.js"></script>
     <script type="text/javascript" src="/static/bootstrap/js/bootstrap.min.js"></script>
   </body>

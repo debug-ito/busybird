@@ -150,6 +150,8 @@ sub addOutput {
             my $req = shift;
             return sub {
                 my $responder = shift;
+                my %selections = %{$req->query_parameters};
+                delete $selections{_}; ## jQuery automatically appends this.
                 my $select_ok = $output->select(
                     sub {
                         my ($id, %res) = @_;
@@ -161,7 +163,7 @@ sub addOutput {
                         ));
                         return 1;
                     },
-                    %{$req->query_parameters}
+                    %selections
                 );
                 if(!$select_ok) {
                     my $error_msg = 'You tried to get unknown resource state.';

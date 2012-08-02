@@ -1,10 +1,15 @@
+//// BusyBird main script
+//// Copyright (c) 2012 Toshio ITO
 
 var bb = {
     AJAXRETRY_ERROR_INTERVAL_MS: 60000,
-    ajaxRetry : function(ajax_param, callback) {
+    ajaxRetry : function(ajax_param) {
         var ajax_xhr = null;
         var ajax_retry_ok = true;
-        ajax_param.success = callback;
+        var deferred = new Deferred();
+        ajax_param.success = function(data, textStatus, jqXHR) {
+            deferred.call(data, textStatus, jqXHR);
+        };
         ajax_param.error = function(jqXHR, textStatus, errorThrown) {
             console.log("ajaxRetry: error: " + textStatus + ", errorThrown: " + errorThrown);
             ajax_xhr = null;
@@ -13,10 +18,11 @@ var bb = {
             }, bb.AJAXRETRY_ERROR_INTERVAL_MS);
         };
         ajax_xhr = $.ajax(ajax_param);
-        return function () {
+        deferred.canceller = function () {
             ajax_retry_ok = false;
             if(ajax_xhr != null) ajax_xhr.abort()
         };
+        return deferred;
     },
     
     linkify: function (text) {
@@ -38,11 +44,47 @@ var bb = {
         return ret;
     },
 
+    renderStatuses: function(statuses, is_prepend) {
+        var statuses_text = "";
+        for(var i = 0 ; i < statuses.length ; i++) {
+            statuses_text += bb.formatStatus(statuses[i]);
+        }
+        if(statuses.length > 0) {
+            if(is_prepend) {
+                $("#statuses").prepend(statuses_text);
+            }else {
+                $("#statuses").append(statuses_text);
+                $("#more_button").attr("onclick", 'bb.loadStatuses("all_statuses?max_id=' + statuses[statuses.length-1].id + '", false)');
+            }
+        }
+    },
+
+    loadStatuses: function (req_point, is_prepend) {
+        return bb.ajaxRetry({
+            url: req_point,
+            type: "GET",
+            cache: false,
+            dataType: "json",
+            timeout: 0
+        }).next(function (data, textStatus, jqXHR) {
+            bb.renderStatuses(data, is_prepend);
+        });
+    },
+
+    confirm: function() {
+        return bb.ajaxRetry({
+            url: "confirm",
+            type: "GET",
+            cache: false,
+            dataType: "text",
+            timeout: 0
+        });
+    }
 };
 
-function bbSelectionElement(name, resource_callback) {
+function bbSelectionElement(name, init_base, resource_callback) {
     this.name = name;
-    this.request_base = "_";
+    this.request_base = init_base;
     this.resource_callback = resource_callback;
     this.is_enabled = true;
 }
@@ -69,21 +111,21 @@ bbSelectionElement.prototype = {
 };
 
 function bbSelectionPoller() {
-    this.cur_aborter = null;
+    this.cur_deferred = null;
     this.elems = {};
 }
 bbSelectionPoller.prototype = {
     URL_BASE: "state",
 
     isRunning: function () {
-        return (this.cur_aborter != null);
+        return (this.cur_deferred != null);
     },
     
     execute: function () {
         var req_params = [];
         var self = this;
         if(self.isRunning()) {
-            self.cur_aborter();
+            self.cur_deferred.cancel();
         }
         for(var elemkey in self.elems) {
             if(!self.elems[elemkey].isEnabled()) continue;
@@ -93,19 +135,25 @@ bbSelectionPoller.prototype = {
         if(req_params.length > 0) {
             req_url += "?" + req_params.join("&");
         }
-        self.cur_aborter = 
-            bb.ajaxRetry({url: req_url, type: "GET", cache: false, dataType: "json", timeout: 0}, function(data, textStatus, jqXHR) {
+        self.cur_deferred = 
+            bb.ajaxRetry({url: req_url, type: "GET", cache: false, dataType: "json", timeout: 0})
+            .next(function (data, textStatus, jqXHR) {
+                var defers = [];
                 for(var key in data) {
                     if(key in self.elems) {
-                        self.elems[key].consumeResource(data[key]);
-                        // ** TODO: collect deferred objects.
+                        var d = self.elems[key].consumeResource(data[key]);
+                        if(d != null) defers.push(d);
                     }
                 }
-                // ** TODO: call execute() after all colleted deferreds are done
+                return Deferred.parallel(defers);
+            }).next(function () {
                 self.execute();
             });
     },
-    add: function (elem) {
+    add: function (name, init_base, resource_callback) {
+        this.addElem(new bbSelectionElement(name, init_base, resource_callback));
+    },
+    addElem: function (elem) {
         this.elems[elem.getName()] = elem;
         if(this.isRunning()) {
             this.execute();
@@ -113,42 +161,17 @@ bbSelectionPoller.prototype = {
     }
 };
 
-function bbCometConfirm() {
-    bb.ajaxRetry({url: "confirm",
-                  type: "GET",
-                  cache: false,
-                  dataType: "text",
-                  timeout: 0},
-                 function (data, textStatus, jqXHR) {
-                     bbCometLoadStatuses('new_statuses', true, true);
-                 });
-}
-
-function bbCometLoadStatuses (req_point, is_prepend, need_confirm) {
-    bb.ajaxRetry({url: req_point,
-                  type: "GET",
-                  cache: false,
-                  dataType: "json",
-                  timeout: 0},
-                 function (data, textStatus, jqXHR) {
-                     var i;
-                     var new_statuses_text = "";
-                     for(i = 0 ; i < data.length ; i++) {
-                         new_statuses_text += bb.formatStatus(data[i]);
-                     }
-                     if(data.length > 0) {
-                         if(is_prepend) {
-                             $("#statuses").prepend(new_statuses_text);
-                         }else {
-                             $("#statuses").append(new_statuses_text);
-                             $("#more_button").attr("onclick", 'bbCometLoadStatuses("all_statuses?max_id=' + data[data.length-1].id + '", false, false)');
-                         }
-                     }
-                     if(need_confirm) bbCometConfirm();
-                 });
-}
+var poller = new bbSelectionPoller();
+poller.add('new_statuses', 0, function(resource) {
+    bb.renderStatuses(resource, true);
+    return bb.confirm().wait(5);
+});
 
 $(document).ready(function () {
-    bbCometLoadStatuses('all_statuses', false, true);
+    bb.loadStatuses('all_statuses', false).next(function() {
+        return bb.confirm();
+    }).next(function () {
+        poller.execute();
+    });
 });
 
