@@ -135,11 +135,6 @@ sub addOutput {
         '/' . $output->getName() . '/index', sub {
             my $page = $self->{template_engine}->render(
                 'output',
-                global_header_height => '50px',
-                global_side_height => '200px',
-                side_width => '150px',
-                optional_width => '100px',
-                profile_image_section_width => '50px',
                 name => $output->getName(),
             );
             return httpResSimple(200, \$page, 'text/html');

@@ -37,7 +37,11 @@ var bb = {
 
     formatStatus: function (status) {
         var ret = '<li>';
-        ret += '<div class="status_profile_image"><img class="status_profile_image" src="'+ status.user.profile_image_url +'" width="48" height="48" /></div>';
+        var img_tag = "";
+        if(status.user.profile_image_url) {
+            img_tag = '<img class="status_profile_image" src="'+ status.user.profile_image_url +'" width="48" height="48" />';
+        }
+        ret += '<div class="status_profile_image">'+ img_tag +'</div>';
         ret += '<div class="status_main">'
         ret += '  <div class="status_header">';
         ret += '    <span class="status_user_name">' + status.user.screen_name + '</span>';
@@ -79,11 +83,19 @@ var bb = {
 
     confirm: function() {
         return bb.ajaxRetry({
-            url: "confirm",
+            url: "confirm.json",
             type: "GET",
             cache: false,
             dataType: "text",
             timeout: 0
+        });
+    }
+};
+
+var bbui = {
+    loadNewStatuses: function () {
+        bb.loadStatuses("new_statuses.json", true).next(function(){
+            return bb.confirm();
         });
     }
 };
@@ -107,6 +119,10 @@ bbSelectionElement.prototype = {
         return this.request_base;
     },
 
+    setRequestBase: function(base) {
+        this.request_base = base;
+    },
+
     setEnabled: function (val) {
         this.is_enabled = val;
     },
@@ -121,7 +137,7 @@ function bbSelectionPoller() {
     this.elems = {};
 }
 bbSelectionPoller.prototype = {
-    URL_BASE: "state",
+    URL_BASE: "state.json",
 
     isRunning: function () {
         return (this.cur_deferred != null);
@@ -168,13 +184,26 @@ bbSelectionPoller.prototype = {
 };
 
 var poller = new bbSelectionPoller();
-poller.add('new_statuses', 0, function(resource) {
-    bb.renderStatuses(resource, true);
-    return bb.confirm();
+// poller.add('new_statuses', 0, function(resource) {
+//     bb.renderStatuses(resource, true);
+//     return bb.confirm();
+// });
+poller.add('new_statuses_num', 0, function(resource) {
+    this.setRequestBase(resource);
+    $('.bb-new-status-num').text(resource);
+    if(resource > 0) {
+        $('.bb-new-status-loader-button')
+            .removeClass('disabled')
+            .prop('href', 'javascript: bbui.loadNewStatuses()');
+    }else {
+        $('.bb-new-status-loader-button')
+            .addClass('disabled')
+            .prop('href', "#");
+    }
 });
 
 $(document).ready(function () {
-    bb.loadStatuses('all_statuses', false).next(function() {
+    bb.loadStatuses('all_statuses.json', false).next(function() {
         return bb.confirm();
     }).next(function () {
         poller.execute();
