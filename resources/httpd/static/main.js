@@ -5,6 +5,9 @@ var bb = {
     AJAXRETRY_BACKOFF_INIT_MS : 500,
     AJAXRETRY_BACKOFF_FACTOR  : 2,
     AJAXRETRY_BACKOFF_MAX_MS  : 120000,
+
+    status_listeners : [],
+    
     ajaxRetry : function(ajax_param) {
         var ajax_xhr = null;
         var ajax_retry_ok = true;
@@ -77,7 +80,13 @@ var bb = {
             dataType: "json",
             timeout: 0
         }).next(function (data, textStatus, jqXHR) {
-            bb.renderStatuses(data, is_prepend);
+            // bb.renderStatuses(data, is_prepend);
+            var defers = [];
+            for(var i = 0 ; i < bb.status_listeners.length ; i++) {
+                var d = bb.status_listeners[i].consumeStatuses(data, is_prepend);
+                if(d != null) defers.push(d);
+            }
+            return Deferred.parallel(defers);
         });
     },
 
@@ -89,7 +98,11 @@ var bb = {
             dataType: "text",
             timeout: 0
         });
-    }
+    },
+
+    addStatusListener: function(name, listen_callback) {
+        bb.status_listeners.push(new bbStatusListener(name, listen_callback));
+    },
 };
 
 var bbui = {
@@ -182,6 +195,33 @@ bbSelectionPoller.prototype = {
         }
     }
 };
+
+function bbStatusListener(name, listener_callback) {
+    this.name = name;
+    this.header = null;
+    this.detail = null;
+    this.listener_callback = listener_callback;
+}
+bbStatusListener.prototype = {
+    consumeStatuses: function(statuses, is_prepend) {
+        return this.listener_callback(statuses, is_prepend);
+    },
+    getName: function () {
+        return this.name;
+    },
+    getHeader: function() {
+        return this.header;
+    },
+    getDetail: function() {
+        return this.detail;
+    },
+};
+
+bb.addStatusListener("renderer", function(statuses, is_prepend) {
+    console.log("renderer executed");
+    bb.renderStatuses(statuses, is_prepend);
+});
+
 
 var poller = new bbSelectionPoller();
 // poller.add('new_statuses', 0, function(resource) {
