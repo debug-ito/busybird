@@ -45,3 +45,38 @@ span.status_created_at {
 }
 
 
+
+/****
+  fixed sidebar
+  http://stackoverflow.com/questions/9350818/fixed-sidebar-navigation-in-fluid-twitter-bootstrap-2-0
+****/
+
+.sidebar-nav {
+    padding: 9px 0;
+}
+
+.sidebar-nav-fixed {
+    position:fixed;
+    top: 50px;
+    width: 14.7%;
+}
+
+.sidebar-detail {
+    max-height: 300px;
+    overflow: auto;
+}
+
+@media (max-width: 767px) {
+    .sidebar-nav-fixed {
+        position:static;
+        width:auto;
+    }
+}
+
+@media (max-width: 979px) {
+    .sidebar-nav-fixed {
+        top:70px;
+    }
+}
+
+
