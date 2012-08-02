@@ -67,7 +67,7 @@ var bb = {
                 $("#statuses").prepend(statuses_text);
             }else {
                 $("#statuses").append(statuses_text);
-                $("#more_button").attr("onclick", 'bb.loadStatuses("all_statuses?max_id=' + statuses[statuses.length-1].id + '", false)');
+                $("#more_button").attr("href", 'javascript: bbui.loadMoreStatuses("' + statuses[statuses.length-1].id + '")');
             }
         }
     },
@@ -80,7 +80,6 @@ var bb = {
             dataType: "json",
             timeout: 0
         }).next(function (data, textStatus, jqXHR) {
-            // bb.renderStatuses(data, is_prepend);
             var defers = [];
             for(var i = 0 ; i < bb.status_listeners.length ; i++) {
                 var d = bb.status_listeners[i].consumeStatuses(data, is_prepend);
@@ -110,7 +109,14 @@ var bbui = {
         bb.loadStatuses("new_statuses.json", true).next(function(){
             return bb.confirm();
         });
-    }
+        $(".bb-new-status-loader-button").addClass("disabled").removeAttr("href");
+    },
+    loadMoreStatuses: function (max_id) {
+        var more_button_selec = $("#more_button").removeAttr("href").button('loading');
+        bb.loadStatuses("all_statuses?max_id=" + max_id, false).next(function () {
+            more_button_selec.button('reset');
+        });
+    },
 };
 
 function bbSelectionElement(name, init_base, resource_callback) {
@@ -216,6 +222,12 @@ bbStatusListener.prototype = {
         return this.detail;
     },
 };
+
+// ** For test
+// bb.addStatusListener("wait", function(statuses, is_prepend) {
+//     console.log("before wait");
+//     return Deferred.wait(5).next(function() { console.log("after wait"); });
+// });
 
 bb.addStatusListener("renderer", function(statuses, is_prepend) {
     console.log("renderer executed");

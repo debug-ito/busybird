@@ -63,7 +63,7 @@
           <ul id="statuses" class="unstyled">
           </ul>
           <div id="main_footer">
-            <button class="btn" id="more_button" type="button" onclick="" >More...</button>
+            <a class="btn btn-primary" id="more_button" data-loading-text="Loading..." href="#">More...</a>
           </div>
         </div>
       </div>
