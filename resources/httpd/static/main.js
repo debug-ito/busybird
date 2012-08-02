@@ -2,20 +2,26 @@
 //// Copyright (c) 2012 Toshio ITO
 
 var bb = {
-    AJAXRETRY_ERROR_INTERVAL_MS: 60000,
+    AJAXRETRY_BACKOFF_INIT_MS : 500,
+    AJAXRETRY_BACKOFF_FACTOR  : 2,
+    AJAXRETRY_BACKOFF_MAX_MS  : 120000,
     ajaxRetry : function(ajax_param) {
         var ajax_xhr = null;
         var ajax_retry_ok = true;
+        var ajax_retry_backoff = bb.AJAXRETRY_BACKOFF_INIT_MS;
         var deferred = new Deferred();
         ajax_param.success = function(data, textStatus, jqXHR) {
             deferred.call(data, textStatus, jqXHR);
         };
         ajax_param.error = function(jqXHR, textStatus, errorThrown) {
-            console.log("ajaxRetry: error: " + textStatus + ", errorThrown: " + errorThrown);
             ajax_xhr = null;
+            ajax_retry_backoff *= bb.AJAXRETRY_BACKOFF_FACTOR;
+            if(ajax_retry_backoff > bb.AJAXRETRY_BACKOFF_MAX_MS) {
+                ajax_retry_backoff = bb.AJAXRETRY_BACKOFF_MAX_MS;
+            }
             setTimeout(function() {
                 if(ajax_retry_ok) ajax_xhr =  $.ajax(ajax_param);
-            }, bb.AJAXRETRY_ERROR_INTERVAL_MS);
+            }, ajax_retry_backoff);
         };
         ajax_xhr = $.ajax(ajax_param);
         deferred.canceller = function () {
@@ -164,7 +170,7 @@ bbSelectionPoller.prototype = {
 var poller = new bbSelectionPoller();
 poller.add('new_statuses', 0, function(resource) {
     bb.renderStatuses(resource, true);
-    return bb.confirm().wait(5);
+    return bb.confirm();
 });
 
 $(document).ready(function () {
