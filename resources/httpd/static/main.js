@@ -69,6 +69,7 @@ var bb = {
     AJAXRETRY_BACKOFF_MAX_MS  : 120000,
 
     status_hook: new bbStatusHook(),
+    display_level: 0,
 
     ajaxRetry : function(ajax_param) {
         var ajax_xhr = null;
@@ -101,8 +102,10 @@ var bb = {
     },
 
     formatStatus: function (status) {
-        var ret = '<li>';
         var img_tag = "";
+        var level = status.busybird.level;
+        if(!level) level = 0;
+        var ret = '<li busybird-level="'+ level +'">';
         if(status.user.profile_image_url) {
             img_tag = '<img class="status_profile_image" src="'+ status.user.profile_image_url +'" width="48" height="48" />';
         }
@@ -111,7 +114,7 @@ var bb = {
         ret += '  <div class="status_header">';
         ret += '    <span class="status_user_name">' + status.user.screen_name + '</span>';
         ret += '    <span class="status_created_at"> at '+ status.created_at + '</span>';
-        ret += '    <span>&nbsp;' + (status.busybird.is_new ? 'NEW' : 'OLD') + '</span>';
+        ret += '    <span>&nbsp;' + (status.busybird.is_new ? 'NEW' : 'OLD') + ', Lv.'+ level + '</span>';
         ret += '  </div>'
         ret += '  <div class="status_text">'+ this.linkify(status.text) + '</div>';
         ret += '</div>'
@@ -173,6 +176,33 @@ var bbui = {
         bb.loadStatuses("all_statuses?max_id=" + max_id, false).next(function () {
             more_button_selec.button('reset');
         });
+    },
+    changeDisplayLevel: function(amount) {
+        bb.display_level += amount;
+        $('.display-level').text(bb.display_level);
+        var invisible_num = 0;
+        var statuses_container = $('#statuses');
+        statuses_container.children().each(function(index, elem) {
+            if($(this).hasClass("hidden_status_header")) {
+                $(this).remove();
+                return true;
+            }
+            var entry_level = $(this).attr('busybird-level');
+            if(entry_level <= bb.display_level) {
+                $(this).css('display', 'block');
+                if(invisible_num > 0) {
+                    $(this).before('<li class="hidden_status_header">'+ invisible_num +' statuses hidden here.</li>');
+                    invisible_num = 0;
+                }
+            }else {
+                $(this).css('display', 'none');
+                invisible_num++;
+            }
+            return true;
+        });
+        if(invisible_num > 0) {
+            statuses_container.append('<li class="hidden_status_header">'+ invisible_num +' statuses hidden here.</li>');
+        }
     },
 };
 

@@ -1,4 +1,4 @@
-/*** 
+ 
 .status_container {
   margin: 5px 30px;
   width: 700px;
@@ -70,10 +70,9 @@ div#control_left {
     float: right;
 }
 
-***/
 
 /**********************************/
-
+/***
 div#global_header {
     background-color: black;
     position: fixed;
@@ -146,3 +145,4 @@ body {
     margin: 0;
 }
 
+***/
