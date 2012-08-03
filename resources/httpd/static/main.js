@@ -1,13 +1,51 @@
 //// BusyBird main script
 //// Copyright (c) 2012 Toshio ITO
 
+function bbStatusListener(name, listener_callback) {
+    this.name = name;
+    this.header = null;
+    this.detail = null;
+    this.listener_callback = listener_callback;
+}
+bbStatusListener.prototype = {
+    consumeStatuses: function(statuses, is_prepend) {
+        return this.listener_callback(statuses, is_prepend);
+    },
+    getName: function () {
+        return this.name;
+    },
+    getHeader: function() {
+        return this.header;
+    },
+    getDetail: function() {
+        return this.detail;
+    },
+};
+
+function bbStatusHook() {
+    this.status_listeners = [];
+}
+bbStatusHook.prototype = {
+    addListener: function(name, listener_callback) {
+        this.status_listeners.push(new bbStatusListener(name, listener_callback));
+    },
+    runHook: function(statuses, is_prepend) {
+        var defers = [];
+        for(var i = 0 ; i < this.status_listeners.length ; i++) {
+            var d = this.status_listeners[i].consumeStatuses(statuses, is_prepend);
+            if(d != null) defers.push(d);
+        }
+        return Deferred.parallel(defers);
+    }
+};
+
 var bb = {
     AJAXRETRY_BACKOFF_INIT_MS : 500,
     AJAXRETRY_BACKOFF_FACTOR  : 2,
     AJAXRETRY_BACKOFF_MAX_MS  : 120000,
 
-    status_listeners : [],
-    
+    status_hook: new bbStatusHook(),
+
     ajaxRetry : function(ajax_param) {
         var ajax_xhr = null;
         var ajax_retry_ok = true;
@@ -80,12 +118,7 @@ var bb = {
             dataType: "json",
             timeout: 0
         }).next(function (data, textStatus, jqXHR) {
-            var defers = [];
-            for(var i = 0 ; i < bb.status_listeners.length ; i++) {
-                var d = bb.status_listeners[i].consumeStatuses(data, is_prepend);
-                if(d != null) defers.push(d);
-            }
-            return Deferred.parallel(defers);
+            return bb.status_hook.runHook(data, is_prepend);
         });
     },
 
@@ -97,10 +130,6 @@ var bb = {
             dataType: "text",
             timeout: 0
         });
-    },
-
-    addStatusListener: function(name, listen_callback) {
-        bb.status_listeners.push(new bbStatusListener(name, listen_callback));
     },
 };
 
@@ -202,34 +231,13 @@ bbSelectionPoller.prototype = {
     }
 };
 
-function bbStatusListener(name, listener_callback) {
-    this.name = name;
-    this.header = null;
-    this.detail = null;
-    this.listener_callback = listener_callback;
-}
-bbStatusListener.prototype = {
-    consumeStatuses: function(statuses, is_prepend) {
-        return this.listener_callback(statuses, is_prepend);
-    },
-    getName: function () {
-        return this.name;
-    },
-    getHeader: function() {
-        return this.header;
-    },
-    getDetail: function() {
-        return this.detail;
-    },
-};
-
 // ** For test
-// bb.addStatusListener("wait", function(statuses, is_prepend) {
+// bb.status_hook.addListener("wait", function(statuses, is_prepend) {
 //     console.log("before wait");
 //     return Deferred.wait(5).next(function() { console.log("after wait"); });
 // });
 
-bb.addStatusListener("renderer", function(statuses, is_prepend) {
+bb.status_hook.addListener("renderer", function(statuses, is_prepend) {
     console.log("renderer executed");
     bb.renderStatuses(statuses, is_prepend);
 });
