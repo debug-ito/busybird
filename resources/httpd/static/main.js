@@ -277,6 +277,39 @@ bb.status_hook.addListener("num-of-new-statuses", function(statuses, is_prepend)
         this.header = '<span class="badge badge-info">'+ num_of_new + "</span> new status" + (num_of_new > 1 ? "es" : "") + ' loaded.';
     }
 });
+bb.status_hook.addListener("owner-of-new-statuses", function(statuses, is_prepend) {
+    var owner_count = {};
+    for(var i = 0 ; i < statuses.length ; i++) {
+        if(!statuses[i].busybird.is_new) continue;
+        var status = statuses[i];
+        if(!(status.user.screen_name in owner_count)) {
+            owner_count[status.user.screen_name] = {
+                "name": status.user.screen_name,
+                "image": status.user.profile_image_url,
+                "count": 0
+            };
+        }
+        owner_count[status.user.screen_name].count++;
+    }
+    var owner_array = [];
+    // ** Is there no equivalent to Perl's values() function in Javascript???
+    for(var key in owner_count) {
+        owner_array.push(owner_count[key]);
+    }
+    if(owner_array.length == 0) {
+        return;
+    }
+    owner_array.sort(function(a, b) {
+        return b.count - a.count;
+    });
+    this.header = '<span class="badge badge-info">' + owner_array.length + '</span> people tweeted.';
+    this.detail = "<ol>\n";
+    for(var i = 0 ; i < owner_array.length ; i++) {
+        this.detail += '<li>' + owner_array[i].name + ' : ' + owner_array[i].count + ' tweet'
+            + (owner_array[i].count > 1 ? "s" : "") + "</li>\n";
+    }
+    this.detail += "</ol>\n";
+});
 
 
 var poller = new bbSelectionPoller();
