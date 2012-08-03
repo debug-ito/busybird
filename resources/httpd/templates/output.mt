@@ -20,14 +20,19 @@
           <div class="navbar-form pull-left">
             <a class="btn btn-small btn-inverse disabled bb-new-status-loader-button" href="#">New <span class="bb-new-status-num badge">0</span></a>
           </div>
-          <ul class="nav pull-right">
-            <li><a><i class="icon-play icon-white"></i></a></li>
-            <li class="divider-vertical"></li>
-            <li><a><i class="icon-zoom-in icon-white"></i></a></li>
-            <li><a><i class="icon-zoom-out icon-white"></i></a></li>
-            <li class="divider-vertical"></li>
-            <li><a><i class="icon-pencil icon-white"></i></a></li>
-          </ul>
+          <div class="navbar-form pull-right">
+            <div class="btn-group pull-right">
+              <a class="btn btn-inverse"><i class="icon-pencil icon-white"></i></a>
+            </div>
+            <div class="btn-group pull-right">
+              <a class="btn btn-inverse"><i class="icon-zoom-in icon-white"></i></a>
+              <a class="btn btn-inverse"><i class="icon-zoom-out icon-white"></i></a>
+            </div>
+            <div class="btn-group pull-right" data-toggle="buttons-radio">
+              <a class="btn btn-inverse active"><i class="icon-pause icon-white"></i></a>
+              <a class="btn btn-inverse"><i class="icon-play icon-white"></i></a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
