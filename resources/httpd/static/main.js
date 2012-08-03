@@ -35,7 +35,31 @@ bbStatusHook.prototype = {
             var d = this.status_listeners[i].consumeStatuses(statuses, is_prepend);
             if(d != null) defers.push(d);
         }
-        return Deferred.parallel(defers);
+        var self = this;
+        return Deferred.parallel(defers).next(function() {
+            var sidebar_text = "";
+            console.log("start: runHook inner callback");
+            console.log("  " + self.status_listeners.length + " listeners.");
+            for(var i = 0 ; i < self.status_listeners.length ; i++) {
+                var name   = "sidebar-item-" + self.status_listeners[i].getName();
+                var header = self.status_listeners[i].getHeader();
+                var detail = self.status_listeners[i].getDetail();
+                console.log(i + "th hook: name: " + name);
+                if(header == null) continue;
+                console.log("  header: " + header);
+                sidebar_text += '<div class="accordion-group"><div class="accordion-heading">';
+                if(detail == null) {
+                    sidebar_text += '<span class="accordion-toggle">' + header + "</span></div></div>\n";
+                }else {
+                    sidebar_text += '<a class="accordion-toggle" data-toggle="collapse" data-parent="#sidebar" href="#'+name+'">'+header+"</a></div>\n";
+                    sidebar_text += '<div class="accordion-body collapse" id="'+name+'"><div class="accordion-inner sidebar-detail">'+"\n";
+                    sidebar_text += detail + "\n</div></div></div>\n";
+                }
+            }
+            console.log("before jquery: runHook inner callback");
+            $('#sidebar').html(sidebar_text);
+            console.log("end: runHook inner callback");
+        });
     }
 };
 
@@ -123,6 +147,7 @@ var bb = {
     },
 
     confirm: function() {
+        // console.log("start: confirm");
         return bb.ajaxRetry({
             url: "confirm.json",
             type: "GET",
@@ -130,6 +155,9 @@ var bb = {
             dataType: "text",
             timeout: 0
         });
+            // .next(function() {
+            //     console.log("end: confirm");
+            // });
     },
 };
 
@@ -238,8 +266,16 @@ bbSelectionPoller.prototype = {
 // });
 
 bb.status_hook.addListener("renderer", function(statuses, is_prepend) {
-    console.log("renderer executed");
     bb.renderStatuses(statuses, is_prepend);
+});
+bb.status_hook.addListener("num-of-new-statuses", function(statuses, is_prepend) {
+    var num_of_new = 0;
+    for(var i = 0 ; i < statuses.length ; i++) {
+        if(statuses[i].busybird.is_new) num_of_new++;
+    }
+    if(num_of_new > 0) {
+        this.header = '<span class="badge badge-info">'+ num_of_new + "</span> new status" + (num_of_new > 1 ? "es" : "") + ' loaded.';
+    }
 });
 
 
