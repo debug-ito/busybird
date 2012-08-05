@@ -127,6 +127,10 @@ var bb = {
         return ret;
     },
 
+    formatHiddenStatus: function (invisible_num) {
+        return '<li class="hidden-status-header">'+ invisible_num +' statuses hidden here.</li>';
+    },
+
     renderStatuses: function(statuses, is_prepend) {
         var statuses_text = "";
         for(var i = 0 ; i < statuses.length ; i++) {
@@ -187,17 +191,17 @@ var bbui = {
         $(".bb-new-status-loader-button").addClass("disabled").removeAttr("href");
     },
     loadMoreStatuses: function (max_id) {
-        var more_button_selec = $("#more-button").removeAttr("href").button('loading');
+        var $more_button_selec = $("#more-button").removeAttr("href").button('loading');
         bb.loadStatuses("all_statuses?max_id=" + max_id, false).next(function () {
-            more_button_selec.button('reset');
+            $more_button_selec.button('reset');
         });
     },
     changeDisplayLevel: function(amount) {
         bb.display_level += amount;
         $('.display-level').text(bb.display_level);
         var invisible_num = 0;
-        var statuses_container = $('#statuses');
-        statuses_container.children().each(function(index, elem) {
+        var $statuses_container = $('#statuses');
+        $statuses_container.children().each(function(index, elem) {
             if($(this).hasClass("hidden-status-header")) {
                 $(this).remove();
                 return true;
@@ -206,7 +210,7 @@ var bbui = {
             if(entry_level <= bb.display_level) {
                 $(this).css('display', 'block');
                 if(invisible_num > 0) {
-                    $(this).before('<li class="hidden-status-header">'+ invisible_num +' statuses hidden here.</li>');
+                    $(this).before(bb.formatHiddenStatus(invisible_num));
                     invisible_num = 0;
                 }
             }else {
@@ -216,7 +220,7 @@ var bbui = {
             return true;
         });
         if(invisible_num > 0) {
-            statuses_container.append('<li class="hidden-status-header">'+ invisible_num +' statuses hidden here.</li>');
+            $statuses_container.append(bb.formatHiddenStatus(invisible_num));
         }
     },
 };
