@@ -201,27 +201,32 @@ var bbui = {
         $('.display-level').text(bb.display_level);
         var invisible_num = 0;
         var $statuses_container = $('#statuses');
-        $statuses_container.children().each(function(index, elem) {
-            if($(this).hasClass("hidden-status-header")) {
-                $(this).remove();
-                return true;
-            }
+        var $visibles = $();
+        var $invisibles = $();
+        $statuses_container.children(".hidden-status-header").remove();
+        $statuses_container.children(".status-container").each(function(index, elem) {
             var entry_level = $(this).attr('busybird-level');
             if(entry_level <= bb.display_level) {
-                $(this).css('display', 'block');
+                // $(this).css('display', 'block');
+                $visibles = $visibles.add($(this));
                 if(invisible_num > 0) {
+                    // $visibles = $visibles.add($(bb.formatHiddenStatus(invisible_num)).insertBefore($(this)));
                     $(this).before(bb.formatHiddenStatus(invisible_num));
                     invisible_num = 0;
                 }
             }else {
-                $(this).css('display', 'none');
+                // $(this).css('display', 'none');
+                $invisibles = $invisibles.add($(this));
                 invisible_num++;
             }
             return true;
         });
         if(invisible_num > 0) {
+            // $visibles = $visibles.add($(bb.formatHiddenStatus(invisible_num)).appendTo($statuses_container));
             $statuses_container.append(bb.formatHiddenStatus(invisible_num));
         }
+        $visibles.slideDown();
+        $invisibles.slideUp();
     },
 };
 
