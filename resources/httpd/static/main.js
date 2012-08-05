@@ -70,7 +70,7 @@ var bb = {
 
     status_hook: new bbStatusHook(),
     display_level: 0,
-    cursor: null,
+    $cursor: null,
 
     ajaxRetry : function(ajax_param) {
         var ajax_xhr = null;
@@ -172,13 +172,13 @@ var bb = {
             // });
     },
 
-    setCursor: function (cur_obj) {
-        if(bb.cursor != null) {
-            bb.cursor.removeClass("bb-cursor");
+    setCursor: function ($cur_obj) {
+        if(bb.$cursor != null) {
+            bb.$cursor.removeClass("bb-cursor");
         }
-        bb.cursor = cur_obj;
-        if(bb.cursor != null) {
-            bb.cursor.addClass("bb-cursor");
+        bb.$cursor = $cur_obj;
+        if(bb.$cursor != null) {
+            bb.$cursor.addClass("bb-cursor");
         }
     },
 };
@@ -198,6 +198,8 @@ var bbui = {
     },
     changeDisplayLevel: function(amount) {
         bb.display_level += amount;
+        var $anchor_elem = bb.$cursor;
+        var rel_pos_anchor = $anchor_elem.offset().top - $(window).scrollTop();
         $('.display-level').text(bb.display_level);
         var invisible_num = 0;
         var $statuses_container = $('#statuses');
@@ -227,6 +229,10 @@ var bbui = {
         }
         $visibles.slideDown();
         $invisibles.slideUp();
+        $statuses_container.children(".status-container").promise().done(function() {
+            // anchor_elem.offsetTop - anchor_relpos
+            $(window).scrollTop($anchor_elem.offset().top - rel_pos_anchor);
+        });
     },
 };
 
