@@ -106,7 +106,7 @@ var bb = {
         var img_tag = "";
         var level = status.busybird.level;
         if(!level) level = 0;
-        var ret = '<li busybird-level="'+ level +'" onclick="bb.setCursor($(this));">';
+        var ret = '<li class="status-container" busybird-level="'+ level +'" onclick="bb.setCursor($(this));">';
         if(status.user.profile_image_url) {
             img_tag = '<img class="status-profile-image" src="'+ status.user.profile_image_url +'" width="48" height="48" />';
         }
@@ -378,7 +378,7 @@ poller.add('new_statuses_num', 0, function(resource) {
 
 $(document).ready(function () {
     bb.loadStatuses('all_statuses.json', false).next(function() {
-        bb.setCursor($('#statuses').children().first());
+        bb.setCursor($('#statuses > .status-container').first());
         return bb.confirm();
     }).next(function () {
         poller.execute();
