@@ -18,28 +18,28 @@ ul#statuses li {
     min-height: 52px;
 }
 
-div.status_profile_image {
+div.status-profile-image {
     float: left;
     text-align: center;
     width: 48px;
 }
 
-div.status_main {
+div.status-main {
     margin-left: 54px;
 }
 
-div.status_header {
+div.status-header {
     border-width: 0 0 1px 0;
     border-color: #999;
     border-style: solid;
     padding: 3px;
 }
 
-div.status_text {
+div.status-text {
     padding: 8px;
 }
 
-span.status_created_at {
+span.status-created-at {
     color: #333;
     font-size: small;
 }

@@ -107,16 +107,16 @@ var bb = {
         if(!level) level = 0;
         var ret = '<li busybird-level="'+ level +'">';
         if(status.user.profile_image_url) {
-            img_tag = '<img class="status_profile_image" src="'+ status.user.profile_image_url +'" width="48" height="48" />';
+            img_tag = '<img class="status-profile-image" src="'+ status.user.profile_image_url +'" width="48" height="48" />';
         }
-        ret += '<div class="status_profile_image">'+ img_tag +'</div>';
-        ret += '<div class="status_main">'
-        ret += '  <div class="status_header">';
-        ret += '    <span class="status_user_name">' + status.user.screen_name + '</span>';
-        ret += '    <span class="status_created_at"> at '+ status.created_at + '</span>';
+        ret += '<div class="status-profile-image">'+ img_tag +'</div>';
+        ret += '<div class="status-main">'
+        ret += '  <div class="status-header">';
+        ret += '    <span class="status-user-name">' + status.user.screen_name + '</span>';
+        ret += '    <span class="status-created-at"> at '+ status.created_at + '</span>';
         ret += '    <span>&nbsp;' + (status.busybird.is_new ? 'NEW' : 'OLD') + ', Lv.'+ level + '</span>';
         ret += '  </div>'
-        ret += '  <div class="status_text">'+ this.linkify(status.text) + '</div>';
+        ret += '  <div class="status-text">'+ this.linkify(status.text) + '</div>';
         ret += '</div>'
         ret += "</li>\n";
         return ret;
@@ -132,7 +132,7 @@ var bb = {
                 $("#statuses").prepend(statuses_text);
             }else {
                 $("#statuses").append(statuses_text);
-                $("#more_button").attr("href", 'javascript: bbui.loadMoreStatuses("' + statuses[statuses.length-1].id + '")');
+                $("#more-button").attr("href", 'javascript: bbui.loadMoreStatuses("' + statuses[statuses.length-1].id + '")');
             }
         }
     },
@@ -172,7 +172,7 @@ var bbui = {
         $(".bb-new-status-loader-button").addClass("disabled").removeAttr("href");
     },
     loadMoreStatuses: function (max_id) {
-        var more_button_selec = $("#more_button").removeAttr("href").button('loading');
+        var more_button_selec = $("#more-button").removeAttr("href").button('loading');
         bb.loadStatuses("all_statuses?max_id=" + max_id, false).next(function () {
             more_button_selec.button('reset');
         });
@@ -183,7 +183,7 @@ var bbui = {
         var invisible_num = 0;
         var statuses_container = $('#statuses');
         statuses_container.children().each(function(index, elem) {
-            if($(this).hasClass("hidden_status_header")) {
+            if($(this).hasClass("hidden-status-header")) {
                 $(this).remove();
                 return true;
             }
@@ -191,7 +191,7 @@ var bbui = {
             if(entry_level <= bb.display_level) {
                 $(this).css('display', 'block');
                 if(invisible_num > 0) {
-                    $(this).before('<li class="hidden_status_header">'+ invisible_num +' statuses hidden here.</li>');
+                    $(this).before('<li class="hidden-status-header">'+ invisible_num +' statuses hidden here.</li>');
                     invisible_num = 0;
                 }
             }else {
@@ -201,7 +201,7 @@ var bbui = {
             return true;
         });
         if(invisible_num > 0) {
-            statuses_container.append('<li class="hidden_status_header">'+ invisible_num +' statuses hidden here.</li>');
+            statuses_container.append('<li class="hidden-status-header">'+ invisible_num +' statuses hidden here.</li>');
         }
     },
 };

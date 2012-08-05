@@ -48,8 +48,8 @@
         <div class="span8">
           <ul id="statuses" class="unstyled">
           </ul>
-          <div id="main_footer">
-            <a class="btn btn-primary" id="more_button" data-loading-text="Loading..." href="#">More...</a>
+          <div id="main-footer">
+            <a class="btn btn-primary" id="more-button" data-loading-text="Loading..." href="#">More...</a>
           </div>
         </div>
       </div>
