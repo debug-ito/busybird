@@ -70,6 +70,7 @@ var bb = {
 
     status_hook: new bbStatusHook(),
     display_level: 0,
+    cursor: null,
 
     ajaxRetry : function(ajax_param) {
         var ajax_xhr = null;
@@ -105,7 +106,7 @@ var bb = {
         var img_tag = "";
         var level = status.busybird.level;
         if(!level) level = 0;
-        var ret = '<li busybird-level="'+ level +'">';
+        var ret = '<li busybird-level="'+ level +'" onclick="bb.setCursor($(this));">';
         if(status.user.profile_image_url) {
             img_tag = '<img class="status-profile-image" src="'+ status.user.profile_image_url +'" width="48" height="48" />';
         }
@@ -165,6 +166,16 @@ var bb = {
             // .next(function() {
             //     console.log("end: confirm");
             // });
+    },
+
+    setCursor: function (cur_obj) {
+        if(bb.cursor != null) {
+            bb.cursor.removeClass("bb-cursor");
+        }
+        bb.cursor = cur_obj;
+        if(bb.cursor != null) {
+            bb.cursor.addClass("bb-cursor");
+        }
     },
 };
 
@@ -367,9 +378,12 @@ poller.add('new_statuses_num', 0, function(resource) {
 
 $(document).ready(function () {
     bb.loadStatuses('all_statuses.json', false).next(function() {
+        bb.setCursor($('#statuses').children().first());
         return bb.confirm();
     }).next(function () {
         poller.execute();
+    }).error(function(e) {
+        console.log("ERROR!!! " + e);
     });
 });
 
