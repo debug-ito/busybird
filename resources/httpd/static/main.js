@@ -111,12 +111,16 @@ var bb = {
         }
         ret += '<div class="status-profile-image">'+ img_tag +'</div>';
         ret += '<div class="status-main">'
-        ret += '  <div class="status-header">';
-        ret += '    <span class="status-user-name">' + status.user.screen_name + '</span>';
-        ret += '    <span class="status-created-at"> at '+ status.created_at + '</span>';
-        ret += '    <span>&nbsp;' + (status.busybird.is_new ? 'NEW' : 'OLD') + ', Lv.'+ level + '</span>';
-        ret += '  </div>'
-        ret += '  <div class="status-text">'+ this.linkify(status.text) + '</div>';
+        ret +=   '<div class="status-header">';
+        ret +=     '<div class="status-attributes">';
+        ret +=       (status.busybird.is_new ? 'NEW' : 'OLD') + ', Lv.'+ level;
+        ret +=     '</div>';
+        ret +=     '<div class="status-user-name">';
+        ret +=       '<strong>' + status.user.screen_name + '</strong>&nbsp;&nbsp;';
+        ret +=       '<span class="status-created-at">'+ status.created_at + '</span>';
+        ret +=     '</div>';
+        ret +=   '</div>'
+        ret +=   '<div class="status-text">'+ this.linkify(status.text) + '</div>';
         ret += '</div>'
         ret += "</li>\n";
         return ret;

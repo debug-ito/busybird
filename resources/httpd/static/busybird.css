@@ -39,9 +39,14 @@ div.status-text {
     padding: 8px;
 }
 
-span.status-created-at {
+div.status-attributes {
+    float: right;
     color: #333;
-    font-size: small;
+    font-size: 80%;
+}
+
+span.status-created-at {
+    font-size: 80%;
 }
 
 
