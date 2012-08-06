@@ -193,6 +193,22 @@ var bb = {
             options
         );
     },
+
+    distanceElems: function ($elem_a, $elem_b) {
+        if($elem_a == null || $elem_b == null) return 0;
+        return Math.abs($elem_a.offset().top - $elem_b.offset().top);
+    },
+
+    distanceToWindow: function ($elem) {
+        var win_top = $(window).scrollTop();
+        var win_btm = win_top + $(window).height();
+        var elem_top = $elem.offset().top;
+        var elem_btm = elem_top + $elem.height();
+        var dist_top = win_top  - elem_top
+        var dist_btm = elem_btm - win_btm;
+        var signed_dist = (dist_top > dist_btm ? dist_top : dist_btm);
+        return (signed_dist > 0 ? signed_dist : 0);
+    }
 };
 
 var bbui = {
@@ -212,37 +228,69 @@ var bbui = {
         // var WINDOW_ADJUSTMENT_INTERVAL_MS = 50;
         // var ENSURE_END_ADJUST_WAIT_MS     = 5000;
         var ANIMATION_DURATION = 400;
+        var old_level = bb.display_level;
         bb.display_level += amount;
-        var $anchor_elem = bb.$cursor;
-        var rel_pos_anchor = $anchor_elem.offset().top - $(window).scrollTop();
         $('.display-level').text(bb.display_level);
+
+        $('.bbtest-anchor').removeClass('bbtest-anchor');
+        
+        var stayvisible_level = (bb.display_level > old_level ? old_level : bb.display_level);
+        var $anchor_elem = null;
+        var min_dist_win = 0;
+        var min_dist_cursor = 0;
+        
         var invisible_num = 0;
         var $statuses_container = $('#statuses');
         var $visibles = $();
         var $invisibles = $();
-        $statuses_container.children(".hidden-status-header").remove();
+        var inserts = [];
         $statuses_container.children(".status-container").each(function(index, elem) {
             var entry_level = $(this).attr('busybird-level');
+            if(entry_level <= stayvisible_level) {
+                // ** search for anchor element
+                var this_dist_win = bb.distanceToWindow($(this));
+                var this_dist_cursor = bb.distanceElems(bb.$cursor, $(this));
+                if(($anchor_elem == null)
+                   || (this_dist_win < min_dist_win)
+                   || (this_dist_win == min_dist_win && this_dist_cursor < min_dist_cursor)) {
+                    $anchor_elem = $(this);
+                    min_dist_win = this_dist_win;
+                    min_dist_cursor = this_dist_cursor;
+                }
+            }
             if(entry_level <= bb.display_level) {
-                // $(this).css('display', 'block');
+                // ** Collect visible elements
                 $visibles = $visibles.add($(this));
                 if(invisible_num > 0) {
                     // $visibles = $visibles.add($(bb.formatHiddenStatus(invisible_num)).insertBefore($(this)));
-                    $(this).before(bb.formatHiddenStatus(invisible_num));
+                    // $(this).before(bb.formatHiddenStatus(invisible_num));
+                    inserts.push({"$pos_elem": $(this), "num": invisible_num});
                     invisible_num = 0;
                 }
             }else {
+                // ** Collect invisible elements
                 // $(this).css('display', 'none');
                 $invisibles = $invisibles.add($(this));
                 invisible_num++;
             }
             return true;
         });
+        var window_adjuster = null;
+        if($anchor_elem != null) {
+            $anchor_elem.addClass('bbtest-anchor');
+            var relative_position_of_anchor = $anchor_elem.offset().top - $(window).scrollTop();
+            window_adjuster = function() {
+                $(window).scrollTop($anchor_elem.offset().top - relative_position_of_anchor);
+            };
+        }
+        $statuses_container.children(".hidden-status-header").remove();
+        for(var i = 0 ; i < inserts.length ; i++) {
+            inserts[i].$pos_elem.before(bb.formatHiddenStatus(inserts[i].num));
+        }
         if(invisible_num > 0) {
             // $visibles = $visibles.add($(bb.formatHiddenStatus(invisible_num)).appendTo($statuses_container));
             $statuses_container.append(bb.formatHiddenStatus(invisible_num));
         }
-        var window_adjuster = function() { $(window).scrollTop($anchor_elem.offset().top - rel_pos_anchor); };
         var options = {
             duration: ANIMATION_DURATION,
             step: window_adjuster,

@@ -95,4 +95,8 @@ span.status-created-at {
     height: 100%;
 }
 
+ul#statuses li.bbtest-anchor {
+    border: 3px solid red;
+}
+
 
