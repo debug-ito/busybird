@@ -284,6 +284,7 @@ var bbui = {
             };
         }
         $statuses_container.children(".hidden-status-header").remove();
+        if(window_adjuster) window_adjuster();
         for(var i = 0 ; i < inserts.length ; i++) {
             inserts[i].$pos_elem.before(bb.formatHiddenStatus(inserts[i].num));
         }
@@ -299,19 +300,6 @@ var bbui = {
         };
         bb.detailedSlide($visibles, "show", options);
         bb.detailedSlide($invisibles, "hide", options);
-        // $visibles.slideDown();
-        // $invisibles.slideUp();
-        // var window_adjustment = setInterval(function() {
-        //     $(window).scrollTop($anchor_elem.offset().top - rel_pos_anchor);
-        // }, WINDOW_ADJUSTMENT_INTERVAL_MS);
-        // var ensure_end_adjust = setTimeout(function() {
-        //     clearInterval(window_adjustment);
-        // }, ENSURE_END_ADJUST_WAIT_MS);
-        // $statuses_container.children(".status-container").promise().done(function() {
-        //     clearInterval(window_adjustment);
-        //     clearTimeout(ensure_end_adjust);
-        //     $(window).scrollTop($anchor_elem.offset().top - rel_pos_anchor);
-        // });
     },
 };
 
