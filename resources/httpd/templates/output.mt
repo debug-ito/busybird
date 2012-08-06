@@ -25,8 +25,8 @@
               <a class="btn btn-inverse"><i class="icon-pencil icon-white"></i></a>
             </div>
             <div class="btn-group pull-right">
-              <a class="btn btn-inverse" href="javascript: bbui.changeDisplayLevel(+1);"><i class="icon-zoom-in icon-white"></i></a>
-              <a class="btn btn-inverse" href="javascript: bbui.changeDisplayLevel(-1);"><i class="icon-zoom-out icon-white"></i></a>
+              <a class="btn btn-inverse" href="javascript: bbui.incrimentDisplayLevel();"><i class="icon-zoom-in icon-white"></i></a>
+              <a class="btn btn-inverse" href="javascript: bbui.decrimentDisplayLevel();"><i class="icon-zoom-out icon-white"></i></a>
               <span class="label bb-nav-text pull-right">Lv. <span class="display-level">0</span></span>
             </div>
             

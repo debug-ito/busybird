@@ -67,6 +67,7 @@ var bb = {
     AJAXRETRY_BACKOFF_INIT_MS : 500,
     AJAXRETRY_BACKOFF_FACTOR  : 2,
     AJAXRETRY_BACKOFF_MAX_MS  : 120000,
+    LEVEL_ANIMATION_DURATION  : 400,
 
     status_hook: new bbStatusHook(),
     display_level: 0,
@@ -222,28 +223,17 @@ var bb = {
         var dist_btm = elem_btm - win_btm;
         var signed_dist = (dist_top > dist_btm ? dist_top : dist_btm);
         return (signed_dist > 0 ? signed_dist : 0);
-    }
-};
+    },
 
-var bbui = {
-    loadNewStatuses: function () {
-        bb.loadStatuses("new_statuses.json", true).next(function(){
-            return bb.confirm();
-        });
-        $(".bb-new-status-loader-button").addClass("disabled").removeAttr("href");
-    },
-    loadMoreStatuses: function () {
-        var $more_button_selec = $("#more-button").removeAttr("href").button('loading');
-        bb.loadStatusesWithMaxID(null).next(function() {
-            $more_button_selec.attr("href", 'javascript: bbui.loadMoreStatuses();').button('reset');
-        });
-    },
-    changeDisplayLevel: function(amount) {
-        // var WINDOW_ADJUSTMENT_INTERVAL_MS = 50;
-        // var ENSURE_END_ADJUST_WAIT_MS     = 5000;
-        var ANIMATION_DURATION = 400;
+    changeDisplayLevel: function(change_level, is_relative) {
         var old_level = bb.display_level;
-        bb.display_level += amount;
+        if(change_level != null) {
+            if(is_relative) {
+                bb.display_level += change_level;
+            }else {
+                bb.display_level = change_level;
+            }
+        }
         $('.display-level').text(bb.display_level);
 
         $('.bbtest-anchor').removeClass('bbtest-anchor');
@@ -308,13 +298,34 @@ var bbui = {
         }
         if(window_adjuster) window_adjuster();
         var options = {
-            duration: ANIMATION_DURATION,
+            duration: bb.LEVEL_ANIMATION_DURATION,
             step: window_adjuster,
             complete: window_adjuster
         };
         bb.detailedSlide($visibles, "show", options);
         bb.detailedSlide($invisibles, "hide", options);
+    }
+};
+
+var bbui = {
+    loadNewStatuses: function () {
+        bb.loadStatuses("new_statuses.json", true).next(function(){
+            return bb.confirm();
+        });
+        $(".bb-new-status-loader-button").addClass("disabled").removeAttr("href");
     },
+    loadMoreStatuses: function () {
+        var $more_button_selec = $("#more-button").removeAttr("href").button('loading');
+        bb.loadStatusesWithMaxID(null).next(function() {
+            $more_button_selec.attr("href", 'javascript: bbui.loadMoreStatuses();').button('reset');
+        });
+    },
+    incrimentDisplayLevel: function() {
+        bb.changeDisplayLevel(+1, true);
+    },
+    decrimentDisplayLevel: function() {
+        bb.changeDisplayLevel(-1, true);
+    }
 };
 
 function bbSelectionElement(name, init_base, resource_callback) {
