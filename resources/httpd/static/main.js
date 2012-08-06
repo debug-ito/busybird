@@ -181,6 +181,18 @@ var bb = {
             bb.$cursor.addClass("bb-cursor");
         }
     },
+
+    detailedSlide: function($selection, target, options) {
+        $selection.animate(
+            { "height": target,
+              "marginTop": target,
+              "marginBottom": target,
+              "paddingTop": target,
+              "paddingBottom": target
+            },
+            options
+        );
+    },
 };
 
 var bbui = {
@@ -197,6 +209,9 @@ var bbui = {
         });
     },
     changeDisplayLevel: function(amount) {
+        // var WINDOW_ADJUSTMENT_INTERVAL_MS = 50;
+        // var ENSURE_END_ADJUST_WAIT_MS     = 5000;
+        var ANIMATION_DURATION = 400;
         bb.display_level += amount;
         var $anchor_elem = bb.$cursor;
         var rel_pos_anchor = $anchor_elem.offset().top - $(window).scrollTop();
@@ -227,12 +242,27 @@ var bbui = {
             // $visibles = $visibles.add($(bb.formatHiddenStatus(invisible_num)).appendTo($statuses_container));
             $statuses_container.append(bb.formatHiddenStatus(invisible_num));
         }
-        $visibles.slideDown();
-        $invisibles.slideUp();
-        $statuses_container.children(".status-container").promise().done(function() {
-            // anchor_elem.offsetTop - anchor_relpos
-            $(window).scrollTop($anchor_elem.offset().top - rel_pos_anchor);
-        });
+        var window_adjuster = function() { $(window).scrollTop($anchor_elem.offset().top - rel_pos_anchor); };
+        var options = {
+            duration: ANIMATION_DURATION,
+            step: window_adjuster,
+            complete: window_adjuster
+        };
+        bb.detailedSlide($visibles, "show", options);
+        bb.detailedSlide($invisibles, "hide", options);
+        // $visibles.slideDown();
+        // $invisibles.slideUp();
+        // var window_adjustment = setInterval(function() {
+        //     $(window).scrollTop($anchor_elem.offset().top - rel_pos_anchor);
+        // }, WINDOW_ADJUSTMENT_INTERVAL_MS);
+        // var ensure_end_adjust = setTimeout(function() {
+        //     clearInterval(window_adjustment);
+        // }, ENSURE_END_ADJUST_WAIT_MS);
+        // $statuses_container.children(".status-container").promise().done(function() {
+        //     clearInterval(window_adjustment);
+        //     clearTimeout(ensure_end_adjust);
+        //     $(window).scrollTop($anchor_elem.offset().top - rel_pos_anchor);
+        // });
     },
 };
 
