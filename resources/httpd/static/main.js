@@ -117,7 +117,8 @@ var bb = {
         ret += '<div class="status-main">'
         ret +=   '<div class="status-header">';
         ret +=     '<div class="status-attributes">';
-        ret +=       (status.busybird.is_new ? 'NEW' : 'OLD') + ', Lv.'+ level;
+        ret +=       (status.busybird.is_new ? '<span class="label label-success bb-status-is-new">NEW</span>&nbsp;' : '');
+        ret +=       '<span class="label">Lv.'+ level + '</span>';
         ret +=     '</div>';
         ret +=     '<div class="status-user-name">';
         ret +=       '<strong>' + status.user.screen_name + '</strong>&nbsp;&nbsp;';
@@ -136,6 +137,7 @@ var bb = {
 
     renderStatuses: function(statuses, is_prepend) {
         var statuses_text = "";
+        var $statuses = $("#statuses");
         for(var i = 0 ; i < statuses.length ; i++) {
             if(statuses[i].id == bb.more_status_max_id) {
                 continue;
@@ -144,9 +146,10 @@ var bb = {
         }
         if(statuses.length > 0) {
             if(is_prepend) {
-                $("#statuses").prepend(statuses_text);
+                $statuses.find(".bb-status-is-new").remove();
+                $statuses.prepend(statuses_text);
             }else {
-                $("#statuses").append(statuses_text);
+                $statuses.append(statuses_text);
                 // $("#more-button").attr("href", 'javascript: bbui.loadMoreStatuses("' + statuses[statuses.length-1].id + '")');
                 bb.more_status_max_id = statuses[statuses.length-1].id;
             }
