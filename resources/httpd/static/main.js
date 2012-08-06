@@ -236,14 +236,14 @@ var bb = {
                 bb.display_level = change_level;
             }
         }
+        var stayvisible_level = (bb.display_level > old_level ? old_level : bb.display_level);
+        
         $('.display-level').text(bb.display_level);
-
         $('.bbtest-anchor').removeClass('bbtest-anchor');
         
-        var stayvisible_level = (bb.display_level > old_level ? old_level : bb.display_level);
         var $anchor_elem = null;
         var min_dist_win = 0;
-        var min_dist_cursor = null;
+        var min_dist_cursor = 0;
         
         var invisible_num = 0;
         var $statuses_container = $('#statuses');
@@ -257,15 +257,13 @@ var bb = {
             if(entry_level <= stayvisible_level && $this.css('display') != "none") {
                 // ** search for anchor element
                 var this_dist_win = bb.distanceToWindow($this);
-                if(($anchor_elem == null) || (this_dist_win < min_dist_win)) {
+                var this_dist_cursor = bb.distanceElems(bb.$cursor, $this);
+                if(($anchor_elem == null)
+                   || (this_dist_win < min_dist_win)
+                   || (this_dist_win == min_dist_win && this_dist_cursor < min_dist_cursor)) {
                     $anchor_elem = $this;
                     min_dist_win = this_dist_win;
-                }else if(this_dist_win == min_dist_win) {
-                    var this_dist_cursor = bb.distanceElems(bb.$cursor, $this);
-                    if(min_dist_cursor == null || this_dist_cursor < min_dist_cursor) {
-                        $anchor_elem = $this;
-                        min_dist_cursor = this_dist_cursor;
-                    }
+                    min_dist_cursor = this_dist_cursor;
                 }
             }
             if(entry_level <= bb.display_level) {
@@ -296,7 +294,6 @@ var bb = {
             inserts[i].$pos_elem.before(bb.formatHiddenStatus(inserts[i].num));
         }
         if(invisible_num > 0) {
-            // $visibles = $visibles.add($(bb.formatHiddenStatus(invisible_num)).appendTo($statuses_container));
             $statuses_container.append(bb.formatHiddenStatus(invisible_num));
         }
         if(window_adjuster) window_adjuster();
@@ -304,7 +301,11 @@ var bb = {
         if(no_animation) $.fx.off = true;
         var options = {
             duration: bb.LEVEL_ANIMATION_DURATION,
-            step: (no_animation ? null : window_adjuster)
+            // step: (no_animation ? null : window_adjuster)
+            step: function(now, fx) {
+                if(fx.prop != "height") return;
+                if(!no_animation && window_adjuster) window_adjuster();
+            }
             // complete: window_adjuster
         };
         bb.detailedSlide($visibles, "show", options);
