@@ -104,11 +104,12 @@ var bb = {
         return text.replace(/(https?:\/\/[^ \r\n\t　]+)/g, "<a href=\"$1\">$1</a>");
     },
 
-    formatStatus: function (status) {
+    formatStatus: function (status, show_by_default) {
         var img_tag = "";
         var level = status.busybird.level;
         if(!level) level = 0;
-        var ret = '<li class="status-container" busybird-level="'+ level +'" onclick="bb.setCursor($(this));">';
+        var style_display = (show_by_default ? "" : 'style="display: none"');
+        var ret = '<li class="status-container" '+ style_display +' busybird-level="'+ level +'" onclick="bb.setCursor($(this));">';
         if(status.user.profile_image_url) {
             img_tag = '<img class="status-profile-image" src="'+ status.user.profile_image_url +'" width="48" height="48" />';
         }
@@ -150,6 +151,7 @@ var bb = {
                 bb.more_status_max_id = statuses[statuses.length-1].id;
             }
         }
+        bb.changeDisplayLevel(0, true, true);
     },
 
     loadStatuses: function (req_point, is_prepend) {
@@ -225,7 +227,7 @@ var bb = {
         return (signed_dist > 0 ? signed_dist : 0);
     },
 
-    changeDisplayLevel: function(change_level, is_relative) {
+    changeDisplayLevel: function(change_level, is_relative, no_animation) {
         var old_level = bb.display_level;
         if(change_level != null) {
             if(is_relative) {
@@ -241,40 +243,41 @@ var bb = {
         var stayvisible_level = (bb.display_level > old_level ? old_level : bb.display_level);
         var $anchor_elem = null;
         var min_dist_win = 0;
-        var min_dist_cursor = 0;
+        var min_dist_cursor = null;
         
         var invisible_num = 0;
         var $statuses_container = $('#statuses');
+        var $status_entries = $statuses_container.children(".status-container");
         var $visibles = $();
         var $invisibles = $();
         var inserts = [];
-        $statuses_container.children(".status-container").each(function(index, elem) {
-            var entry_level = $(this).attr('busybird-level');
-            if(entry_level <= stayvisible_level) {
+        $status_entries.each(function(index, elem) {
+            var $this = $(this);
+            var entry_level = $this.attr('busybird-level');
+            if(entry_level <= stayvisible_level && $this.css('display') != "none") {
                 // ** search for anchor element
-                var this_dist_win = bb.distanceToWindow($(this));
-                var this_dist_cursor = bb.distanceElems(bb.$cursor, $(this));
-                if(($anchor_elem == null)
-                   || (this_dist_win < min_dist_win)
-                   || (this_dist_win == min_dist_win && this_dist_cursor < min_dist_cursor)) {
-                    $anchor_elem = $(this);
+                var this_dist_win = bb.distanceToWindow($this);
+                if(($anchor_elem == null) || (this_dist_win < min_dist_win)) {
+                    $anchor_elem = $this;
                     min_dist_win = this_dist_win;
-                    min_dist_cursor = this_dist_cursor;
+                }else if(this_dist_win == min_dist_win) {
+                    var this_dist_cursor = bb.distanceElems(bb.$cursor, $this);
+                    if(min_dist_cursor == null || this_dist_cursor < min_dist_cursor) {
+                        $anchor_elem = $this;
+                        min_dist_cursor = this_dist_cursor;
+                    }
                 }
             }
             if(entry_level <= bb.display_level) {
                 // ** Collect visible elements
-                $visibles = $visibles.add($(this));
+                $visibles = $visibles.add($this);
                 if(invisible_num > 0) {
-                    // $visibles = $visibles.add($(bb.formatHiddenStatus(invisible_num)).insertBefore($(this)));
-                    // $(this).before(bb.formatHiddenStatus(invisible_num));
-                    inserts.push({"$pos_elem": $(this), "num": invisible_num});
+                    inserts.push({"$pos_elem": $this, "num": invisible_num});
                     invisible_num = 0;
                 }
             }else {
                 // ** Collect invisible elements
-                // $(this).css('display', 'none');
-                $invisibles = $invisibles.add($(this));
+                $invisibles = $invisibles.add($this);
                 invisible_num++;
             }
             return true;
@@ -297,13 +300,17 @@ var bb = {
             $statuses_container.append(bb.formatHiddenStatus(invisible_num));
         }
         if(window_adjuster) window_adjuster();
+        var old_fx = $.fx.off;
+        if(no_animation) $.fx.off = true;
         var options = {
             duration: bb.LEVEL_ANIMATION_DURATION,
-            step: window_adjuster,
-            complete: window_adjuster
+            step: (no_animation ? null : window_adjuster)
+            // complete: window_adjuster
         };
         bb.detailedSlide($visibles, "show", options);
         bb.detailedSlide($invisibles, "hide", options);
+        $status_entries.promise().done(window_adjuster);
+        $.fx.off = old_fx;
     }
 };
 
