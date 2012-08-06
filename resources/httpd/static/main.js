@@ -71,6 +71,7 @@ var bb = {
     status_hook: new bbStatusHook(),
     display_level: 0,
     $cursor: null,
+    more_status_max_id: null,
 
     ajaxRetry : function(ajax_param) {
         var ajax_xhr = null;
@@ -134,6 +135,9 @@ var bb = {
     renderStatuses: function(statuses, is_prepend) {
         var statuses_text = "";
         for(var i = 0 ; i < statuses.length ; i++) {
+            if(statuses[i].id == bb.more_status_max_id) {
+                continue;
+            }
             statuses_text += bb.formatStatus(statuses[i]);
         }
         if(statuses.length > 0) {
@@ -141,7 +145,8 @@ var bb = {
                 $("#statuses").prepend(statuses_text);
             }else {
                 $("#statuses").append(statuses_text);
-                $("#more-button").attr("href", 'javascript: bbui.loadMoreStatuses("' + statuses[statuses.length-1].id + '")');
+                // $("#more-button").attr("href", 'javascript: bbui.loadMoreStatuses("' + statuses[statuses.length-1].id + '")');
+                bb.more_status_max_id = statuses[statuses.length-1].id;
             }
         }
     },
@@ -156,6 +161,15 @@ var bb = {
         }).next(function (data, textStatus, jqXHR) {
             return bb.status_hook.runHook(data, is_prepend);
         });
+    },
+
+    loadStatusesWithMaxID: function(max_id) {
+        if(max_id == null) max_id = bb.more_status_max_id;
+        if(max_id == null) {
+            console.log("ERROR: bb.loadWithMaxID: max_id is null.");
+            return Deferred.next();
+        }
+        return bb.loadStatuses("all_statuses?max_id=" + max_id, false);
     },
 
     confirm: function() {
@@ -218,10 +232,10 @@ var bbui = {
         });
         $(".bb-new-status-loader-button").addClass("disabled").removeAttr("href");
     },
-    loadMoreStatuses: function (max_id) {
+    loadMoreStatuses: function () {
         var $more_button_selec = $("#more-button").removeAttr("href").button('loading');
-        bb.loadStatuses("all_statuses?max_id=" + max_id, false).next(function () {
-            $more_button_selec.button('reset');
+        bb.loadStatusesWithMaxID(null).next(function() {
+            $more_button_selec.attr("href", 'javascript: bbui.loadMoreStatuses();').button('reset');
         });
     },
     changeDisplayLevel: function(amount) {

@@ -49,7 +49,7 @@
           <ul id="statuses" class="unstyled">
           </ul>
           <div id="main-footer">
-            <a class="btn btn-primary" id="more-button" data-loading-text="Loading..." href="#">More...</a>
+            <a class="btn btn-primary" id="more-button" data-loading-text="Loading..." href="javascript: bbui.loadMoreStatuses();">More...</a>
           </div>
         </div>
       </div>
