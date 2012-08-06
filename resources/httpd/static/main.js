@@ -291,6 +291,7 @@ var bbui = {
             // $visibles = $visibles.add($(bb.formatHiddenStatus(invisible_num)).appendTo($statuses_container));
             $statuses_container.append(bb.formatHiddenStatus(invisible_num));
         }
+        if(window_adjuster) window_adjuster();
         var options = {
             duration: ANIMATION_DURATION,
             step: window_adjuster,
