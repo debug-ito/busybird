@@ -6,7 +6,7 @@ use DateTime;
 use BusyBird::Status;
 use BusyBird::Log ('bblog');
 use AnyEvent;
-use BusyBird::Util ('setParam');
+use BusyBird::Util qw(setParam :datetime);
 
 
 my $LOCAL_TZ = DateTime::TimeZone->new( name => 'local' );
@@ -45,7 +45,7 @@ sub _newStatus {
     my $status = BusyBird::Status->new(
         id => $status_id,
         id_str => $status_id,
-        created_at => $nowtime,
+        created_at => datetimeFormat($nowtime),
         text => $text,
         in_reply_to_screen_name => '',
         user => {

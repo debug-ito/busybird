@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use DateTime;
-use BusyBird::Util ('setParam');
+use BusyBird::Util qw(setParam :datetime);
 use BusyBird::Status;
 
 sub new {
@@ -30,22 +30,22 @@ sub getWorkerInput {
             args => [\%argset]};
 }
 
-sub convertSearchDateTime {
-    my ($self_class, $time_str) = @_;
-    my ($weekday, $day, $monthname, $year, $time, $timezone) = split(/[\s,]+/, $time_str);
-    my ($hour, $minute, $second) = split(/:/, $time);
-    my $dt = DateTime->new(
-        year      => $year,
-        month     => $BusyBird::InputDriver::Twitter::MONTH{$monthname},
-        day       => $day,
-        hour      => $hour,
-        minute    => $minute,
-        second    => $second,
-        time_zone => $timezone
-    );
-    return $dt;
-
-}
+## sub convertSearchDateTime {
+##     my ($self_class, $time_str) = @_;
+##     my ($weekday, $day, $monthname, $year, $time, $timezone) = split(/[\s,]+/, $time_str);
+##     my ($hour, $minute, $second) = split(/:/, $time);
+##     my $dt = DateTime->new(
+##         year      => $year,
+##         month     => $BusyBird::InputDriver::Twitter::MONTH{$monthname},
+##         day       => $day,
+##         hour      => $hour,
+##         minute    => $minute,
+##         second    => $second,
+##         time_zone => $timezone
+##     );
+##     return $dt;
+## 
+## }
 
 sub convertSearchStatus {
     my ($self, $nt_search_status) = @_;
@@ -54,7 +54,8 @@ sub convertSearchStatus {
     return BusyBird::Status->new(
         id => $id,
         id_str => defined($id) ? "$id" : undef,
-        created_at => $self->convertSearchDateTime($nt_search_status->{created_at}),
+        ## created_at => $self->convertSearchDateTime($nt_search_status->{created_at}),
+        created_at => datetimeNormalize($nt_search_status->{created_at}, 1),
         text => $text,
         user => {
             screen_name => $nt_search_status->{from_user},

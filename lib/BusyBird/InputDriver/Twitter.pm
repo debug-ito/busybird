@@ -7,7 +7,7 @@ use Carp;
 use BusyBird::Status;
 use BusyBird::Worker::Twitter;
 use BusyBird::Log ('bblog');
-use BusyBird::Util ('setParam');
+use BusyBird::Util qw(setParam :datetime);
 
 our %MONTH = (
     Jan => 1, Feb => 2,  Mar =>  3, Apr =>  4,
@@ -28,21 +28,21 @@ sub _setParams {
     $self->{max_id_for_page} = [];
 }
 
-sub convertNormalDateTime {
-    my ($class_self, $time_str) = @_;
-    my ($weekday, $monthname, $day, $time, $timezone, $year) = split(/\s+/, $time_str);
-    my ($hour, $minute, $second) = split(/:/, $time);
-    my $dt = DateTime->new(
-        year      => $year,
-        month     => $MONTH{$monthname},
-        day       => $day,
-        hour      => $hour,
-        minute    => $minute,
-        second    => $second,
-        time_zone => $timezone
-    );
-    return $dt;
-}
+## sub convertNormalDateTime {
+##     my ($class_self, $time_str) = @_;
+##     my ($weekday, $monthname, $day, $time, $timezone, $year) = split(/\s+/, $time_str);
+##     my ($hour, $minute, $second) = split(/:/, $time);
+##     my $dt = DateTime->new(
+##         year      => $year,
+##         month     => $MONTH{$monthname},
+##         day       => $day,
+##         hour      => $hour,
+##         minute    => $minute,
+##         second    => $second,
+##         time_zone => $timezone
+##     );
+##     return $dt;
+## }
 
 sub processEntities {
     my ($class_self, $text, $entities) = @_;
@@ -101,7 +101,8 @@ sub convertNormalStatus {
     return BusyBird::Status->new(
         id => $status_id,
         id_str => defined($status_id) ? "$status_id" : undef,
-        created_at => $self->convertNormalDateTime($nt_status->{created_at}),
+        ## created_at => $self->convertNormalDateTime($nt_status->{created_at}),
+        created_at => datetimeNormalize($nt_status->{created_at}, 1),
         text => $text,
         in_reply_to_screen_name => $nt_status->{in_reply_to_screen_name},
         in_reply_to_status_id => $status_rep_id,

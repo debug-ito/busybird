@@ -12,6 +12,7 @@ BEGIN {
     use_ok('Test::XML::Simple');
     use_ok('DateTime');
     use_ok('BusyBird::Status');
+    use_ok('BusyBird::Util', ':datetime');
 }
 
 sub testJSON {
@@ -62,7 +63,8 @@ sub testClone {
     my $status = $test_status->{status};
     my $clone = $status->clone();
     is_deeply($status, $clone, "clone is exactly the same as the original");
-    cmp_ok(DateTime->compare($status->{created_at}, $clone->{created_at}), "==", 0, "... created_at is exactly the same.");
+    ## cmp_ok(DateTime->compare($status->{created_at}, $clone->{created_at}), "==", 0, "... created_at is exactly the same.");
+    is($status->{created_at}, $clone->{created_at}, "... created_at is exactly the same.");
     my ($orig_id, $orig_id_str) = @{$status}{'id', 'id_str'};
     my $orig_screen_name = $status->{user}{screen_name};
     $clone->{id} = "foobar";
@@ -91,7 +93,8 @@ sub testSerialize {
     is($serialized_again, $serialized, "serialization is consistent.");
 }
 
-BusyBird::Status->setTimeZone('UTC');
+## BusyBird::Status->setTimeZone('UTC');
+$SYSTEM_TIMEZONE = DateTime::TimeZone->new(name => 'UTC');
 $BusyBird::Status::FORMAT_JSON_SORTED = 1;
 
 my @statuses_for_test = (
@@ -99,9 +102,10 @@ my @statuses_for_test = (
         status => new_ok('BusyBird::Status', [
             id => 'hoge',
             id_str => 'hoge',
-            created_at => DateTime->new(
-                year => 2011, month => 6, day => 14, hour => 10, minute => 45, second => 11, time_zone => '+0900',
-            ),
+            created_at => datetimeNormalize("2011-06-14 10:45:11+0900", 1),
+                ## DateTime->new(
+                ##     year => 2011, month => 6, day => 14, hour => 10, minute => 45, second => 11, time_zone => '+0900',
+                ## ),
             text => 'foo bar',
             in_reply_to_screen_name => undef,
             user => {
@@ -155,9 +159,10 @@ my @statuses_for_test = (
         status => new_ok('BusyBird::Status', [
             id => 99239,
             id_str => '99239',
-            created_at => DateTime->new(
-                year => 2012, month => 5, day => 20, hour => 12, minute => 22, second => 11, time_zone => '+0900'
-            ),
+            created_at => datetimeNormalize('2012-05-20 12:22:11+0900', 1),
+                ## DateTime->new(
+                ##     year => 2012, month => 5, day => 20, hour => 12, minute => 22, second => 11, time_zone => '+0900'
+                ## ),
             text => 'some text',
             user => {
                 screen_name => 'toshio_ito',
@@ -208,16 +213,18 @@ my @statuses_for_test = (
         status => new_ok('BusyBird::Status', [
             id => "SomeSource_101105",
             id_str => "SomeSource_101105",
-            created_at => DateTime->new(
-                year => 2012, month => 4, day => 22, hour => 2, minute => 5, second => 45, time_zone => '-1000',
-            ),
+            created_at => datetimeNormalize('2012-04-22 02:05:45-1000', 1),
+                ## DateTime->new(
+                ##     year => 2012, month => 4, day => 22, hour => 2, minute => 5, second => 45, time_zone => '-1000',
+                ## ),
             text => 'UTF8 てきすと ',
             user => {
                 screen_name => "hogeuser",
                 name => "ほげ ユーザ",
-                created_at => DateTime->new(
-                    year => 2008, month => 11, day => 1, hour => 16, minute => 33, second => 0, time_zone => '+0000',
-                ),
+                created_at => datetimeNormalize('2008-11-01T16:33:00+00:00', 1),
+                    ## DateTime->new(
+                    ##     year => 2008, month => 11, day => 1, hour => 16, minute => 33, second => 0, time_zone => '+0000',
+                    ## ),
             },
             busybird => {
                 is_new => 1,
@@ -278,14 +285,16 @@ my @statuses_for_test = (
         status => new_ok('BusyBird::Status', [
             id => "99332",
             id_str => "99332",
-            created_at => DateTime->new(
-                year => 2009, month => 1, day => 1, hour => 3, minute => 0, second => 0, time_zone => '+0900',
-            ),
+            created_at => datetimeNormalize('2009-01-01 03:00:00+0900', 1),
+                ## DateTime->new(
+                ##     year => 2009, month => 1, day => 1, hour => 3, minute => 0, second => 0, time_zone => '+0900',
+                ## ),
             user => {
                 screen_name => 'tito',
-                created_at => DateTime->new(
-                    year => 2007, month => 12, day => 31, hour => 22, minute => 6, second => 46, time_zone => '-0500',
-                ),
+                created_at => datetimeNormalize('2007-12-31T22:06:46-05:00', 1),
+                    ## DateTime->new(
+                    ##     year => 2007, month => 12, day => 31, hour => 22, minute => 6, second => 46, time_zone => '-0500',
+                    ## ),
             },
             busybird => {
                 original => {
@@ -333,9 +342,10 @@ my @statuses_for_test = (
         status => new_ok('BusyBird::Status', [
             id => "Twitter_http://my.twitter.local/api_200101",
             id_str => "Twitter_http://my.twitter.local/api_200101",
-            created_at => DateTime->new(
-                year => 2012, month => 2, day => 29, hour => 0, minute => 0, second => 3, time_zone => '-0200',
-            ),
+            created_at => datetimeNormalize('2012/02/29 00:00:03-0200', 1),
+                ## DateTime->new(
+                ##     year => 2012, month => 2, day => 29, hour => 0, minute => 0, second => 3, time_zone => '-0200',
+                ## ),
             text => "http://foo.com/ http://bar.com/ It's test for \"quotes\" and entities.",
             entities => {
                 "urls" => [
@@ -417,9 +427,10 @@ my @statuses_for_test = (
         status => new_ok('BusyBird::Status', [
             id => "RSS_http://some.site.com/feed?format=rss_998223",
             id_str => "RSS_http://some.site.com/feed?format=rss_998223",
-            created_at => DateTime->new(
-                year => 2012, month => 5, day => 8, hour => 10, minute => 2, second => 14, time_zone => "+0000",
-            ),
+            created_at => datetimeNormalize('2012-05-08 10:02:14+0000', 1),
+                ## DateTime->new(
+                ##     year => 2012, month => 5, day => 8, hour => 10, minute => 2, second => 14, time_zone => "+0000",
+                ## ),
             text => 'Check out this <a href="http://external.site.com/hoge/page">page</a>.',
             entities => {
                 hashtags => [],

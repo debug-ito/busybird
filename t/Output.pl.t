@@ -13,6 +13,7 @@ BEGIN {
     use_ok('DateTime');
     use_ok('BusyBird::Status');
     use_ok('BusyBird::Output');
+    use_ok('BusyBird::Util', ':datetime');
 }
 
 sub readFile {
@@ -86,7 +87,7 @@ sub generateStatus {
     my $status = new_ok('BusyBird::Status', [
         id => $id,
         id_str => "$id",
-        created_at => DateTime->from_epoch(epoch => $id)
+        created_at => datetimeFormat(DateTime->from_epoch(epoch => $id)),
     ]);
     return $status;
 }
@@ -411,6 +412,7 @@ sub main {
         &checkStatusNum($output, 10, 20);
         my $filepath = $output->_getStatusesFilePath;
         eval {
+            local $BusyBird::Status::FORMAT_JSON_SORTED = 1;
             like($filepath, qr/statuses\.json$/, "Statuses file path $filepath seems correct.") or die "";
             ok(unlink($filepath), "remove $filepath") if -f $filepath;
             $output->saveStatuses();
@@ -424,7 +426,7 @@ sub main {
             my $after_savedfile = &readFile($filepath);
             is($after_savedfile, $before_savedfile, "The serialization is consistent.");
         };
-        ok(!$@, "save and load status file test successful");
+        ok(!$@, "save and load status file test successful") or diag("ERROR message: $@");
         ok(unlink($filepath), "remove $filepath") if -f $filepath;
     }
 

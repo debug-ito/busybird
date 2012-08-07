@@ -12,7 +12,7 @@ use AnyEvent;
 use BusyBird::Log ('bblog');
 use BusyBird::Filter;
 use BusyBird::ComponentManager;
-use BusyBird::Util ('setParam');
+use BusyBird::Util qw(setParam :datetime);
 
 my $DEFAULT_PAGE_COUNT = 100;
 my $DEFAULT_PAGE_MAX   = 10;
@@ -174,7 +174,7 @@ sub _initLoader {
                 }else {
                     &bblog(sprintf("Input %s: get page %d [%d statuses]", $self->getName, $page, int(@$statuses)));
                     foreach my $status (@$statuses) {
-                        my $datetime = $status->{created_at};
+                        my $datetime = datetimeParse($status->{created_at});
                         ## ** Update latest status time
                         if (!defined($self->{last_status_epoch_time}) || $datetime->epoch > $self->{last_status_epoch_time}) {
                             $self->{last_status_epoch_time} = $datetime->epoch;

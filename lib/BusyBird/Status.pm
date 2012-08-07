@@ -5,25 +5,13 @@ use Carp;
 use JSON;
 use XML::Simple;
 use Storable ('dclone');
-use DateTime;
 use BusyBird::Log qw(bblog);
 use Encode;
 
 $XML::Simple::PREFERRED_PARSER = 'XML::Parser';
 
-my @MONTH = (undef, qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec));
-my %MONTH_FROM_STR = ( map { $MONTH[$_] => $_ } 1..12);
-my @DAY_OF_WEEK = (undef, qw(Mon Tue Wed Thu Fri Sat Sun));
-
-my $DATETIME_STR_MATCHER;
-{
-    my $month_selector = join('|', @MONTH[1..12]);
-    my $dow_selector = join('|', @DAY_OF_WEEK[1..7]);
-    $DATETIME_STR_MATCHER = qr!^($dow_selector) +($month_selector) +(\d{2}) +(\d{2}):(\d{2}):(\d{2}) +([\-\+]\d{4}) +(\d+)$!;
-}
-
 our $FORMAT_JSON_SORTED = 0;
-our $_STATUS_TIMEZONE = DateTime::TimeZone->new( name => 'local');
+## our $_STATUS_TIMEZONE = DateTime::TimeZone->new( name => 'local');
 
 sub new {
     my ($class, @args) = @_;
@@ -38,15 +26,15 @@ sub new {
     return $self;
 }
 
-sub setTimeZone {
-    my ($class, $timezone_str) = @_;
-    $_STATUS_TIMEZONE = DateTime::TimeZone->new(name => $timezone_str);
-}
-
-sub getTimeZone {
-    my ($class) = @_;
-    return $_STATUS_TIMEZONE;
-}
+## sub setTimeZone {
+##     my ($class, $timezone_str) = @_;
+##     $_STATUS_TIMEZONE = DateTime::TimeZone->new(name => $timezone_str);
+## }
+## 
+## sub getTimeZone {
+##     my ($class) = @_;
+##     return $_STATUS_TIMEZONE;
+## }
 
 ## sub content {
 ##     my $self = shift;
@@ -102,14 +90,14 @@ sub _translateTreeNodes {
     }
 }
 
-sub _datetimeFormatTwitter {
-    my $dt = shift;
-    $dt->set_time_zone($_STATUS_TIMEZONE) if defined($_STATUS_TIMEZONE);
-    return sprintf("%s %s %s",
-                   $DAY_OF_WEEK[$dt->day_of_week],
-                   $MONTH[$dt->month],
-                   $dt->strftime('%d %H:%M:%S %z %Y'));
-}
+## sub _datetimeFormatTwitter {
+##     my $dt = shift;
+##     $dt->set_time_zone($_STATUS_TIMEZONE) if defined($_STATUS_TIMEZONE);
+##     return sprintf("%s %s %s",
+##                    $DAY_OF_WEEK[$dt->day_of_week],
+##                    $MONTH[$dt->month],
+##                    $dt->strftime('%d %H:%M:%S %z %Y'));
+## }
 
 sub _XMLFormatEntities {
     my ($entities_ref) = @_;
@@ -148,12 +136,13 @@ sub _XMLFormatEntities {
 
 sub convertForJSON {
     my ($self) = @_;
-    my $clone = $self->clone();
-    $clone->_translateTreeNodes(
-        $clone,
-        'DateTime' => \&_datetimeFormatTwitter,
-    );
-    return {%$clone}; ## ** Unbless the hash object
+    return {%$self}; ## ** Unbless the hash object. That's all!
+    ## my $clone = $self->clone();
+    ## $clone->_translateTreeNodes(
+    ##     $clone,
+    ##     'DateTime' => \&_datetimeFormatTwitter,
+    ## );
+    ## return {%$clone}; ## ** Unbless the hash object
 }
 
 my %FORMATTERS = (
@@ -174,7 +163,7 @@ my %FORMATTERS = (
             $clone->_translateTreeNodes(
                 ## $clone->content,
                 $clone,
-                'DateTime' => \&_datetimeFormatTwitter,
+                ## 'DateTime' => \&_datetimeFormatTwitter,
                 '.entities' => \&_XMLFormatEntities,
                 '_SCALAR_ELEM' => sub {
                     my $scalar = shift;
@@ -224,7 +213,7 @@ sub mime {
 
 sub serialize {
     my ($class, $statuses_ref) = @_;
-    local $_STATUS_TIMEZONE = undef;
+    ## local $_STATUS_TIMEZONE = undef;
     return $class->format('json', $statuses_ref);
 }
 
@@ -235,33 +224,35 @@ sub deserialize {
         $raw_statuses = [$raw_statuses];
     }
     my @statuses = ();
-    foreach my $raw_status (@$raw_statuses) {
-        $class->_translateTreeNodes(
-            $raw_status,
-            _SCALAR_ELEM => sub {
-                my ($elem_orig) = @_;
-                if(!defined($elem_orig)) {
-                    return $elem_orig;
-                }
-                my $elem = $elem_orig;
-                my ($dow, $month_str, $dom, $h, $m, $s, $tz_str, $year) = ($elem =~ $DATETIME_STR_MATCHER);
-                if($dow) {
-                    return DateTime->new(
-                        year      => $year,
-                        month     => $MONTH_FROM_STR{$month_str},
-                        day       => $dom,
-                        hour      => $h,
-                        minute    => $m,
-                        second    => $s,
-                        time_zone => $tz_str,
-                    );
-                }
-                return $elem_orig;
-            },
-        );
-        push(@statuses, BusyBird::Status->new($raw_status));
-    }
+    @statuses = map {BusyBird::Status->new($_)} @$raw_statuses;
     return \@statuses;
+    ## foreach my $raw_status (@$raw_statuses) {
+    ##     $class->_translateTreeNodes(
+    ##         $raw_status,
+    ##         _SCALAR_ELEM => sub {
+    ##             my ($elem_orig) = @_;
+    ##             if(!defined($elem_orig)) {
+    ##                 return $elem_orig;
+    ##             }
+    ##             my $elem = $elem_orig;
+    ##             my ($dow, $month_str, $dom, $h, $m, $s, $tz_str, $year) = ($elem =~ $DATETIME_STR_MATCHER);
+    ##             if($dow) {
+    ##                 return DateTime->new(
+    ##                     year      => $year,
+    ##                     month     => $MONTH_FROM_STR{$month_str},
+    ##                     day       => $dom,
+    ##                     hour      => $h,
+    ##                     minute    => $m,
+    ##                     second    => $s,
+    ##                     time_zone => $tz_str,
+    ##                 );
+    ##             }
+    ##             return $elem_orig;
+    ##         },
+    ##     );
+    ##     push(@statuses, BusyBird::Status->new($raw_status));
+    ## }
+    ## return \@statuses;
 }
 
 1;

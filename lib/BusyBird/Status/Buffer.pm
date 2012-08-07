@@ -3,7 +3,7 @@ package BusyBird::Status::Buffer;
 use strict;
 use warnings;
 use BusyBird::Status;
-use BusyBird::Util ('setParam');
+use BusyBird::Util qw(setParam :datetime);
 
 sub new {
     my ($class, %params) = @_;
@@ -84,7 +84,9 @@ sub sort {
     if(defined($sorter)) {
         @sorted_statuses = CORE::sort { $sorter->($a, $b) } @{$self->{buffer}};
     }else {
-        @sorted_statuses = CORE::sort { DateTime->compare($b->{created_at}, $a->{created_at}) } @{$self->{buffer}};
+        @sorted_statuses = map { $_->[0] }
+            CORE::sort { DateTime->compare($b->[1], $a->[1]) }
+            map { [$_, datetimeParse($_->{created_at})] } @{$self->{buffer}};
     }
     $self->{buffer} = \@sorted_statuses;
     return $self;
