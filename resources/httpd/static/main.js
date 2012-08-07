@@ -525,6 +525,7 @@ poller.add('new_statuses', 0, function(resource) {
 });
 poller.add('new_statuses_num', 0, function(resource) {
     this.setRequestBase(resource);
+    document.title = (resource > 0 ? '('+ resource +') ' : "") + document.title.replace(/^\([0-9]*\) */, "");
     $('.bb-new-status-num').text(resource);
     if(resource > 0) {
         $('.bb-new-status-loader-button')
