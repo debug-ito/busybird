@@ -38,15 +38,11 @@ bbStatusHook.prototype = {
         var self = this;
         return Deferred.parallel(defers).next(function() {
             var sidebar_text = "";
-            console.log("start: runHook inner callback");
-            console.log("  " + self.status_listeners.length + " listeners.");
             for(var i = 0 ; i < self.status_listeners.length ; i++) {
                 var name   = "sidebar-item-" + self.status_listeners[i].getName();
                 var header = self.status_listeners[i].getHeader();
                 var detail = self.status_listeners[i].getDetail();
-                console.log(i + "th hook: name: " + name);
                 if(header == null) continue;
-                console.log("  header: " + header);
                 sidebar_text += '<div class="accordion-group"><div class="accordion-heading">';
                 if(detail == null) {
                     sidebar_text += '<span class="accordion-toggle">' + header + "</span></div></div>\n";
@@ -56,9 +52,7 @@ bbStatusHook.prototype = {
                     sidebar_text += detail + "\n</div></div></div>\n";
                 }
             }
-            console.log("before jquery: runHook inner callback");
             $('#sidebar').html(sidebar_text);
-            console.log("end: runHook inner callback");
         });
     }
 };
@@ -154,7 +148,7 @@ var bb = {
                 bb.more_status_max_id = statuses[statuses.length-1].id;
             }
         }
-        bb.changeDisplayLevel(0, true, true);
+        bb.changeDisplayLevel(0, true, true, true);
     },
 
     loadStatuses: function (req_point, is_prepend) {
@@ -230,7 +224,7 @@ var bb = {
         return (signed_dist > 0 ? signed_dist : 0);
     },
 
-    changeDisplayLevel: function(change_level, is_relative, no_animation) {
+    changeDisplayLevel: function(change_level, is_relative, no_animation, no_window_adjust) {
         var old_level = bb.display_level;
         if(change_level != null) {
             if(is_relative) {
@@ -284,7 +278,7 @@ var bb = {
             return true;
         });
         var window_adjuster = null;
-        if($anchor_elem != null) {
+        if($anchor_elem != null && !no_window_adjust) {
             $anchor_elem.addClass('bbtest-anchor');
             var relative_position_of_anchor = $anchor_elem.offset().top - $(window).scrollTop();
             window_adjuster = function() {
