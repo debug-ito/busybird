@@ -134,7 +134,7 @@ sub _XMLFormatEntities {
     );
 }
 
-sub convertForJSON {
+sub TO_JSON {
     my ($self) = @_;
     return {%$self}; ## ** Unbless the hash object. That's all!
     ## my $clone = $self->clone();
@@ -148,11 +148,12 @@ sub convertForJSON {
 my %FORMATTERS = (
     json => sub {
         my ($statuses_ref) = @_;
-        my @statuses_for_json = map { $_->convertForJSON } @$statuses_ref;
+        ## my @statuses_for_json = map { $_->convertForJSON } @$statuses_ref;
         return to_json(
-            \@statuses_for_json,
+            ## \@statuses_for_json,
+            $statuses_ref,
             {canonical => $FORMAT_JSON_SORTED,
-             ascii => 1}
+             ascii => 1, allow_blessed => 1, convert_blessed => 1}
         );
     },
     xml => sub {

@@ -94,7 +94,8 @@ sub sort {
 
 sub TO_JSON {
     my ($self) = @_;
-    return [ map {$_->convertForJSON} @{$self->{buffer}} ];
+    ## return [ map {$_->convertForJSON} @{$self->{buffer}} ];
+    return $self->{buffer};
 }
     
 
