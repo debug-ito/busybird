@@ -518,7 +518,6 @@ bb.status_hook.addListener("owner-of-new-statuses", function(statuses, is_prepen
 
 var poller = new bbSelectionPoller("state.json");
 poller.add('new_statuses', 0, function(resource) {
-    bb.renderStatuses(resource, true);
     return bb.status_hook.runHook(resource, true).next(function() {
         return bb.confirm();
     });
