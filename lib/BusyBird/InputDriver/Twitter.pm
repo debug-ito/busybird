@@ -44,38 +44,38 @@ sub _setParams {
 ##     return $dt;
 ## }
 
-sub processEntities {
-    my ($class_self, $text, $entities) = @_;
-    if(!defined($entities)) {
-        return $text;
-    }
-    if(defined($entities->{media})) {
-        foreach my $entity (@{$entities->{media}}) {
-            $text = $class_self->entityExpandURL($text, $entity);
-        }
-    }
-    if(defined($entities->{urls})) {
-        foreach my $entity (@{$entities->{urls}}) {
-            $text = $class_self->entityExpandURL($text, $entity);
-        }
-    }
-    return $text;
-}
+## sub processEntities {
+##     my ($class_self, $text, $entities) = @_;
+##     if(!defined($entities)) {
+##         return $text;
+##     }
+##     if(defined($entities->{media})) {
+##         foreach my $entity (@{$entities->{media}}) {
+##             $text = $class_self->entityExpandURL($text, $entity);
+##         }
+##     }
+##     if(defined($entities->{urls})) {
+##         foreach my $entity (@{$entities->{urls}}) {
+##             $text = $class_self->entityExpandURL($text, $entity);
+##         }
+##     }
+##     return $text;
+## }
 
-sub entityExpandURL {
-    my ($class_self, $text, $entity) = @_;
-    if(!defined($entity) || !defined($entity->{expanded_url}) || !defined($entity->{indices})) {
-        return $text;
-    }
-    if(ref($entity->{indices}) ne 'ARRAY' || int(@{$entity->{indices}}) < 2) {
-        return $text;
-    }
-    if($entity->{indices}->[1] < $entity->{indices}->[0]) {
-        return $text;
-    }
-    substr($text, $entity->{indices}->[0], $entity->{indices}->[1] - $entity->{indices}->[0]) = $entity->{expanded_url};
-    return $text;
-}
+## sub entityExpandURL {
+##     my ($class_self, $text, $entity) = @_;
+##     if(!defined($entity) || !defined($entity->{expanded_url}) || !defined($entity->{indices})) {
+##         return $text;
+##     }
+##     if(ref($entity->{indices}) ne 'ARRAY' || int(@{$entity->{indices}}) < 2) {
+##         return $text;
+##     }
+##     if($entity->{indices}->[1] < $entity->{indices}->[0]) {
+##         return $text;
+##     }
+##     substr($text, $entity->{indices}->[0], $entity->{indices}->[1] - $entity->{indices}->[0]) = $entity->{expanded_url};
+##     return $text;
+## }
 
 sub getWorkerInput {
     my ($self, $count, $page) = @_;
@@ -95,7 +95,8 @@ sub createStatusID {
 
 sub convertNormalStatus {
     my ($self, $nt_status) = @_;
-    my $text = $self->processEntities($nt_status->{text}, $nt_status->{entities});
+    ## my $text = $self->processEntities($nt_status->{text}, $nt_status->{entities});
+    my $text = $nt_status->{text};
     my $status_id = $self->createStatusID($nt_status, 'id');
     my $status_rep_id = $self->createStatusID($nt_status, 'in_reply_to_status_id');
     return BusyBird::Status->new(
@@ -112,6 +113,7 @@ sub convertNormalStatus {
             'name' => $nt_status->{user}->{name},
             'profile_image_url' => $nt_status->{user}->{profile_image_url},
         },
+        entities => $nt_status->{entities},
         busybird => {
             original => {
                 map { $_ => $nt_status->{$_} } qw(id id_str in_reply_to_status_id in_reply_to_status_id_str),

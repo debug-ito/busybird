@@ -66,7 +66,8 @@ sub convertSearchStatus {
                     map {$_ => $nt_search_status->{$_}} qw(id id_str),
                 }
             }
-        }
+        },
+        entities => $nt_search_status->{entities},
     );
 }
 

@@ -94,8 +94,22 @@ var bb = {
         return deferred;
     },
     
-    linkify: function (text) {
-        return text.replace(/(https?:\/\/[^ \r\n\t　]+)/g, "<a href=\"$1\">$1</a>");
+    linkify: function (text, entities) {
+        var found_in_entities = {};
+        if(entities && entities.urls) {
+            for(var i = 0 ; i < entities.urls.length ; i++) {
+                var url_entry = entities.urls[i];
+                found_in_entities[url_entry.url] = url_entry;
+                console.log("entity: " + url_entry.url);
+            }
+        }
+        return text.replace(/https?:\/\/[\x21-\x7E]+/g, function(orig_url) {
+            var text = orig_url;
+            if(orig_url in found_in_entities) {
+                text = found_in_entities[orig_url].expanded_url;
+            }
+            return '<a href="'+ orig_url +'">'+ text +'</a>';
+        });
     },
 
     formatStatus: function (status, show_by_default) {
@@ -119,7 +133,7 @@ var bb = {
         ret +=       '<span class="status-created-at">'+ status.created_at + '</span>';
         ret +=     '</div>';
         ret +=   '</div>'
-        ret +=   '<div class="status-text">'+ this.linkify(status.text) + '</div>';
+        ret +=   '<div class="status-text">'+ this.linkify(status.text, status.entities) + '</div>';
         ret += '</div>'
         ret += "</li>\n";
         return ret;
