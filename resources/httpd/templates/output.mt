@@ -30,9 +30,9 @@
               <span class="label bb-nav-text pull-right">Lv. <span class="display-level">0</span></span>
             </div>
             
-            <div class="btn-group pull-right" data-toggle="buttons-radio">
-              <a class="btn btn-inverse active"><i class="icon-pause icon-white"></i></a>
-              <a class="btn btn-inverse"><i class="icon-play icon-white"></i></a>
+            <div class="btn-group pull-right">
+              <a id="bb-button-stop-mode" class="btn btn-inverse active" href="javascript: bbui.toggleRunMode();"><i class="icon-pause icon-white"></i></a>
+              <a id="bb-button-run-mode" class="btn btn-inverse" href="javascript: bbui.toggleRunMode();"><i class="icon-play icon-white"></i></a>
             </div>
           </div>
         </div>

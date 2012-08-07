@@ -89,7 +89,11 @@ var bb = {
         ajax_xhr = $.ajax(ajax_param);
         deferred.canceller = function () {
             ajax_retry_ok = false;
-            if(ajax_xhr != null) ajax_xhr.abort()
+            console.log("ajaxRetry: canceller called");
+            if(ajax_xhr != null) {
+                console.log("ajaxRetry: xhr aborted.");
+                ajax_xhr.abort();
+            }
         };
         return deferred;
     },
@@ -100,7 +104,6 @@ var bb = {
             for(var i = 0 ; i < entities.urls.length ; i++) {
                 var url_entry = entities.urls[i];
                 found_in_entities[url_entry.url] = url_entry;
-                console.log("entity: " + url_entry.url);
             }
         }
         return text.replace(/https?:\/\/[\x21-\x7E]+/g, function(orig_url) {
@@ -344,6 +347,11 @@ var bbui = {
     },
     decrimentDisplayLevel: function() {
         bb.changeDisplayLevel(-1, true);
+    },
+    toggleRunMode: function() {
+        poller.toggleSelection("new_statuses");
+        $('#bb-button-stop-mode').toggleClass("active");
+        $('#bb-button-run-mode').toggleClass("active");
     }
 };
 
@@ -379,13 +387,12 @@ bbSelectionElement.prototype = {
     },
 };
 
-function bbSelectionPoller() {
+function bbSelectionPoller(url_base) {
+    this.url_base = url_base;
     this.cur_deferred = null;
     this.elems = {};
 }
 bbSelectionPoller.prototype = {
-    URL_BASE: "state.json",
-
     isRunning: function () {
         return (this.cur_deferred != null);
     },
@@ -394,30 +401,31 @@ bbSelectionPoller.prototype = {
         var req_params = [];
         var self = this;
         if(self.isRunning()) {
+            console.log("poller: cancel deferred.");
             self.cur_deferred.cancel();
         }
         for(var elemkey in self.elems) {
             if(!self.elems[elemkey].isEnabled()) continue;
             req_params.push(elemkey + "=" + self.elems[elemkey].getRequestBase());
         }
-        var req_url = self.URL_BASE;
+        var req_url = self.url_base;
         if(req_params.length > 0) {
             req_url += "?" + req_params.join("&");
         }
-        self.cur_deferred = 
-            bb.ajaxRetry({url: req_url, type: "GET", cache: false, dataType: "json", timeout: 0})
-            .next(function (data, textStatus, jqXHR) {
-                var defers = [];
-                for(var key in data) {
-                    if(key in self.elems) {
-                        var d = self.elems[key].consumeResource(data[key]);
-                        if(d != null) defers.push(d);
-                    }
+        self.cur_deferred = bb.ajaxRetry({url: req_url, type: "GET", cache: false, dataType: "json", timeout: 0});
+        self.cur_deferred.next(function (data, textStatus, jqXHR) {
+            var defers = [];
+            for(var key in data) {
+                if(key in self.elems && data[key] != null) {
+                    var d = self.elems[key].consumeResource(data[key]);
+                    if(d != null) defers.push(d);
                 }
-                return Deferred.parallel(defers);
-            }).next(function () {
-                self.execute();
-            });
+            }
+            return Deferred.parallel(defers);
+        }).next(function () {
+            self.cur_deferred = null;
+            self.execute();
+        });
     },
     add: function (name, init_base, resource_callback) {
         this.addElem(new bbSelectionElement(name, init_base, resource_callback));
@@ -427,6 +435,31 @@ bbSelectionPoller.prototype = {
         if(this.isRunning()) {
             this.execute();
         }
+    },
+    changeSelection: function (changes) {
+        var changed = false;
+        for(var name in changes) {
+            var to_state = changes[name];
+            if(this.elems[name].isEnabled() != to_state) {
+                this.elems[name].setEnabled(to_state);
+                changed = true;
+            }
+        }
+        if(changed && this.isRunning()) {
+            this.execute();
+        }
+    },
+    toggleSelection: function (names) {
+        if(names == null) return;
+        if(!(names instanceof Array)) {
+            names = [names];
+        }
+        var changes = {};
+        for(var i = 0 ; i < names.length ; i++) {
+            var name = names[i];
+            changes[name] = (this.elems[name].isEnabled() ? false : true);
+        }
+        this.changeSelection(changes);
     }
 };
 
@@ -483,11 +516,13 @@ bb.status_hook.addListener("owner-of-new-statuses", function(statuses, is_prepen
 });
 
 
-var poller = new bbSelectionPoller();
-// poller.add('new_statuses', 0, function(resource) {
-//     bb.renderStatuses(resource, true);
-//     return bb.confirm();
-// });
+var poller = new bbSelectionPoller("state.json");
+poller.add('new_statuses', 0, function(resource) {
+    bb.renderStatuses(resource, true);
+    return bb.status_hook.runHook(resource, true).next(function() {
+        return bb.confirm();
+    });
+});
 poller.add('new_statuses_num', 0, function(resource) {
     this.setRequestBase(resource);
     $('.bb-new-status-num').text(resource);
@@ -501,6 +536,7 @@ poller.add('new_statuses_num', 0, function(resource) {
             .prop('href', "#");
     }
 });
+poller.changeSelection({'new_statuses': false});
 
 $(document).ready(function () {
     bb.loadStatuses('all_statuses.json', false).next(function() {
