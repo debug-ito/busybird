@@ -49,7 +49,8 @@ sub getWorkerInput {
 
 sub convertSearchStatus {
     my ($self, $nt_search_status) = @_;
-    my $text = $self->processEntities($nt_search_status->{text}, $nt_search_status->{entities});
+    ## my $text = $self->processEntities($nt_search_status->{text}, $nt_search_status->{entities});
+    my $text = $nt_search_status->{text};
     my $id = $self->createStatusID($nt_search_status, 'id');
     return BusyBird::Status->new(
         id => $id,
@@ -61,6 +62,7 @@ sub convertSearchStatus {
             screen_name => $nt_search_status->{from_user},
             name => $nt_search_status->{from_user_name},
             profile_image_url => $nt_search_status->{profile_image_url},
+            entities => $nt_search_status->{entities},
             busybird => {
                 original => {
                     map {$_ => $nt_search_status->{$_}} qw(id id_str),
