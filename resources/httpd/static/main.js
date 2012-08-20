@@ -322,7 +322,7 @@ var bb = {
         var ACTION_STAY_INVISIBLE = 1;
         var ACTION_GET_VISIBLE = 2;
         var ACTION_GET_INVISIBLE = 3;
-        var ANIMATION_MAX = 30;
+        var ANIMATION_MAX = 15;
 
         // var $cur_entry = $status_entries.first();
         var metrics_list = [];
@@ -348,13 +348,11 @@ var bb = {
                 metric.action = (cur_is_visible ? ACTION_STAY_VISIBLE : ACTION_GET_VISIBLE);
                 if(next_seq_invisible_entries.length > 0) {
                     hidden_header_list.push({'$followed_by': $cur_entry, 'entries': next_seq_invisible_entries});
-                    console.log("hidden_header pushed in the middle");
                     next_seq_invisible_entries = [];
                 }
             }else {
                 metric.action = (cur_is_visible ? ACTION_GET_INVISIBLE : ACTION_STAY_INVISIBLE);
                 next_seq_invisible_entries.push($cur_entry);
-                console.log("invisible status pushed: entry_level: " + entry_level + ", display_level: " + current_display_level);
             }
             var cur_pos = (cur_is_visible ? $cur_entry.offset().top : prev_pos);
             metric.win_dist = bb.distanceRanges(win_dim.top, win_dim.range, cur_pos, $cur_entry.height());
@@ -365,7 +363,6 @@ var bb = {
         }).next(function () {
             if(next_seq_invisible_entries.length > 0) {
                 hidden_header_list.push({'$followed_by': null, 'entries': next_seq_invisible_entries});
-                console.log("hidden_header pushed at the bottom");
             }
             metrics_list = metrics_list.sort(function (a, b) {
                 if(a.win_dist != b.win_dist) {
@@ -383,6 +380,13 @@ var bb = {
                     return 0;
                 }
             });
+
+            $('.test-metrics-index').remove();
+            for(var i = 0 ; i < metrics_list.length ; i++) {
+                metrics_list[i].$status_entry.find('.status-attributes').append('<span class="test-metrics-index">&nbsp; METRIC: '+i+'</span>');
+                metrics_list[i].$status_entry.attr('busybird-metric', i);
+            }
+            
             if(!no_window_adjust) {
                 for(var i = 0 ; i < metrics_list.length ; i++) {
                     if(metrics_list[i].action == ACTION_STAY_VISIBLE) {
@@ -407,12 +411,21 @@ var bb = {
                 }
             }
             window_adjuster();
-            for(var i = ANIMATION_MAX ; i < metrics_list.length ; i++) {
-                if(metrics_list[i].action == ACTION_GET_VISIBLE || metrics_list[i].action == ACTION_GET_INVISIBLE) {
-                    metrics_list[i].$status_entry.hide();
-                }
+            // for(var i = ANIMATION_MAX ; i < metrics_list.length ; i++) {
+            //     if(metrics_list[i].action == ACTION_GET_VISIBLE || metrics_list[i].action == ACTION_GET_INVISIBLE) {
+            //         metrics_list[i].$status_entry.toggle();
+            //         metrics_list[i].$status_entry.attr('busybird-action', 'no-anim');
+            //     }else {
+            //         metrics_list[i].$status_entry.attr('busybird-action', 'none,no-anim');
+            //     }
+            // }
+            // window_adjuster();
+
+
+            for(var i = 0 ; i < metrics_list.length ; i++) {
+                metrics_list[i].$status_entry.attr('busybird-action', '');
             }
-            window_adjuster();
+            
             var slide_options = {
                 duration: bb.LEVEL_ANIMATION_DURATION,
                 step: function(now, fx) {
@@ -420,18 +433,39 @@ var bb = {
                     window_adjuster();
                 }
             };
-            return Deferred.repeat(ANIMATION_MAX, function(animation_index) {
-                if(animation_index >= metrics_list.length) return;
-                var metric_elem = metrics_list[animation_index];
-                if(metric_elem.action == ACTION_GET_VISIBLE || metric_elem.action == ACTION_GET_INVISIBLE) {
-                    if(no_animation) {
-                        metric_elem.$status_entry.toggle();
-                        window_adjuster();
-                    }else {
-                        bb.detailedSlide(metric_elem.$status_entry, "toggle", slide_options);
-                    }
-                }
+            var action_list = $.grep(metrics_list, function(elem) {
+                return (elem.action == ACTION_GET_VISIBLE || elem.action == ACTION_GET_INVISIBLE);
             });
+            var $action_list = $( $.map(action_list, function(elem) { return elem.$status_entry.get(); }) );
+            if(no_animation) {
+                $action_list.toggle();
+                $action_list.attr('busybird-action', 'no-anim');
+            }else {
+                var $action_anim_list = $action_list.slice(0, ANIMATION_MAX);
+                var $action_noanim_list = $action_list.slice(ANIMATION_MAX);
+                $action_anim_list.attr('busybird-action', 'anim');
+                $action_noanim_list.attr('busybird-action', 'no-anim');
+                bb.detailedSlide($action_anim_list, "toggle", slide_options);
+                $action_noanim_list.slice(ANIMATION_MAX).toggle();
+            }
+            window_adjuster();
+            
+            // return Deferred.repeat(ANIMATION_MAX, function(animation_index) {
+            //     if(animation_index >= metrics_list.length) return;
+            //     var metric_elem = metrics_list[animation_index];
+            //     if(metric_elem.action == ACTION_GET_VISIBLE || metric_elem.action == ACTION_GET_INVISIBLE) {
+            //         if(no_animation) {
+            //             metric_elem.$status_entry.toggle();
+            //             window_adjuster();
+            //             metric_elem.$status_entry.attr('busybird-action', 'anim,no');
+            //         }else {
+            //             bb.detailedSlide(metric_elem.$status_entry, "toggle", slide_options);
+            //             metric_elem.$status_entry.attr('busybird-action', 'anim');
+            //         }
+            //     }else {
+            //         metric_elem.$status_entry.attr('busybird-action', 'none,anim');
+            //     }
+            // });
         });
 
         /////////////////////////////////
