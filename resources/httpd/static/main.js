@@ -146,6 +146,15 @@ var bb = {
         return '<li class="hidden-status-header">'+ invisible_num +' statuses hidden here.</li>';
     },
 
+    blockRepeat: function(orig_array, block_size, each_func) {
+        var block_num = Math.ceil(orig_array.length / block_size);
+        return Deferred.repeat(block_num, function(block_index) {
+            var start_global_index = block_size * block_index;
+            console.log("blockRepeat: block_size: " + block_size + ", block_index: " + block_index);
+            each_func(orig_array.slice(start_global_index, start_global_index + block_size), start_global_index);
+        });
+    },
+
     renderStatuses: function(statuses, is_prepend) {
         console.log("renderStatuses: start");
         var BLOCK_SIZE = 20;
@@ -156,22 +165,19 @@ var bb = {
         var total_index = 0;
         if(is_prepend) {
             $statuses.find(".bb-status-is-new").remove();
+            statuses = statuses.reverse();
         }
-        return Deferred.repeat(block_num, function(block_index) {
-            console.log("renderStatuses: repeat " + block_index);
-            var this_index = 0;
+        return bb.blockRepeat(statuses, BLOCK_SIZE, function(block_array) {
             var statuses_text = "";
-            while(this_index < BLOCK_SIZE && total_index < statuses.length) {
-                var status_index = (is_prepend ? statuses.length - 1 - total_index : total_index);
-                if(statuses[status_index].id == bb.more_status_max_id) continue;
-                var this_status_text = bb.formatStatus(statuses[status_index]);
+            for(var i = 0 ; i < block_array.length ; i++) {
+                var status = block_array[i];
+                if(status.id == bb.more_status_max_id) continue;
+                var this_status_text = bb.formatStatus(status);
                 if(is_prepend) {
                     statuses_text =  this_status_text + statuses_text;
                 }else {
                     statuses_text = statuses_text + this_status_text;
                 }
-                this_index++;
-                total_index++;
             }
             if(is_prepend) {
                 $statuses.prepend(statuses_text);
@@ -185,6 +191,36 @@ var bb = {
             }
             return bb.changeDisplayLevel(0, true, true, true)
         });
+
+        ///
+        // return Deferred.repeat(block_num, function(block_index) {
+        //     console.log("renderStatuses: repeat " + block_index);
+        //     var this_index = 0;
+        //     var statuses_text = "";
+        //     while(this_index < BLOCK_SIZE && total_index < statuses.length) {
+        //         var status_index = (is_prepend ? statuses.length - 1 - total_index : total_index);
+        //         if(statuses[status_index].id == bb.more_status_max_id) continue;
+        //         var this_status_text = bb.formatStatus(statuses[status_index]);
+        //         if(is_prepend) {
+        //             statuses_text =  this_status_text + statuses_text;
+        //         }else {
+        //             statuses_text = statuses_text + this_status_text;
+        //         }
+        //         this_index++;
+        //         total_index++;
+        //     }
+        //     if(is_prepend) {
+        //         $statuses.prepend(statuses_text);
+        //     }else {
+        //         $statuses.append(statuses_text);
+        //     }
+        // }).next(function() {
+        //     console.log("renderStatuses: repeat finished.");
+        //     if(!is_prepend) {
+        //         bb.more_status_max_id = statuses[statuses.length-1].id;
+        //     }
+        //     return bb.changeDisplayLevel(0, true, true, true)
+        // });
         // for(var i = 0 ; i < statuses.length ; i++) {
         //     if(statuses[i].id == bb.more_status_max_id) {
         //         continue;
