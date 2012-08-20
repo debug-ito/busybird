@@ -482,7 +482,7 @@ var bb = {
                 $action_anim_list.attr('busybird-action', 'anim');
                 $action_noanim_list.attr('busybird-action', 'no-anim');
                 bb.detailedSlide($action_anim_list, "toggle", slide_options);
-                $action_noanim_list.slice(ANIMATION_MAX).toggle();
+                $action_noanim_list.toggle();
             }
             window_adjuster();
             
