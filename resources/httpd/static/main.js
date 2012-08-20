@@ -157,17 +157,17 @@ var bb = {
 
     renderStatuses: function(statuses, is_prepend) {
         console.log("renderStatuses: start");
-        var BLOCK_SIZE = 20;
+        // var BLOCK_SIZE = 20;
         // var statuses_text = "";
         var $statuses = $("#statuses");
         if(statuses.length <= 0) return;
-        var block_num = Math.ceil(statuses.length / BLOCK_SIZE);
+        // var block_num = Math.ceil(statuses.length / BLOCK_SIZE);
         var total_index = 0;
         if(is_prepend) {
             $statuses.find(".bb-status-is-new").remove();
             statuses = statuses.reverse();
         }
-        return bb.blockRepeat(statuses, BLOCK_SIZE, function(block_array) {
+        return bb.blockRepeat(statuses, 100, function(block_array) {
             var statuses_text = "";
             for(var i = 0 ; i < block_array.length ; i++) {
                 var status = block_array[i];
@@ -490,7 +490,7 @@ var bb = {
 
             $statuses_container.children(".hidden-status-header").remove();
             window_adjuster();
-            return bb.blockRepeat(hidden_header_list, 20, function(header_block) {
+            return bb.blockRepeat(hidden_header_list, 40, function(header_block) {
                 for(var i = 0 ; i < header_block.length ; i++) {
                     var header_entry = header_block[i];
                     if(header_entry.$followed_by != null) {
@@ -501,7 +501,7 @@ var bb = {
                 }
                 window_adjuster();
             }).next(function () {
-                return bb.blockRepeat(action_noanim_list, 20, function(status_block) {
+                return bb.blockRepeat(action_noanim_list, 100, function(status_block) {
                     $(status_block).toggle();
                     window_adjuster();
                 });
