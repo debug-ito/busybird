@@ -369,8 +369,10 @@ var bb = {
         var invisible_index = 0;
         var prev_pos = 0;
         var window_adjuster = function() {};
-        return Deferred.repeat($status_entries.length, function(repeat_index) {
-            var $cur_entry = $status_entries.slice(repeat_index, repeat_index + 1);
+        // return Deferred.repeat($status_entries.length, function(repeat_index) {
+        return bb.blockRepeat($status_entries.get(), 50, function(status_block) { $.each(status_block, function(index_in_block, cur_entry) {
+            // var $cur_entry = $status_entries.slice(repeat_index, repeat_index + 1);
+            var $cur_entry = $(cur_entry);
             var entry_level = $cur_entry.attr('busybird-level');
             var cur_is_visible = ($cur_entry.css('display') != 'none');
             if(cur_is_visible) {
@@ -396,7 +398,7 @@ var bb = {
             metric.invisible_index = invisible_index;
             metrics_list.push(metric);
             prev_pos = cur_pos;
-        }).next(function () {
+        })}).next(function () {
             if(next_seq_invisible_entries.length > 0) {
                 hidden_header_list.push({'$followed_by': null, 'entries': next_seq_invisible_entries});
             }
