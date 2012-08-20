@@ -150,13 +150,13 @@ var bb = {
         var block_num = Math.ceil(orig_array.length / block_size);
         return Deferred.repeat(block_num, function(block_index) {
             var start_global_index = block_size * block_index;
-            console.log("blockRepeat: block_size: " + block_size + ", block_index: " + block_index);
+            // console.log("blockRepeat: block_size: " + block_size + ", block_index: " + block_index);
             each_func(orig_array.slice(start_global_index, start_global_index + block_size), start_global_index);
         });
     },
 
     renderStatuses: function(statuses, is_prepend) {
-        console.log("renderStatuses: start");
+        // console.log("renderStatuses: start");
         // var BLOCK_SIZE = 20;
         // var statuses_text = "";
         var $statuses = $("#statuses");
@@ -185,7 +185,7 @@ var bb = {
                 $statuses.append(statuses_text);
             }
         }).next(function() {
-            console.log("renderStatuses: repeat finished.");
+            // console.log("renderStatuses: repeat finished.");
             if(!is_prepend) {
                 bb.more_status_max_id = statuses[statuses.length-1].id;
             }
@@ -419,11 +419,11 @@ var bb = {
                 }
             });
 
-            $('.test-metrics-index').remove();
-            for(var i = 0 ; i < metrics_list.length ; i++) {
-                metrics_list[i].$status_entry.find('.status-attributes').append('<span class="test-metrics-index">&nbsp; METRIC: '+i+'</span>');
-                metrics_list[i].$status_entry.attr('busybird-metric', i);
-            }
+            // $('.test-metrics-index').remove();
+            // for(var i = 0 ; i < metrics_list.length ; i++) {
+            //     metrics_list[i].$status_entry.find('.status-attributes').append('<span class="test-metrics-index">&nbsp; METRIC: '+i+'</span>');
+            //     metrics_list[i].$status_entry.attr('busybird-metric', i);
+            // }
             
             if(!no_window_adjust) {
                 for(var i = 0 ; i < metrics_list.length ; i++) {
@@ -460,10 +460,9 @@ var bb = {
             // }
             // window_adjuster();
 
-
-            for(var i = 0 ; i < metrics_list.length ; i++) {
-                metrics_list[i].$status_entry.attr('busybird-action', '');
-            }
+            // for(var i = 0 ; i < metrics_list.length ; i++) {
+            //     metrics_list[i].$status_entry.attr('busybird-action', '');
+            // }
             
             var slide_options = {
                 duration: bb.LEVEL_ANIMATION_DURATION,
