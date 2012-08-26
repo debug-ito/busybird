@@ -17,24 +17,26 @@
             <li class="active"><a><?= $S{name} ?></a></li>
             <li class="divider-vertical"></li>
           </ul>
-          <div class="navbar-form pull-left">
-            <a class="btn btn-small btn-inverse disabled bb-new-status-loader-button" href="#">New <span class="bb-new-status-num badge">0</span></a>
-          </div>
+          <div id="bb-indicator" class="navbar-text pull-left"></div>
           <div class="navbar-form pull-right">
             <div class="btn-group pull-right">
               <a class="btn btn-inverse"><i class="icon-pencil icon-white"></i></a>
             </div>
-            <div class="navbar-text pull-right">
-              <span class="label">Lv. <span class="display-level">0</span></span>
-            </div>
+          </div>
+          <div class="navbar-text pull-right">
+            <span class="label">Lv. <span class="display-level">0</span></span>
+          </div>
+          <div class="navbar-form pull-right">
             <div class="btn-group pull-right">
               <a class="btn btn-inverse" href="javascript: bbui.incrimentDisplayLevel();"><i class="icon-zoom-in icon-white"></i></a>
               <a class="btn btn-inverse" href="javascript: bbui.decrimentDisplayLevel();"><i class="icon-zoom-out icon-white"></i></a>
             </div>
-            
             <div class="btn-group pull-right">
               <a id="bb-button-stop-mode" class="btn btn-inverse active" href="javascript: bbui.toggleRunMode();"><i class="icon-pause icon-white"></i></a>
               <a id="bb-button-run-mode" class="btn btn-inverse" href="javascript: bbui.toggleRunMode();"><i class="icon-play icon-white"></i></a>
+            </div>
+            <div class="btn-group pull-left">
+              <a class="btn btn-small btn-inverse disabled bb-new-status-loader-button" href="#">New <span class="bb-new-status-num badge">0</span></a>
             </div>
           </div>
         </div>

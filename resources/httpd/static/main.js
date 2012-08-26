@@ -1,6 +1,21 @@
 //// BusyBird main script
 //// Copyright (c) 2012 Toshio ITO
 
+function bbIndicator($show_target) {
+    this.$show_target = $show_target;
+}
+bbIndicator.prototype = {
+    show: function(msg, type, timeout) {
+        var self = this;
+        this.$show_target.text(msg).show();
+        if(timeout != null && timeout > 0) {
+            setTimeout(function() {
+                self.$show_target.fadeOut('fast');
+            }, timeout);
+        }
+    }
+};
+
 function bbStatusListener(name, listener_callback) {
     this.name = name;
     this.header = null;
@@ -67,6 +82,7 @@ var bb = {
     display_level: 0,
     $cursor: null,
     more_status_max_id: null,
+    indicator: null,
 
     ajaxRetry : function(ajax_param) {
         var ajax_xhr = null;
@@ -631,8 +647,10 @@ poller.add('new_statuses_num', 0, function(resource) {
 poller.changeSelection({'new_statuses': false});
 
 $(document).ready(function () {
+    bb.indicator = new bbIndicator($('#bb-indicator'));
     bb.loadStatuses('all_statuses.json', false).next(function() {
         bb.setCursor($('#statuses > .status-container').first());
+        bb.indicator.show("Initialized", null, 3000);
         return bb.confirm();
     }).next(function () {
         poller.execute();
