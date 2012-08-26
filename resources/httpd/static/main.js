@@ -364,9 +364,11 @@ var bb = {
         var metrics_list = [];
         var hidden_header_list = [];
         var win_dim = {"top": $(window).scrollTop(), "range": $(window).height()};
-        var cursor_pos = (bb.$cursor == null ? (win_dim.top + win_dim.range / 2.0) : bb.$cursor.offset().top);
+        // var cursor_pos = (bb.$cursor == null ? (win_dim.top + win_dim.range / 2.0) : bb.$cursor.offset().top);
+        var cursor_index = (bb.$cursor == null ? -1 : $status_entries.index(bb.$cursor));
+        var cur_index = 0;
         var next_seq_invisible_entries = [];
-        var invisible_index = 0;
+        // var invisible_index = 0;
         var prev_pos = 0;
         var window_adjuster = function() {};
         // return Deferred.repeat($status_entries.length, function(repeat_index) {
@@ -375,11 +377,11 @@ var bb = {
             var $cur_entry = $(cur_entry);
             var entry_level = $cur_entry.attr('busybird-level');
             var cur_is_visible = ($cur_entry.css('display') != 'none');
-            if(cur_is_visible) {
-                invisible_index = 0;
-            }else {
-                invisible_index++;
-            }
+            // if(cur_is_visible) {
+            //     invisible_index = 0;
+            // }else {
+            //     invisible_index++;
+            // }
             var metric = {};
             metric.$status_entry = $cur_entry;
             if(entry_level <= current_display_level) {
@@ -394,10 +396,12 @@ var bb = {
             }
             var cur_pos = (cur_is_visible ? $cur_entry.offset().top : prev_pos);
             metric.win_dist = bb.distanceRanges(win_dim.top, win_dim.range, cur_pos, $cur_entry.height());
-            metric.cursor_signed_dist = cur_pos - cursor_pos;
-            metric.invisible_index = invisible_index;
+            metric.cursor_index_dist = Math.abs(cur_index - cursor_index);
+            // metric.cursor_signed_dist = cur_pos - cursor_pos;
+            // metric.invisible_index = invisible_index;
             metrics_list.push(metric);
             prev_pos = cur_pos;
+            cur_index++;
         })}).next(function () {
             if(next_seq_invisible_entries.length > 0) {
                 hidden_header_list.push({'$followed_by': null, 'entries': next_seq_invisible_entries});
@@ -406,24 +410,25 @@ var bb = {
                 if(a.win_dist != b.win_dist) {
                     return a.win_dist - b.win_dist;
                 }
-                if(Math.abs(a.cursor_signed_dist) != Math.abs(b.cursor_signed_dist)) {
-                    return Math.abs(a.cursor_signed_dist) - Math.abs(b.cursor_signed_dist);
-                }
-                if(a.cursor_signed_dist >= 0 && b.cursor_signed_dist >= 0) {
-                    return a.invisible_index - b.invisible_index;
-                }else if(a.cursor_signed_dist <= 0 && b.cursor_signed_dist <= 0) {
-                    return b.invisible_index - a.invisible_index;
-                }else {
-                    // ** sgn(a.cursor_signed_dist) != sgn(b.cursor_signed_dist): I guess this is a very rare case.
-                    return 0;
-                }
+                return a.cursor_index_dist - b.cursor_index_dist;
+                // if(Math.abs(a.cursor_signed_dist) != Math.abs(b.cursor_signed_dist)) {
+                //     return Math.abs(a.cursor_signed_dist) - Math.abs(b.cursor_signed_dist);
+                // }
+                // if(a.cursor_signed_dist >= 0 && b.cursor_signed_dist >= 0) {
+                //     return a.invisible_index - b.invisible_index;
+                // }else if(a.cursor_signed_dist <= 0 && b.cursor_signed_dist <= 0) {
+                //     return b.invisible_index - a.invisible_index;
+                // }else {
+                //     // ** sgn(a.cursor_signed_dist) != sgn(b.cursor_signed_dist): I guess this is a very rare case.
+                //     return 0;
+                // }
             });
 
-            // $('.test-metrics-index').remove();
-            // for(var i = 0 ; i < metrics_list.length ; i++) {
-            //     metrics_list[i].$status_entry.find('.status-attributes').append('<span class="test-metrics-index">&nbsp; METRIC: '+i+'</span>');
-            //     metrics_list[i].$status_entry.attr('busybird-metric', i);
-            // }
+            $('.test-metrics-index').remove();
+            for(var i = 0 ; i < metrics_list.length ; i++) {
+                metrics_list[i].$status_entry.find('.status-attributes').append('<span class="test-metrics-index">&nbsp; METRIC: '+i+'</span>');
+                metrics_list[i].$status_entry.attr('busybird-metric', i);
+            }
             
             if(!no_window_adjust) {
                 for(var i = 0 ; i < metrics_list.length ; i++) {
@@ -495,6 +500,7 @@ var bb = {
                     if(header_entry.$followed_by != null) {
                         header_entry.$followed_by.before(bb.formatHiddenStatus(header_entry.entries.length));
                     }else {
+                        // ** Is there a way not to use $status_container ?
                         $statuses_container.append(bb.formatHiddenStatus(header_entry.entries.length));
                     }
                 }
