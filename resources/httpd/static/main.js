@@ -157,11 +157,8 @@ var bb = {
 
     renderStatuses: function(statuses, is_prepend) {
         // console.log("renderStatuses: start");
-        // var BLOCK_SIZE = 20;
-        // var statuses_text = "";
         var $statuses = $("#statuses");
         if(statuses.length <= 0) return;
-        // var block_num = Math.ceil(statuses.length / BLOCK_SIZE);
         var total_index = 0;
         if(is_prepend) {
             $statuses.find(".bb-status-is-new").remove();
@@ -191,53 +188,6 @@ var bb = {
             }
             return bb.changeDisplayLevel(0, true, true, true)
         });
-
-        ///
-        // return Deferred.repeat(block_num, function(block_index) {
-        //     console.log("renderStatuses: repeat " + block_index);
-        //     var this_index = 0;
-        //     var statuses_text = "";
-        //     while(this_index < BLOCK_SIZE && total_index < statuses.length) {
-        //         var status_index = (is_prepend ? statuses.length - 1 - total_index : total_index);
-        //         if(statuses[status_index].id == bb.more_status_max_id) continue;
-        //         var this_status_text = bb.formatStatus(statuses[status_index]);
-        //         if(is_prepend) {
-        //             statuses_text =  this_status_text + statuses_text;
-        //         }else {
-        //             statuses_text = statuses_text + this_status_text;
-        //         }
-        //         this_index++;
-        //         total_index++;
-        //     }
-        //     if(is_prepend) {
-        //         $statuses.prepend(statuses_text);
-        //     }else {
-        //         $statuses.append(statuses_text);
-        //     }
-        // }).next(function() {
-        //     console.log("renderStatuses: repeat finished.");
-        //     if(!is_prepend) {
-        //         bb.more_status_max_id = statuses[statuses.length-1].id;
-        //     }
-        //     return bb.changeDisplayLevel(0, true, true, true)
-        // });
-        // for(var i = 0 ; i < statuses.length ; i++) {
-        //     if(statuses[i].id == bb.more_status_max_id) {
-        //         continue;
-        //     }
-        //     statuses_text += bb.formatStatus(statuses[i]);
-        // }
-        // if(statuses.length > 0) {
-        //     if(is_prepend) {
-        //         $statuses.find(".bb-status-is-new").remove();
-        //         $statuses.prepend(statuses_text);
-        //     }else {
-        //         $statuses.append(statuses_text);
-        //         // $("#more-button").attr("href", 'javascript: bbui.loadMoreStatuses("' + statuses[statuses.length-1].id + '")');
-        //         bb.more_status_max_id = statuses[statuses.length-1].id;
-        //     }
-        // }
-        // bb.changeDisplayLevel(0, true, true, true);
     },
 
     loadStatuses: function (req_point, is_prepend) {
@@ -314,14 +264,6 @@ var bb = {
     distanceToWindow: function ($elem) {
         return bb.distanceRanges($(window).scrollTop(), $(window).height(),
                                  $elem.offset().top, $elem.height());
-        // var win_top = $(window).scrollTop();
-        // var win_btm = win_top + $(window).height();
-        // var elem_top = $elem.offset().top;
-        // var elem_btm = elem_top + $elem.height();
-        // var dist_top = win_top  - elem_top
-        // var dist_btm = elem_btm - win_btm;
-        // var signed_dist = (dist_top > dist_btm ? dist_top : dist_btm);
-        // return (signed_dist > 0 ? signed_dist : 0);
     },
 
     getTime: function () {
@@ -360,28 +302,18 @@ var bb = {
         var ACTION_GET_INVISIBLE = 3;
         var ANIMATION_MAX = 15;
 
-        // var $cur_entry = $status_entries.first();
         var metrics_list = [];
         var hidden_header_list = [];
         var win_dim = {"top": $(window).scrollTop(), "range": $(window).height()};
-        // var cursor_pos = (bb.$cursor == null ? (win_dim.top + win_dim.range / 2.0) : bb.$cursor.offset().top);
         var cursor_index = (bb.$cursor == null ? -1 : $status_entries.index(bb.$cursor));
         var cur_index = 0;
         var next_seq_invisible_entries = [];
-        // var invisible_index = 0;
         var prev_pos = 0;
         var window_adjuster = function() {};
-        // return Deferred.repeat($status_entries.length, function(repeat_index) {
         return bb.blockRepeat($status_entries.get(), 150, function(status_block) { $.each(status_block, function(index_in_block, cur_entry) {
-            // var $cur_entry = $status_entries.slice(repeat_index, repeat_index + 1);
             var $cur_entry = $(cur_entry);
             var entry_level = $cur_entry.attr('busybird-level');
             var cur_is_visible = ($cur_entry.css('display') != 'none');
-            // if(cur_is_visible) {
-            //     invisible_index = 0;
-            // }else {
-            //     invisible_index++;
-            // }
             var metric = {};
             metric.$status_entry = $cur_entry;
             if(entry_level <= current_display_level) {
@@ -397,8 +329,6 @@ var bb = {
             var cur_pos = (cur_is_visible ? $cur_entry.offset().top : prev_pos);
             metric.win_dist = bb.distanceRanges(win_dim.top, win_dim.range, cur_pos, $cur_entry.height());
             metric.cursor_index_dist = Math.abs(cur_index - cursor_index);
-            // metric.cursor_signed_dist = cur_pos - cursor_pos;
-            // metric.invisible_index = invisible_index;
             metrics_list.push(metric);
             prev_pos = cur_pos;
             cur_index++;
@@ -411,24 +341,13 @@ var bb = {
                     return a.win_dist - b.win_dist;
                 }
                 return a.cursor_index_dist - b.cursor_index_dist;
-                // if(Math.abs(a.cursor_signed_dist) != Math.abs(b.cursor_signed_dist)) {
-                //     return Math.abs(a.cursor_signed_dist) - Math.abs(b.cursor_signed_dist);
-                // }
-                // if(a.cursor_signed_dist >= 0 && b.cursor_signed_dist >= 0) {
-                //     return a.invisible_index - b.invisible_index;
-                // }else if(a.cursor_signed_dist <= 0 && b.cursor_signed_dist <= 0) {
-                //     return b.invisible_index - a.invisible_index;
-                // }else {
-                //     // ** sgn(a.cursor_signed_dist) != sgn(b.cursor_signed_dist): I guess this is a very rare case.
-                //     return 0;
-                // }
             });
 
-            $('.test-metrics-index').remove();
-            for(var i = 0 ; i < metrics_list.length ; i++) {
-                metrics_list[i].$status_entry.find('.status-attributes').append('<span class="test-metrics-index">&nbsp; METRIC: '+i+'</span>');
-                metrics_list[i].$status_entry.attr('busybird-metric', i);
-            }
+            // $('.test-metrics-index').remove();
+            // for(var i = 0 ; i < metrics_list.length ; i++) {
+            //     metrics_list[i].$status_entry.find('.status-attributes').append('<span class="test-metrics-index">&nbsp; METRIC: '+i+'</span>');
+            //     metrics_list[i].$status_entry.attr('busybird-metric', i);
+            // }
             
             if(!no_window_adjust) {
                 for(var i = 0 ; i < metrics_list.length ; i++) {
@@ -443,31 +362,6 @@ var bb = {
                     }
                 }
             }
-            
-            // $statuses_container.children(".hidden-status-header").remove();
-            // window_adjuster();
-            // for(var i = 0 ; i < hidden_header_list.length ; i++) {
-            //     var header_entry = hidden_header_list[i];
-            //     if(header_entry.$followed_by != null) {
-            //         header_entry.$followed_by.before(bb.formatHiddenStatus(header_entry.entries.length));
-            //     }else {
-            //         $statuses_container.append(bb.formatHiddenStatus(header_entry.entries.length));
-            //     }
-            // }
-            // window_adjuster();
-            // for(var i = ANIMATION_MAX ; i < metrics_list.length ; i++) {
-            //     if(metrics_list[i].action == ACTION_GET_VISIBLE || metrics_list[i].action == ACTION_GET_INVISIBLE) {
-            //         metrics_list[i].$status_entry.toggle();
-            //         metrics_list[i].$status_entry.attr('busybird-action', 'no-anim');
-            //     }else {
-            //         metrics_list[i].$status_entry.attr('busybird-action', 'none,no-anim');
-            //     }
-            // }
-            // window_adjuster();
-
-            // for(var i = 0 ; i < metrics_list.length ; i++) {
-            //     metrics_list[i].$status_entry.attr('busybird-action', '');
-            // }
             
             var slide_options = {
                 duration: bb.LEVEL_ANIMATION_DURATION,
@@ -512,119 +406,7 @@ var bb = {
                 });
             });
             
-            // var $action_list = $( $.map(action_list, function(elem) { return elem.$status_entry.get(); }) );
-            // if(no_animation) {
-            //     $action_list.toggle();
-            //     $action_list.attr('busybird-action', 'no-anim');
-            // }else {
-            //     var $action_anim_list = $action_list.slice(0, ANIMATION_MAX);
-            //     var $action_noanim_list = $action_list.slice(ANIMATION_MAX);
-            //     $action_anim_list.attr('busybird-action', 'anim');
-            //     $action_noanim_list.attr('busybird-action', 'no-anim');
-            //     bb.detailedSlide($action_anim_list, "toggle", slide_options);
-            //     $action_noanim_list.toggle();
-            // }
-            // window_adjuster();
-            
-            // return Deferred.repeat(ANIMATION_MAX, function(animation_index) {
-            //     if(animation_index >= metrics_list.length) return;
-            //     var metric_elem = metrics_list[animation_index];
-            //     if(metric_elem.action == ACTION_GET_VISIBLE || metric_elem.action == ACTION_GET_INVISIBLE) {
-            //         if(no_animation) {
-            //             metric_elem.$status_entry.toggle();
-            //             window_adjuster();
-            //             metric_elem.$status_entry.attr('busybird-action', 'anim,no');
-            //         }else {
-            //             bb.detailedSlide(metric_elem.$status_entry, "toggle", slide_options);
-            //             metric_elem.$status_entry.attr('busybird-action', 'anim');
-            //         }
-            //     }else {
-            //         metric_elem.$status_entry.attr('busybird-action', 'none,anim');
-            //     }
-            // });
         });
-
-        /////////////////////////////////
-        
-        // var $anchor_elem = null;
-        // var min_dist_win = 0;
-        // var min_dist_cursor = 0;
-        // 
-        // var invisible_num = 0;
-        // var $statuses_container = $('#statuses');
-        // var $status_entries = $statuses_container.children(".status-container");
-        // var $visibles = $();
-        // var $invisibles = $();
-        // var inserts = [];
-        // 
-        // show_time("before each");
-        // 
-        // $status_entries.each(function(index, elem) {
-        //     var $this = $(this);
-        //     var entry_level = $this.attr('busybird-level');
-        //     if(entry_level <= stayvisible_level && $this.css('display') != "none") {
-        //         // ** search for anchor element
-        //         var this_dist_win = bb.distanceToWindow($this);
-        //         var this_dist_cursor = bb.distanceElems(bb.$cursor, $this);
-        //         if(($anchor_elem == null)
-        //            || (this_dist_win < min_dist_win)
-        //            || (this_dist_win == min_dist_win && this_dist_cursor < min_dist_cursor)) {
-        //             $anchor_elem = $this;
-        //             min_dist_win = this_dist_win;
-        //             min_dist_cursor = this_dist_cursor;
-        //         }
-        //     }
-        //     if(entry_level <= bb.display_level) {
-        //         // ** Collect visible elements
-        //         $visibles = $visibles.add($this);
-        //         if(invisible_num > 0) {
-        //             inserts.push({"$pos_elem": $this, "num": invisible_num});
-        //             invisible_num = 0;
-        //         }
-        //     }else {
-        //         // ** Collect invisible elements
-        //         $invisibles = $invisibles.add($this);
-        //         invisible_num++;
-        //     }
-        //     return true;
-        // });
-        // show_time("end each");
-        // 
-        // var window_adjuster = null;
-        // if($anchor_elem != null && !no_window_adjust) {
-        //     $anchor_elem.addClass('bbtest-anchor');
-        //     var relative_position_of_anchor = $anchor_elem.offset().top - $(window).scrollTop();
-        //     window_adjuster = function() {
-        //         $(window).scrollTop($anchor_elem.offset().top - relative_position_of_anchor);
-        //     };
-        // }
-        // show_time("end creating window_adjuster");
-        // $statuses_container.children(".hidden-status-header").remove();
-        // if(window_adjuster) window_adjuster();
-        // for(var i = 0 ; i < inserts.length ; i++) {
-        //     inserts[i].$pos_elem.before(bb.formatHiddenStatus(inserts[i].num));
-        // }
-        // if(invisible_num > 0) {
-        //     $statuses_container.append(bb.formatHiddenStatus(invisible_num));
-        // }
-        // if(window_adjuster) window_adjuster();
-        // show_time("end manipulating headers");
-        // var old_fx = $.fx.off;
-        // if(no_animation) $.fx.off = true;
-        // var options = {
-        //     duration: bb.LEVEL_ANIMATION_DURATION,
-        //     // step: (no_animation ? null : window_adjuster)
-        //     step: function(now, fx) {
-        //         if(fx.prop != "height") return;
-        //         if(!no_animation && window_adjuster) window_adjuster();
-        //     }
-        //     // complete: window_adjuster
-        // };
-        // show_time("start slide");
-        // bb.detailedSlide($visibles, "show", options);
-        // bb.detailedSlide($invisibles, "hide", options);
-        // $status_entries.promise().done(window_adjuster);
-        // $.fx.off = old_fx;
     }
 };
 
