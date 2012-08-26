@@ -28,15 +28,25 @@
           </div>
           <div class="navbar-form pull-right">
             <div class="btn-group pull-right">
-              <a class="btn btn-inverse" href="javascript: bbui.incrimentDisplayLevel();"><i class="icon-zoom-in icon-white"></i></a>
-              <a class="btn btn-inverse" href="javascript: bbui.decrimentDisplayLevel();"><i class="icon-zoom-out icon-white"></i></a>
+              <a id="bb-button-incriment-display-level" class="btn btn-inverse" href="javascript: bbcom.incriment_display_level.trigger();">
+                <i class="icon-zoom-in icon-white"></i>
+              </a>
+              <a id="bb-button-decriment-display-level" class="btn btn-inverse" href="javascript: bbcom.decriment_display_level.trigger();">
+                <i class="icon-zoom-out icon-white"></i>
+              </a>
             </div>
             <div class="btn-group pull-right">
-              <a id="bb-button-stop-mode" class="btn btn-inverse active" href="javascript: bbui.toggleRunMode();"><i class="icon-pause icon-white"></i></a>
-              <a id="bb-button-run-mode" class="btn btn-inverse" href="javascript: bbui.toggleRunMode();"><i class="icon-play icon-white"></i></a>
+              <a id="bb-button-stop-mode" class="btn btn-inverse active" href="javascript: bbcom.toggle_run_mode.trigger();">
+                <i class="icon-pause icon-white"></i>
+              </a>
+              <a id="bb-button-run-mode" class="btn btn-inverse" href="javascript: bbcom.toggle_run_mode.trigger();">
+                <i class="icon-play icon-white"></i>
+              </a>
             </div>
             <div class="btn-group pull-left">
-              <a class="btn btn-small btn-inverse disabled bb-new-status-loader-button" href="#">New <span class="bb-new-status-num badge">0</span></a>
+              <a class="btn btn-small btn-inverse disabled bb-new-status-loader-button">
+                New <span class="bb-new-status-num badge">0</span>
+              </a>
             </div>
           </div>
         </div>
@@ -53,7 +63,7 @@
           <ul id="statuses" class="unstyled">
           </ul>
           <div id="main-footer">
-            <a class="btn btn-primary" id="more-button" data-loading-text="Loading..." href="javascript: bbui.loadMoreStatuses();">More...</a>
+            <a class="btn btn-primary" id="more-button" data-loading-text="Loading..." href="javascript: bbcom.load_more_statuses.trigger();">More...</a>
           </div>
         </div>
       </div>

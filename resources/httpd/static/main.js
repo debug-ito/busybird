@@ -1,6 +1,42 @@
 //// BusyBird main script
 //// Copyright (c) 2012 Toshio ITO
 
+function bbUserCommand(params) {
+    this.lock_counter = (params.init_lock || 0);
+    this.keys = [];
+    this.onLocked = (params.onLocked || function(){});
+    this.onUnlocked = (params.onUnlocked || function(){});
+    this.onTriggered = (params.onTriggered || function(){});
+}
+bbUserCommand.prototype = {
+    lock: function() {
+        return this.setLock(this.lock_counter + 1);
+    },
+    unlock: function() {
+        return this.setLock(this.lock_counter - 1);
+    },
+    setLock: function(new_count) {
+        var old_count = this.lock_counter;
+        if(new_count < 0) new_count = 0;
+        this.lock_counter = new_count;
+        if(new_count <= 0 && old_count > 0) {
+            this.onUnlocked();
+        }else if(new_count > 0 && old_count <= 0) {
+            this.onLocked();
+        }
+        return this;
+    },
+    trigger: function() {
+        if(this.lock_counter <= 0) {
+            this.onTriggered();
+        }
+    },
+    addKey: function(keys) {
+        this.keys.push(keys);
+        return this;
+    }
+};
+
 function bbIndicator($show_target) {
     this.$show_target = $show_target;
 }
@@ -437,31 +473,101 @@ var bb = {
     }
 };
 
-var bbui = {
-    loadNewStatuses: function () {
-        bb.loadStatuses("new_statuses.json", true).next(function(){
-            return bb.confirm();
-        });
-        $(".bb-new-status-loader-button").addClass("disabled").removeAttr("href");
-    },
-    loadMoreStatuses: function () {
-        var $more_button_selec = $("#more-button").removeAttr("href").button('loading');
-        bb.loadStatusesWithMaxID(null).next(function() {
-            $more_button_selec.attr("href", 'javascript: bbui.loadMoreStatuses();').button('reset');
-        });
-    },
-    incrimentDisplayLevel: function() {
-        bb.changeDisplayLevel(+1, true);
-    },
-    decrimentDisplayLevel: function() {
-        bb.changeDisplayLevel(-1, true);
-    },
-    toggleRunMode: function() {
-        poller.toggleSelection("new_statuses");
-        $('#bb-button-stop-mode').toggleClass("active");
-        $('#bb-button-run-mode').toggleClass("active");
-    }
+function createDisplayLevelChanger(change_amount, target_button_id) {
+    return new bbUserCommand({
+        onTriggered: function () {
+            bbcom.incriment_display_level.lock();
+            bbcom.decriment_display_level.lock();
+            bb.changeDisplayLevel(change_amount, true).next(function () {
+                bbcom.incriment_display_level.unlock();
+                bbcom.decriment_display_level.unlock();
+            });
+        },
+        onLocked: function() {
+            $(target_button_id).addClass("disabled");
+        },
+        onUnlocked: function() {
+            $(target_button_id).removeClass("disabled");
+        }
+    });
+}
+
+var bbcom = {
+    load_new_statuses: new bbUserCommand({
+        init_lock: 1,
+        onTriggered: function() {
+            var self = this;
+            bb.loadStatuses("new_statuses.json", true).next(function(){
+                // self.unlock();
+                return bb.confirm();
+            });
+            self.lock();
+        },
+        onLocked: function() {
+            $(".bb-new-status-loader-button").addClass("disabled").removeAttr("href");
+        },
+        onUnlocked: function() {
+            $('.bb-new-status-loader-button')
+                .removeClass("disabled")
+                .prop('href', 'javascript: bbcom.load_new_statuses.trigger();');
+        }
+    }),
+
+    load_more_statuses: new bbUserCommand({
+        onTriggered: function() {
+            // var $more_button_selec = $("#more-button").removeAttr("href").button('loading');
+            var self = this;
+            self.lock();
+            bb.loadStatusesWithMaxID(null).next(function() {
+                self.unlock();
+                // $more_button_selec.attr("href", 'javascript: bbui.loadMoreStatuses();').button('reset');
+            });
+        },
+        onLocked: function() {
+            $("#more-button").removeAttr("href").button('loading');
+        },
+        onUnlocked: function() {
+            $("#more-button").attr("href", 'javascript: bbcom.load_more_statuses.trigger();').button('reset');
+        }
+    }),
+
+    incriment_display_level: createDisplayLevelChanger(+1, "#bb-button-incriment-display-level"),
+    decriment_display_level: createDisplayLevelChanger(-1, "#bb-button-decriment-display-level"),
+
+    toggle_run_mode: new bbUserCommand({
+        onTriggered: function() {
+            poller.toggleSelection("new_statuses");
+            $('#bb-button-stop-mode').toggleClass("active");
+            $('#bb-button-run-mode').toggleClass("active");
+        }
+    }),
 };
+
+// var bbui = {
+//     loadNewStatuses: function () {
+//         bb.loadStatuses("new_statuses.json", true).next(function(){
+//             return bb.confirm();
+//         });
+//         $(".bb-new-status-loader-button").addClass("disabled").removeAttr("href");
+//     },
+//     loadMoreStatuses: function () {
+//         var $more_button_selec = $("#more-button").removeAttr("href").button('loading');
+//         bb.loadStatusesWithMaxID(null).next(function() {
+//             $more_button_selec.attr("href", 'javascript: bbui.loadMoreStatuses();').button('reset');
+//         });
+//     },
+//     incrimentDisplayLevel: function() {
+//         bb.changeDisplayLevel(+1, true);
+//     },
+//     decrimentDisplayLevel: function() {
+//         bb.changeDisplayLevel(-1, true);
+//     },
+//     toggleRunMode: function() {
+//         poller.toggleSelection("new_statuses");
+//         $('#bb-button-stop-mode').toggleClass("active");
+//         $('#bb-button-run-mode').toggleClass("active");
+//     }
+// };
 
 function bbSelectionElement(name, init_base, resource_callback) {
     this.name = name;
@@ -568,6 +674,9 @@ bbSelectionPoller.prototype = {
             changes[name] = (this.elems[name].isEnabled() ? false : true);
         }
         this.changeSelection(changes);
+    },
+    selectionEnabled: function(name) {
+        return (this.elems[name] == null ? false : this.elems[name].isEnabled());
     }
 };
 
@@ -634,15 +743,23 @@ poller.add('new_statuses_num', 0, function(resource) {
     this.setRequestBase(resource);
     document.title = (resource > 0 ? '('+ resource +') ' : "") + document.title.replace(/^\([0-9]*\) */, "");
     $('.bb-new-status-num').text(resource);
-    if(resource > 0) {
-        $('.bb-new-status-loader-button')
-            .removeClass('disabled')
-            .prop('href', 'javascript: bbui.loadNewStatuses()');
+    if(resource > 0 && !poller.selectionEnabled('new_statuses')) {
+        // $('.bb-new-status-loader-button').removeClass("disabled");
+        bbcom.load_new_statuses.setLock(0);
     }else {
-        $('.bb-new-status-loader-button')
-            .addClass('disabled')
-            .prop('href', "#");
+        bbcom.load_new_statuses.setLock(1);
     }
+    // else {
+    //     $('.bb-new-status-loader-button').addClass("disabled");
+    // }
+    // if(resource > 0) {
+    //     bbcom.load_new_statuses.unlock();
+    // }else {
+    //     bbcom.load_new_statuses.lock();
+    //     // $('.bb-new-status-loader-button')
+    //     //     .addClass('disabled')
+    //     //     .prop('href', "#");
+    // }
 });
 poller.changeSelection({'new_statuses': false});
 
