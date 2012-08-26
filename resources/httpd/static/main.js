@@ -164,6 +164,7 @@ var bb = {
             $statuses.find(".bb-status-is-new").remove();
             statuses = statuses.reverse();
         }
+        var new_entries = [];
         return bb.blockRepeat(statuses, 100, function(block_array) {
             var statuses_text = "";
             for(var i = 0 ; i < block_array.length ; i++) {
@@ -177,16 +178,19 @@ var bb = {
                 }
             }
             if(is_prepend) {
-                $statuses.prepend(statuses_text);
+                // $statuses.prepend(statuses_text);
+                new_entries.unshift.apply(new_entries, $(statuses_text).prependTo($statuses).get()); //** use apply() to expand array argument
             }else {
-                $statuses.append(statuses_text);
+                // $statuses.append(statuses_text);
+                new_entries.push.apply(new_entries, $(statuses_text).appendTo($statuses).get());
             }
         }).next(function() {
             // console.log("renderStatuses: repeat finished.");
             if(!is_prepend) {
                 bb.more_status_max_id = statuses[statuses.length-1].id;
             }
-            return bb.changeDisplayLevel(0, true, true, true)
+            console.log("new entries num: " + new_entries.length);
+            return bb.changeDisplayLevel(0, true, true, true, $(new_entries));
         });
     },
 
@@ -270,7 +274,7 @@ var bb = {
         return (new Date()).getTime();
     },
 
-    changeDisplayLevel: function(change_level, is_relative, no_animation, no_window_adjust) {
+    changeDisplayLevel: function(change_level, is_relative, no_animation, no_window_adjust, $status_and_header_set) {
         var start_time = bb.getTime();
         var end_time;
         var show_time = function(msg) {
@@ -292,8 +296,11 @@ var bb = {
         $('.display-level').text(bb.display_level);
         $('.bbtest-anchor').removeClass('bbtest-anchor');
 
-        var $statuses_container = $('#statuses');
-        var $status_entries = $statuses_container.children('.status-container');
+        // var $statuses_container = $('#statuses');
+        if($status_and_header_set == null) {
+            $status_and_header_set = $('#statuses').children();
+        }
+        var $status_entries = $status_and_header_set.filter('.status-container');
         if($status_entries.length <= 0) return;
 
         var ACTION_STAY_VISIBLE = 0;
@@ -386,7 +393,8 @@ var bb = {
             }
             bb.detailedSlide($(action_anim_list), "toggle", slide_options);
 
-            $statuses_container.children(".hidden-status-header").remove();
+            // $statuses_container.children(".hidden-status-header").remove();
+            $status_and_header_set.filter(".hidden-status-header").remove();
             window_adjuster();
             return bb.blockRepeat(hidden_header_list, 40, function(header_block) {
                 for(var i = 0 ; i < header_block.length ; i++) {
@@ -394,8 +402,8 @@ var bb = {
                     if(header_entry.$followed_by != null) {
                         header_entry.$followed_by.before(bb.formatHiddenStatus(header_entry.entries.length));
                     }else {
-                        // ** Is there a way not to use $status_container ?
-                        $statuses_container.append(bb.formatHiddenStatus(header_entry.entries.length));
+                        // $statuses_container.append(bb.formatHiddenStatus(header_entry.entries.length));
+                        $status_and_header_set.last().after(bb.formatHiddenStatus(header_entry.entries.length));
                     }
                 }
                 window_adjuster();
@@ -405,7 +413,6 @@ var bb = {
                     window_adjuster();
                 });
             });
-            
         });
     }
 };
