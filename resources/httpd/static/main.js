@@ -120,6 +120,10 @@ var bb = {
         var level = status.busybird.level;
         if(!level) level = 0;
         var style_display = (show_by_default ? "" : 'style="display: none"');
+        var timestamp_str = status.created_at;
+        if(status.busybird.status_permalink != null) {
+            timestamp_str = '<a href="'+status.busybird.status_permalink+'">'+timestamp_str+'</a>';
+        }
         var ret = '<li class="status-container" '+ style_display +' busybird-level="'+ level +'" onclick="bb.setCursor($(this));">';
         if(status.user.profile_image_url) {
             img_tag = '<img class="status-profile-image" src="'+ status.user.profile_image_url +'" width="48" height="48" />';
@@ -133,7 +137,7 @@ var bb = {
         ret +=     '</div>';
         ret +=     '<div class="status-user-name">';
         ret +=       '<strong>' + status.user.screen_name + '</strong>&nbsp;&nbsp;';
-        ret +=       '<span class="status-created-at">'+ status.created_at + '</span>';
+        ret +=       '<span class="status-created-at">'+ timestamp_str + '</span>';
         ret +=     '</div>';
         ret +=   '</div>'
         ret +=   '<div class="status-text">'+ this.linkify(status.text, status.entities) + '</div>';

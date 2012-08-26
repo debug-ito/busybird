@@ -11,13 +11,14 @@ sub new {
     $net_twitter_params{ssl}    = 1 if !defined($net_twitter_params{ssl});
     my $nt = Net::Twitter->new(%net_twitter_params);
     my $self = $class->SUPER::new($nt);
-    $self->{apiurl} = ($net_twitter_params{apiurl} or '_DEFAULT_');
+    ## $self->{apiurl} = ($net_twitter_params{apiurl} or '_DEFAULT_');
     return $self;
 }
 
 sub getAPIURL {
     my $self = shift;
-    return $self->{apiurl};
+    return $self->getTargetObject->apiurl;
+    ## return $self->{apiurl};
 }
 
 1;

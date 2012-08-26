@@ -52,7 +52,7 @@ sub convertSearchStatus {
     ## my $text = $self->processEntities($nt_search_status->{text}, $nt_search_status->{entities});
     my $text = $nt_search_status->{text};
     my $id = $self->createStatusID($nt_search_status, 'id');
-    return BusyBird::Status->new(
+    my $status = BusyBird::Status->new(
         id => $id,
         id_str => defined($id) ? "$id" : undef,
         ## created_at => $self->convertSearchDateTime($nt_search_status->{created_at}),
@@ -63,14 +63,16 @@ sub convertSearchStatus {
             name => $nt_search_status->{from_user_name},
             profile_image_url => $nt_search_status->{profile_image_url},
             entities => $nt_search_status->{entities},
-            busybird => {
-                original => {
-                    map {$_ => $nt_search_status->{$_}} qw(id id_str),
-                }
+        },
+        busybird => {
+            original => {
+                map {$_ => $nt_search_status->{$_}} qw(id id_str),
             }
         },
         entities => $nt_search_status->{entities},
     );
+    $self->setStatusPermalink($status);
+    return $status;
 }
 
 sub extractStatusesFromWorkerData {

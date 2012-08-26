@@ -93,13 +93,31 @@ sub createStatusID {
     return 'Twitter_' . $self->{worker}->getAPIURL() . "_" . $orig_id;
 }
 
+sub getAPIHost {
+    my ($self) = @_;
+    my $apiurl = $self->{worker}->getAPIURL();
+    $apiurl =~ m!https?://([^/]+)!;
+    return $1;
+}
+
+sub setStatusPermalink {
+    my ($self, $status) = @_;
+    my $apihost = $self->getAPIHost();
+    return $status if not defined($apihost);
+    $status->{busybird}{status_permalink} = sprintf(
+        "http://%s/%s/status/%s", $apihost, $status->{user}{screen_name},
+        $status->{busybird}{original}{id_str}
+    );
+    return $status;
+}
+
 sub convertNormalStatus {
     my ($self, $nt_status) = @_;
     ## my $text = $self->processEntities($nt_status->{text}, $nt_status->{entities});
     my $text = $nt_status->{text};
     my $status_id = $self->createStatusID($nt_status, 'id');
     my $status_rep_id = $self->createStatusID($nt_status, 'in_reply_to_status_id');
-    return BusyBird::Status->new(
+    my $status = BusyBird::Status->new(
         id => $status_id,
         id_str => defined($status_id) ? "$status_id" : undef,
         ## created_at => $self->convertNormalDateTime($nt_status->{created_at}),
@@ -120,6 +138,8 @@ sub convertNormalStatus {
             },
         },
     );
+    $self->setStatusPermalink($status);
+    return $status;
 }
 
 sub extractStatusesFromWorkerData {
