@@ -103,10 +103,11 @@ sub getAPIHost {
 sub setStatusPermalink {
     my ($self, $status) = @_;
     my $apihost = $self->getAPIHost();
+    my $id = $status->{busybird}{original}{id_str} || $self->{busybird}{original}{id};
     return $status if not defined($apihost);
+    return $status if not defined($id);
     $status->{busybird}{status_permalink} = sprintf(
-        "http://%s/%s/status/%s", $apihost, $status->{user}{screen_name},
-        $status->{busybird}{original}{id_str}
+        "http://%s/%s/status/%s", $apihost, $status->{user}{screen_name}, $id
     );
     return $status;
 }
