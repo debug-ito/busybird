@@ -53,13 +53,23 @@ function bbIndicator($show_target) {
         className: 'bb-spinner',
         left: 0,
     });
+    this.timeout_obj = null;
 }
 bbIndicator.prototype = {
     show: function(msg, type, timeout) {
         var $msg = this.$show_target.find('.bb-msg');
-        $msg.text(msg).show();
+        if(type != null) {
+            msg = '<span class="bb-msg-'+type+'">'+msg+'</span>';
+        }
+        $msg.html(msg).show();
         if(timeout != null && timeout > 0) {
-            setTimeout(function() {
+            var self = this;
+            if(self.timeout_obj != null) {
+                clearTimeout(self.timeout_obj);
+                self.timeout_obj = null;
+            }
+            self.timeout_obj = setTimeout(function() {
+                self.timeout_obj = null;
                 $msg.fadeOut('fast');
             }, timeout);
         }
@@ -158,11 +168,22 @@ var bb = {
         var ajax_retry_ok = true;
         var ajax_retry_backoff = bb.AJAXRETRY_BACKOFF_INIT_MS;
         var deferred = new Deferred();
+        var try_max = 0;
+        var try_count = 0;
+        if('tryMax' in ajax_param) {
+            try_max = ajax_param.tryMax;
+            delete ajax_param.tryMax;
+        }
         ajax_param.success = function(data, textStatus, jqXHR) {
             deferred.call(data, textStatus, jqXHR);
         };
         ajax_param.error = function(jqXHR, textStatus, errorThrown) {
             ajax_xhr = null;
+            try_count++;
+            if(try_max > 0 && try_count >= try_max) {
+                deferred.fail(jqXHR, textStatus, errorThrown);
+                return;
+            }
             ajax_retry_backoff *= bb.AJAXRETRY_BACKOFF_FACTOR;
             if(ajax_retry_backoff > bb.AJAXRETRY_BACKOFF_MAX_MS) {
                 ajax_retry_backoff = bb.AJAXRETRY_BACKOFF_MAX_MS;
@@ -283,25 +304,29 @@ var bb = {
         });
     },
 
-    loadStatuses: function (req_point, is_prepend) {
+    loadStatuses: function (req_point, is_prepend, try_max) {
+        if(try_max == null) {
+            try_max = 0;
+        }
         return bb.ajaxRetry({
             url: req_point,
             type: "GET",
             cache: false,
             dataType: "json",
-            timeout: 0
+            timeout: 0,
+            tryMax: try_max
         }).next(function (data, textStatus, jqXHR) {
             return bb.status_hook.runHook(data, is_prepend);
         });
     },
 
-    loadStatusesWithMaxID: function(max_id) {
+    loadStatusesWithMaxID: function(max_id, try_max) {
         if(max_id == null) max_id = bb.more_status_max_id;
         if(max_id == null) {
             console.log("ERROR: bb.loadWithMaxID: max_id is null.");
             return Deferred.next();
         }
-        return bb.loadStatuses("all_statuses?max_id=" + max_id, false);
+        return bb.loadStatuses("all_statuses?max_id=" + max_id, false, try_max);
     },
 
     confirm: function() {
@@ -528,14 +553,22 @@ function createDisplayLevelChanger(change_amount, target_button_id) {
 }
 
 var bbcom = {
+    LOAD_TRY_MAX: 2,
+    LOAD_ERROR_MSG_DURATION: 5000,
+    
     load_new_statuses: new bbUserCommand({
         init_lock: 1,
         onTriggered: function() {
             var self = this;
+            var TRY_MAX = 2;
             bb.indicator.spinBegin();
-            bb.loadStatuses("new_statuses.json", true).next(function(){
+            bb.loadStatuses("new_statuses.json", true, bbcom.LOAD_TRY_MAX).next(function(){
                 bb.indicator.spinEnd();
                 return bb.confirm();
+            }).error(function() {
+                bb.indicator.spinEnd();
+                bb.indicator.show("Cannot load new statuses.", "error", bbcom.LOAD_ERROR_MSG_DURATION);
+                self.unlock();
             });
             self.lock();
         },
@@ -555,10 +588,14 @@ var bbcom = {
             var self = this;
             self.lock();
             bb.indicator.spinBegin();
-            bb.loadStatusesWithMaxID(null).next(function() {
+            bb.loadStatusesWithMaxID(null, bbcom.LOAD_TRY_MAX).next(function() {
                 self.unlock();
                 bb.indicator.spinEnd();
                 // $more_button_selec.attr("href", 'javascript: bbui.loadMoreStatuses();').button('reset');
+            }).error(function() {
+                self.unlock();
+                bb.indicator.spinEnd();
+                bb.indicator.show("Cannot load statuses.", "error", bbcom.LOAD_ERROR_MSG_DURATION);
             });
         },
         onLocked: function() {

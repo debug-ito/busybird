@@ -104,4 +104,9 @@ ul#statuses li.bbtest-anchor {
     width: 28px;
 }
 
+.bb-msg-error {
+    text-weight: bold;
+    color: #ff4758;
+}
+
 
