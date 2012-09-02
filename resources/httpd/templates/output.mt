@@ -17,7 +17,10 @@
             <li class="active"><a><?= $S{name} ?></a></li>
             <li class="divider-vertical"></li>
           </ul>
-          <div id="bb-indicator" class="navbar-text pull-left"></div>
+          <div id="bb-indicator" class="navbar-text pull-left">
+            <div class="bb-indicator-placeholder"></div>
+            <span class="bb-msg"></span>
+          </div>
           <div class="navbar-form pull-right">
             <div class="btn-group pull-right">
               <a class="btn btn-inverse"><i class="icon-pencil icon-white"></i></a>
@@ -76,6 +79,7 @@
     
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
     <script type="text/javascript" src="/static/jsdeferred.nodoc.js"></script>
+    <script type="text/javascript" src="/static/spin.js"></script>
     <script type="text/javascript" src="/static/main.js"></script>
     <script type="text/javascript" src="/static/bootstrap/js/bootstrap.min.js"></script>
   </body>

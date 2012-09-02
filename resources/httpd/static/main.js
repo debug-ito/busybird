@@ -39,16 +39,49 @@ bbUserCommand.prototype = {
 
 function bbIndicator($show_target) {
     this.$show_target = $show_target;
+    this.spin_count = 0;
+    this.spinner = new Spinner({
+        lines: 10,
+        length: 5,
+        width: 2,
+        radius: 3,
+        corners: 1,
+        rotate: 0,
+        trail: 60,
+        speed: 1.0,
+        color: "#CCC",
+        className: 'bb-spinner',
+        left: 0,
+    });
 }
 bbIndicator.prototype = {
     show: function(msg, type, timeout) {
-        var self = this;
-        this.$show_target.text(msg).show();
+        var $msg = this.$show_target.find('.bb-msg');
+        $msg.text(msg).show();
         if(timeout != null && timeout > 0) {
             setTimeout(function() {
-                self.$show_target.fadeOut('fast');
+                $msg.fadeOut('fast');
             }, timeout);
         }
+    },
+    spinSet: function(val) {
+        var old = this.spin_count;
+        if(val < 0) val = 0;
+        this.spin_count = val;
+        if(old > 0 && this.spin_count <= 0) {
+            this.spinner.stop();
+        }else if(old <= 0 && this.spin_count > 0) {
+            // this.spinner.spin(this.$show_target.find('.bb-spinner-container')[0]);
+            this.spinner.spin(this.$show_target[0]);
+            // this.spinner.spin();
+            // this.$show_target.prepend(this.spinner.el);
+        }
+    },
+    spinBegin: function() {
+        this.spinSet(this.spin_count + 1);
+    },
+    spinEnd: function() {
+        this.spinSet(this.spin_count - 1);
     }
 };
 
@@ -478,9 +511,11 @@ function createDisplayLevelChanger(change_amount, target_button_id) {
         onTriggered: function () {
             bbcom.incriment_display_level.lock();
             bbcom.decriment_display_level.lock();
+            bb.indicator.spinBegin();
             bb.changeDisplayLevel(change_amount, true).next(function () {
                 bbcom.incriment_display_level.unlock();
                 bbcom.decriment_display_level.unlock();
+                bb.indicator.spinEnd();
             });
         },
         onLocked: function() {
@@ -497,8 +532,9 @@ var bbcom = {
         init_lock: 1,
         onTriggered: function() {
             var self = this;
+            bb.indicator.spinBegin();
             bb.loadStatuses("new_statuses.json", true).next(function(){
-                // self.unlock();
+                bb.indicator.spinEnd();
                 return bb.confirm();
             });
             self.lock();
@@ -518,8 +554,10 @@ var bbcom = {
             // var $more_button_selec = $("#more-button").removeAttr("href").button('loading');
             var self = this;
             self.lock();
+            bb.indicator.spinBegin();
             bb.loadStatusesWithMaxID(null).next(function() {
                 self.unlock();
+                bb.indicator.spinEnd();
                 // $more_button_selec.attr("href", 'javascript: bbui.loadMoreStatuses();').button('reset');
             });
         },
@@ -765,13 +803,16 @@ poller.changeSelection({'new_statuses': false});
 
 $(document).ready(function () {
     bb.indicator = new bbIndicator($('#bb-indicator'));
+    bb.indicator.spinBegin();
     bb.loadStatuses('all_statuses.json', false).next(function() {
         bb.setCursor($('#statuses > .status-container').first());
+        bb.indicator.spinEnd();
         bb.indicator.show("Initialized", null, 3000);
         return bb.confirm();
     }).next(function () {
         poller.execute();
     }).error(function(e) {
+        bb.indicator.spinEnd();
         console.log("ERROR!!! " + e);
     });
 });
