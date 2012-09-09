@@ -796,10 +796,11 @@ bb.status_hook.addListener("owner-of-new-statuses", function(statuses, is_prepen
 
 var poller = new bbSelectionPoller("state.json");
 poller.add('new_statuses', 0, function(resource) {
-    return bb.status_hook.runHook(resource, true);
-        //.next(function() {
-    //     return bb.confirm();
-    // });
+    bb.indicator.spinBegin();
+    return bb.status_hook.runHook(resource, true).next(function() {
+        // return bb.confirm();
+        bb.indicator.spinEnd();
+    });
 });
 poller.add('new_statuses_num', 0, function(resource) {
     this.setRequestBase(resource);
