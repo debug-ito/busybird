@@ -63,13 +63,13 @@ function bbIndicator($show_target) {
 bbIndicator.prototype = {
     show: function(msg, type, timeout) {
         var $msg = this.$show_target.find('.bb-msg');
-        if(type != null) {
+        if(defined(type)) {
             msg = '<span class="bb-msg-'+type+'">'+msg+'</span>';
         }
         $msg.html(msg).show();
-        if(timeout != null && timeout > 0) {
+        if(defined(timeout) && timeout > 0) {
             var self = this;
-            if(self.timeout_obj != null) {
+            if(defined(self.timeout_obj)) {
                 clearTimeout(self.timeout_obj);
                 self.timeout_obj = null;
             }
@@ -132,7 +132,7 @@ bbStatusHook.prototype = {
         var defers = [];
         for(var i = 0 ; i < this.status_listeners.length ; i++) {
             var d = this.status_listeners[i].consumeStatuses(statuses, is_prepend);
-            if(d != null) defers.push(d);
+            if(defined(d)) defers.push(d);
         }
         var self = this;
         return Deferred.parallel(defers).next(function() {
@@ -201,7 +201,7 @@ var bb = {
         deferred.canceller = function () {
             ajax_retry_ok = false;
             console.log("ajaxRetry: canceller called");
-            if(ajax_xhr != null) {
+            if(defined(ajax_xhr)) {
                 console.log("ajaxRetry: xhr aborted.");
                 ajax_xhr.abort();
             }
@@ -232,7 +232,7 @@ var bb = {
         if(!level) level = 0;
         var style_display = (show_by_default ? "" : 'style="display: none"');
         var timestamp_str = status.created_at;
-        if(status.busybird.status_permalink != null) {
+        if(defined(status.busybird.status_permalink)) {
             timestamp_str = '<a href="'+status.busybird.status_permalink+'">'+timestamp_str+'</a>';
         }
         var ret = '<li class="status-container" '+ style_display +' busybird-level="'+ level +'" onclick="bb.setCursor($(this));">';
@@ -284,7 +284,7 @@ var bb = {
             var statuses_text = "";
             for(var i = 0 ; i < block_array.length ; i++) {
                 var status = block_array[i];
-                if(status.id == bb.more_status_max_id) continue;
+                if(status.id === bb.more_status_max_id) continue;
                 var this_status_text = bb.formatStatus(status);
                 if(is_prepend) {
                     statuses_text =  this_status_text + statuses_text;
@@ -354,11 +354,11 @@ var bb = {
     },
 
     setCursor: function ($cur_obj) {
-        if(bb.$cursor != null) {
+        if(defined(bb.$cursor)) {
             bb.$cursor.removeClass("bb-cursor");
         }
         bb.$cursor = $cur_obj;
-        if(bb.$cursor != null) {
+        if(defined(bb.$cursor)) {
             bb.$cursor.addClass("bb-cursor");
         }
     },
@@ -408,7 +408,7 @@ var bb = {
         };
         show_time("start");
         
-        if(change_level != null) {
+        if(defined(change_level)) {
             if(is_relative) {
                 bb.display_level += change_level;
             }else {
@@ -444,7 +444,7 @@ var bb = {
         return bb.blockRepeat($status_entries.get(), 150, function(status_block) { $.each(status_block, function(index_in_block, cur_entry) {
             var $cur_entry = $(cur_entry);
             var entry_level = $cur_entry.attr('busybird-level');
-            var cur_is_visible = ($cur_entry.css('display') != 'none');
+            var cur_is_visible = ($cur_entry.css('display') !== 'none');
             var metric = {};
             metric.$status_entry = $cur_entry;
             if(entry_level <= current_display_level) {
@@ -468,7 +468,7 @@ var bb = {
                 hidden_header_list.push({'$followed_by': null, 'entries': next_seq_invisible_entries});
             }
             metrics_list = metrics_list.sort(function (a, b) {
-                if(a.win_dist != b.win_dist) {
+                if(a.win_dist !== b.win_dist) {
                     return a.win_dist - b.win_dist;
                 }
                 return a.cursor_index_dist - b.cursor_index_dist;
@@ -482,7 +482,7 @@ var bb = {
             
             if(!no_window_adjust) {
                 for(var i = 0 ; i < metrics_list.length ; i++) {
-                    if(metrics_list[i].action == ACTION_STAY_VISIBLE) {
+                    if(metrics_list[i].action === ACTION_STAY_VISIBLE) {
                         var $anchor_elem = metrics_list[i].$status_entry;
                         $anchor_elem.addClass('bbtest-anchor');
                         var relative_position_of_anchor = $anchor_elem.offset().top - $(window).scrollTop();
@@ -497,12 +497,12 @@ var bb = {
             var slide_options = {
                 duration: bb.LEVEL_ANIMATION_DURATION,
                 step: function(now, fx) {
-                    if(fx.prop != "height") return;
+                    if(fx.prop !== "height") return;
                     window_adjuster();
                 }
             };
             var action_list = $.map($.grep(metrics_list, function(elem) {
-                return (elem.action == ACTION_GET_VISIBLE || elem.action == ACTION_GET_INVISIBLE);
+                return (elem.action === ACTION_GET_VISIBLE || elem.action === ACTION_GET_INVISIBLE);
             }), function(elem) {
                 return elem.$status_entry.get();
             });
@@ -523,7 +523,7 @@ var bb = {
             return bb.blockRepeat(hidden_header_list, 40, function(header_block) {
                 for(var i = 0 ; i < header_block.length ; i++) {
                     var header_entry = header_block[i];
-                    if(header_entry.$followed_by != null) {
+                    if(defined(header_entry.$followed_by)) {
                         header_entry.$followed_by.before(bb.formatHiddenStatus(header_entry.entries.length));
                     }else {
                         // $statuses_container.append(bb.formatHiddenStatus(header_entry.entries.length));
@@ -667,7 +667,7 @@ function bbSelectionPoller(url_base) {
 }
 bbSelectionPoller.prototype = {
     isRunning: function () {
-        return (this.cur_deferred != null);
+        return (defined(this.cur_deferred));
     },
     
     execute: function () {
@@ -689,9 +689,9 @@ bbSelectionPoller.prototype = {
         self.cur_deferred.next(function (data, textStatus, jqXHR) {
             var defers = [];
             for(var key in data) {
-                if(key in self.elems && data[key] != null) {
+                if(key in self.elems && defined(data[key])) {
                     var d = self.elems[key].consumeResource(data[key]);
-                    if(d != null) defers.push(d);
+                    if(defined(d)) defers.push(d);
                 }
             }
             return Deferred.parallel(defers);
@@ -713,7 +713,7 @@ bbSelectionPoller.prototype = {
         var changed = false;
         for(var name in changes) {
             var to_state = changes[name];
-            if(this.elems[name].isEnabled() != to_state) {
+            if(this.elems[name].isEnabled() !== to_state) {
                 this.elems[name].setEnabled(to_state);
                 changed = true;
             }
@@ -783,7 +783,7 @@ bb.status_hook.addListener("owner-of-new-statuses", function(statuses, is_prepen
     for(var key in owner_count) {
         owner_array.push(owner_count[key]);
     }
-    if(owner_array.length == 0) {
+    if(owner_array.length === 0) {
         return;
     }
     owner_array.sort(function(a, b) {
