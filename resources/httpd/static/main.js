@@ -1,6 +1,11 @@
 //// BusyBird main script
 //// Copyright (c) 2012 Toshio ITO
 
+function defined(val) {
+    // ** simulate Perl's defined() function.
+    return (val != null);
+}
+
 function bbUserCommand(params) {
     this.lock_counter = (params.init_lock || 0);
     this.keys = [];
@@ -136,9 +141,9 @@ bbStatusHook.prototype = {
                 var name   = "sidebar-item-" + self.status_listeners[i].getName();
                 var header = self.status_listeners[i].getHeader();
                 var detail = self.status_listeners[i].getDetail();
-                if(header == null) continue;
+                if(!defined(header)) continue;
                 sidebar_text += '<div class="accordion-group"><div class="accordion-heading">';
-                if(detail == null) {
+                if(!defined(detail)) {
                     sidebar_text += '<span class="accordion-toggle">' + header + "</span></div></div>\n";
                 }else {
                     sidebar_text += '<a class="accordion-toggle" data-toggle="collapse" data-parent="#sidebar" href="#'+name+'">'+header+"</a></div>\n";
@@ -305,7 +310,7 @@ var bb = {
     },
 
     loadStatuses: function (req_point, is_prepend, try_max) {
-        if(try_max == null) {
+        if(!defined(try_max)) {
             try_max = 0;
         }
         return bb.ajaxRetry({
@@ -321,8 +326,8 @@ var bb = {
     },
 
     loadStatusesWithMaxID: function(max_id, try_max) {
-        if(max_id == null) max_id = bb.more_status_max_id;
-        if(max_id == null) {
+        if(!defined(max_id)) max_id = bb.more_status_max_id;
+        if(!defined(max_id)) {
             console.log("ERROR: bb.loadWithMaxID: max_id is null.");
             return Deferred.next();
         }
@@ -371,7 +376,7 @@ var bb = {
     },
 
     distanceElems: function ($elem_a, $elem_b) {
-        if($elem_a == null || $elem_b == null) return 0;
+        if(!defined($elem_a) || !defined($elem_b)) return 0;
         return Math.abs($elem_a.offset().top - $elem_b.offset().top);
     },
 
@@ -416,7 +421,7 @@ var bb = {
         $('.bbtest-anchor').removeClass('bbtest-anchor');
 
         // var $statuses_container = $('#statuses');
-        if($status_and_header_set == null) {
+        if(!defined($status_and_header_set)) {
             $status_and_header_set = $('#statuses').children();
         }
         var $status_entries = $status_and_header_set.filter('.status-container');
@@ -431,7 +436,7 @@ var bb = {
         var metrics_list = [];
         var hidden_header_list = [];
         var win_dim = {"top": $(window).scrollTop(), "range": $(window).height()};
-        var cursor_index = (bb.$cursor == null ? -1 : $status_entries.index(bb.$cursor));
+        var cursor_index = (!defined(bb.$cursor) ? -1 : $status_entries.index(bb.$cursor));
         var cur_index = 0;
         var next_seq_invisible_entries = [];
         var prev_pos = 0;
@@ -718,7 +723,7 @@ bbSelectionPoller.prototype = {
         }
     },
     toggleSelection: function (names) {
-        if(names == null) return;
+        if(!defined(names)) return;
         if(!(names instanceof Array)) {
             names = [names];
         }
@@ -730,7 +735,7 @@ bbSelectionPoller.prototype = {
         this.changeSelection(changes);
     },
     selectionEnabled: function(name) {
-        return (this.elems[name] == null ? false : this.elems[name].isEnabled());
+        return (!defined(this.elems[name]) ? false : this.elems[name].isEnabled());
     }
 };
 
