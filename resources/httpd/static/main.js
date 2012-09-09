@@ -331,12 +331,17 @@ var bb = {
 
     confirm: function() {
         // console.log("start: confirm");
+        var CONFIRM_TRY_MAX = 3;
         return bb.ajaxRetry({
             url: "confirm.json",
-            type: "GET",
+            type: "POST",
             cache: false,
             dataType: "text",
-            timeout: 0
+            timeout: 0,
+            tryMax: CONFIRM_TRY_MAX
+        }).error(function() {
+            var CONFIRM_MSG_TIMEOUT = 5000;
+            bb.indicator.show("Error while confirming new statuses.", "error", CONFIRM_MSG_TIMEOUT);
         });
             // .next(function() {
             //     console.log("end: confirm");
