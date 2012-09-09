@@ -569,7 +569,7 @@ var bbcom = {
             bb.indicator.spinBegin();
             bb.loadStatuses("new_statuses.json", true, bbcom.LOAD_TRY_MAX).next(function(){
                 bb.indicator.spinEnd();
-                return bb.confirm();
+                // return bb.confirm();
             }).error(function() {
                 bb.indicator.spinEnd();
                 bb.indicator.show("Cannot load new statuses.", "error", bbcom.LOAD_ERROR_MSG_DURATION);
@@ -622,32 +622,6 @@ var bbcom = {
         }
     }),
 };
-
-// var bbui = {
-//     loadNewStatuses: function () {
-//         bb.loadStatuses("new_statuses.json", true).next(function(){
-//             return bb.confirm();
-//         });
-//         $(".bb-new-status-loader-button").addClass("disabled").removeAttr("href");
-//     },
-//     loadMoreStatuses: function () {
-//         var $more_button_selec = $("#more-button").removeAttr("href").button('loading');
-//         bb.loadStatusesWithMaxID(null).next(function() {
-//             $more_button_selec.attr("href", 'javascript: bbui.loadMoreStatuses();').button('reset');
-//         });
-//     },
-//     incrimentDisplayLevel: function() {
-//         bb.changeDisplayLevel(+1, true);
-//     },
-//     decrimentDisplayLevel: function() {
-//         bb.changeDisplayLevel(-1, true);
-//     },
-//     toggleRunMode: function() {
-//         poller.toggleSelection("new_statuses");
-//         $('#bb-button-stop-mode').toggleClass("active");
-//         $('#bb-button-run-mode').toggleClass("active");
-//     }
-// };
 
 function bbSelectionElement(name, init_base, resource_callback) {
     this.name = name;
@@ -766,6 +740,13 @@ bbSelectionPoller.prototype = {
 //     return Deferred.wait(5).next(function() { console.log("after wait"); });
 // });
 
+bb.status_hook.addListener("confirmer", function(statuses, is_prepend) {
+    for(var i = 0 ; i < statuses.length ; i++) {
+        if(statuses[i].busybird.is_new) {
+            return bb.confirm();
+        }
+    }
+});
 bb.status_hook.addListener("renderer", function(statuses, is_prepend) {
     return bb.renderStatuses(statuses, is_prepend);
 });
@@ -815,9 +796,10 @@ bb.status_hook.addListener("owner-of-new-statuses", function(statuses, is_prepen
 
 var poller = new bbSelectionPoller("state.json");
 poller.add('new_statuses', 0, function(resource) {
-    return bb.status_hook.runHook(resource, true).next(function() {
-        return bb.confirm();
-    });
+    return bb.status_hook.runHook(resource, true);
+        //.next(function() {
+    //     return bb.confirm();
+    // });
 });
 poller.add('new_statuses_num', 0, function(resource) {
     this.setRequestBase(resource);
@@ -850,7 +832,7 @@ $(document).ready(function () {
         bb.setCursor($('#statuses > .status-container').first());
         bb.indicator.spinEnd();
         bb.indicator.show("Initialized", null, 3000);
-        return bb.confirm();
+        // return bb.confirm();
     }).next(function () {
         poller.execute();
     }).error(function(e) {
