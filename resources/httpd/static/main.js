@@ -211,10 +211,18 @@ var bb = {
     
     linkify: function (text, entities) {
         var found_in_entities = {};
-        if(entities && entities.urls) {
-            for(var i = 0 ; i < entities.urls.length ; i++) {
-                var url_entry = entities.urls[i];
-                found_in_entities[url_entry.url] = url_entry;
+        if(defined(entities)) {
+            if(defined(entities.urls)) {
+                for(var i = 0 ; i < entities.urls.length ; i++) {
+                    var url_entry = entities.urls[i];
+                    found_in_entities[url_entry.url] = url_entry;
+                }
+            }
+            if(defined(entities.media)) {
+                for(var i = 0 ; i < entities.media.length ; i++) {
+                    var url_entry = entities.media[i];
+                    found_in_entities[url_entry.url] = url_entry;
+                }
             }
         }
         return text.replace(/https?:\/\/[\x21-\x7E]+/g, function(orig_url) {
