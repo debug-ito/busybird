@@ -418,7 +418,7 @@ var bb = {
         var current_display_level = bb.display_level;
         
         $('.display-level').text(bb.display_level);
-        $('.bbtest-anchor').removeClass('bbtest-anchor');
+        // $('.bbtest-anchor').removeClass('bbtest-anchor');
 
         // var $statuses_container = $('#statuses');
         if(!defined($status_and_header_set)) {
@@ -441,6 +441,9 @@ var bb = {
         var next_seq_invisible_entries = [];
         var prev_pos = 0;
         var window_adjuster = function() {};
+        var $next_cursor = null;
+        var next_cursor_dist = null;
+        var will_cursor_be_invisible = false;
         return bb.blockRepeat($status_entries.get(), 150, function(status_block) { $.each(status_block, function(index_in_block, cur_entry) {
             var $cur_entry = $(cur_entry);
             var entry_level = $cur_entry.attr('busybird-level');
@@ -461,6 +464,15 @@ var bb = {
             metric.win_dist = bb.distanceRanges(win_dim.top, win_dim.range, cur_pos, $cur_entry.height());
             metric.cursor_index_dist = Math.abs(cur_index - cursor_index);
             metrics_list.push(metric);
+            if((!defined(next_cursor_dist) || metric.cursor_index_dist < next_cursor_dist)
+              && (metric.action === ACTION_STAY_VISIBLE || metric.action === ACTION_GET_VISIBLE)) {
+                $next_cursor = $cur_entry;
+                next_cursor_dist = metric.cursor_index_dist;
+            }
+            if(metric.cursor_index_dist === 0
+               && (metric.action === ACTION_GET_INVISIBLE || metric.action === ACTION_STAY_INVISIBLE)) {
+                will_cursor_be_invisible = true;
+            }
             prev_pos = cur_pos;
             cur_index++;
         })}).next(function () {
@@ -473,6 +485,9 @@ var bb = {
                 }
                 return a.cursor_index_dist - b.cursor_index_dist;
             });
+            if(will_cursor_be_invisible || !defined(bb.$cursor)) {
+                bb.setCursor($next_cursor);
+            }
 
             // $('.test-metrics-index').remove();
             // for(var i = 0 ; i < metrics_list.length ; i++) {
@@ -484,7 +499,7 @@ var bb = {
                 for(var i = 0 ; i < metrics_list.length ; i++) {
                     if(metrics_list[i].action === ACTION_STAY_VISIBLE) {
                         var $anchor_elem = metrics_list[i].$status_entry;
-                        $anchor_elem.addClass('bbtest-anchor');
+                        // $anchor_elem.addClass('bbtest-anchor');
                         var relative_position_of_anchor = $anchor_elem.offset().top - $(window).scrollTop();
                         window_adjuster = function() {
                             $(window).scrollTop($anchor_elem.offset().top - relative_position_of_anchor);
@@ -835,7 +850,7 @@ $(document).ready(function () {
     bb.indicator = new bbIndicator($('#bb-indicator'));
     bb.indicator.spinBegin();
     bb.loadStatuses('all_statuses.json', false).next(function() {
-        bb.setCursor($('#statuses > .status-container').first());
+        // bb.setCursor($('#statuses > .status-container').first());
         bb.indicator.spinEnd();
         bb.indicator.show("Initialized", null, 3000);
         // return bb.confirm();
