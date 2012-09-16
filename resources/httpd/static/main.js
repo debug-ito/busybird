@@ -102,23 +102,19 @@ bbIndicator.prototype = {
 
 function bbStatusListener(name, listener_callback) {
     this.name = name;
-    this.header = null;
-    this.detail = null;
+    this.summary_entries = [];  // ** [{name: "....", header: "....", detail: "...."}]
     this.listener_callback = listener_callback;
 }
 bbStatusListener.prototype = {
+    getName: function() {
+        return this.name;
+    },
     consumeStatuses: function(statuses, is_prepend) {
         return this.listener_callback(statuses, is_prepend);
     },
-    getName: function () {
-        return this.name;
-    },
-    getHeader: function() {
-        return this.header;
-    },
-    getDetail: function() {
-        return this.detail;
-    },
+    getSummaries: function() {
+        return this.summary_entries;
+    }
 };
 
 function bbStatusHook() {
@@ -137,18 +133,24 @@ bbStatusHook.prototype = {
         var self = this;
         return Deferred.parallel(defers).next(function() {
             var sidebar_text = "";
+            var summaries = [];
             for(var i = 0 ; i < self.status_listeners.length ; i++) {
-                var name   = "sidebar-item-" + self.status_listeners[i].getName();
-                var header = self.status_listeners[i].getHeader();
-                var detail = self.status_listeners[i].getDetail();
-                if(!defined(header)) continue;
+                var this_summary = self.status_listeners[i].getSummaries();
+                if(defined(this_summary)) {
+                    summaries.push.apply(summaries, this_summary);
+                }
+            }
+            for(var i = 0 ; i < summaries.length ; i++) {
+                var summary = summaries[i];
+                if(!defined(summary.name) || !defined(summary.header)) continue;
+                var name   = "sidebar-item-" + summary.name;
                 sidebar_text += '<div class="accordion-group"><div class="accordion-heading">';
-                if(!defined(detail)) {
-                    sidebar_text += '<span class="accordion-toggle">' + header + "</span></div></div>\n";
+                if(!defined(summary.detail)) {
+                    sidebar_text += '<span class="accordion-toggle">' + summary.header + "</span></div></div>\n";
                 }else {
-                    sidebar_text += '<a class="accordion-toggle" data-toggle="collapse" data-parent="#sidebar" href="#'+name+'">'+header+"</a></div>\n";
+                    sidebar_text += '<a class="accordion-toggle" data-toggle="collapse" data-parent="#sidebar" href="#'+name+'">'+summary.header+"</a></div>\n";
                     sidebar_text += '<div class="accordion-body collapse" id="'+name+'"><div class="accordion-inner sidebar-detail">'+"\n";
-                    sidebar_text += detail + "\n</div></div></div>\n";
+                    sidebar_text += summary.detail + "\n</div></div></div>\n";
                 }
             }
             $('#sidebar').html(sidebar_text);
@@ -784,48 +786,121 @@ bb.status_hook.addListener("confirmer", function(statuses, is_prepend) {
 bb.status_hook.addListener("renderer", function(statuses, is_prepend) {
     return bb.renderStatuses(statuses, is_prepend);
 });
-bb.status_hook.addListener("num-of-new-statuses", function(statuses, is_prepend) {
-    var num_of_new = 0;
+bb.status_hook.addListener("new-status-summary", function(statuses, is_prepend) {
+    var new_statuses_for_lv = {};
     for(var i = 0 ; i < statuses.length ; i++) {
-        if(statuses[i].busybird.is_new) num_of_new++;
-    }
-    if(num_of_new > 0) {
-        this.header = '<span class="badge badge-info">'+ num_of_new + "</span> new status" + (num_of_new > 1 ? "es" : "") + ' loaded.';
-    }
-});
-bb.status_hook.addListener("owner-of-new-statuses", function(statuses, is_prepend) {
-    var owner_count = {};
-    for(var i = 0 ; i < statuses.length ; i++) {
-        if(!statuses[i].busybird.is_new) continue;
-        var status = statuses[i];
-        if(!(status.user.screen_name in owner_count)) {
-            owner_count[status.user.screen_name] = {
-                "name": status.user.screen_name,
-                "image": status.user.profile_image_url,
-                "count": 0
-            };
+        if(statuses[i].busybird.is_new) {
+            var lv = statuses[i].busybird.level;
+            if(!defined(lv)) lv = 0;
+            if(!defined(new_statuses_for_lv[lv])) {
+                new_statuses_for_lv[lv] = [];
+            }
+            new_statuses_for_lv[lv].push(statuses[i]);
         }
-        owner_count[status.user.screen_name].count++;
     }
-    var owner_array = [];
-    // ** Is there no equivalent to Perl's values() function in Javascript???
-    for(var key in owner_count) {
-        owner_array.push(owner_count[key]);
+    var statuses_with_lv = [];
+    for(var lv_key in new_statuses_for_lv) {
+        statuses_with_lv.push({"level": lv_key, "statuses": new_statuses_for_lv[lv_key]});
     }
-    if(owner_array.length === 0) {
-        return;
-    }
-    owner_array.sort(function(a, b) {
-        return b.count - a.count;
+    if(statuses_with_lv.length === 0) return;
+    statuses_with_lv = statuses_with_lv.sort(function(a, b) {
+        return (a.level - b.level);
     });
-    this.header = '<span class="badge badge-info">' + owner_array.length + '</span> people tweeted.';
-    this.detail = "<ol>\n";
-    for(var i = 0 ; i < owner_array.length ; i++) {
-        this.detail += '<li>' + owner_array[i].name + ' : ' + owner_array[i].count + ' tweet'
-            + (owner_array[i].count > 1 ? "s" : "") + "</li>\n";
+
+    ///
+    function makeDetail(level, statuses) {
+        var owner_count = {};
+        for(var i = 0 ; i < statuses.length ; i++) {
+            var status = statuses[i];
+            if(!(status.user.screen_name in owner_count)) {
+                owner_count[status.user.screen_name] = {
+                    "name": status.user.screen_name,
+                    "image": status.user.profile_image_url,
+                    "count": 0
+                };
+            }
+            owner_count[status.user.screen_name].count++;
+        }
+        var owner_array = [];
+        // ** Is there no equivalent to Perl's values() function in Javascript???
+        for(var key in owner_count) {
+            owner_array.push(owner_count[key]);
+        }
+        if(owner_array.length === 0) {
+            return null;
+        }
+        owner_array.sort(function(a, b) {
+            return b.count - a.count;
+        });
+        var detail = "<ol>\n";
+        for(var i = 0 ; i < owner_array.length ; i++) {
+            detail += '<li>' + owner_array[i].name + ' : ' + owner_array[i].count + ' tweet'
+                + (owner_array[i].count > 1 ? "s" : "") + "</li>\n";
+        }
+        detail += "</ol>\n";
+        return detail;
     }
-    this.detail += "</ol>\n";
+    /// 
+    
+    this.summary_entries = [];
+    var total_status_num = 0;
+    for(var i = 0 ; i < statuses_with_lv.length ; i++) {
+        var elem = statuses_with_lv[i];
+        var name = "new-statuses-summary-" + elem.level;
+        var this_num = elem.statuses.length;
+        total_status_num += this_num;
+        var this_num_str = (this_num > 0 ? "+" : "") + this_num;
+        var header = 'Lv. '+elem.level+'&nbsp;&nbsp;<span class="badge badge-info">'+total_status_num+'</span>'
+            + ' <span class="badge">'+this_num_str+'</span>';
+        var detail = makeDetail(elem.level, elem.statuses);
+        this.summary_entries.push({"name": name, "header": header, "detail": detail});
+    }
 });
+
+
+/////
+//// bb.status_hook.addListener("num-of-new-statuses", function(statuses, is_prepend) {
+////     var num_of_new = 0;
+////     for(var i = 0 ; i < statuses.length ; i++) {
+////         if(statuses[i].busybird.is_new) num_of_new++;
+////     }
+////     if(num_of_new > 0) {
+////         this.header = '<span class="badge badge-info">'+ num_of_new + "</span> new status" + (num_of_new > 1 ? "es" : "") + ' loaded.';
+////     }
+//// });
+//// bb.status_hook.addListener("owner-of-new-statuses", function(statuses, is_prepend) {
+////     var owner_count = {};
+////     for(var i = 0 ; i < statuses.length ; i++) {
+////         if(!statuses[i].busybird.is_new) continue;
+////         var status = statuses[i];
+////         if(!(status.user.screen_name in owner_count)) {
+////             owner_count[status.user.screen_name] = {
+////                 "name": status.user.screen_name,
+////                 "image": status.user.profile_image_url,
+////                 "count": 0
+////             };
+////         }
+////         owner_count[status.user.screen_name].count++;
+////     }
+////     var owner_array = [];
+////     // ** Is there no equivalent to Perl's values() function in Javascript???
+////     for(var key in owner_count) {
+////         owner_array.push(owner_count[key]);
+////     }
+////     if(owner_array.length === 0) {
+////         return;
+////     }
+////     owner_array.sort(function(a, b) {
+////         return b.count - a.count;
+////     });
+////     this.header = '<span class="badge badge-info">' + owner_array.length + '</span> people tweeted.';
+////     this.detail = "<ol>\n";
+////     for(var i = 0 ; i < owner_array.length ; i++) {
+////         this.detail += '<li>' + owner_array[i].name + ' : ' + owner_array[i].count + ' tweet'
+////             + (owner_array[i].count > 1 ? "s" : "") + "</li>\n";
+////     }
+////     this.detail += "</ol>\n";
+//// });
 
 
 var poller = new bbSelectionPoller("state.json");
