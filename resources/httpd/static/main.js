@@ -313,7 +313,11 @@ var bb = {
                 bb.more_status_max_id = statuses[statuses.length-1].id;
             }
             console.log("new entries num: " + new_entries.length);
-            return bb.changeDisplayLevel(0, true, true, true, $(new_entries));
+            if(new_entries.length === 0) {
+                bb.indicator.show("No status loaded.", null, 3000);
+            }else {
+                return bb.changeDisplayLevel(0, true, true, true, $(new_entries));
+            }
         });
     },
 
@@ -337,6 +341,7 @@ var bb = {
         if(!defined(max_id)) max_id = bb.more_status_max_id;
         if(!defined(max_id)) {
             console.log("ERROR: bb.loadWithMaxID: max_id is null.");
+            bb.indicator.show("ERROR: max_id is null", "error", 5000);
             return Deferred.next();
         }
         return bb.loadStatuses("all_statuses?max_id=" + max_id, false, try_max);
