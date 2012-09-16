@@ -542,7 +542,8 @@ var bb = {
                         header_entry.$followed_by.before(bb.formatHiddenStatus(header_entry.entries.length));
                     }else {
                         // $statuses_container.append(bb.formatHiddenStatus(header_entry.entries.length));
-                        $status_and_header_set.last().after(bb.formatHiddenStatus(header_entry.entries.length));
+                        $status_and_header_set.filter('.status-container')
+                            .last().after(bb.formatHiddenStatus(header_entry.entries.length));
                     }
                 }
                 window_adjuster();
