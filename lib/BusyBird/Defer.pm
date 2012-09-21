@@ -9,7 +9,7 @@ use Carp;
 use version; our $VERSION = qv('0.9.2');    # REMINDER: update Changes
 
 # REMINDER: update dependencies in Makefile.PL
-use Scalar::Util qw( refaddr );
+use Scalar::Util qw( refaddr blessed );
 
 ## no critic (ProhibitBuiltinHomonyms)
 
@@ -52,7 +52,7 @@ sub clone {
     my ($this) = @_;
     my $self = $SELF{refaddr $this};
 
-    my $clone = __PACKAGE__->new();
+    my $clone = blessed($this)->new();
     my $clone_self = $SELF{refaddr $clone};
 
     $clone_self->{opcode} = [ @{ $self->{opcode} } ];
@@ -89,9 +89,6 @@ sub do {
         when ('CODE') {
             return $this->_add(OP_CODE, $task);
         }
-        when (__PACKAGE__) {
-            return $this->_add(OP_DEFER, $task);
-        }
         when ('ARRAY') {
             my %task = map { $_ => $task->[$_] } 0 .. $#{ $task };
             return $this->_add(OP_CODE, _do_batch(1, %task));
@@ -100,6 +97,9 @@ sub do {
             return $this->_add(OP_CODE, _do_batch(0, %{ $task }));
         }
         default {
+            if(blessed $task && $task->can('run') && $task->can('clone')) {
+                return $this->_add(OP_DEFER, $task);
+            }
             croak 'require CODE/Defer object or ARRAY/HASH in first param'
         }
     }
@@ -117,12 +117,13 @@ sub _do_batch {
                 $task = BusyBird::Defer->new();
                 $task->do( $task{$key} );
             }
-            when (__PACKAGE__) {
-                $task = $task{$key}->clone();
-            }
             default {
-                my $pos = $is_array ? $key+1 : "{$key}";
-                croak 'require CODE/Defer object in param '.$pos;
+                if(blessed $task{$key} && $task{$key}->can('run') && $task{$key}->can('clone')) {
+                    $task = $task{$key}->clone();
+                }else {
+                    my $pos = $is_array ? $key+1 : "{$key}";
+                    croak 'require CODE/Defer object in param '.$pos;
+                }
             }
         }
         $task{$key} = $task;
