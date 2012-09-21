@@ -912,10 +912,16 @@ poller.add('new_statuses', 0, function(resource) {
     });
 });
 poller.add('new_statuses_num', 0, function(resource) {
-    this.setRequestBase(resource);
-    document.title = (resource > 0 ? '('+ resource +') ' : "") + document.title.replace(/^\([0-9]*\) */, "");
-    $('.bb-new-status-num').text(resource);
-    if(resource > 0 && !poller.selectionEnabled('new_statuses')) {
+    var total_num = resource.total;
+    if(total_num < 0) {
+        var error_msg = "Something terrible happened when polling new_statuses_num";
+        bb.indicator.show(error_msg, "error", 3000);
+        return Deferred.wait(0.5);
+    }
+    this.setRequestBase(total_num);
+    document.title = (total_num > 0 ? '('+ total_num +') ' : "") + document.title.replace(/^\([0-9]*\) */, "");
+    $('.bb-new-status-num').text(total_num);
+    if(total_num > 0 && !poller.selectionEnabled('new_statuses')) {
         // $('.bb-new-status-loader-button').removeClass("disabled");
         bbcom.load_new_statuses.setLock(0);
     }else {
@@ -924,7 +930,7 @@ poller.add('new_statuses_num', 0, function(resource) {
     // else {
     //     $('.bb-new-status-loader-button').addClass("disabled");
     // }
-    // if(resource > 0) {
+    // if(total_num > 0) {
     //     bbcom.load_new_statuses.unlock();
     // }else {
     //     bbcom.load_new_statuses.lock();

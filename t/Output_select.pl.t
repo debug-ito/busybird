@@ -4,6 +4,7 @@ use warnings;
 
 use Test::More;
 use Test::AnyEvent::Time;
+use Test::Warn;
 
 BEGIN {
     use_ok('BusyBird::Status');
@@ -34,13 +35,14 @@ sub testCalled {
 }
 
 sub selectStatusNum {
-    my ($output, $condition, $exp_num) = @_;
+    my ($output, $condition, $exp_set) = @_;
     $output->select(
         sub {
             my ($sid, %res) = @_;
             $called++;
             ok(defined($res{new_statuses_num}));
-            cmp_ok($res{new_statuses_num}, "==", $exp_num, "status num: $res{new_statuses_num} == $exp_num");
+            ## cmp_ok($res{new_statuses_num}, "==", $exp_num, "status num: $res{new_statuses_num} == $exp_num");
+            is_deeply($res{new_statuses_num}, $exp_set, "got resource as expected.");
             return 1;
         },
         new_statuses_num => $condition
@@ -69,51 +71,43 @@ sub curLevels {
     }
 }
 
-sub checkSelectNum {
-    my ($output, $select_input, $exp_num) = @_;
-    selectStatusNum($output, $select_input, $exp_num);
-    testCalled 1;
-}
-
 {
     my $out = new_ok('BusyBird::Output', [name => 'test', no_persistent => 1]);
-    selectStatusNum($out, 0, 1);
+    selectStatusNum($out, 0, {total => 1, 0 => 1});
     testCalled 0;
     syncPush($out, createStatus(1));
     testCalled 1;
 
-    selectStatusNum($out, [0], 1);
+    selectStatusNum($out, 0, {total => 1, 0 => 1});
     testCalled 1;
-    selectStatusNum($out, [1], 4);
+    selectStatusNum($out, 1, {total => 4, 0 => 4});
     testCalled 0;
     syncPush($out, map {createStatus($_)} (2..4));
     testCalled 1;
 
-    selectStatusNum($out, [4, 4], 5);
+    selectStatusNum($out, 4, {total => 7, 0 => 4, 5 => 3});
     testCalled 0;
     syncPush($out, map {createStatus($_, 5)} (5..7));
+    testCalled 1;
+    selectStatusNum($out, 7, {total => 8, 0 => 4, 2 => 1, 5 => 3});
     testCalled 0;
     syncPush($out, map {createStatus($_, 2)} (8));
     testCalled 1;
 
     curLevels $out, 2, 5, 5, 5, undef, undef, undef, undef;
     
-    selectStatusNum($out, [4, 0], 7);
+    selectStatusNum($out, 8, {total => 11, -3 => 2, 0 => 5, 2 => 1, 5 => 3});
     testCalled 0;
     syncPush($out, createStatus(9, 0), map { createStatus($_, -3) } (10, 11));
     testCalled 1;
 
     curLevels $out, 0, -3, -3, 2, 5, 5, 5, undef, undef, undef, undef;
 
-    checkSelectNum($out, 2000, 11);
-    checkSelectNum($out, [2000, 0], 7);
-    checkSelectNum($out, [2000, -2], 2);
-    checkSelectNum($out, [2000, 5], 11);
-    checkSelectNum($out, [2000, 10], 11);
-    checkSelectNum($out, {size => 2000}, 11);
-    checkSelectNum($out, {size => 2000, level => 1}, 7);
-    checkSelectNum($out, {size => 2000, level => -1}, 2);
-    checkSelectNum($out, {size => 2000, level => 0}, 7);
+    foreach my $junk (undef, "hogehoge", "23sfh", [10, 10], {foo => 10, bar => 9}) {
+        warning_like {
+            $out->select(sub { return 1 }, new_statuses_num => undef);
+        } qr/must be a number/, "error on select";
+    }
 
     done_testing();
 }

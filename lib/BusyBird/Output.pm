@@ -7,6 +7,7 @@ use DateTime;
 use IO::File;
 use Carp;
 use Async::Selector;
+use Scalar::Util qw(looks_like_number);
 
 use BusyBird::Filter;
 use BusyBird::Status;
@@ -57,6 +58,10 @@ sub _initSelector {
     $self->{selector}->register(
         new_statuses => sub {
             my ($size) = @_;
+            if(!looks_like_number($size)) {
+                carp("condition_input to select new_statuses must be a number.");
+                return [];
+            }
             $size = int($size);
             return $self->{new_status_buffer}->size != $size
                 ? $self->{new_status_buffer}
@@ -64,17 +69,18 @@ sub _initSelector {
         },
         new_statuses_num => sub {
             my $input = shift;
-            my ($size, $level) = expandParam($input, qw(size level));
-            $size = int($size);
-            my $level_condition = undef;
-            if(defined $level) {
-                $level_condition = sub {
-                    my $status_level = $_->{busybird}{level} || 0;
-                    return ($status_level <= $level);
-                };
+            if(!looks_like_number($input)) {
+                carp("condition_input to select new_statuses_num must be a number.");
+                return {total => -1};
             }
-            my $cur_size = $self->{new_status_buffer}->size($level_condition);
-            return $cur_size != $size ? $cur_size : undef;
+            my $size = int($input);
+            my $statuses = $self->getNewStatuses;
+            my %count = (total => int(@$statuses));
+            foreach my $status (@$statuses) {
+                my $level = $status->{busybird}{level} || 0;
+                $count{$level}++;
+            }
+            return $count{total} != $size ? \%count : undef;
         },
     );
 }
