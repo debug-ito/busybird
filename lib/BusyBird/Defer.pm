@@ -80,29 +80,36 @@ sub _add {
     }
 
     push @{ $self->{opcode} }, [ $op, @params ];
-    return;
+    return $this;
 }
 
 sub do {
-    my ($this, $task) = @_;
-    given (ref $task) {
-        when ('CODE') {
-            return $this->_add(OP_CODE, $task);
-        }
-        when ('ARRAY') {
-            my %task = map { $_ => $task->[$_] } 0 .. $#{ $task };
-            return $this->_add(OP_CODE, _do_batch(1, %task));
-        }
-        when ('HASH') {
-            return $this->_add(OP_CODE, _do_batch(0, %{ $task }));
-        }
-        default {
-            if(blessed $task && $task->can('run') && $task->can('clone')) {
-                return $this->_add(OP_DEFER, $task);
+    my ($this, @tasks) = @_;
+    if(!@tasks) {
+        croak 'require CODE/Defer object or ARRAY/HASH in first param';
+    }
+    foreach my $task (@tasks) {
+        given (ref $task) {
+            when ('CODE') {
+                $this->_add(OP_CODE, $task);
             }
-            croak 'require CODE/Defer object or ARRAY/HASH in first param'
+            when ('ARRAY') {
+                my %task = map { $_ => $task->[$_] } 0 .. $#{ $task };
+                $this->_add(OP_CODE, _do_batch(1, %task));
+            }
+            when ('HASH') {
+                $this->_add(OP_CODE, _do_batch(0, %{ $task }));
+            }
+            default {
+                if(blessed $task && $task->can('run') && $task->can('clone')) {
+                    $this->_add(OP_DEFER, $task);
+                }else {
+                    croak 'require CODE/Defer object or ARRAY/HASH as a param';
+                }
+            }
         }
     }
+    return $this;
 }
 
 sub _do_batch {
@@ -292,7 +299,7 @@ sub run {
 
     $self->{parent} = $d;
     $this->done(@result);
-    return;
+    return $this;
 }
 
 sub _op {
