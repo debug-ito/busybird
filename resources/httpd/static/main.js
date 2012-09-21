@@ -3,7 +3,7 @@
 
 function defined(val) {
     // ** simulate Perl's defined() function.
-    return (val != null);
+    return !(val === null || val === undefined);
 }
 
 function bbUserCommand(params) {
