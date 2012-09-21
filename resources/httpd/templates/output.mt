@@ -23,7 +23,7 @@
           </div>
           <div class="navbar-form pull-right">
             <div class="btn-group pull-right">
-              <a class="btn btn-inverse"><i class="icon-pencil icon-white"></i></a>
+              <a class="btn btn-inverse" href="https://twitter.com/intent/tweet" target="_blank"><i class="icon-pencil icon-white"></i></a>
             </div>
           </div>
           <div class="navbar-text pull-right">
