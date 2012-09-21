@@ -418,12 +418,12 @@ var bb = {
         var start_time = bb.getTime();
         var end_time;
         var old_display_level = bb.display_level;
-        var show_time = function(msg) {
-            end_time = bb.getTime();
-            console.log("changeDisplayLevel: " + msg + " (" + (end_time - start_time) + " ms)");
-            start_time = end_time;
-        };
-        show_time("start");
+        // var show_time = function(msg) {
+        //     end_time = bb.getTime();
+        //     console.log("changeDisplayLevel: " + msg + " (" + (end_time - start_time) + " ms)");
+        //     start_time = end_time;
+        // };
+        // show_time("start");
         
         if(defined(change_level)) {
             if(is_relative) {
