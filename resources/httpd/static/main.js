@@ -166,6 +166,7 @@ var bb = {
 
     status_hook: new bbStatusHook(),
     display_level: 0,
+    new_status_num_for_level: {},
     $cursor: null,
     more_status_max_id: null,
     indicator: null,
@@ -416,6 +417,7 @@ var bb = {
     changeDisplayLevel: function(change_level, is_relative, no_animation, no_window_adjust, $status_and_header_set) {
         var start_time = bb.getTime();
         var end_time;
+        var old_display_level = bb.display_level;
         var show_time = function(msg) {
             end_time = bb.getTime();
             console.log("changeDisplayLevel: " + msg + " (" + (end_time - start_time) + " ms)");
@@ -428,6 +430,9 @@ var bb = {
                 bb.display_level += change_level;
             }else {
                 bb.display_level = change_level;
+            }
+            if(bb.display_level != old_display_level) {
+                bb.updateNewStatusNumIndicator();
             }
         }
         var current_display_level = bb.display_level;
@@ -569,6 +574,27 @@ var bb = {
                 });
             });
         });
+    },
+
+    updateNewStatusNumIndicator: function(new_count_obj) {
+        var visible_count = 0;
+        if(defined(new_count_obj)) {
+            bb.new_status_num_for_level = new_count_obj;
+        }
+        $.each(bb.new_status_num_for_level, function(level, count) {
+            level = parseInt(level);
+            if(level <= bb.display_level) {
+                visible_count += count;
+            }
+        });
+        document.title = (visible_count > 0 ? '('+ visible_count +') ' : "") + document.title.replace(/^\([0-9]*\) */, "");
+        $('.bb-new-status-num').text(visible_count);
+        if(visible_count > 0 && !poller.selectionEnabled('new_statuses')) {
+            // $('.bb-new-status-loader-button').removeClass("disabled");
+            bbcom.load_new_statuses.setLock(0);
+        }else {
+            bbcom.load_new_statuses.setLock(1);
+        }
     }
 };
 
@@ -913,24 +939,34 @@ poller.add('new_statuses', 0, function(resource) {
 });
 poller.add('new_statuses_num', 0, function(resource) {
     var total_num = resource.total;
+    delete resource.total;
+    var error_msg;
+    /// var visible_count = 0;
     if(total_num < 0) {
-        var error_msg = "Something terrible happened when polling new_statuses_num";
+        error_msg = "Something terrible happened when polling new_statuses_num";
         bb.indicator.show(error_msg, "error", 3000);
         return Deferred.wait(0.5);
     }
     this.setRequestBase(total_num);
-    document.title = (total_num > 0 ? '('+ total_num +') ' : "") + document.title.replace(/^\([0-9]*\) */, "");
-    $('.bb-new-status-num').text(total_num);
-    if(total_num > 0 && !poller.selectionEnabled('new_statuses')) {
-        // $('.bb-new-status-loader-button').removeClass("disabled");
-        bbcom.load_new_statuses.setLock(0);
-    }else {
-        bbcom.load_new_statuses.setLock(1);
-    }
+    bb.updateNewStatusNumIndicator(resource);
+    // $.each(resource, function(level, count) {
+    //     level = parseInt(level);
+    //     if(level <= bb.display_level) {
+    //         visible_count += count;
+    //     }
+    // });
+    // document.title = (visible_count > 0 ? '('+ visible_count +') ' : "") + document.title.replace(/^\([0-9]*\) */, "");
+    // $('.bb-new-status-num').text(visible_count);
+    // if(visible_count > 0 && !poller.selectionEnabled('new_statuses')) {
+    //     // $('.bb-new-status-loader-button').removeClass("disabled");
+    //     bbcom.load_new_statuses.setLock(0);
+    // }else {
+    //     bbcom.load_new_statuses.setLock(1);
+    // }
     // else {
     //     $('.bb-new-status-loader-button').addClass("disabled");
     // }
-    // if(total_num > 0) {
+    // if(visible_count > 0) {
     //     bbcom.load_new_statuses.unlock();
     // }else {
     //     bbcom.load_new_statuses.lock();
