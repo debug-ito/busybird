@@ -51,8 +51,10 @@ sub unshift {
 }
 
 sub size {
-    my ($self) = @_;
-    return int(@{$self->{buffer}});
+    my ($self, $condition_func) = @_;
+    return (defined($condition_func))
+        ? int(grep { $condition_func->() } @{$self->{buffer}})
+            : int(@{$self->{buffer}});
 }
 
 sub truncate {

@@ -126,6 +126,17 @@ sub checkGotStatuses {
     }
 }
 
+{
+    note("--- test conditional size()");
+    my $buf = new_ok("BusyBird::Status::Buffer");
+    $next_id = 1;
+    $buf->unshift(createStatus($_, "val$_")) foreach 1..30;
+    $buf->unshift(createStatus($_, "hoge$_")) foreach 31..50;
+    cmp_ok($buf->size, "==", 50, "total 50 statuses");
+    cmp_ok($buf->size(sub { $_->{id} <= 30 }), "==", 30, "Those with IDs less than or equal to 30 are 30");
+    cmp_ok($buf->size(sub { $_->{val} =~ /^hoge/ }), "==", 20, "Those with vals starting with hoge are 20");
+}
+
 done_testing();
 
 

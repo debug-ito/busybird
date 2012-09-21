@@ -8,7 +8,7 @@ use base ('Exporter');
 
 my @DATETIME_NAMES = qw(datetimeFormat datetimeParse datetimeNormalize $SYSTEM_TIMEZONE);
 
-our @EXPORT_OK = (qw(setParam), @DATETIME_NAMES);
+our @EXPORT_OK = (qw(setParam expandParam), @DATETIME_NAMES);
 our %EXPORT_TAGS = (
     datetime => [@DATETIME_NAMES],
 );
@@ -40,6 +40,20 @@ sub setParam {
         croak "ERROR: setParam in $classname: Parameter for '$key' is mandatory, but not supplied.";
     }
     $hashref->{$key} = (defined($params_ref->{$key}) ? $params_ref->{$key} : $default);
+}
+
+sub expandParam {
+    my ($param, @names) = @_;
+    my $refparam = ref($param);
+    my @result = ();
+    if($refparam eq 'ARRAY') {
+        @result = @$param;
+    }elsif($refparam eq 'HASH') {
+        @result = @{$param}{@names};
+    }else {
+        $result[0] = $param;
+    }
+    return wantarray ? @result : $result[0];
 }
 
 sub datetimeFormat {

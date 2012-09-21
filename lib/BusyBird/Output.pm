@@ -13,7 +13,7 @@ use BusyBird::Status;
 use BusyBird::Status::Buffer;
 use BusyBird::ComponentManager;
 use BusyBird::Log qw(bblog);
-use BusyBird::Util ('setParam');
+use BusyBird::Util qw(setParam expandParam);
 
 sub new {
     my ($class, %params) = @_;
@@ -38,22 +38,43 @@ sub new {
     return $self;
 }
 
+sub _expandSizeParam {
+    my $input = shift;
+    my ($size, $level) = expandParam($input, qw(size level));
+    $size = int($size);
+    my $level_condition = undef;
+    if(defined $level) {
+        $level_condition = sub {
+            my $status_level = $_->{busybird}{level} || 0;
+            return ($status_level <= $level);
+        };
+    }
+    return ($size, $level_condition);
+}
+
 sub _initSelector {
     my ($self) = @_;
     $self->{selector}->register(
         new_statuses => sub {
-            my $in = shift;
-            $in = int($in);
-            return $self->{new_status_buffer}->size != $in
+            my ($size) = @_;
+            $size = int($size);
+            return $self->{new_status_buffer}->size != $size
                 ? $self->{new_status_buffer}
                     : undef;
         },
         new_statuses_num => sub {
-            my $in = shift;
-            $in = int($in);
-            return $self->{new_status_buffer}->size != $in
-                ? $self->{new_status_buffer}->size
-                    : undef;
+            my $input = shift;
+            my ($size, $level) = expandParam($input, qw(size level));
+            $size = int($size);
+            my $level_condition = undef;
+            if(defined $level) {
+                $level_condition = sub {
+                    my $status_level = $_->{busybird}{level} || 0;
+                    return ($status_level <= $level);
+                };
+            }
+            my $cur_size = $self->{new_status_buffer}->size($level_condition);
+            return $cur_size != $size ? $cur_size : undef;
         },
     );
 }
