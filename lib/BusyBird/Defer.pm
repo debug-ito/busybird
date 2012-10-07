@@ -121,7 +121,7 @@ sub _do_batch {
         my $task;
         given (ref $task{$key}) {
             when ('CODE') {
-                $task = BusyBird::Defer->new();
+                $task = __PACKAGE__->new();
                 $task->do( $task{$key} );
             }
             default {
@@ -148,7 +148,7 @@ sub _do_batch {
 
         my %taskresults = map { $_ => undef } keys %task;
         for my $key (sort keys %task) {     # sort just to simplify testing
-            my $t = BusyBird::Defer->new();
+            my $t = __PACKAGE__->new();
             $t->try();
                 $t->do( $task{$key} );
             $t->catch(
