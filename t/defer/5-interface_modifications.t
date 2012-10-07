@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::Exception;
 
 BEGIN {
     use_ok('BusyBird::Defer');
@@ -26,6 +27,18 @@ sub pusher {
     $d->do(map { pusher($_) } (1 .. 10));
     $d->run();
     is_deeply(\@results, [(1..10)], "results ok");
+}
+
+{
+    note('--- do(undef) complains nothing. It is just ignored. ');
+    my $d = BusyBird::Defer->new();
+    lives_ok { $d->do(undef, undef, undef) } "pushing undefs is ok";
+    $d->do(pusher(1));
+    lives_ok { $d->do(undef, pusher(2), undef) } "pushing undefs and a coderef is ok";
+    $d->do(pusher(3));
+    @results = ();
+    $d->run();
+    is_deeply(\@results, [1,2,3], "results ok");
 }
 
 {

@@ -89,6 +89,9 @@ sub do {
         croak 'require CODE/Defer object or ARRAY/HASH in first param';
     }
     foreach my $task (@tasks) {
+        if(!defined($task)) {
+            next;
+        }
         given (ref $task) {
             when ('CODE') {
                 $this->_add(OP_CODE, $task);
