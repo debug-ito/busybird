@@ -128,46 +128,10 @@ sub clone {
     $clone->max_active($self->max_active);
     %$clone = %$self;
     return $clone;
-    
-    ## my $super_clone = $self->SUPER::clone();
-    ## my $clone = bless $super_clone, blessed($self);
-    ## $clone->_init();
-    ## $clone->max_active($self->max_active);
-    ## return $clone;
 }
-
-## ** Specifically implement do() method.
-## ** This is necessary to pass nesting tests.
-sub do {
-    my ($self, $task) = @_;
-    if(!defined($task)) {
-        croak("Undefined task.");
-    }
-    if(blessed($task) && $task->can('run') && $task->can('clone')) {
-        return $self->original->_add(BusyBird::Defer::OP_DEFER, $task);
-    }elsif(ref($task) eq 'ARRAY') {
-        my @newtasks = ();
-        foreach my $one_task (@$task) {
-            if(blessed($one_task) && $one_task->can('run') && $one_task->can('clone')) {
-                my $clone = $one_task->clone;
-                push(
-                    @newtasks, sub {
-                        my ($p, @args) = @_;
-                        $clone->run($p, @args);
-                    }
-                );
-            }else {
-                push(@newtasks, $one_task);
-            }
-        }
-        @$task = @newtasks;
-    }
-    return $self->original->do($task);
-}
-
 
 ## delegated methods
-## sub        do { my $self = shift; return $self->original->       do(@_) }
+sub        do { my $self = shift; return $self->original->       do(@_) }
 sub        if { my $self = shift; return $self->original->       if(@_) }
 sub      else { my $self = shift; return $self->original->     else(@_) }
 sub    end_if { my $self = shift; return $self->original->   end_if(@_) }

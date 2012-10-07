@@ -358,9 +358,8 @@ sub cv_ender {
     test_messages \@result, qw(d1 c1 b1 a1 d0 c0 b0 a0);
 }
 
-TODO: {
+{
     note('--- do_batch');
-    local $TODO = "We cannot pass do_batch test unless rewrite BusyBird::Defer.";
     my $pd = BusyBird::Defer::Queue->new(max_active => 0);
     my $cd = BusyBird::Defer::Queue->new(max_active => 1);
     my @result = ();
@@ -380,10 +379,10 @@ TODO: {
     );
     $pd->do(sub { $cv->end; shift->done });
     eval {
-        $cv->begin; $pd->run(undef, [[0.8], "a"], [[0.7], "b"], [[0.6], "c"], [[0.5], "d"]);
-        $cv->begin; $pd->run(undef, [[0.4], "e"], [[0.3], "f"], [[0.2], "g"], [[0.1], "h"]);
+        $cv->begin; $pd->run(undef, [[0.5], "a"], [[0.4], "b"], [[0.3], "c"], [[0.1], "d"]);
+        $cv->begin; $pd->run(undef, [[0.1], "e"], [[0.3], "f"], [[0.5], "g"], [[0.1], "h"]);
         $cv->recv;
-        test_messages \@result, qw(h0 h g0 g f0 f e0 e d0 d c0 c b0 b a0 a);
+        test_messages \@result, qw(d0 h0 c0 b0 a0 a b c d e0 f0 g0 e f g h);
     };
     if($@) {
         fail("Something crached");
@@ -392,7 +391,7 @@ TODO: {
 }
 
 {
-    note('--- mixed (BusyBird::Defer and Async::Defer::Queue) deferred');
+    note('--- mixed (BusyBird::Defer and BusyBird::Defer::Queue) deferred');
     my $dq = BusyBird::Defer::Queue->new(max_active => 1);
     my $cq = BusyBird::Defer->new();
     my @result = ();
