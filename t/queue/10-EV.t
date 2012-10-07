@@ -6,7 +6,6 @@ use Test::More;
 use Test::Exception;
 use FindBin;
 use lib ("$FindBin::RealBin/lib");
-use EV;
 use Pseudo::CV;
 
 BEGIN {
@@ -26,7 +25,7 @@ sub delay_msg_statement {
     my ($result) = @_;
     return sub {
         my ($d, $delay, $msg) = @_;
-        my $w; $w = EV::timer $delay, 0, sub {
+        my $w; $w = PCVtimer $delay, 0, sub {
             undef $w;
             note($msg);
             push(@$result, $msg);
@@ -42,7 +41,7 @@ sub shift_delay_msg_statement {
         my $delay = shift(@$delays);
         my $remain = int(@$delays);
         my $my_msg = "$msg$remain";
-        my $w; $w = EV::timer $delay, 0, sub {
+        my $w; $w = PCVtimer $delay, 0, sub {
             undef $w;
             note($my_msg);
             push(@$result, $my_msg);
@@ -195,7 +194,7 @@ sub cv_ender {
     $d->do(
         sub {
             my ($d) = @_;
-            my $w; $w = EV::timer 0.02, 0, sub {
+            my $w; $w = PCVtimer 0.02, 0, sub {
                 undef $w;
                 my $msg = sprintf("%s%d", $d->{label}, $d->iter);
                 note($msg);
@@ -232,7 +231,7 @@ sub cv_ender {
     $d->do(
         sub {
             my $d = shift;
-            my $w; $w = EV::timer 0.01, 0, sub {
+            my $w; $w = PCVtimer 0.01, 0, sub {
                 undef $w;
                 note("long"); push(@result, "long");
                 $d->done;
@@ -243,7 +242,7 @@ sub cv_ender {
     $d->do(
         sub {
             my $d = shift;
-            my $w; $w = EV::timer 0.01, 0, sub {
+            my $w; $w = PCVtimer 0.01, 0, sub {
                 undef $w;
                 note("short"); push(@result, "short");
                 $d->done;
@@ -273,7 +272,7 @@ sub cv_ender {
     $cd->do(
         sub {
             my ($d, $delays, $msg) = @_;
-            my $w; $w = EV::timer shift(@$delays), 0, sub {
+            my $w; $w = PCVtimer shift(@$delays), 0, sub {
                 undef $w;
                 $d->throw([$delays, $msg]);
             };
@@ -283,7 +282,7 @@ sub cv_ender {
         qr// => sub {
             my ($d, $thrown) = @_;
             my ($delays, $msg) = @$thrown;
-            my $w; $w = EV::timer shift(@$delays), 0, sub {
+            my $w; $w = PCVtimer shift(@$delays), 0, sub {
                 undef $w;
                 my $t_msg = "T$msg";
                 note($t_msg); push(@result, $t_msg);
@@ -384,7 +383,7 @@ sub cv_ender {
     $p->do(
         sub {
             my ($d) = @_;
-            my $w; $w = EV::timer 0.05, 0, sub {
+            my $w; $w = PCVtimer 0.05, 0, sub {
                 undef $w;
                 push(@result, 'p');
                 $d->done();

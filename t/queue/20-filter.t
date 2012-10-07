@@ -8,7 +8,6 @@ use Test::More;
 use Test::Exception;
 use FindBin;
 use lib ("$FindBin::RealBin/lib");
-use EV;
 use Pseudo::CV;
 
 BEGIN {
@@ -28,7 +27,7 @@ sub filterPlus {
     return sub {
         my ($d, $statuses) = @_;
         $_ += $add_amount foreach @$statuses;
-        my $tw; $tw = EV::timer 0.1, 0, sub {
+        my $tw; $tw = PCVtimer 0.1, 0, sub {
             undef $tw;
             $d->done($statuses);
         };
@@ -38,7 +37,7 @@ sub filterPlus {
 sub filterReverse {
     return sub {
         my ($d, $statuses) = @_;
-        my $tw; $tw = EV::timer 0.1, 0, sub {
+        my $tw; $tw = PCVtimer 0.1, 0, sub {
             undef $tw;
             $d->done( [reverse(@$statuses)] );
         };
@@ -50,7 +49,7 @@ sub filterSleepPush {
     return sub {
         my ($d, $in) = @_;
         note(sprintf('filterSleepPush with pushval => %s, sleep => %s', $pushval, $sleep));
-        my $tw; $tw = EV::timer $sleep, 0,  sub {
+        my $tw; $tw = PCVtimer $sleep, 0,  sub {
             undef $tw;
             push(@$in, $pushval);
             $d->done($in);
@@ -63,7 +62,7 @@ sub filterCheck {
     return sub {
         my ($d, $statuses) = @_;
         is_deeply($statuses, $expected_seq, "filterCheck");
-        my $tw; $tw = EV::timer 0.1, 0, sub {
+        my $tw; $tw = PCVtimer 0.1, 0, sub {
             undef $tw;
             $d->done($statuses);
         };
@@ -74,7 +73,7 @@ sub filterDying {
     my ($add, $msg, $is_in_place) = @_;
     return sub {
         my ($d, $statuses) = @_;
-        my $tw; $tw = EV::timer 0.2, 0, sub {
+        my $tw; $tw = PCVtimer 0.2, 0, sub {
             undef $tw;
             my @new_statuses = ();
             eval {
@@ -106,7 +105,7 @@ sub checkParallel {
     $filter->do(
         sub {
             my ($d, $target) = @_;
-            my $tw; $tw = EV::timer 0, 0, sub {
+            my $tw; $tw = PCVtimer 0, 0, sub {
                 undef $tw;
                 $parallel_count++;
                 if($parallel_limit > 0) {
@@ -122,7 +121,7 @@ sub checkParallel {
             my ($d, $target) = @_;
             ## ** descending amount of sleep_time
             my $sleep_time = 3.0 / $target;
-            my $tw; $tw = EV::timer $sleep_time, 0, sub {
+            my $tw; $tw = PCVtimer $sleep_time, 0, sub {
                 undef $tw;
                 $d->done($target);
             };
@@ -131,7 +130,7 @@ sub checkParallel {
     my $got_order_ref = [];
     {
         my $cv = Pseudo::CV->new;
-        my $timeout; $timeout = EV::timer 10, 0, sub {
+        my $timeout; $timeout = PCVtimer 10, 0, sub {
             undef $timeout;
             fail("timeout");
             $cv->send;
@@ -244,7 +243,7 @@ sub checkParallel {
     $filters{single_filter}->do(
         sub {
             my ($d, $data) = @_;
-            my $tw; $tw = EV::timer 0.01, 0, sub {
+            my $tw; $tw = PCVtimer 0.01, 0, sub {
                 undef $tw;
                 $filter_counter++;
                 $single_filter_cv->end();
@@ -256,7 +255,7 @@ sub checkParallel {
         my $callback_counter = 0;
         {
             my $cv = Pseudo::CV->new;
-            my $timeout; $timeout = EV::timer 10, 0, sub {
+            my $timeout; $timeout = PCVtimer 10, 0, sub {
                 undef $timeout;
                 fail("$key: timeout");
                 $cv->send;
