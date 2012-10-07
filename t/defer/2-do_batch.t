@@ -5,7 +5,8 @@ use Test::Exception;
 
 use BusyBird::Defer;
 
-use EV;
+use AE;
+my $cv;
 
 
 plan 'no_plan';
@@ -247,7 +248,7 @@ $d = BusyBird::Defer->new();
 $d->do(sub{
     my ($d, @param) = @_;
     $param[0]++;
-    $d->{t} = EV::timer 0.01, 0, sub { $d->done(@param) };
+    $d->{t} = AE::timer 0.01, 0, sub { $d->done(@param) };
 });
 $d->do(sub{
     my ($d, @param) = @_;
@@ -293,9 +294,9 @@ $p->do(sub{
     $p->done();
 });
 (%seen, @result) = ();
-$t = EV::timer 0.01, 0, sub{ $p->run(undef, [10], [20], [30], [40], [50]) };
-$tx= EV::timer 0.5,  0, sub{ EV::unloop };
-EV::loop;
+$t = AE::timer 0.01, 0, sub{ $p->run(undef, [10], [20], [30], [40], [50]) };
+$tx= AE::timer 0.5,  0, sub{ $cv->send };
+$cv = AE::cv; $cv->recv;
 is scalar(keys %seen), 5, 'all batch objects are different (ARRAY)';
 is_deeply \@result, [
     { type=>'sub',      state=>0,   share=>0,   param=>[10] },
@@ -324,9 +325,9 @@ $p->do(sub{
     $p->done();
 });
 (%seen, @result, %result) = ();
-$t = EV::timer 0.01, 0, sub{ $p->run(undef, sub1=>[10], sub2=>[20], defer1=>[30], defer2=>[40], anon=>[50]) };
-$tx= EV::timer 0.5,  0, sub{ EV::unloop };
-EV::loop;
+$t = AE::timer 0.01, 0, sub{ $p->run(undef, sub1=>[10], sub2=>[20], defer1=>[30], defer2=>[40], anon=>[50]) };
+$tx= AE::timer 0.5,  0, sub{ $cv->send };
+$cv = AE::cv; $cv->recv;
 is scalar(keys %seen), 5, 'all batch objects are different (HASH)';
 @result = sort { $a->{param}[0] <=> $b->{param}[0] } @result;
 is_deeply \@result, [

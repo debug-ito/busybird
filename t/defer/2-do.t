@@ -5,7 +5,8 @@ use Test::Exception;
 
 use BusyBird::Defer;
 
-use EV;
+use AE;
+my $cv;
 
 
 plan tests => 4;
@@ -49,7 +50,7 @@ $d = BusyBird::Defer->new();
 $d->do(sub{
     my ($d, $n) = @_;
     $n++;
-    $d->{t} = EV::timer 0.01, 0, sub{ $d->done($n) };
+    $d->{t} = AE::timer 0.01, 0, sub{ $d->done($n) };
 });
 $d->do(sub{
     my ($d, $n) = @_;
@@ -57,10 +58,10 @@ $d->do(sub{
     $result = $n;
     $d->done($n);
 });
-$t = EV::timer 0.01, 0, sub{ $d->run(undef, 3) };
-$tx= EV::timer 0.5, 0, sub{ EV::unloop };
+$t = AE::timer 0.01, 0, sub{ $d->run(undef, 3) };
+$tx= AE::timer 0.5, 0, sub{ $cv->send };
 $result = undef;
-EV::loop;
+$cv = AE::cv; $cv->recv;
 is $result, 14, 'handle correctly both sync and async functions';
 
 $p = BusyBird::Defer->new();
