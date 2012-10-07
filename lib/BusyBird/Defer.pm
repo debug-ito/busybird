@@ -297,6 +297,18 @@ sub run {
     }
     _check_stack($self);
 
+    if(ref($d) eq 'CODE') {
+        my $callback = $d;
+        $d = __PACKAGE__->new();
+        $d->do(
+            sub {
+                my ($defer, @results) = @_;
+                $callback->(@results);
+                $defer->done;
+            }
+        );
+    }
+
     $self->{parent} = $d;
     $this->done(@result);
     return $this;

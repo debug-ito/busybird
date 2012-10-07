@@ -59,9 +59,4 @@ sub pusher {
     is_deeply(\@results, [11, 11, 11, 15, 15, 15, 16, 50], "results ok");
 }
 
-{
-    note('--- run() accepts a coderef as a callback');
-}
-
-
 done_testing();
