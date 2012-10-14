@@ -261,7 +261,36 @@ sub cv_ender {
 }
 
 {
-    note('--- throw exception (handled)');
+    note('--- throw exception (handled in the defer)');
+    my $d = BusyBird::Defer::Queue->new(max_active => 0);
+    my @result = ();
+    my $cv = Pseudo::CV->new();
+    $d->try();
+    $d->do(shift_delay_msg_statement(\@result));
+    $d->do(
+        sub {
+            my ($d, $delays, $msg) = @_;
+            $d->throw([$delays, $msg]);
+        }
+    );
+    $d->catch(
+        qr// => sub {
+            my ($d, $thrown) = @_;
+            my ($delays, $msg) = @$thrown;
+            push(@result, "E$msg");
+            $d->done($delays, $msg);
+        },
+        FINALLY => shift_delay_msg_statement(\@result),
+    );
+    $d->do(sub { $cv->end; shift->done });
+    $cv->begin; $d->run(undef, [0.2, 0.1], "a");
+    $cv->begin; $d->run(undef, [0.1, 0.3], "b");
+    $cv->recv;
+    test_messages \@result, qw(b1 Eb a1 Ea a0 b0);
+}
+
+{
+    note('--- throw exception (handled by parent)');
     my $pd = BusyBird::Defer::Queue->new(max_active => 0);
     my $cd = BusyBird::Defer::Queue->new(max_active => 2);
     my @result = ();
