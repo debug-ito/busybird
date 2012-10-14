@@ -404,6 +404,36 @@ sub cv_ender {
 }
 
 {
+    note('--- mixed (child BusyBird::Defer cannot run() multiple times)');
+    my $dq = BusyBird::Defer::Queue->new(max_active => 0);
+    my $cq = BusyBird::Defer->new();
+    my $cv = Pseudo::CV->new();
+    my @result = ();
+    $dq->do($cq);
+    $cq->do(sub { my $d = shift; $d->done(@_) });
+    $cq->do(
+        sub {
+            my ($d, $msg) = @_;
+            my $w; $w = PCVtimer 0.1, 0, sub {
+                undef $w;
+                push(@result, $msg);
+                $d->done;
+            };
+        }
+    );
+    lives_ok  { $cv->begin; $dq->run(cv_ender($cv), "a"); } "First time. It can run.";
+    throws_ok { $cv->begin; $dq->run(cv_ender($cv), "b"); } qr/already running/, "Second time. It cannot run.";
+    $cv->end;
+    my $timeout; $timeout = PCVtimer 5, 0, sub {
+        undef $timeout;
+        fail("timeout");
+        $cv->send;
+    };
+    $cv->recv;
+    test_messages \@result, qw(a);
+}
+
+{
     note('--- empty deferred');
     my $empty = BusyBird::Defer::Queue->new();
     my $p = BusyBird::Defer->new();
