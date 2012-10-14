@@ -162,6 +162,7 @@ sub checkParallel {
 
 {
         my $filter = BusyBird::Defer::Queue->new();
+        $filter->do(&filterPlus(0));
         &checkFilter($filter, [0..10], [0..10]);
 
         $filter->do(&filterPlus(5));
@@ -240,6 +241,7 @@ sub checkParallel {
     );
     my $filter_counter = 0;
     my $single_filter_cv;
+    $filters{empty_filter}->do(sub { my $d = shift; $d->done(@_) });
     $filters{single_filter}->do(
         sub {
             my ($d, $data) = @_;

@@ -380,6 +380,7 @@ sub cv_ender {
     my $p = BusyBird::Defer->new();
     my @result = ();
     my $cv = Pseudo::CV->new();
+    $empty->do(sub { my $d = shift; $d->done(@_) });
     $p->do(
         sub {
             my ($d) = @_;
