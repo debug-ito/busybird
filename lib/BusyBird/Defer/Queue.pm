@@ -9,6 +9,7 @@ our $VERSION = '0.01';
 
 
 use Scalar::Util qw(blessed refaddr);
+use Carp;
 use BusyBird::Defer;
 
 my %SELF = ();
@@ -18,7 +19,6 @@ sub new {
     my $self = bless {}, $class;
     $self->_init();
     $self->max_active(defined($params{max_active}) ? $params{max_active} : 1);
-    $self->try();
     return $self;
 }
 
@@ -33,19 +33,12 @@ sub _init {
     $self->max_active(1);
     $self->cur_active(0);
     $self->jobqueue([]);
-    $self->doneable(0);
 }
 
 sub original {
     my ($self, $arg) = @_;
     $SELF{refaddr $self}{__original} = $arg if defined($arg);
     return $SELF{refaddr $self}{__original};
-}
-
-sub doneable {
-    my ($self, $arg) = @_;
-    $SELF{refaddr $self}{__doneable} = $arg if defined($arg);
-    return $SELF{refaddr $self}{__doneable};
 }
 
 sub max_active {
@@ -68,24 +61,20 @@ sub jobqueue {
 
 sub done {
     my ($self, @results) = @_;
-    
+
     ## If $self is given to another Defer's run() method as its
     ## parent, $self->done() is called without calling
-    ## $self->run(). This is not good because we have a hook at run()
-    ## method to control parallel execution. So $self->doneable
-    ## attribute flag is used to detect call to done() without run(),
-    ## and to force calling run() instead.
-    
-    if(!$self->doneable) {
-        return $self->run(undef, @results);
-    }
-    return $self->original->done(@results);
+    ## $self->run(). In this case, it just call $self->run() instead
+    ## to start a new execution.
+
+    return $self->run(undef, @results);
 }
 
 sub run {
     my ($self, @args) = @_;
     push(@{$self->jobqueue}, \@args);
     $self->_shift_run();
+    return $self;
 }
 
 sub _shift_run {
@@ -93,17 +82,20 @@ sub _shift_run {
     return if $self->max_active > 0 && $self->cur_active >= $self->max_active;
     my $args_ref = shift(@{$self->jobqueue});
     return if !defined($args_ref);
-    
-    my $clone = $self->clone;
+
+    my $container = BusyBird::Defer->new();
     my $error_obj = undef;
-    $clone->catch(
+    my $cloned_orig = $self->original->clone;
+    $container->try();
+    $container->do($cloned_orig);
+    $container->catch(
         qr// => sub {
             my ($d, $err) = @_;
             $error_obj = $err;
             $d->done;
         },
     );
-    $clone->do(
+    $container->do(
         sub {
             my ($d, @args) = @_;
             $self->cur_active($self->cur_active - 1);
@@ -115,10 +107,15 @@ sub _shift_run {
             }
         }
     );
-    $clone->doneable(1);
     $self->cur_active($self->cur_active + 1);
-    %{$clone->original} = %{$clone};
-    $clone->original->run(@$args_ref);
+    %{$cloned_orig} = %{$self};
+    eval {
+        $container->run(@$args_ref);
+    };
+    if($@) {
+        $self->cur_active($self->cur_active - 1);
+        croak $@;
+    }
 }
 
 sub clone {
@@ -131,17 +128,17 @@ sub clone {
 }
 
 ## delegated methods
-sub        do { my $self = shift; return $self->original->       do(@_) }
-sub        if { my $self = shift; return $self->original->       if(@_) }
-sub      else { my $self = shift; return $self->original->     else(@_) }
-sub    end_if { my $self = shift; return $self->original->   end_if(@_) }
-sub     while { my $self = shift; return $self->original->    while(@_) }
-sub end_while { my $self = shift; return $self->original->end_while(@_) }
-sub       try { my $self = shift; return $self->original->      try(@_) }
-sub     catch { my $self = shift; return $self->original->    catch(@_) }
-sub     throw { my $self = shift; return $self->original->    throw(@_) }
-sub  continue { my $self = shift; return $self->original-> continue(@_) }
-sub     break { my $self = shift; return $self->original->    break(@_) }
+sub        do { my $self = shift; $self->original->       do(@_); return $self }
+sub        if { my $self = shift; $self->original->       if(@_); return $self }
+sub      else { my $self = shift; $self->original->     else(@_); return $self }
+sub    end_if { my $self = shift; $self->original->   end_if(@_); return $self }
+sub     while { my $self = shift; $self->original->    while(@_); return $self }
+sub end_while { my $self = shift; $self->original->end_while(@_); return $self }
+sub       try { my $self = shift; $self->original->      try(@_); return $self }
+sub     catch { my $self = shift; $self->original->    catch(@_); return $self }
+sub     throw { my $self = shift; $self->original->    throw(@_); return $self }
+sub  continue { my $self = shift; $self->original-> continue(@_); return $self }
+sub     break { my $self = shift; $self->original->    break(@_); return $self }
 
 
 
