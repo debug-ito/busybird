@@ -387,6 +387,32 @@ sub cv_ender {
 }
 
 {
+    note('--- do_batch (coderef batches cannot be run multiple times)');
+    my $pd = BusyBird::Defer::Queue->new(max_active => 0);
+    my @result = ();
+    my $cv = Pseudo::CV->new;
+    $pd->do({
+        taskA => shift_delay_msg_statement(\@result),
+        taskB => shift_delay_msg_statement(\@result),
+        taskC => shift_delay_msg_statement(\@result)
+    });
+    lives_ok {
+        $cv->begin; $pd->run(cv_ender($cv), taskA => [[0.1], "xa"], taskB => [[0.2], "xb"], taskC => [[0.4], "xc"]);
+    } "First time. It can run().";
+    throws_ok {
+        $cv->begin; $pd->run(cv_ender($cv), taskA => [[0.3], "ya"], taskB => [[0.5], "yb"], taskC => [[0.6], "yc"]);
+    } qr/already running/, "Second time. It cannot run()";
+    $cv->end;
+    my $timeout; $timeout = PCVtimer 5, 0, sub {
+        undef $timeout;
+        fail('timeout');
+        $cv->send;
+    };
+    $cv->recv;
+    test_messages \@result, qw(xa0 xb0 xc0);
+}
+
+{
     note('--- mixed (BusyBird::Defer and BusyBird::Defer::Queue) deferred');
     my $dq = BusyBird::Defer::Queue->new(max_active => 1);
     my $cq = BusyBird::Defer->new();
