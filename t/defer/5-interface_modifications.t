@@ -68,7 +68,7 @@ sub pusher {
         }
     ), $d, "catch()");
     @results = ();
-    $d->run();
+    is($d->run(), $d, "run()");
     is_deeply(\@results, [11, 11, 11, 15, 15, 15, 16, 50], "results ok");
 }
 
