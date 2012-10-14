@@ -22,6 +22,13 @@ sub new {
     return $self;
 }
 
+sub deferrize {
+    my ($self, @childs) = @_;
+    my $newone = blessed($self)->new(max_active => $self->max_active);
+    $newone->do(@childs);
+    return $newone;
+}
+
 sub DESTROY {
     my ($self) = @_;
     delete $SELF{refaddr($self)};
