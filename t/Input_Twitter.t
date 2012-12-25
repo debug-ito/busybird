@@ -5,6 +5,10 @@ use Test::Builder;
 use Test::MockObject;
 use List::Util qw(min);
 
+BEGIN {
+    use_ok('App::BusyBird::Input::Twitter');
+}
+
 sub limit {
     my ($orig, $min, $max) = @_;
     $$orig = $min if $$orig < $min;
@@ -25,10 +29,15 @@ sub mockTimeline {
     return \@result;
 }
 
+sub statuses {
+    my (@ids) = @_;
+    return map { +{id => $_} } @ids;
+}
+
 sub testMock {
     my ($param, $exp_ids, $msg) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
-    is_deeply(main->mockTimeline($param), [map { +{id => $_} } @$exp_ids], $msg);
+    is_deeply(main->mockTimeline($param), [statuses(@$exp_ids)], $msg);
 }
 
 note('--- test the mock itself');
@@ -45,5 +54,17 @@ testMock {since_id => 120}, [], "mock since_id too large";
 testMock {since_id => -100}, [reverse(91..100)], "mock since_id negative";
 testMock {max_id => 40, since_id => 35}, [reverse(36..40)], "mock max_id and since_id";
 testMock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
+
+my $mocknt = Test::MockObject->new();
+$mocknt->mock($_, \&mockTimeline) foreach qw(home_timeline user_timeline public_timeline list_statuses);
+
+my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt);
+is_deeply(
+    $bbin->user_timeline("label", {since_id => 10}),
+    [statuses reverse 11..100],
+    "home_timeline since_id"
+);
+
+
 
 done_testing();
