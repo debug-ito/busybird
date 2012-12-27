@@ -2,7 +2,7 @@ package App::BusyBird::Input::Twitter;
 
 use strict;
 use warnings;
-use App::BusyBird::Util qw(setParam);
+use App::BusyBird::Util qw(set_param);
 use App::BusyBird::Log;
 use Time::HiRes qw(sleep);
 use JSON;
@@ -11,16 +11,16 @@ use Try::Tiny;
 sub new {
     my ($class, %params) = @_;
     my $self = bless {}, $class;
-    $self->setParam(\%params, 'backend', undef, 1);
-    $self->setParam(\%params, 'filepath', undef);
-    $self->setParam(\%params, 'page_max', 10);
-    $self->setParam(\%params, 'page_max_no_since_id', 1);
-    $self->setParam(\%params, 'page_next_delay', 0.5);
+    $self->set_param(\%params, 'backend', undef, 1);
+    $self->set_param(\%params, 'filepath', undef);
+    $self->set_param(\%params, 'page_max', 10);
+    $self->set_param(\%params, 'page_max_no_since_id', 1);
+    $self->set_param(\%params, 'page_next_delay', 0.5);
     $self->{logger} = exists($params{logger}) ? $params{logger} : App::BusyBird::Log->logger;
     return $self;
 }
 
-sub _loadTimeFile {
+sub _load_next_since_id_file {
     my ($self) = @_;
     return undef if not defined($self->{filepath});
     open my $file, $self->{filepath} or return undef;
@@ -37,7 +37,7 @@ sub _log {
     $self->{logger}->log($level, $msg) if defined $self->{logger};
 }
 
-sub _saveTimeFile {
+sub _save_next_since_id_file {
     my ($self, $since_ids) = @_;
     return if not defined($self->{filepath});
     open my $file, ">", $self->{filepath} or die "Cannot open $self->{filepath} for write: $!";
@@ -61,7 +61,7 @@ sub _logQuery {
 sub user_timeline {
     my ($self, $label, $nt_params) = @_;
     $label ||= "";
-    my $since_ids = $self->_loadTimeFile();
+    my $since_ids = $self->_load_next_since_id_file();
     my $since_id = $since_ids->{$label};
     $nt_params->{since_id} = $since_id if !defined($nt_params->{since_id}) && defined($since_id);
     my $page_max = defined($nt_params->{since_id}) ? $self->{page_max} : $self->{page_max_no_since_id};
@@ -86,7 +86,7 @@ sub user_timeline {
     }
     if(@result) {
         $since_ids->{$label} = $result[0]->{id};
-        $self->_saveTimeFile($since_ids);
+        $self->_save_next_since_id_file($since_ids);
     }
     return \@result;
 }

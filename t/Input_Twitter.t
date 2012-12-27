@@ -15,7 +15,7 @@ sub limit {
     $$orig = $max if $$orig > $max;
 }
 
-sub mockTimeline {
+sub mock_timeline {
     my ($self, $params) = @_;
     my $page_size = $params->{count} || $params->{per_page} || $params->{rpp} || 10;
     my $max_id = $params->{max_id} || 100;
@@ -34,29 +34,29 @@ sub statuses {
     return map { +{id => $_} } @ids;
 }
 
-sub testMock {
+sub test_mock {
     my ($param, $exp_ids, $msg) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
-    is_deeply(main->mockTimeline($param), [statuses(@$exp_ids)], $msg);
+    is_deeply(main->mock_timeline($param), [statuses(@$exp_ids)], $msg);
 }
 
 note('--- test the mock itself');
 
-testMock {}, [100,99,98,97,96,95,94,93,92,91], "mock no param";
-testMock {count => 4}, [100,99,98,97], "mock count";
-testMock {per_page => 13}, [100,99,98,97,96,95,94,93,92,91,90,89,88], "mock per_page";
-testMock {rpp => 150}, [reverse(1..100)], "mock rpp";
-testMock {max_id => 50}, [reverse(41..50)], "mock max_id";
-testMock {max_id => 120}, [reverse(91..100)], "mock max_id too large";
-testMock {max_id => -40}, [1], "mock max_id negative";
-testMock {since_id => 95}, [reverse(96 .. 100)], "mock since_id";
-testMock {since_id => 120}, [], "mock since_id too large";
-testMock {since_id => -100}, [reverse(91..100)], "mock since_id negative";
-testMock {max_id => 40, since_id => 35}, [reverse(36..40)], "mock max_id and since_id";
-testMock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
+test_mock {}, [100,99,98,97,96,95,94,93,92,91], "mock no param";
+test_mock {count => 4}, [100,99,98,97], "mock count";
+test_mock {per_page => 13}, [100,99,98,97,96,95,94,93,92,91,90,89,88], "mock per_page";
+test_mock {rpp => 150}, [reverse(1..100)], "mock rpp";
+test_mock {max_id => 50}, [reverse(41..50)], "mock max_id";
+test_mock {max_id => 120}, [reverse(91..100)], "mock max_id too large";
+test_mock {max_id => -40}, [1], "mock max_id negative";
+test_mock {since_id => 95}, [reverse(96 .. 100)], "mock since_id";
+test_mock {since_id => 120}, [], "mock since_id too large";
+test_mock {since_id => -100}, [reverse(91..100)], "mock since_id negative";
+test_mock {max_id => 40, since_id => 35}, [reverse(36..40)], "mock max_id and since_id";
+test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
 
 my $mocknt = Test::MockObject->new();
-$mocknt->mock($_, \&mockTimeline) foreach qw(home_timeline user_timeline public_timeline list_statuses);
+$mocknt->mock($_, \&mock_timeline) foreach qw(home_timeline user_timeline public_timeline list_statuses);
 
 my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, logger => undef);
 is_deeply(
