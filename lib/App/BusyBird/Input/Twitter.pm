@@ -7,6 +7,7 @@ use App::BusyBird::Log;
 use Time::HiRes qw(sleep);
 use JSON;
 use Try::Tiny;
+use Carp;
 
 sub new {
     my ($class, %params) = @_;
@@ -50,7 +51,7 @@ sub _save_next_since_id_file {
     close $file;
 }
 
-sub _logQuery {
+sub _log_query {
     my ($self, $method, $params) = @_;
     $self->_log("info", sprintf(
         "%s: method: %s, args: %s", __PACKAGE__, $method,
@@ -58,9 +59,15 @@ sub _logQuery {
     ));
 }
 
-sub user_timeline {
-    my ($self, $label, $nt_params) = @_;
-    $label ||= "";
+sub _load_timeline {
+    my ($self, $nt_params, $method, @label_params) = @_;
+    $nt_params ||= {};
+    if(not defined $method) {
+        $method = (caller(1))[3];
+        $method =~ s/^.*:://g;
+    }
+    my $label = "$method," .
+        join(",", map { "$_:" . (defined($nt_params->{$_}) ? $nt_params->{$_} : "") } @label_params);
     my $since_ids = $self->_load_next_since_id_file();
     my $since_id = $since_ids->{$label};
     $nt_params->{since_id} = $since_id if !defined($nt_params->{since_id}) && defined($since_id);
@@ -71,8 +78,15 @@ sub user_timeline {
     my %loaded_ids = ();
     while($load_count < $page_max) {
         $nt_params->{max_id} = $max_id if defined $max_id;
-        my $loaded = $self->{backend}->user_timeline($nt_params);
-        $self->_logQuery("user_timeline", $nt_params);
+        $self->_log_query($method, $nt_params);
+        my $loaded;
+        try {
+            $loaded = $self->{backend}->$method($nt_params);
+        }catch {
+            my $e = shift;
+            $self->_log("error", $e);
+        };
+        last if not defined $loaded;
         @$loaded = grep { !$loaded_ids{$_->{id}} } @$loaded;
         last if !@$loaded;
         push(@result, @$loaded);
@@ -89,6 +103,31 @@ sub user_timeline {
         $self->_save_next_since_id_file($since_ids);
     }
     return \@result;
+}
+
+sub user_timeline {
+    my ($self, $nt_params) = @_;
+    return $self->_load_timeline($nt_params, undef, qw(user_id screen_name));
+}
+
+sub public_timeline {
+    my ($self, $nt_params) = @_;
+    return $self->_load_timeline($nt_params);
+}
+
+sub home_timeline {
+    my ($self, $nt_params) = @_;
+    return $self->_load_timeline($nt_params);
+}
+
+sub list_statuses {
+    my ($self, $nt_params) = @_;
+    return $self->_load_timeline($nt_params, undef, qw(user list_id));
+}
+
+sub search {
+    my ($self, $nt_params) = @_;
+    return $self->_load_time($nt_params, undef, qw(q lang locale));
 }
 
 1;

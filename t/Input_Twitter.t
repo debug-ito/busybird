@@ -58,14 +58,20 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
 my $mocknt = Test::MockObject->new();
 $mocknt->mock($_, \&mock_timeline) foreach qw(home_timeline user_timeline public_timeline list_statuses);
 
-my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, logger => undef);
+my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, logger => undef, page_next_delay => 0);
 is_deeply(
-    $bbin->user_timeline("label", {since_id => 10}),
+    $bbin->user_timeline({since_id => 10}),
     [statuses reverse 11..100],
     "home_timeline since_id"
 );
 
-## ファイル出力のテストはテスト環境依存(ファイルシステムとか)なので、AUTHOR_TESTINGにするといいかも。
+## ファイル出力のテストはテスト環境依存(ファイルシステムとか)なので、
+## AUTHOR_TESTINGにするといいかも。 
+
+## what if backend emits exception?
+
+## what if search in UTF8?? is $label OK?
+
 
 
 done_testing();
