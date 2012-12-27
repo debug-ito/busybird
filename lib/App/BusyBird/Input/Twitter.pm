@@ -170,6 +170,12 @@ Maximum number of pages this module tries to load when no since_id is given.
 
 Delay in seconds before loading the next page.
 
+=item logger (optional)
+
+Logger object. By default App::BusBird::Log object is used.
+
+Setting it to C<undef> suppresses logging.
+
 =back
 
 
