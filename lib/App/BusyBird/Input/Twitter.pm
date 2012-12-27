@@ -5,12 +5,14 @@ use warnings;
 use App::BusyBird::Util qw(setParam);
 use App::BusyBird::Log qw(bblog);
 use Time::HiRes qw(sleep);
+use JSON;
+use Try::Tiny;
 
 sub new {
     my ($class, %params) = @_;
     my $self = bless {}, $class;
     $self->setParam(\%params, 'backend', undef, 1);
-    $self->setParam(\%params, 'path_base', undef);
+    $self->setParam(\%params, 'filepath', undef);
     $self->setParam(\%params, 'page_max', 10);
     $self->setParam(\%params, 'page_max_no_since_id', 1);
     $self->setParam(\%params, 'page_next_delay', 0.5);
@@ -18,22 +20,27 @@ sub new {
 }
 
 sub _loadTimeFile {
-    my ($self, $label) = @_;
-    return undef if not defined($self->{path_base});
-    my $filename = $self->{path_base} . $label;
-    open my $file, $filename or return undef;
-    my $since_id = <$file>;
+    my ($self) = @_;
+    return undef if not defined($self->{filepath});
+    open my $file, $self->{filepath} or return undef;
+    my $json_text = do { local $/ = undef; <$file> };
     close $file;
-    $since_id =~ s/\s+$//;
-    return $since_id;
+    my $since_ids = try {
+        decode_json($json_text);
+    };
+    return $since_ids;
 }
 
 sub _saveTimeFile {
-    my ($self, $label, $since_id) = @_;
-    return if not defined($self->{path_base});
-    my $filename = $self->{path_base} . $label;
-    open my $file, ">", $filename or die "Cannot open $filename for write: $!";
-    print $file "$since_id\n";
+    my ($self, $since_ids) = @_;
+    return if not defined($self->{filepath});
+    open my $file, ">", $self->{filepath} or die "Cannot open $self->{filepath} for write: $!";
+    try {
+        print $file encode_json($since_ids);
+    }catch {
+        my $e = shift;
+        bblog("error", $e);
+    };
     close $file;
 }
 
@@ -48,7 +55,8 @@ sub _logQuery {
 sub user_timeline {
     my ($self, $label, $nt_params) = @_;
     $label ||= "";
-    my $since_id = $self->_loadTimeFile($label);
+    my $since_ids = $self->_loadTimeFile();
+    my $since_id = $since_ids->{$label};
     $nt_params->{since_id} = $since_id if !defined($nt_params->{since_id}) && defined($since_id);
     my $page_max = defined($nt_params->{since_id}) ? $self->{page_max} : $self->{page_max_no_since_id};
     my $max_id = undef;
@@ -71,7 +79,8 @@ sub user_timeline {
         bblog("warn", "page has reached the max value of " . $self->{page_max});
     }
     if(@result) {
-        $self->_saveTimeFile($label, $result[0]->{id});
+        $since_ids->{$label} = $result[0]->{id};
+        $self->_saveTimeFile($since_ids);
     }
     return \@result;
 }
@@ -138,10 +147,10 @@ Creates the object with the following C<%options>.
 
 Backend L<Net::Twitter> object.
 
-=item path_base (optional)
+=item filepath (optional)
 
-File path base for saving next since_id.
-If this option is not specified, no file will be created.
+File path for saving and loading the next since_id.
+If this option is not specified, no file will be created or loaded.
 
 =item page_max (optional)
 
