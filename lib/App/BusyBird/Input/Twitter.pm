@@ -3,7 +3,7 @@ package App::BusyBird::Input::Twitter;
 use strict;
 use warnings;
 use App::BusyBird::Util qw(setParam);
-use App::BusyBird::Log qw(bblog);
+use App::BusyBird::Log;
 use Time::HiRes qw(sleep);
 use JSON;
 use Try::Tiny;
@@ -16,6 +16,7 @@ sub new {
     $self->setParam(\%params, 'page_max', 10);
     $self->setParam(\%params, 'page_max_no_since_id', 1);
     $self->setParam(\%params, 'page_next_delay', 0.5);
+    $self->{logger} = exists($params{logger}) ? $params{logger} : App::BusyBird::Log->logger;
     return $self;
 }
 
@@ -31,6 +32,11 @@ sub _loadTimeFile {
     return $since_ids;
 }
 
+sub _log {
+    my ($self, $level, $msg) = @_;
+    $self->{logger}->log($level, $msg) if defined $self->{logger};
+}
+
 sub _saveTimeFile {
     my ($self, $since_ids) = @_;
     return if not defined($self->{filepath});
@@ -39,14 +45,14 @@ sub _saveTimeFile {
         print $file encode_json($since_ids);
     }catch {
         my $e = shift;
-        bblog("error", $e);
+        $self->_log("error", $e);
     };
     close $file;
 }
 
 sub _logQuery {
     my ($self, $method, $params) = @_;
-    bblog("info", sprintf(
+    $self->_log("info", sprintf(
         "%s: method: %s, args: %s", __PACKAGE__, $method,
         join(", ", map {"$_: " . (defined($params->{$_}) ? $params->{$_} : "[undef]")} keys %$params)
     ));
@@ -76,7 +82,7 @@ sub user_timeline {
         sleep($self->{page_next_delay});
     }
     if($load_count == $self->{page_max}) {
-        bblog("warn", "page has reached the max value of " . $self->{page_max});
+        $self->_log("warn", "page has reached the max value of " . $self->{page_max});
     }
     if(@result) {
         $since_ids->{$label} = $result[0]->{id};

@@ -58,13 +58,14 @@ testMock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
 my $mocknt = Test::MockObject->new();
 $mocknt->mock($_, \&mockTimeline) foreach qw(home_timeline user_timeline public_timeline list_statuses);
 
-my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt);
+my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, logger => undef);
 is_deeply(
     $bbin->user_timeline("label", {since_id => 10}),
     [statuses reverse 11..100],
     "home_timeline since_id"
 );
 
+## ファイル出力のテストはテスト環境依存(ファイルシステムとか)なので、AUTHOR_TESTINGにするといいかも。
 
 
 done_testing();
