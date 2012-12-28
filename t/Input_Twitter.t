@@ -40,6 +40,12 @@ sub test_mock {
     is_deeply(main->mock_timeline($param), [statuses(@$exp_ids)], $msg);
 }
 
+sub test_call {
+    my ($mock, $method, @method_args) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    is_deeply([$mock->next_call], [$method, [$mock, @method_args]], "mock method $method");
+}
+
 note('--- test the mock itself');
 
 test_mock {}, [100,99,98,97,96,95,94,93,92,91], "mock no param";
@@ -58,12 +64,29 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
 my $mocknt = Test::MockObject->new();
 $mocknt->mock($_, \&mock_timeline) foreach qw(home_timeline user_timeline public_timeline list_statuses);
 
-my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, logger => undef, page_next_delay => 0);
+note('--- iteration by user_timeline');
+my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, page_next_delay => 0, page_max => 500, logger => undef);
 is_deeply(
-    $bbin->user_timeline({since_id => 10}),
+    $bbin->user_timeline({since_id => 10, screen_name => "someone"}),
     [statuses reverse 11..100],
-    "home_timeline since_id"
+    "user_timeline since_id"
 );
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 91};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 82};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 73};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 64};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 55};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 46};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 37};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 28};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 19};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 11};
+ok(!defined(scalar($mocknt->next_call)), "call end");
+
+
+
+
 
 ## ファイル出力のテストはテスト環境依存(ファイルシステムとか)なので、
 ## AUTHOR_TESTINGにするといいかも。 

@@ -61,27 +61,27 @@ sub _log_query {
 
 sub _load_timeline {
     my ($self, $nt_params, $method, @label_params) = @_;
-    $nt_params ||= {};
+    my %params = defined($nt_params) ? %$nt_params : ();
     if(not defined $method) {
         $method = (caller(1))[3];
         $method =~ s/^.*:://g;
     }
     my $label = "$method," .
-        join(",", map { "$_:" . (defined($nt_params->{$_}) ? $nt_params->{$_} : "") } @label_params);
+        join(",", map { "$_:" . (defined($params{$_}) ? $params{$_} : "") } @label_params);
     my $since_ids = $self->_load_next_since_id_file();
     my $since_id = $since_ids->{$label};
-    $nt_params->{since_id} = $since_id if !defined($nt_params->{since_id}) && defined($since_id);
-    my $page_max = defined($nt_params->{since_id}) ? $self->{page_max} : $self->{page_max_no_since_id};
+    $params{since_id} = $since_id if !defined($params{since_id}) && defined($since_id);
+    my $page_max = defined($params{since_id}) ? $self->{page_max} : $self->{page_max_no_since_id};
     my $max_id = undef;
     my @result = ();
     my $load_count = 0;
     my %loaded_ids = ();
     while($load_count < $page_max) {
-        $nt_params->{max_id} = $max_id if defined $max_id;
-        $self->_log_query($method, $nt_params);
+        $params{max_id} = $max_id if defined $max_id;
+        $self->_log_query($method, \%params);
         my $loaded;
         try {
-            $loaded = $self->{backend}->$method($nt_params);
+            $loaded = $self->{backend}->$method({%params});
         }catch {
             my $e = shift;
             $self->_log("error", $e);
@@ -176,6 +176,13 @@ implementation like identi.ca?
 
 Also, Net::Twitter has its own plan for supporting API v1.1.
 See also L<https://twitter.com/semifor/status/273442692371992578>
+
+
+=item *
+
+It catches Net::Twitter's exception internally.
+If an exception is thrown, it is logged and C<undef> is returned.
+
 
 =back
 
