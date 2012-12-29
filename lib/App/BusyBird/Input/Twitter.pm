@@ -127,7 +127,7 @@ sub list_statuses {
 
 sub search {
     my ($self, $nt_params) = @_;
-    return $self->_load_time($nt_params, undef, qw(q lang locale));
+    return $self->_load_timeline($nt_params, undef, qw(q lang locale));
 }
 
 1;
