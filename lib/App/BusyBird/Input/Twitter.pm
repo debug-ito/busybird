@@ -18,7 +18,48 @@ sub new {
     $self->set_param(\%params, 'page_max_no_since_id', 1);
     $self->set_param(\%params, 'page_next_delay', 0.5);
     $self->{logger} = exists($params{logger}) ? $params{logger} : App::BusyBird::Log->logger;
+    $self->{transformer} =
+        exists($params{transformer}) ? $params{transformer} : \&transformer_default;
     return $self;
+}
+
+sub transformer_default {
+    my ($self, $result) = @_;
+    if(ref($result) eq "HASH" && defined($result->{results}) && ref($result->{results}) eq "ARRAY") {
+        $result = [ map { $self->transform_search_status($_) } @{$result->{results}} ];
+    }
+    return [
+        map { $self->transform_permalink($_) }
+            map { $self->transform_timezone($_) }
+                map { $self->transform_status_id($_) } @$result ];
+}
+
+sub transform_search_status {
+    my ($self, $search_status) = @_;
+    my $status = { %$search_status };
+    $status->{user} = {
+        id => $search_status->{from_user_id},
+        id_str => $search_status->{from_user_id_str},
+        screen_name => $search_status->{from_user},
+        name => $search_status->{from_user_name},
+        profile_image_url => $search_status->{profile_image_url},
+    };
+    return $status;
+}
+
+sub transform_status_id {
+    'TODO: implement it and write POD';
+    return $_[1];
+}
+
+sub transform_permalink {
+    'TODO: implement it and write POD';
+    return $_[1];
+}
+
+sub transform_timezone {
+    'TODO: implement it and write POD';
+    return $_[1];
 }
 
 sub _load_next_since_id_file {
@@ -87,6 +128,10 @@ sub _load_timeline {
             $self->_log("error", $e);
         };
         last if not defined $loaded;
+        $loaded = $self->{transformer}->($self, $loaded) if defined $self->{transformer};
+        if(ref($loaded) ne "ARRAY") {
+            croak("transformer must return array-ref");
+        }
         @$loaded = grep { !$loaded_ids{$_->{id}} } @$loaded;
         last if !@$loaded;
         push(@result, @$loaded);
@@ -156,16 +201,19 @@ C<max_id> param for the requests are adjusted automatically.
 =item *
 
 Optionally it saves the latest status ID to a file.
-The file will be read to set C<since_id> param for the next request.
+The file will be read to set C<since_id> param for the next request,
+so that it can always load all the unread statuses.
+
 
 =item *
 
 Convert status IDs to include the source of the statuses.
 This prevents ID conflict between statuses from different sources.
 
+
 =item *
 
-Add BusyBidrd-specific fields to the statuses.
+Add BusyBird-specific fields to the statuses.
 
 
 =item *
@@ -218,12 +266,36 @@ Delay in seconds before loading the next page.
 
 =item logger (optional)
 
-Logger object. By default App::BusBird::Log object is used.
+Logger object. By default L<App::BusyBird::Log> object is used.
 
 Setting it to C<undef> suppresses logging.
 
+=item transformer (optional)
+
+A subroutine reference that transforms the result from Net::Twitter methods.
+
+The transformer takes two arguments.
+The first is the L<App::BusyBird::Input::Twitter> object.
+The second is the result scalar from Net::Twitter methods (C<home_timeline>, C<user_timeline> etc.).
+
+The output from the transformer is an array-ref of the transformed result.
+
+By default, C<transformer> is C<transformer_default> function in this medule.
+
+Setting C<transformer> to C<undef> suppresses any transformation.
+
 =back
 
+=head1 OBJECT METHODS
+
+=head2 $transformed_result = $input->transformer_default($result)
+
+Default C<transformer> of results from Net::Twitter.
+
+
+=head2 $normal_status = $input->transform_search_status($search_status)
+
+Transforms a status object returned by Twitter's Search API v1.0 into a normal status object.
 
 
 =cut
