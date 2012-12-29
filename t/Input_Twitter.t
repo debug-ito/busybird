@@ -3,6 +3,7 @@ use warnings;
 use Test::More;
 use Test::Builder;
 use Test::MockObject;
+use Test::Exception;
 use List::Util qw(min);
 
 BEGIN {
@@ -27,6 +28,12 @@ sub mock_timeline {
         push(@result, { id => $id });
     }
     return \@result;
+}
+
+sub mock_search {
+    my ($self, $params) = @_;
+    my $statuses = mock_timeline($self, $params);
+    return { results => $statuses };
 }
 
 sub statuses {
@@ -69,6 +76,7 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
 
 my $mocknt = Test::MockObject->new();
 $mocknt->mock($_, \&mock_timeline) foreach qw(home_timeline user_timeline public_timeline list_statuses);
+$mocknt->mock('search', \&mock_search);
 
 note('--- iteration by user_timeline');
 my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, page_next_delay => 0, page_max => 500, logger => undef);
@@ -145,7 +153,7 @@ test_call $mocknt, 'user_timeline', {count => 11, max_id => 60};
 end_call $mocknt;
 
 $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, page_next_delay => 0, logger => undef);
-foreach my $method_name (qw(home_timeline list_statuses)) {
+foreach my $method_name (qw(home_timeline list_statuses search)) {
     note("--- iteration by $method_name");
     $mocknt->clear;
     is_deeply(
@@ -170,16 +178,75 @@ is_deeply(
 test_call $mocknt, 'public_timeline', {};
 end_call $mocknt;
 
+{
+    my $mocknt = Test::MockObject->new;
+    my $call_count = 0;
+    $mocknt->mock('user_timeline', sub {
+        my ($self, $params) = @_;
+        $call_count++;
+        if($call_count == 1) {
+            return mock_timeline($self, $params);
+        }else {
+            die "Some network error.";
+        }
+    });
+    my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, page_next_delay => 0, logger => undef);
+    my $result;
+    lives_ok { $result = $bbin->user_timeline({since_id => 10, count => 5}) } '$bbin should not throw exception even if backend does.';
+    ok(!defined($result), "the result should be undef then.");
+}
+
+if(!$ENV{AUTHOR_TEST}) {
+    note("Set AUTHOR_TEST env to do some more tests.");
+}else {
+    my $filename = "test_persistence_file_input_twitter";
+    if(-r $filename) {
+        unlink($filename) or die "Cannot remove $filename: $!";
+    }
+    my $bbin = App::BusyBird::Input::Twitter->new(
+        backend => $mocknt, filepath => $filename, page_next_delay => 0, logger => undef
+    );
+    $mocknt->clear;
+    is_deeply(
+        $bbin->user_timeline({max_id => 30, since_id => 5, count => 20, user_id => 88}),
+        [statuses reverse 6..30],
+        "user_timeline: init"
+    );
+    test_call $mocknt, 'user_timeline', {user_id => 88, count => 20, since_id => 5, max_id => 30};
+    test_call $mocknt, 'user_timeline', {user_id => 88, count => 20, since_id => 5, max_id => 11};
+    test_call $mocknt, 'user_timeline', {user_id => 88, count => 20, since_id => 5, max_id => 6};
+    end_call $mocknt;
+    
+    ok(-r $filename, "$filename created");
+
+    $mocknt->clear;
+    is_deeply(
+        $bbin->user_timeline({max_id => 70, count => 35, user_id => 88}),
+        [statuses reverse 31..70],
+        "user_timmeline: from the previous max_id"
+    );
+    test_call $mocknt, 'user_timeline', {user_id => 88, count => 35, since_id => 30, max_id => 70};
+    test_call $mocknt, 'user_timeline', {user_id => 88, count => 35, since_id => 30, max_id => 36};
+    test_call $mocknt, 'user_timeline', {user_id => 88, count => 35, since_id => 30, max_id => 31};
+    end_call $mocknt;
+
+    $mocknt->clear;
+    is_deeply(
+        $bbin->user_timeline({count => 5, screen_name => "hoge"}),
+        [statuses reverse 96..100],
+        "user_timeline: different label"
+    );
+    test_call $mocknt, "user_timeline", {count => 5, screen_name => 'hoge'};
+    end_call $mocknt;
+
+    ok(-r $filename, "$filename exists");
+    unlink($filename);
+
+    ## what if search in UTF8?? is $label OK?
+}
 
 
-note('--- iteration by search. TODO?');
-## what if search in UTF8?? is $label OK?
 
-
-## ファイル出力のテストはテスト環境依存(ファイルシステムとか)なので、
-## AUTHOR_TESTINGにするといいかも。 
-
-## what if backend emits exception?
 
 
 done_testing();
