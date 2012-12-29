@@ -157,8 +157,8 @@ foreach my $method_name (qw(home_timeline list_statuses search)) {
     note("--- iteration by $method_name");
     $mocknt->clear;
     is_deeply(
-        $bbin->$method_name({max_id => 40, since_id => 5, count => 20}),
-        [statuses reverse 6..40],
+        [map { $_->{id} } @{$bbin->$method_name({max_id => 40, since_id => 5, count => 20})}],
+        [reverse 6..40],
         "$method_name iterates"
     );
     test_call $mocknt, $method_name, {count => 20, since_id => 5, max_id => 40};
@@ -179,9 +179,9 @@ test_call $mocknt, 'public_timeline', {};
 end_call $mocknt;
 
 {
-    my $mocknt = Test::MockObject->new;
+    my $diemock = Test::MockObject->new;
     my $call_count = 0;
-    $mocknt->mock('user_timeline', sub {
+    $diemock->mock('user_timeline', sub {
         my ($self, $params) = @_;
         $call_count++;
         if($call_count == 1) {
@@ -190,10 +190,10 @@ end_call $mocknt;
             die "Some network error.";
         }
     });
-    my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, page_next_delay => 0, logger => undef);
+    my $diein = App::BusyBird::Input::Twitter->new(backend => $diemock, page_next_delay => 0, logger => undef);
     my $result;
-    lives_ok { $result = $bbin->user_timeline({since_id => 10, count => 5}) } '$bbin should not throw exception even if backend does.';
-    ok(!defined($result), "the result should be undef then.");
+    lives_ok { $result = $diein->user_timeline({since_id => 10, count => 5}) } '$diein should not throw exception even if backend does.';
+    ok(!defined($result), "the result should be undef then.") or diag("result is $result");
 }
 
 if(!$ENV{AUTHOR_TEST}) {
