@@ -246,6 +246,7 @@ if(!$ENV{AUTHOR_TEST}) {
 }
 
 
+fail("--- TODO: transformer option.");
 
 
 
