@@ -6,6 +6,7 @@ use App::BusyBird::Util qw(set_param);
 use App::BusyBird::Log;
 use Time::HiRes qw(sleep);
 use JSON;
+use Data::Clone;
 use Try::Tiny;
 use Carp;
 
@@ -24,32 +25,44 @@ sub new {
 }
 
 sub transformer_default {
-    my ($self, $result) = @_;
-    if(ref($result) eq "HASH" && defined($result->{results}) && ref($result->{results}) eq "ARRAY") {
-        $result = [ map { $self->transform_search_status($_) } @{$result->{results}} ];
-    }
+    my ($self, $status_arrayref) = @_;
     return [
         map { $self->transform_permalink($_) }
             map { $self->transform_timezone($_) }
-                map { $self->transform_status_id($_) } @$result ];
+                map { $self->transform_status_id($_) }
+                    map { $self->transform_search_status($_) } @$status_arrayref ];
 }
 
+my %_SEARCH_KEY_MAP = (
+    id => 'from_user_id',
+    id_str => 'from_user_id_str',
+    screen_name => 'from_user_name',
+    profile_image_url => 'profile_image_url',
+);
+
 sub transform_search_status {
-    my ($self, $search_status) = @_;
-    my $status = { %$search_status };
-    $status->{user} = {
-        id => $search_status->{from_user_id},
-        id_str => $search_status->{from_user_id_str},
-        screen_name => $search_status->{from_user},
-        name => $search_status->{from_user_name},
-        profile_image_url => $search_status->{profile_image_url},
-    };
-    return $status;
+    my ($self, $status) = @_;
+    return $status if defined $status->{user};
+    my $new_status = clone($status);
+    $new_status->{user} = {};
+    foreach my $new_id (keys %_SEARCH_KEY_MAP) {
+        my $orig_id = $_SEARCH_KEY_MAP{$new_id};
+        $new_status->{user}{$new_id} = $status->{$orig_id} if exists $status->{$orig_id};
+    }
+    return $new_status;
 }
 
 sub transform_status_id {
-    'TODO: implement it and write POD';
-    return $_[1];
+    my ($self, $status) = @_;
+    my $prefix = $self->{backend}->apiurl;
+    $prefix =~ s|/+$||;
+    my $new_status = clone($status);
+    foreach my $key (qw(id id_str in_reply_to_status_id in_reply_to_status_id_str)) {
+        next if not defined $status->{$key};
+        $new_status->{$key} = "$prefix/" . $status->{$key};
+        $new_status->{busybird}{original}{$key} = $status->{$key};
+    }
+    return $new_status;
 }
 
 sub transform_permalink {
@@ -100,6 +113,15 @@ sub _log_query {
     ));
 }
 
+sub _normalize_search_result {
+    my ($self, $nt_result) = @_;
+    if(ref($nt_result) eq 'HASH' && ref($nt_result->{results}) eq 'ARRAY') {
+        return $nt_result->{results};
+    }else {
+        return $nt_result;
+    }
+}
+
 sub _load_timeline {
     my ($self, $nt_params, $method, @label_params) = @_;
     my %params = defined($nt_params) ? %$nt_params : ();
@@ -131,15 +153,16 @@ sub _load_timeline {
             $self->_log("error", $e);
         };
         return undef if not defined $loaded;
+        $loaded = $self->_normalize_search_result($loaded);
+        @$loaded = grep { !$loaded_ids{$_->{id}} } @$loaded;
+        last if !@$loaded;
+        $loaded_ids{$_->{id}} = 1 foreach @$loaded;
+        $max_id = $loaded->[-1]{id};
         $loaded = $self->{transformer}->($self, $loaded) if defined $self->{transformer};
         if(ref($loaded) ne "ARRAY") {
             croak("transformer must return array-ref");
         }
-        @$loaded = grep { !$loaded_ids{$_->{id}} } @$loaded;
-        last if !@$loaded;
         push(@result, @$loaded);
-        $loaded_ids{$_->{id}} = 1 foreach @$loaded;
-        $max_id = $loaded->[-1]{id};
         $load_count++;
         sleep($self->{page_next_delay});
     }
@@ -300,5 +323,16 @@ Default C<transformer> of results from Net::Twitter.
 
 Transforms a status object returned by Twitter's Search API v1.0 into a normal status object.
 
+This method does not modify the input C<$search_status>. The transformation is done to its clone.
+
+
+=head2 $transformed_status = $input->transform_status_id($status)
+
+Transforms a status's ID fields so that they include API URL of the source.
+This transformation is recommended when you load statuses from multiple sources, e.g. twitter.com and identi.ca.
+
+This method does not modify the input C<$status>. The transformation is done to its clone.
+
+The original IDs are saved under C<< $transformed_status->{busybird}{original} >>
 
 =cut
