@@ -113,6 +113,9 @@ sub _load_timeline {
     my $since_id = $since_ids->{$label};
     $params{since_id} = $since_id if !defined($params{since_id}) && defined($since_id);
     my $page_max = defined($params{since_id}) ? $self->{page_max} : $self->{page_max_no_since_id};
+    if($method eq 'public_timeline') {
+        $page_max = 1;
+    }
     my $max_id = undef;
     my @result = ();
     my $load_count = 0;

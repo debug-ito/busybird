@@ -179,6 +179,7 @@ test_call $mocknt, 'public_timeline', {};
 end_call $mocknt;
 
 {
+    note('--- it should return undef if backend throws an exception.');
     my $diemock = Test::MockObject->new;
     my $call_count = 0;
     $diemock->mock('user_timeline', sub {
