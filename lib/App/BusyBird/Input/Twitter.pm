@@ -130,7 +130,7 @@ sub _load_timeline {
             my $e = shift;
             $self->_log("error", $e);
         };
-        last if not defined $loaded;
+        return undef if not defined $loaded;
         $loaded = $self->{transformer}->($self, $loaded) if defined $self->{transformer};
         if(ref($loaded) ne "ARRAY") {
             croak("transformer must return array-ref");
