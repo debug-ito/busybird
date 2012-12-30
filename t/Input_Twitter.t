@@ -256,11 +256,56 @@ if(!$ENV{AUTHOR_TEST}) {
     ok(-r $filename, "$filename exists");
     unlink($filename);
 
-    ## what if search in UTF8?? is $label OK?
+    fail("TODO: search q = character string.");
 }
 
 
-fail("--- TODO: transformer option.");
+{
+    note('--- transforms');
+    my $tmock = Test::MockObject->new;
+    my $apiurl = 'http://hoge.com/';
+    $tmock->mock($_, \&mock_timeline) foreach qw(home_timeline);
+    $tmock->mock('search', \&mock_search);
+    $tmock->mock('-apiurl', sub { $apiurl });
+    $bbin = App::BusyBird::Input::Twitter->new(
+        backend => $tmock, page_next_delay => 0, logger => undef
+    );
+    is_deeply(
+        $bbin->transform_status_id({ id => 10, in_reply_to_status_id => 55}),
+        {
+            id => "${apiurl}10", in_reply_to_status_id => "${apiurl}55",
+            busybird => { original => {
+                id => 10, in_reply_to_status_id => 55
+            } }
+        },
+        "transform_status_id"
+    );
+    is_deeply(
+        $bbin->transform_search_status({ id => 10, from_user_id => 88, from_user => "hoge"}),
+        {
+            id => 10, user => {
+                id => 88,
+                screen_name => "hoge"
+            }
+        },
+        "transform_search_status"
+    );
+    is_deeply(
+        $bbin->transform_timezone({ id => 5, created_at => "Sat Aug 25 17:26:51 +0000 2012" }, "+0900"),
+        {
+            id => 5, created_at => "Sat Aug 26 02:26:51 +0900 2012"
+        },
+        "transform_timezone"
+    );
+
+    fail("TODO: test permalink and the whole transform_default");
+    ## 
+    ## is_deeply(
+    ##     $bbin->transform_permalink({ id => 5, user => { screen_name => "hoge" } }),
+    ##     { id => 5, busybird => { status_permalink => "$apiurl" } }
+    ## )
+}
+
 
 
 
