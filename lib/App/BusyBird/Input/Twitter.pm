@@ -365,4 +365,14 @@ This method does not modify the input C<$status>. The transformation is done to 
 
 The original IDs are saved under C<< $transformed_status->{busybird}{original} >>
 
+
+=head2 $transformed_status = $input->transform_timezone($status, [$timezone_string])
+
+Transforms the timezone of a status's C<created_at> field to the specified C<$timezone_string>.
+If C<$timezone_string> is omitted, the local timezone of the environment is used.
+
+C<$timezone_string> must be a string that L<DateTime::TimeZone> module can understand.
+
+This method does not modify the input C<$status>. The transformation is done to its clone.
+
 =cut
