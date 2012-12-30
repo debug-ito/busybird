@@ -244,7 +244,7 @@ Add BusyBird-specific fields to the statuses.
 
 =item *
 
-Normalize status objects for Search API.
+Normalize status objects from Search API.
 It might be unnecesary in Twitter API v1.1, but what about other Twitter API
 implementation like identi.ca?
 
@@ -263,7 +263,7 @@ If an exception is thrown, it is logged and C<undef> is returned.
 
 =head1 CLASS METHODS
 
-=head2 $bbtw = App::BusyBird::Input::Twitter->new(%options);
+=head2 $input = App::BusyBird::Input::Twitter->new(%options);
 
 Creates the object with the following C<%options>.
 
@@ -302,11 +302,11 @@ A subroutine reference that transforms the result from Net::Twitter methods.
 
 The transformer takes two arguments.
 The first is the L<App::BusyBird::Input::Twitter> object.
-The second is the result scalar from Net::Twitter methods (C<home_timeline>, C<user_timeline> etc.).
+The second is the array-ref of status objects obtained by Net::Twitter methods (C<home_timeline>, C<user_timeline> etc.).
 
 The output from the transformer is an array-ref of the transformed result.
 
-By default, C<transformer> is C<transformer_default> function in this medule.
+By default, C<transformer> is C<transformer_default> function in this module.
 
 Setting C<transformer> to C<undef> suppresses any transformation.
 
@@ -314,14 +314,39 @@ Setting C<transformer> to C<undef> suppresses any transformation.
 
 =head1 OBJECT METHODS
 
-=head2 $transformed_result = $input->transformer_default($result)
+=head2 $status_arrayref = $input->home_timeline($options_hashref)
 
-Default C<transformer> of results from Net::Twitter.
+=head2 $status_arrayref = $input->user_timeline($options_hashref)
+
+=head2 $status_arrayref = $input->list_statuses($options_hashref)
+
+=head2 $status_arrayref = $input->public_statuses($options_hashref)
+
+=head2 $status_arrayref = $input->search($options_hashref)
+
+Wrapper methods for corresponding L<Net::Twitter> methods. See L<Net::Twitter> for specification of C<$options_hashref>.
+
+If C<since_id> is given by C<$options_hashref> or it is loaded from the file specified by C<filepath> option,
+these wrapper methods repeatedly call L<Net::Twitter>'s corresponding methods to load a complete timeline newer than C<since_id>.
+If C<filepath> option is enabled, the latest ID of the loaded status is saved to the file.
+
+The max number of calling the backend L<Net::Twitter> methods is limited to C<page_max> option
+if C<since_id> is specified or loaded from the file. The max number is limited to C<page_max_no_since_id> option
+if C<since_id> is not specified.
+
+If the operation succeeds, the return value of these methods is an array-ref of status objects transformed by C<transformer> option.
+If the backend L<Net::Twitter> methods throw an exception due to network failure or something,
+the exception is catched and C<undef> is returned.
+
+
+=head2 $transformed_status_arrayref = $input->transformer_default($status_arrayref)
+
+Default C<transformer> of results from L<Net::Twitter>.
 
 
 =head2 $normal_status = $input->transform_search_status($search_status)
 
-Transforms a status object returned by Twitter's Search API v1.0 into a normal status object.
+Transforms a status object returned by Twitter's Search API v1.0 into something more like a normal status object.
 
 This method does not modify the input C<$search_status>. The transformation is done to its clone.
 
