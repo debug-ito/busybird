@@ -36,7 +36,7 @@ sub transformer_default {
 my %_SEARCH_KEY_MAP = (
     id => 'from_user_id',
     id_str => 'from_user_id_str',
-    screen_name => 'from_user_name',
+    screen_name => 'from_user',
     profile_image_url => 'profile_image_url',
 );
 
@@ -47,7 +47,7 @@ sub transform_search_status {
     $new_status->{user} = {};
     foreach my $new_id (keys %_SEARCH_KEY_MAP) {
         my $orig_id = $_SEARCH_KEY_MAP{$new_id};
-        $new_status->{user}{$new_id} = $status->{$orig_id} if exists $status->{$orig_id};
+        $new_status->{user}{$new_id} = delete $new_status->{$orig_id} if exists $new_status->{$orig_id};
     }
     return $new_status;
 }
