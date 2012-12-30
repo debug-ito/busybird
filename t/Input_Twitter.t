@@ -79,7 +79,9 @@ $mocknt->mock($_, \&mock_timeline) foreach qw(home_timeline user_timeline public
 $mocknt->mock('search', \&mock_search);
 
 note('--- iteration by user_timeline');
-my $bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, page_next_delay => 0, page_max => 500, logger => undef);
+my $bbin = App::BusyBird::Input::Twitter->new(
+    backend => $mocknt, page_next_delay => 0, page_max => 500, logger => undef, transformer => undef
+);
 is_deeply(
     $bbin->user_timeline({since_id => 10, screen_name => "someone"}),
     [statuses reverse 11..100],
@@ -129,7 +131,9 @@ test_call $mocknt, 'user_timeline', {count => 5, max_id => 8, since_id => 5};
 test_call $mocknt, 'user_timeline', {count => 5, max_id => 6, since_id => 5};
 end_call $mocknt;
 
-$bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, page_next_delay => 0, page_max => 2, logger => undef);
+$bbin = App::BusyBird::Input::Twitter->new(
+    backend => $mocknt, page_next_delay => 0, page_max => 2, logger => undef, transformer => undef
+);
 $mocknt->clear;
 is_deeply(
     $bbin->user_timeline({since_id => 5, screen_name => "foo"}),
@@ -140,7 +144,9 @@ test_call $mocknt, 'user_timeline', {screen_name => "foo", since_id => 5};
 test_call $mocknt, 'user_timeline', {screen_name => "foo", since_id => 5, max_id => 91};
 end_call $mocknt;
 
-$bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 3, logger => undef);
+$bbin = App::BusyBird::Input::Twitter->new(
+    backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 3, logger => undef, transformer => undef
+);
 $mocknt->clear;
 is_deeply(
     $bbin->user_timeline({max_id => 80, count => 11}),
@@ -152,13 +158,15 @@ test_call $mocknt, 'user_timeline', {count => 11, max_id => 70};
 test_call $mocknt, 'user_timeline', {count => 11, max_id => 60};
 end_call $mocknt;
 
-$bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, page_next_delay => 0, logger => undef);
+$bbin = App::BusyBird::Input::Twitter->new(
+    backend => $mocknt, page_next_delay => 0, logger => undef, transformer => undef
+);
 foreach my $method_name (qw(home_timeline list_statuses search)) {
     note("--- iteration by $method_name");
     $mocknt->clear;
     is_deeply(
-        [map { $_->{id} } @{$bbin->$method_name({max_id => 40, since_id => 5, count => 20})}],
-        [reverse 6..40],
+        $bbin->$method_name({max_id => 40, since_id => 5, count => 20}),
+        [statuses reverse 6..40],
         "$method_name iterates"
     );
     test_call $mocknt, $method_name, {count => 20, since_id => 5, max_id => 40};
@@ -168,7 +176,9 @@ foreach my $method_name (qw(home_timeline list_statuses search)) {
 }
 
 note('--- public_statuses should never iterate');
-$bbin = App::BusyBird::Input::Twitter->new(backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 10, logger => undef);
+$bbin = App::BusyBird::Input::Twitter->new(
+    backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 10, logger => undef, transformer => undef
+);
 $mocknt->clear;
 is_deeply(
     $bbin->public_timeline(),
@@ -191,7 +201,9 @@ end_call $mocknt;
             die "Some network error.";
         }
     });
-    my $diein = App::BusyBird::Input::Twitter->new(backend => $diemock, page_next_delay => 0, logger => undef);
+    my $diein = App::BusyBird::Input::Twitter->new(
+        backend => $diemock, page_next_delay => 0, logger => undef, transformer => undef
+    );
     my $result;
     lives_ok { $result = $diein->user_timeline({since_id => 10, count => 5}) } '$diein should not throw exception even if backend does.';
     ok(!defined($result), "the result should be undef then.") or diag("result is $result");
@@ -200,12 +212,13 @@ end_call $mocknt;
 if(!$ENV{AUTHOR_TEST}) {
     note("Set AUTHOR_TEST env to do some more tests.");
 }else {
+    note('--- AUTHOR_TEST: filepath option');
     my $filename = "test_persistence_file_input_twitter";
     if(-r $filename) {
         unlink($filename) or die "Cannot remove $filename: $!";
     }
     my $bbin = App::BusyBird::Input::Twitter->new(
-        backend => $mocknt, filepath => $filename, page_next_delay => 0, logger => undef
+        backend => $mocknt, filepath => $filename, page_next_delay => 0, logger => undef, transformer => undef
     );
     $mocknt->clear;
     is_deeply(
