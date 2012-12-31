@@ -76,8 +76,25 @@ sub transform_status_id {
 }
 
 sub transform_permalink {
-    'TODO: implement it and write POD';
-    return $_[1];
+    my ($self, $status) = @_;
+    my $apiurl = $self->{backend}->apiurl;
+    my $id;
+    {
+        no autovivification;
+        $id = $status->{busybird}{original}{id}
+        || $status->{busybird}{original}{id_str}
+            || $status->{id}
+                || $status->{id_str};
+        return $status if not defined($apiurl);
+        return $status if not defined($id);
+        return $status if not defined($status->{user}{screen_name});
+    }
+    $apiurl =~ s|/+$||;
+    my $new_status = clone($status);
+    $new_status->{busybird}{status_permalink} = sprintf(
+        "%s/%s/status/%s", $apiurl, $status->{user}{screen_name}, $id
+    );
+    return $new_status;
 }
 
 sub transform_timezone {
@@ -390,5 +407,18 @@ If C<$timezone_string> is omitted, the local timezone of the environment is used
 C<$timezone_string> must be a string that L<DateTime::TimeZone> module can understand.
 
 This method does not modify the input C<$status>. The transformation is done to its clone.
+
+=head2 $transformed_status = $input->transform_permalink($status)
+
+Adds a permalink field to the transformed status.
+
+The permalink is stored in C<< $transformed_status->{busybird}{status_permalink}. >>
+
+This method does not modify the input C<$status>. The transformation is done to its clone.
+
+
+=head1 AUTHOR
+
+Toshio Ito
 
 =cut

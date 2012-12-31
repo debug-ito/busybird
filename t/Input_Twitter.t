@@ -311,12 +311,12 @@ if(!$ENV{AUTHOR_TEST}) {
         );
     }
 
-    fail("TODO: test permalink and the whole transform_default");
-    ## 
-    ## is_deeply(
-    ##     $bbin->transform_permalink({ id => 5, user => { screen_name => "hoge" } }),
-    ##     { id => 5, busybird => { status_permalink => "$apiurl" } }
-    ## )
+    is_deeply(
+        $bbin->transform_permalink({ id => 5, user => { screen_name => "hoge" } }),
+        { id => 5, user => {screen_name => "hoge"},
+          busybird => { status_permalink => "${apiurl}hoge/status/5" } },
+        'transform_permalink'
+    );
 }
 
 
