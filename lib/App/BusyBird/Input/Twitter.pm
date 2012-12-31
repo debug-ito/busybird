@@ -380,6 +380,7 @@ the exception is catched and C<undef> is returned.
 =head2 $transformed_status_arrayref = $input->transformer_default($status_arrayref)
 
 Default C<transformer> of results from L<Net::Twitter>.
+In fact this is just applying the following C<transform_*> methods to every status.
 
 
 =head2 $normal_status = $input->transform_search_status($search_status)

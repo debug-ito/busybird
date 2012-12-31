@@ -6,6 +6,7 @@ use Test::MockObject;
 use Test::Exception;
 use DateTime::TimeZone;
 use List::Util qw(min);
+use utf8;
 
 BEGIN {
     use_ok('App::BusyBird::Input::Twitter');
@@ -256,10 +257,37 @@ if(!$ENV{AUTHOR_TEST}) {
     test_call $mocknt, "user_timeline", {count => 5, screen_name => 'hoge'};
     end_call $mocknt;
 
+    $mocknt->clear;
+    is_deeply(
+        $bbin->search({q => 'ほげ', max_id => 60, count => 10}),
+        [statuses reverse 51..60],
+        "search: hoge first"
+    );
+    test_call $mocknt, "search", {q => 'ほげ', count => 10, max_id => 60};
+    end_call $mocknt;
+
+    $mocknt->clear;
+    is_deeply(
+        $bbin->search({q => 'ふーばー', count => 10}),
+        [statuses reverse 91..100],
+        "search: foobar first"
+    );
+    test_call $mocknt, "search", {q => 'ふーばー', count => 10};
+    end_call $mocknt;
+
+    $mocknt->clear;
+    is_deeply(
+        $bbin->search({q => 'ほげ', count => 30}),
+        [statuses reverse 61..100],
+        "search: hoge second. it continues from ID=61"
+    );
+    test_call $mocknt, "search", {q => 'ほげ', count => 30, since_id => 60};
+    test_call $mocknt, "search", {q => 'ほげ', count => 30, since_id => 60, max_id => 71};
+    test_call $mocknt, "search", {q => 'ほげ', count => 30, since_id => 60, max_id => 61};
+    end_call $mocknt;
+
     ok(-r $filename, "$filename exists");
     unlink($filename);
-
-    fail("TODO: search q = character string.");
 }
 
 
