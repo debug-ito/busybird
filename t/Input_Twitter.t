@@ -317,6 +317,41 @@ if(!$ENV{AUTHOR_TEST}) {
           busybird => { status_permalink => "${apiurl}hoge/status/5" } },
         'transform_permalink'
     );
+
+    if(!$ENV{AUTHOR_TEST}) {
+        note('Set AUTHOR_TEST to test transformer_default');
+    }else {
+        is_deeply(
+            $bbin->transformer_default([{
+                id => 5, id_str => "5", created_at => "Wed, 05 Dec 2012 14:09:11 +0000",
+                in_reply_to_status_id => 12, in_reply_to_status_id_str => "12",
+                from_user => 'foobar',
+                from_user_id => 100,
+                from_user_id_str => "100"
+            }]),
+            [{
+                id => "${apiurl}5", id_str => "${apiurl}5",
+                in_reply_to_status_id => "${apiurl}12",
+                in_reply_to_status_id_str => "${apiurl}12",
+                created_at => "Wed Dec 05 23:09:11 +0900 2012",
+                user => {
+                    screen_name => "foobar",
+                    id => 100,
+                    id_str => "100"
+                },
+                busybird => {
+                    status_permalink => "${apiurl}foobar/status/5",
+                    original => {
+                        id => 5,
+                        id_str => "5",
+                        in_reply_to_status_id => 12,
+                        in_reply_to_status_id_str => "12",
+                    }
+                }
+            }],
+            'transformer_default'
+        );
+    }
 }
 
 
