@@ -259,11 +259,11 @@ if(!$ENV{AUTHOR_TEST}) {
 
     $mocknt->clear;
     is_deeply(
-        $bbin->search({q => 'ほげ', max_id => 60, count => 10}),
+        $bbin->search({q => 'ほ げ', max_id => 60, count => 10}),
         [statuses reverse 51..60],
         "search: hoge first"
     );
-    test_call $mocknt, "search", {q => 'ほげ', count => 10, max_id => 60};
+    test_call $mocknt, "search", {q => 'ほ げ', count => 10, max_id => 60};
     end_call $mocknt;
 
     $mocknt->clear;
@@ -277,13 +277,13 @@ if(!$ENV{AUTHOR_TEST}) {
 
     $mocknt->clear;
     is_deeply(
-        $bbin->search({q => 'ほげ', count => 30}),
+        $bbin->search({q => 'ほ げ', count => 30}),
         [statuses reverse 61..100],
         "search: hoge second. it continues from ID=61"
     );
-    test_call $mocknt, "search", {q => 'ほげ', count => 30, since_id => 60};
-    test_call $mocknt, "search", {q => 'ほげ', count => 30, since_id => 60, max_id => 71};
-    test_call $mocknt, "search", {q => 'ほげ', count => 30, since_id => 60, max_id => 61};
+    test_call $mocknt, "search", {q => 'ほ げ', count => 30, since_id => 60};
+    test_call $mocknt, "search", {q => 'ほ げ', count => 30, since_id => 60, max_id => 71};
+    test_call $mocknt, "search", {q => 'ほ げ', count => 30, since_id => 60, max_id => 61};
     end_call $mocknt;
 
     ok(-r $filename, "$filename exists");
