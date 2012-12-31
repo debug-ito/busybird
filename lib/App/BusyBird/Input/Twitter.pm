@@ -12,7 +12,7 @@ use Try::Tiny;
 use Carp;
 use DateTime::TimeZone;
 
-my $LOCAL_TIMEZONE = DateTime::TimeZone->new(name => 'local');
+our $STATUS_TIMEZONE = DateTime::TimeZone->new(name => 'local');
 my $DATETIME_FORMATTER = 'App::BusyBird::DateTime::Format';
 
 sub new {
@@ -99,7 +99,7 @@ sub transform_permalink {
 
 sub transform_timezone {
     my ($self, $status, $timezone) = @_;
-    $timezone = $LOCAL_TIMEZONE if not defined $timezone;
+    $timezone = $STATUS_TIMEZONE if not defined $timezone;
     my $dt = $DATETIME_FORMATTER->parse_datetime($status->{created_at});
     croak 'Invalid created_at field in a status' if not defined $dt;
     $dt->set_time_zone($timezone);
@@ -402,7 +402,9 @@ The original IDs are saved under C<< $transformed_status->{busybird}{original} >
 =head2 $transformed_status = $input->transform_timezone($status, [$timezone_string])
 
 Transforms the timezone of a status's C<created_at> field to the specified C<$timezone_string>.
-If C<$timezone_string> is omitted, the local timezone of the environment is used.
+If C<$timezone_string> is omitted, C<$App::BusyBird::Input::Twitter::STATUS_TIMEZONE>
+(a C<DateTime::TimeZone> object) is used, which represents the local timezone by default.
+
 
 C<$timezone_string> must be a string that L<DateTime::TimeZone> module can understand.
 

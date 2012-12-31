@@ -4,11 +4,14 @@ use Test::More;
 use Test::Builder;
 use Test::MockObject;
 use Test::Exception;
+use DateTime::TimeZone;
 use List::Util qw(min);
 
 BEGIN {
     use_ok('App::BusyBird::Input::Twitter');
 }
+
+$App::BusyBird::Input::Twitter::STATUS_TIMEZONE = DateTime::TimeZone->new(name => '+0900');
 
 sub limit {
     my ($orig, $min, $max) = @_;
@@ -301,16 +304,20 @@ if(!$ENV{AUTHOR_TEST}) {
         },
         "transform_timezone"
     );
-    if(!$ENV{AUTHOR_TEST}) {
-        note('Set AUTHOR_TEST to test transform_timezone to local');
-    }else {
+    is_deeply(
+        $bbin->transform_timezone({id => 10, created_at => 'Mon, 31 Dec 2012 22:01:43 +0000'}),
+        { id => 10, created_at => 'Tue Jan 01 07:01:43 +0900 2013' },
+        'transform_timezone to local'
+    );
+    {
+        local $App::BusyBird::Input::Twitter::STATUS_TIMEZONE
+            = DateTime::TimeZone->new(name => '-0500');
         is_deeply(
             $bbin->transform_timezone({id => 10, created_at => 'Mon, 31 Dec 2012 22:01:43 +0000'}),
-            { id => 10, created_at => 'Tue Jan 01 07:01:43 +0900 2013' },
-            'transform_timezone to local'
+            { id => 10, created_at => 'Mon Dec 31 17:01:43 -0500 2012' },
+            'transform_timezone to local (another one)'
         );
     }
-
     is_deeply(
         $bbin->transform_permalink({ id => 5, user => { screen_name => "hoge" } }),
         { id => 5, user => {screen_name => "hoge"},
@@ -318,40 +325,36 @@ if(!$ENV{AUTHOR_TEST}) {
         'transform_permalink'
     );
 
-    if(!$ENV{AUTHOR_TEST}) {
-        note('Set AUTHOR_TEST to test transformer_default');
-    }else {
-        is_deeply(
-            $bbin->transformer_default([{
-                id => 5, id_str => "5", created_at => "Wed, 05 Dec 2012 14:09:11 +0000",
-                in_reply_to_status_id => 12, in_reply_to_status_id_str => "12",
-                from_user => 'foobar',
-                from_user_id => 100,
-                from_user_id_str => "100"
-            }]),
-            [{
-                id => "${apiurl}5", id_str => "${apiurl}5",
-                in_reply_to_status_id => "${apiurl}12",
-                in_reply_to_status_id_str => "${apiurl}12",
-                created_at => "Wed Dec 05 23:09:11 +0900 2012",
-                user => {
-                    screen_name => "foobar",
-                    id => 100,
-                    id_str => "100"
-                },
-                busybird => {
-                    status_permalink => "${apiurl}foobar/status/5",
-                    original => {
-                        id => 5,
-                        id_str => "5",
-                        in_reply_to_status_id => 12,
-                        in_reply_to_status_id_str => "12",
-                    }
+    is_deeply(
+        $bbin->transformer_default([{
+            id => 5, id_str => "5", created_at => "Wed, 05 Dec 2012 14:09:11 +0000",
+            in_reply_to_status_id => 12, in_reply_to_status_id_str => "12",
+            from_user => 'foobar',
+            from_user_id => 100,
+            from_user_id_str => "100"
+        }]),
+        [{
+            id => "${apiurl}5", id_str => "${apiurl}5",
+            in_reply_to_status_id => "${apiurl}12",
+            in_reply_to_status_id_str => "${apiurl}12",
+            created_at => "Wed Dec 05 23:09:11 +0900 2012",
+            user => {
+                screen_name => "foobar",
+                id => 100,
+                id_str => "100"
+            },
+            busybird => {
+                status_permalink => "${apiurl}foobar/status/5",
+                original => {
+                    id => 5,
+                    id_str => "5",
+                    in_reply_to_status_id => 12,
+                    in_reply_to_status_id_str => "12",
                 }
-            }],
-            'transformer_default'
-        );
-    }
+            }
+        }],
+        'transformer_default'
+    );
 }
 
 
