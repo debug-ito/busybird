@@ -47,8 +47,13 @@ my %_SEARCH_KEY_MAP = (
 
 sub transform_search_status {
     my ($self, $status) = @_;
-    return $status if defined $status->{user};
     my $new_status = clone($status);
+    if(exists($status->{created_at})) {
+        $new_status->{created_at} = $DATETIME_FORMATTER->format_datetime(
+            $DATETIME_FORMATTER->parse_datetime($status->{created_at})
+        );
+    }
+    return $new_status if defined $status->{user};
     $new_status->{user} = {};
     foreach my $new_id (keys %_SEARCH_KEY_MAP) {
         my $orig_id = $_SEARCH_KEY_MAP{$new_id};

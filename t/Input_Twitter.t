@@ -280,14 +280,17 @@ if(!$ENV{AUTHOR_TEST}) {
         },
         "transform_status_id"
     );
-    fail('TODO: check created_at format normalization');
     is_deeply(
-        $bbin->transform_search_status({ id => 10, from_user_id => 88, from_user => "hoge"}),
+        $bbin->transform_search_status({
+            id => 10, from_user_id => 88, from_user => "hoge",
+            created_at => 'Thu, 06 Oct 2011 19:36:17 +0000'
+        }),
         {
             id => 10, user => {
                 id => 88,
                 screen_name => "hoge"
-            }
+            },
+            created_at => 'Thu Oct 06 19:36:17 +0000 2011'
         },
         "transform_search_status"
     );
