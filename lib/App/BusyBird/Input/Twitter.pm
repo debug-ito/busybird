@@ -4,11 +4,16 @@ use strict;
 use warnings;
 use App::BusyBird::Util qw(set_param);
 use App::BusyBird::Log;
+use App::BusyBird::DateTime::Format;
 use Time::HiRes qw(sleep);
 use JSON;
 use Data::Clone;
 use Try::Tiny;
 use Carp;
+use DateTime::TimeZone;
+
+my $LOCAL_TIMEZONE = DateTime::TimeZone->new(name => 'local');
+my $DATETIME_FORMATTER = 'App::BusyBird::DateTime::Format';
 
 sub new {
     my ($class, %params) = @_;
@@ -71,8 +76,14 @@ sub transform_permalink {
 }
 
 sub transform_timezone {
-    'TODO: implement it and write POD';
-    return $_[1];
+    my ($self, $status, $timezone) = @_;
+    $timezone = $LOCAL_TIMEZONE if not defined $timezone;
+    my $dt = $DATETIME_FORMATTER->parse_datetime($status->{created_at});
+    croak 'Invalid created_at field in a status' if not defined $dt;
+    $dt->set_time_zone($timezone);
+    my $new_status = clone($status);
+    $new_status->{created_at} = $DATETIME_FORMATTER->format_datetime($dt);
+    return $new_status;
 }
 
 sub _load_next_since_id_file {

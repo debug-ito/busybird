@@ -210,7 +210,7 @@ end_call $mocknt;
 }
 
 if(!$ENV{AUTHOR_TEST}) {
-    note("Set AUTHOR_TEST env to do some more tests.");
+    note("Set AUTHOR_TEST env to test filepath option");
 }else {
     note('--- AUTHOR_TEST: filepath option');
     my $filename = "test_persistence_file_input_twitter";
@@ -280,6 +280,7 @@ if(!$ENV{AUTHOR_TEST}) {
         },
         "transform_status_id"
     );
+    fail('TODO: check created_at format normalization');
     is_deeply(
         $bbin->transform_search_status({ id => 10, from_user_id => 88, from_user => "hoge"}),
         {
@@ -293,10 +294,19 @@ if(!$ENV{AUTHOR_TEST}) {
     is_deeply(
         $bbin->transform_timezone({ id => 5, created_at => "Sat Aug 25 17:26:51 +0000 2012" }, "+0900"),
         {
-            id => 5, created_at => "Sat Aug 26 02:26:51 +0900 2012"
+            id => 5, created_at => "Sun Aug 26 02:26:51 +0900 2012"
         },
         "transform_timezone"
     );
+    if(!$ENV{AUTHOR_TEST}) {
+        note('Set AUTHOR_TEST to test transform_timezone to local');
+    }else {
+        is_deeply(
+            $bbin->transform_timezone({id => 10, created_at => 'Mon, 31 Dec 2012 22:01:43 +0000'}),
+            { id => 10, created_at => 'Tue Jan 01 07:01:43 +0900 2013' },
+            'transform_timezone to local'
+        );
+    }
 
     fail("TODO: test permalink and the whole transform_default");
     ## 
