@@ -247,6 +247,40 @@ sub search {
 
 App::BusyBird::Input::Twitter - Loader for Twitter API
 
+=head1 SYNOPSIS
+
+    use App::BusyBird::Input::Twitter;
+    use Net::Twitter;
+    
+    my $input = App::BusyBird::Input::Twitter->new(
+        backend => Net::Twitter->new(
+            traits => [qw(OAuth API::REST API::Search)],
+            consumer_key => "YOUR_CONSUMER_KEY_HERE",
+            consumer_secret => "YOUR_CONSUMER_SECRET_HERE",
+            access_token => "YOUR_ACCESS_TOKEN_HERE",
+            access_token_secret => "YOUR_ACCESS_TOKEN_SECRET_HERE",
+            ssl => 1,
+    
+            #### If you access to somewhere other than twitter.com,
+            #### set the apiurl option
+            ## apiurl => "http://example.com/api/",
+        ),
+        filepath => 'next_since_ids.json'
+    );
+    
+    ## First call to home_timeline
+    my $arrayref_of_statuses = $input->home_timeline();
+    
+    ## The latest loaded status ID is saved to next_since_ids.json
+    
+    ## Subsequent calls to home_timeline automatically load
+    ## all statuses that have not been loaded yet.
+    $arrayref_of_statuses = $input->home_timeline();
+    
+    
+    ## You can load other timelines as well.
+    $arrayref_of_statuses = $input->user_timeline({screen_name => 'hoge'});
+
 
 =head1 DESCRIPTION
 
@@ -283,11 +317,9 @@ Add BusyBird-specific fields to the statuses.
 =item *
 
 Normalize status objects from Search API.
-It might be unnecesary in Twitter API v1.1, but what about other Twitter API
-implementation like identi.ca?
 
-Also, Net::Twitter has its own plan for supporting API v1.1.
-See also L<https://twitter.com/semifor/status/273442692371992578>
+It might be unnecesary in Twitter API v1.1, other Twitter API
+implementations like identi.ca might need it.
 
 
 =item *
