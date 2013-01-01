@@ -12,6 +12,8 @@ use Try::Tiny;
 use Carp;
 use DateTime::TimeZone;
 
+our $VERSION = "0.01";
+
 our $STATUS_TIMEZONE = DateTime::TimeZone->new(name => 'local');
 my $DATETIME_FORMATTER = 'App::BusyBird::DateTime::Format';
 
@@ -246,6 +248,11 @@ sub search {
 =head1 NAME
 
 App::BusyBird::Input::Twitter - Loader for Twitter API
+
+=head1 VERSION
+
+Version 0.01
+
 
 =head1 SYNOPSIS
 
