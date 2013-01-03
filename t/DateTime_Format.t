@@ -40,6 +40,8 @@ sub checkFormat {
 
 checkParse "Fri Jul 16 16:58:46 +0200 2010", DT qw(2010 7 16 16 58 46 +0200);
 checkParse "Mon Dec 03 00:01:23 +0900 2012", DT qw(2012 12 3 0 1 23 +0900);
+checkParse "Thu Jan 03 02:24:43 +0000 2013", DT qw(2013 1 3 2 24 43 +0000);
+checkParse "Thu Jan 03 14:44:12 +0900 2013", DT qw(2013 1 3 14 44 12 +0900);
 checkParse "some text here. Wed  Feb  29 23:34:06 +0900  2012", undef;
 checkParse "Thu, 06 Oct 2011 19:36:17 +0000", DT qw(2011 10 6 19 36 17 +0000);
 checkParse "Sun, 23 Oct 2011 19:03:12 -0500", DT qw(2011 10 23 19 3 12 -0500);
