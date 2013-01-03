@@ -46,18 +46,45 @@ sub test_status_id_set {
     );
 }
 
+sub sync_get {
+    my ($storage, $loop, $unloop, %query) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my $callbacked = 0;
+    my $statuses;
+    $storage->get_statuses(%query, callback => sub {
+        is(int(@_), 1, 'operation succeed');
+        $statuses = $_[0];
+        $callbacked = 1;
+        $unloop->();
+    });
+    $loop->();
+    ok($callbacked, 'callbacked');
+    return $statuses;
+}
+
+sub on_statuses {
+    my ($storage, $loop, $unloop, $query_ref, $code) = @_;
+    $code->(sync_get($storage, $loop, $unloop, %$query_ref));
+}
+
 
 sub test_status_storage {
     my ($storage, $loop, $unloop) = @_;
     $loop ||= sub {};
     $unloop ||= sub {};
+    my $callbacked = 0;
     note("--- clear the timelines");
     foreach my $tl ('_test_tl1', "_test_tl2", "_test_time line") {
+        $callbacked = 0;
         $storage->delete_statuses(
             timeline => $tl,
-            callback => sub { $unloop->() }
+            callback => sub {
+                $callbacked = 1;
+                $unloop->();
+            }
         );
         $loop->();
+        ok($callbacked, "callbacked");
         is_deeply(
             { $storage->get_unconfirmed_count(timeline => $tl) },
             { total => 0 },
@@ -65,7 +92,8 @@ sub test_status_storage {
         );
     }
     
-    note("--- put_statuses (insert)");
+    note("--- put_statuses (insert), single");
+    $callbacked = 0;
     $storage->put_statuses(
         timeline => '_test_tl1',
         mode => 'insert',
@@ -74,15 +102,19 @@ sub test_status_storage {
             my ($num, $error) = @_;
             is(int(@_), 1, 'put_statuses succeed.');
             is($num, 1, 'put 1 status');
+            $callbacked = 1;
             $unloop->();
         }
     );
     $loop->();
+    ok($callbacked, "callbacked");
     is_deeply(
         { $storage->get_unconfirmed_count(timeline => '_test_tl1') },
         { total => 1, 0 => 1 },
         '1 unconfirmed status'
     );
+    note('--- put_statuses (insert), multiple');
+    $callbacked = 0;
     $storage->put_statuses(
         timeline => '_test_tl1',
         mode => 'insert',
@@ -91,10 +123,12 @@ sub test_status_storage {
             my ($num, $error) = @_;
             is(int(@_), 1, 'put_statuses succeed');
             is($num, 4, 'put 4 statuses');
+            $callbacked = 1;
             $unloop->();
         }
     );
     $loop->();
+    ok($callbacked, "callbacked");
     is_deeply(
         { $storage->get_unconfirmed_count(timeline => '_test_tl1') },
         { total => 5, 0 => 5 },
@@ -102,25 +136,132 @@ sub test_status_storage {
     );
 
     note('--- get_statuses');
+    $callbacked = 0;
     $storage->get_statuses(
         timeline => '_test_tl1',
         count => 'all',
         callback => sub {
             my ($statuses, $error) = @_;
             is(int(@_), 1, "get_statuses succeed");
-            FROM_AROUND_HERE.
+            test_status_id_set($statuses, [1..5], "1..5 statuses");
+            foreach my $s (@$statuses) {
+                no autovivification;
+                ok(!$s->{busybird}{confirmed_at}, "status is not confirmed");
+            }
+            $callbacked = 1;
+            $unloop->();
         }
     );
     $loop->();
+    ok($callbacked, "callbacked");
+
+    note('--- confirm_statuses');
+    $callbacked = 0;
+    $storage->confirm_statuses(
+        timeline => '_test_tl1',
+        callback => sub {
+            my ($num, $error) = @_;
+            is(int(@_), 1, "confirm_statuses succeed");
+            is($num, 5, "5 statuses confirmed.");
+            $callbacked = 1;
+            $unloop->();
+        }
+    );
+    $loop->();
+    ok($callbacked, "callbacked");
+    is_deeply(
+        { $storage->get_unconfirmed_counts(timeline => '_test_tl1') },
+        { total => 0 },
+        "all confirmed"
+    );
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test_tl1', count => 'all'
+    }, sub {
+        my $statuses = shift;
+        is(int(@$statuses), 5, "5 statueses");
+        foreach my $s (@$statuses) {
+            no autovivification;
+            ok($s->{busybird}{confirmed_at}, 'confirmed');
+        }
+    };
+
+    note('--- delete_statuses (single deletion)');
+    $callbacked = 0;
+    $storage->delete_statuses(
+        timeline => '_test_tl1',
+        ids => 3,
+        callback => sub {
+            my ($num, $error) = @_;
+            is(int(@_), 1, "operation succeed.");
+            is($num, 1, "1 deletion");
+            $callbacked = 1;
+            $unloop->();
+        }
+    );
+    $loop->();
+    ok($callbacked, "callbacked");
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test_tl1', count => 'all'
+    }, sub {
+        my $statuses = shift;
+        test_statuses_id_set($statueses, [1,2,4,5], "ID=3 is deleted");
+    };
+
+    note('--- delete_statuses (multiple deletion)');
+    $callbacked = 0;
+    $storage->delete_statuses(
+        timeline => '_test_tl1',
+        ids => [1, 4],
+        callback => sub {
+            my ($num, $error) = @_;
+            is(int(@_), 1, 'operation succeed');
+            is($num, 2, "2 statuses deleted");
+            $callbacked = 1;
+            $unloop->();
+        }
+    );
+    $loop->();
+    ok($callbacked, "callbacked");
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test_tl1', count => 'all'
+    }, sub {
+        my $statuses = shift;
+        test_statuses_id_set($statuses, [2,5], "ID=1,4 are deleted");
+    };
+
+    note('--- delete_statuses (all deletion)');
+    $callbacked = 0;
+    $storage->delete_statuses(
+        timeline => '_test_tl1',
+        ids => undef,
+        callback => sub {
+            my ($num, $error) = @_;
+            is(int(@_), 1, 'operation succeed');
+            is($num, 2, "2 statuses deleted");
+            $callbacked = 1;
+            $unloop->();
+        }
+    );
+    $loop->();
+    ok($callbacked, "callbacked");
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test_tl1', count => 'all'
+    }, sub {
+        my $statuses = shift;
+        test_statuses_id_set($statuses, [], "ID=2,5are deleted. now empty");
+    };
+    
 
   TODO: {
         local $TODO = "tests are going to be written.";
         fail('put_statuses (insert): insert duplicate IDs');
         fail('put_statuses (insert): insert confirmed statuses');
+        fail('put_statuses (update): non-existent statuses');
         fail('get_unconfirmed_count: multi level unconfirmed');
         fail('get_statuses: max_id, count');
+        fail('delete_statuses: non-existent statuses');
         fail('timeline independency');
-        ## We do not test error mode cases here. It depends on implementations.
+        ## We do not test error mode cases here(?). It depends on implementations.
     }
 }
 
