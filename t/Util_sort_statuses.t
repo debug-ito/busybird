@@ -1,0 +1,54 @@
+use strict;
+use warnings;
+use Test::More;
+use Test::Builder;
+use DateTime;
+use App::BusyBird::DateTime::Format;
+
+BEGIN {
+    use_ok('App::BusyBird::Util', 'sort_statuses');
+}
+
+sub dtstr {
+    my ($epoch) = @_;
+    return App::BusyBird::DateTime::Format->format_datetime(
+        DateTime->from_epoch(epoch => $epoch, time_zone => 'UTC')
+    );
+}
+
+sub test_sort {
+    my ($in_statuses, $exp_statuses, $msg) = @_;
+    my $got_statuses = sort_statuses($in_statuses);
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    is_deeply(
+        $got_statuses,
+        $exp_statuses,
+        $msg
+    ) or do {
+        diag("ID: " . $_->{id}) foreach @$got_statuses;
+    };
+}
+
+{
+    my @orig = (
+        {id =>  0, created_at => dtstr(16000), busybird => { confirmed_at => dtstr(44192) }},
+        {id =>  1, busybird => {confirmed_at => dtstr(32921)}},
+        {id =>  2, created_at => dtstr(21834), busybird => { confirmed_at => dtstr(88321) }},
+        {id =>  3, created_at => dtstr(4440)},
+        {id =>  4, busybird => {confirmed_at => dtstr(44192)}},
+        {id =>  5, busybird => {confirmed_at => ""}},
+        {id =>  6, created_at => dtstr(1200)},
+        {id =>  7, created_at => dtstr(383911), busybird => { confirmed_at => dtstr(55432) }},
+        {id =>  8, created_at => dtstr(393922), busybird => { confirmed_at => dtstr(88321) }},
+        {id =>  9, created_at => dtstr(5000)},
+        {id => 10, created_at => dtstr(4440), busybird => { confirmed_at => "" } },
+        {id => 11, },
+        {id => 12, created_at => dtstr(5000), busybird => { confirmed_at => dtstr(44192) }},
+        {id => 13, created_at => ""},
+        {id => 14, created_at => "", busybird => { confirmed_at => dtstr(55432) }},
+    );
+    test_sort(\@orig, [@orig[5,11,13, 9,3,10,6, 8,2, 14,7, 4,0,12, 1]], "sort ok");
+}
+
+
+done_testing();

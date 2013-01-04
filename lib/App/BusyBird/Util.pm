@@ -3,9 +3,11 @@ use strict;
 use warnings;
 use Scalar::Util ('blessed');
 use Carp;
-use base ('Exporter');
+use Exporter qw(import);
+use App::BusyBird::DateTime::Format;
+use DateTime;
 
-our @EXPORT_OK = (qw(set_param expand_param));
+our @EXPORT_OK = (qw(set_param expand_param sort_statuses));
 
 sub set_param {
     my ($hashref, $params_ref, $key, $default, $is_mandatory) = @_;
@@ -30,5 +32,42 @@ sub expand_param {
     return wantarray ? @result : $result[0];
 }
 
+sub _epoch_undef {
+    my ($datetime_str) = @_;
+    my $dt = App::BusyBird::DateTime::Format->parse_datetime($datetime_str);
+    return defined($dt) ? $dt->epoch : undef;
+}
+
+sub _sort_compare {
+    my ($a, $b) = @_;
+    if(defined($a) && defined($b)) {
+        return $b <=> $a;
+    }elsif(!defined($a) && defined($b)) {
+        return -1;
+    }elsif(defined($a) && !defined($b)) {
+        return 1;
+    }else {
+        return 0;
+    }
+}
+
+sub sort_statuses {
+    my ($statuses) = @_;
+    my @dt_statuses = do {
+        no autovivification;
+        map { [
+            $_,
+            _epoch_undef($_->{busybird}{confirmed_at}),
+            _epoch_undef($_->{created_at}),
+        ] } @$statuses;
+    };
+    return [ map { $_->[0] } sort {
+        foreach my $sort_key (1, 2) {
+            my $ret = _sort_compare($a->[$sort_key], $b->[$sort_key]);
+            return $ret if $ret != 0;
+        }
+        return 0;
+    } @dt_statuses];
+}
 
 1;
