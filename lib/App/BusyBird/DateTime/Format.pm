@@ -32,6 +32,7 @@ sub new {
 sub parse_datetime {
     my ($class_self, $string) = @_;
     my $parsed;
+    return undef if not defined $string;
     foreach my $f (@FORMATS) {
         $parsed = try {
             $f->parse_datetime($string);

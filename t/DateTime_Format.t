@@ -48,6 +48,7 @@ checkParse "Sun, 23 Oct 2011 19:03:12 -0500", DT qw(2011 10 23 19 3 12 -0500);
 checkParse "2012-09-23T11:00:10+0800", undef;
 checkParse "2012-09-23T11:00:10+08:00", DT qw(2012 9 23 11 0 10 +0800);
 checkParse "2011/07/12 04:02:00-10:30", undef;
+checkParse undef, undef;
 
 checkFormat DT(qw(2010 8 22 3 34 0 +0900)), "Sun Aug 22 03:34:00 +0900 2010";
 checkFormat DT(qw(2012 1 1 15 8 45 +2000)), "Sun Jan 01 15:08:45 +2000 2012";
