@@ -6,7 +6,7 @@ use lib ("$FindBin::RealBin/lib");
 use Test::App::BusyBird::StatusStorage;
 
 BEGIN {
-    use_ok('App::BusyBird::StatusStorage');
+    use_ok('App::BusyBird::StatusStorage::Memory');
 }
 
 my $storage = new_ok('App::BusyBird::StatusStorage::Memory');

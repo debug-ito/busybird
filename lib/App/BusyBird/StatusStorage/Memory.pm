@@ -2,14 +2,17 @@ package App::BusyBird::StatusStorage::Memory;
 use strict;
 use warnings;
 use App::BusyBird::Util qw(set_param sort_statuses);
+use App::BusyBird::DateTime::Format;
+use DateTime;
 use Carp;
+use List::Util qw(min);
 
 sub new {
     my ($class, %options) = @_;
     my $self = bless {
         timelines => {}, ## timelines should be always sorted.
     }, $class;
-    $self->set_param(\%options, 'filepath', undef, 1);
+    $self->set_param(\%options, 'filepath', undef);
     return $self;
 }
 
@@ -27,12 +30,19 @@ sub _index {
     return int(@ret) == 0 ? -1 : $ret[0];
 }
 
+sub _confirmed {
+    my ($self, $status) = @_;
+    no autovivification;
+    return $status->{busybird}{confirmed_at};
+}
+
 sub put_statuses {
     my ($self, %args) = @_;
     croak 'timeline arg is mandatory' if not defined $args{timeline};
     my $timeline = $args{timeline};
-    if(!defined($args{mode}) || $args{mode} ne 'insert'
-           || $args{mode} ne 'update' || $args{mode} ne 'upsert') {
+    if(!defined($args{mode}) ||
+           ($args{mode} ne 'insert'
+                && $args{mode} ne 'update' && $args{mode} ne 'upsert')) {
         croak 'mode arg must be insert/update/upsert';
     }
     my $mode = $args{mode};
@@ -78,6 +88,13 @@ sub delete_statuses {
     my ($self, %args) = @_;
     croak 'timeline arg is mandatory' if not defined $args{timeline};
     my $timeline = $args{timeline};
+    if(!$self->{timelines}{$timeline}) {
+        if($args{callback}) {
+            @_ = (0);
+            goto $args{callback};
+        }
+        return;
+    }
     my $ids = $args{ids};
     if(defined($ids)) {
         if(!ref($ids)) {
@@ -110,29 +127,112 @@ sub delete_statuses {
 sub get_statuses {
     my ($self, %args) = @_;
     croak 'timeline arg is mandatory' if not defined $args{timeline};
-    croak 'callback arg is mandaotry' if not defined $args{callback};
+    croak 'callback arg is mandatory' if not defined $args{callback};
     my $timeline = $args{timeline};
+    if(!$self->{timelines}{$timeline}) {
+        @_ = ([]);
+        goto $args{callback};
+    }
     my $confirm_state = $args{confirm_state} || 'any';
     my $max_id = $args{max_id};
     my $count = defined($args{count}) ? $args{count} : 20;
-    my $start_index = 0;
+    my $confirm_test = $confirm_state eq 'unconfirmed' ? sub {
+        !$self->_confirmed(shift);
+    } : $confirm_state eq 'confirmed' ? sub {
+        $self->_confirmed(shift);
+    } : sub { 1 };
+    my $start_index;
     if(defined($max_id)) {
         my $tl_index = $self->_index($timeline, $max_id);
         if($tl_index < 0) {
             @_ = ([]);
-            goto $args{$callback};
+            goto $args{callback};
+        }
+        my $s = $self->{timelines}{$timeline}[$tl_index];
+        if(!$confirm_test->($s)) {
+            @_ = ([]);
+            goto $args{callback};
         }
         $start_index = $tl_index;
     }
-    ## FROM AROUND HERE
+    my @indice = grep {
+        if(!$confirm_test->($self->{timelines}{$timeline}[$_])) {
+            0;
+        }elsif(defined($start_index) && $_ < $start_index) {
+            0;
+        }else {
+            1;
+        }
+    } 0 .. $#{$self->{timelines}{$timeline}};
+    $count = int(@indice) if $count eq 'all';
+    $count = min($count, int(@indice));
+    my $result_statuses = $count <= 0 ? [] : [ map {
+        $self->{timelines}{$timeline}[$_]
+    } @indice[0 .. ($count-1)] ];
+
+    @_ = ($result_statuses);
+    goto $args{callback};
 }
 
 sub confirm_statuses {
-    
+    my ($self, %args) = @_;
+    croak 'timeline arg is mandatory' if not defined $args{timeline};
+    my $timeline = $args{timeline};
+    if(!$self->{timelines}{$timeline}) {
+        if($args{callback}) {
+            @_ = (0);
+            goto $args{callback};
+        }
+        return;
+    }
+    my $ids = $args{ids};
+    my @target_statuses = ();
+    if(defined($ids)) {
+        if(!ref($ids)) {
+            $ids = [$ids];
+        }elsif(ref($ids) eq 'ARRAY') {
+            ;
+        }else {
+            croak "ids arg must be undef/ID/ARRAYREF_OF_IDS";
+        }
+        @target_statuses = map {
+            my $tl_index = $self->_index($timeline, $_);
+            $tl_index < 0 ? () : ($self->{timelines}{$timeline}[$tl_index]);
+        } @$ids;
+    }else {
+        @target_statuses = grep {
+            !$self->_confirmed($_)
+        } @{$self->{timelines}{$timeline}};
+    }
+    my $confirm_str = App::BusyBird::DateTime::Format->format_datetime(
+        DateTime->now(time_zone => 'UTC')
+    );
+    $_->{busybird}{confirmed_at} = $confirm_str foreach @target_statuses;
+    if($args{callback}) {
+        @_ = (int(@target_statuses));
+        goto $args{callback};
+    }
 }
 
 sub get_unconfirmed_counts {
-    
+    my ($self, %args) = @_;
+    croak 'timeline arg is mandatory' if not defined $args{timeline};
+    my $timeline = $args{timeline};
+    if(!$self->{timelines}{$timeline}) {
+        return ( total => 0 );
+    }
+    my @statuses = grep {
+        !$self->_confirmed($_)
+    } @{$self->{timelines}{$timeline}};
+    my %count = (total => int(@statuses));
+    foreach my $status (@statuses) {
+        my $level = do {
+            no autovivification;
+            $status->{busybird}{level} || 0;
+        };
+        $count{$level}++;
+    }
+    return %count;
 }
 
 

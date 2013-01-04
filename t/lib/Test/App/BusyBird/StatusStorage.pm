@@ -6,6 +6,7 @@ use DateTime;
 use Test::More;
 use Test::Builder;
 use App::BusyBird::DateTime::Format;
+use Carp;
 
 our @EXPORT = qw(test_status_storage);
 
@@ -64,6 +65,7 @@ sub sync_get {
 
 sub on_statuses {
     my ($storage, $loop, $unloop, $query_ref, $code) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
     $code->(sync_get($storage, $loop, $unloop, %$query_ref));
 }
 
@@ -86,7 +88,7 @@ sub test_status_storage {
         $loop->();
         ok($callbacked, "callbacked");
         is_deeply(
-            { $storage->get_unconfirmed_count(timeline => $tl) },
+            { $storage->get_unconfirmed_counts(timeline => $tl) },
             { total => 0 },
             "$tl is empty"
         );
@@ -109,7 +111,7 @@ sub test_status_storage {
     $loop->();
     ok($callbacked, "callbacked");
     is_deeply(
-        { $storage->get_unconfirmed_count(timeline => '_test_tl1') },
+        { $storage->get_unconfirmed_counts(timeline => '_test_tl1') },
         { total => 1, 0 => 1 },
         '1 unconfirmed status'
     );
@@ -130,7 +132,7 @@ sub test_status_storage {
     $loop->();
     ok($callbacked, "callbacked");
     is_deeply(
-        { $storage->get_unconfirmed_count(timeline => '_test_tl1') },
+        { $storage->get_unconfirmed_counts(timeline => '_test_tl1') },
         { total => 5, 0 => 5 },
         '5 unconfirmed status'
     );
@@ -204,7 +206,7 @@ sub test_status_storage {
         timeline => '_test_tl1', count => 'all'
     }, sub {
         my $statuses = shift;
-        test_statuses_id_set($statueses, [1,2,4,5], "ID=3 is deleted");
+        test_status_id_set($statuses, [1,2,4,5], "ID=3 is deleted");
     };
 
     note('--- delete_statuses (multiple deletion)');
@@ -226,7 +228,7 @@ sub test_status_storage {
         timeline => '_test_tl1', count => 'all'
     }, sub {
         my $statuses = shift;
-        test_statuses_id_set($statuses, [2,5], "ID=1,4 are deleted");
+        test_status_id_set($statuses, [2,5], "ID=1,4 are deleted");
     };
 
     note('--- delete_statuses (all deletion)');
@@ -248,7 +250,7 @@ sub test_status_storage {
         timeline => '_test_tl1', count => 'all'
     }, sub {
         my $statuses = shift;
-        test_statuses_id_set($statuses, [], "ID=2,5are deleted. now empty");
+        test_status_id_set($statuses, [], "ID=2,5 are deleted. now empty");
     };
     
 
@@ -257,7 +259,7 @@ sub test_status_storage {
         fail('put_statuses (insert): insert duplicate IDs');
         fail('put_statuses (insert): insert confirmed statuses');
         fail('put_statuses (update): non-existent statuses');
-        fail('get_unconfirmed_count: multi level unconfirmed');
+        fail('get_unconfirmed_counts: multi level unconfirmed');
         fail('get_statuses: max_id, count');
         fail('delete_statuses: non-existent statuses');
         fail('timeline independency');
