@@ -12,12 +12,13 @@ BEGIN {
 my $storage = new_ok('App::BusyBird::StatusStorage::Memory');
 
 test_status_storage($storage);
+test_status_order($storage);
 
 TODO: {
     our $TODO = "test and implementaion must be done";
     fail("save() and load() method");
     fail('load() on init, save() on DESTROY');
-    fail('ordered status test');
+    fail('test truncation');
 }
 
 

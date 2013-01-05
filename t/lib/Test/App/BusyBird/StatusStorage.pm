@@ -8,7 +8,7 @@ use Test::Builder;
 use App::BusyBird::DateTime::Format;
 use Carp;
 
-our @EXPORT = qw(test_status_storage);
+our @EXPORT = qw(test_status_storage test_status_order);
 
 my $datetime_formatter = 'App::BusyBird::DateTime::Format';
 
@@ -42,6 +42,11 @@ sub id_counts {
     return %id_counts;
 }
 
+sub id_list {
+    my @statuses_or_ids = @_;
+    return map { ref($_) ? $_->{id} : $_ } @statuses_or_ids;
+}
+
 sub confirmed {
     my ($s) = @_;
     no autovivification;
@@ -55,6 +60,17 @@ sub test_status_id_set {
     return is_deeply(
         { id_counts @$got_statuses },
         { id_counts @$exp_statuses_or_ids },
+        $msg
+    );
+}
+
+sub test_status_id_list {
+    ## ordered status ID list test
+    my ($got_statuses, $exp_statuses_or_ids, $msg) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    return is_deeply(
+        [id_list @$got_statuses],
+        [id_list @$exp_statuses_or_ids],
         $msg
     );
 }
@@ -148,6 +164,15 @@ sub change_and_check {
             $statuses, [@{$args{exp_confirmed}}, @{$args{exp_unconfirmed}}],
             "$label statuses in any state OK"
         );
+    };
+}
+
+sub get_and_check_list {
+    my ($storage, $loop, $unloop, $get_args, $exp_id_list, $msg) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    on_statuses $storage, $loop, $unloop, $get_args, sub {
+        my $statuses = shift;
+        test_status_id_list $statuses, $exp_id_list, $msg;
     };
 }
 
@@ -499,12 +524,113 @@ sub test_status_storage {
             exp_change => 0, exp_unconfirmed => [], exp_confirmed => []
         );
     }
+    note('--- clean up');
+    foreach my $tl ('_test_tl1', '_test  tl2') {
+        $callbacked = 0;
+        $storage->delete_statuses(timeline => $tl, callback => sub {
+            is(int(@_), 1, "operation succeed");
+            $callbacked = 1;
+            $unloop->();
+        });
+        $loop->();
+        ok($callbacked, "callbacked");
+    }
+}
+
+sub test_status_order {
+    my ($storage, $loop, $unloop) = @_;
+    $loop ||= sub {};
+    $unloop ||= sub {};
+    note('-------- test_status_order');
+    note('--- clear timeline');
+    my $callbacked = 0;
+    $storage->delete_statuses(timeline => "_test_tl3", callback => sub {
+        is(int(@_), 1, "operation succeed");
+        $callbacked = 1;
+        $unloop->();
+    });
+    $loop->();
+    ok($callbacked, "callbacked");
+    note('--- populate timeline');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl3',
+        mode => 'insert', target => [map {status $_} (1..30)],
+        label => 'first insert',
+        exp_change => 30, exp_unconfirmed => [1..30], exp_confirmed => []
+    );
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl3',
+        mode => 'confirm', target => undef, label => 'confirm all',
+        exp_change => 30, exp_unconfirmed => [], exp_confirmed => [1..30]
+    );
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl3',
+        mode => 'insert', target => [map {status $_} (31..60)],
+        label => "another insert", exp_change => 30,
+        exp_unconfirmed => [31..60], exp_confirmed => [1..30]
+    );
+    my %base = (timeline => '_test_tl3');
+
+    note('--- get: no max_id, any state, all');
+    get_and_check_list(
+        $storage, $loop, $unloop, {%base, count => 'all'}, [reverse 1..60]
+    );
+    note('--- get: no max_id, any state, partial');
+    get_and_check_list(
+        $storage, $loop, $unloop, {%base, count => 20}, [reverse 41..60]
+    );
+    note('--- get: no max_id, any state, both states');
+    get_and_check_list(
+        $storage, $loop, $unloop, {%base, count => 40}, [reverse 21..60]
+    );
+    note('--- get: no max_id, any state, count larger than the size');
+    get_and_check_list(
+        $storage, $loop, $unloop, {%base, count => 120}, [reverse 1..60]
+    );
+
+    note('--- get: no max_id unconfirmed, all');
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'unconfirmed', count => 'all'},
+        [reverse 31..60]
+    );
+    note('--- get: no max_id, unconfirmed, partial');
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'unconfirmed', count => 15},
+        [reverse 46..60 ]
+    );
+    note('--- get: no max_id, unconfirmed, larger than the unconfirmed size');
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'unconfirmed', count => 50},
+        [reverse 31..60]
+    );
+
+    note('--- get: no max_id, confirmed, all');
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'confirmed', count => 'all'},
+        [reverse 1..30]
+    );
+    note('--- get: no max_id, confirmed, partial');
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'confirmed', count => 25},
+        [reverse 6..30]
+    );
+    note('--- get: no max_id, confirmed, larger than the confirmed size');
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'confirmed', count => 70},
+        [reverse 1..30]
+    );
     
 
   TODO: {
-        local $TODO = "tests are going to be written.";
-        fail('get_statuses: max_id, count -> ordered test');
-        ## We do not test error mode cases here(?). It depends on implementations.
+        our $TODO = "test must be written.";
+        fail("scramble created_at and confirmed_at");
+        fail('max_id to existent but different state.');
     }
 }
 
@@ -519,6 +645,7 @@ Test::App::BusyBird::StatusStorage - Test routines for StatusStorage
 =head2 test_status_storage($storage, $loop, $unloop)
 
 Test the StatusStorage object.
+All StatusStorage implementations should pass this test.
 
 C<$storage> is the StatusStorage object to be tested.
 C<$loop> is a subroutine reference to go into the event loop,
@@ -528,6 +655,22 @@ If the storage does not use any event loop mechanism, C<$loop> and <$unloop> can
 In general test of statuses are based on status IDs.
 This allows implementations to modify statuses internally.
 In addition, statuses are tested unordered.
+
+
+=head2 test_status_order($storage, $loop, $unloop)
+
+Test the order of statuses obtained by C<get_statuses()> method.
+
+This test assumes the C<$storage> conforms to the "Order of Statuses" guideline
+documented in L<App::BusyBird::StatusStorage>.
+StatusStorage that does not confirm to the guideline should not run this test.
+
+The arguments are the same as C<test_status_storage> function.
+
+
+=head1 AUTHOR
+
+Toshio Ito C<< toshioito [at] cpan.org >>
 
 =cut
 
