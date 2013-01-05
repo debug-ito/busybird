@@ -26,6 +26,12 @@ sub status {
     return $status;
 }
 
+sub nowstring {
+    return $datetime_formatter->format_datetime(
+        DateTime->now(time_zone => 'UTC')
+    );
+}
+
 sub id_counts {
     my @statuses_or_ids = @_;
     my %id_counts = ();
@@ -36,11 +42,17 @@ sub id_counts {
     return %id_counts;
 }
 
+sub confirmed {
+    my ($s) = @_;
+    no autovivification;
+    return $s->{busybird}{confirmed_at};
+}
+
 sub test_status_id_set {
     ## unordered status ID set test
     my ($got_statuses, $exp_statuses_or_ids, $msg) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
-    is_deeply(
+    return is_deeply(
         { id_counts @$got_statuses },
         { id_counts @$exp_statuses_or_ids },
         $msg
@@ -67,6 +79,76 @@ sub on_statuses {
     my ($storage, $loop, $unloop, $query_ref, $code) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     $code->(sync_get($storage, $loop, $unloop, %$query_ref));
+}
+
+sub change_and_check {
+    my ($storage, $loop, $unloop, %args) = @_;
+    my $callbacked = 0;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my $label = "change_and_check " . ($args{label} || "") . ":";
+    my $callback_func = sub {
+        my ($result) = @_;
+        is(int(@_), 1, "$label $args{mode} succeed.");
+        is($result, $args{exp_change},
+           "$label $args{mode} changed $args{exp_change}");
+        $callbacked = 1;
+        $unloop->();
+    };
+    if($args{mode} eq 'insert' || $args{mode} eq 'update' || $args{mode} eq 'upsert') {
+        $storage->put_statuses(
+            timeline => $args{timeline},
+            mode => $args{mode},
+            statuses => $args{target},
+            callback => $callback_func,
+        );
+        $loop->();
+    }elsif($args{mode} eq 'delete' || $args{mode} eq 'confirm') {
+        my $method = "$args{mode}_statuses";
+        $storage->$method(
+            timeline => $args{timeline},
+            ids => $args{target},
+            callback => $callback_func,
+        );
+        $loop->();
+    }else {
+        croak "Invalid mode";
+    }
+    on_statuses $storage, $loop, $unloop, {
+        timeline => $args{timeline}, count => 'all',
+        confirm_state => 'confirmed'
+    }, sub {
+        my $statuses = shift;
+        test_status_id_set(
+            $statuses, $args{exp_confirmed},
+            "$label confirmed statuses OK"
+        );
+        foreach my $s (@$statuses) {
+            ok(confirmed($s), "$label confirmed");
+        }
+    };
+    on_statuses $storage, $loop, $unloop, {
+        timeline => $args{timeline}, count => 'all',
+        confirm_state => 'unconfirmed',
+    }, sub {
+        my $statuses = shift;
+        test_status_id_set(
+            $statuses, $args{exp_unconfirmed},
+            "$label unconfirmed statuses OK"
+        );
+        foreach my $s (@$statuses) {
+            ok(!confirmed($s), "$label not confirmed");
+        }
+    };
+    on_statuses $storage, $loop, $unloop, {
+        timeline => $args{timeline}, count => 'all',
+        confirm_state => 'any',
+    }, sub {
+        my $statuses = shift;
+        test_status_id_set(
+            $statuses, [@{$args{exp_confirmed}}, @{$args{exp_unconfirmed}}],
+            "$label statuses in any state OK"
+        );
+    };
 }
 
 
@@ -252,17 +334,91 @@ sub test_status_storage {
         my $statuses = shift;
         test_status_id_set($statuses, [], "ID=2,5 are deleted. now empty");
     };
+
+    note('--- put_statuses (insert): insert duplicate IDs');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl1',
+        mode => 'insert', target => [map { status $_ } (1,2,3,2,1,1,4,5,3)],
+        exp_change => 5,
+        exp_unconfirmed => [1..5], exp_confirmed => []
+    );
+    note('--- confirm_statuses: single confirmation');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl1',
+        mode => 'confirm', target => 3, exp_change => 1,
+        exp_unconfirmed => [1,2,4,5], exp_confirmed => [3]
+    );
+    is_deeply(
+        {$storage->get_unconfirmed_counts(timeline => '_test_tl1')},
+        {total => 4, 0 => 4}, "4 unconfirmed statuses"
+    );
+    note('--- confirm_statuses: multiple partial confirmation');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl1',
+        mode => 'confirm', target => [1,5,3], exp_change => 3,
+        exp_unconfirmed => [2,4], exp_confirmed => [1,3,5]
+    );
+    note('--- put (insert): try to insert existent status');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl1',
+        mode => 'insert', target => status(3), exp_change => 0,
+        exp_unconfirmed => [2,4], exp_confirmed => [1,3,5]
+    );
+    note('--- put (update): change to unconfirmed');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl1',
+        mode => 'update', target => [map { status($_) } (3,5)],
+        exp_change => 2, exp_unconfirmed => [2,3,4,5], exp_confirmed => [1]
+    );
+    is_deeply(
+        {$storage->get_unconfirmed_counts(timeline => '_test_tl1')},
+        {total => 4, 0 => 4}, '4 unconfirmed statuses'
+    );
+    note('--- put (update): change level');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl1',
+        mode => 'update',
+        target => [map { status($_, ($_ % 2 + 1), $_ == 1 ? nowstring() : undef) } (1..5)],
+        exp_change => 5, exp_unconfirmed => [2,3,4,5], exp_confirmed => [1]
+    );
+    is_deeply(
+        {$storage->get_unconfirmed_counts(timeline => '_test_tl1')},
+        {total => 4, 1 => 2, 2 => 2}, "4 unconfirmed statuses in 2 levels"
+    );
+    note('--- put (upsert): confirmed statuses');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl1',
+        mode => 'upsert', target => [map { status($_, 7, nowstring()) } (4..7)],
+        exp_change => 4, exp_unconfirmed => [2,3], exp_confirmed => [1,4..7]
+    );
+    note('--- get and put(update): back to unconfirmed');
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test_tl1', count => 'all', confirm_state => 'confirmed'
+    }, sub {
+        my $statuses = shift;
+        delete $_->{busybird}{confirmed_at} foreach @$statuses;
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_tl1',
+            mode => 'update', target => $statuses,
+            exp_change => 5, exp_unconfirmed => [1..7], exp_confirmed => []
+        );
+    };
+    is_deeply(
+        {$storage->get_unconfirmed_counts(timeline => '_test_tl1')},
+        {total => 7, 1 => 1, 2 => 2, 7 => 4}, "3 levels"
+    );
+    
     
 
   TODO: {
         local $TODO = "tests are going to be written.";
-        fail('put_statuses (insert): insert duplicate IDs');
+        fail('get, put(update), delete, confirm: non-existent statuses');
+        fail('get: single status');
+        fail('get: try to get single status in different state');
         fail('put_statuses (insert): insert confirmed statuses');
-        fail('put_statuses (update): non-existent statuses');
-        fail('get_unconfirmed_counts: multi level unconfirmed');
-        fail('get_statuses: max_id, count');
-        fail('delete_statuses: non-existent statuses');
+        fail('get_statuses: max_id, count -> ordered test');
         fail('timeline independency');
+        fail('access to non-existent timeline');
         ## We do not test error mode cases here(?). It depends on implementations.
     }
 }
