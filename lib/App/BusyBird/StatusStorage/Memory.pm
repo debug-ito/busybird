@@ -62,7 +62,7 @@ sub put_statuses {
         croak "{id} field is mandatory in statuses" if not defined $s->{id};
         my $tl_index = $self->_index($timeline, $s->{id});
         my $existent = ($tl_index >= 0);
-        last if ($mode eq 'insert' && $existent) || ($mode eq 'update' && !$existent);
+        next if ($mode eq 'insert' && $existent) || ($mode eq 'update' && !$existent);
         my $is_insert = ($mode eq 'insert');
         if($mode eq 'upsert') {
             $is_insert = (!$existent);
