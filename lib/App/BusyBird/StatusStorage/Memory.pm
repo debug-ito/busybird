@@ -116,6 +116,7 @@ sub delete_statuses {
     }else {
         if(defined($self->{timelines}{$timeline})) {
             $delete_num = @{$self->{timelines}{$timeline}};
+            $self->{timelines}{$timeline} = [];
         }
     }
     if($args{callback}) {
