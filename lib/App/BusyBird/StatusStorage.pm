@@ -16,11 +16,11 @@ App::BusyBird::StatusStorage::* module family.
 
 =head1 CLASS METHODS
 
-=head2 $storage = $class->new(%options)
+=head2 $storage = $class->new(@args)
 
-Creates a Status Storage object from C<%options>.
+Creates a Status Storage object from C<@args>.
 
-Specification of C<%options> is up to implementations.
+Specification of C<@args> is up to implementations.
 
 
 =head1 OBJECT METHODS
