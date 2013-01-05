@@ -245,6 +245,11 @@ sub get_unconfirmed_counts {
 
 App::BusyBird::StatusStorage::Memory - Simple status storage in the process memory
 
+=head1 SYNOPSIS
+
+    TODO;
+
+
 =head1 DESCRIPTION
 
 This module is an implementation of L<App::BusyBird::StatusStorage>.
