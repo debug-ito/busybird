@@ -152,6 +152,8 @@ statuses not in the C<timeline> are inserted.
 
 The statuses are identified by C<< $status->{id} >> field.  The
 C<< $status->{id} >> field must be unique in the C<timeline>.
+So if C<mode> is C<"insert">, statuses whose ID is already in the C<timeline>
+are ignored and not inserted.
 
 
 =item C<statuses> => {STATUS, ARRAYREF_OF_STATUSES} (mandatory)
