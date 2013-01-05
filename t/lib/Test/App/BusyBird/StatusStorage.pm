@@ -571,64 +571,111 @@ sub test_status_order {
     );
     my %base = (timeline => '_test_tl3');
 
-    note('--- get: no max_id, any state, all');
+    note();
     get_and_check_list(
-        $storage, $loop, $unloop, {%base, count => 'all'}, [reverse 1..60]
+        $storage, $loop, $unloop, {%base, count => 'all'}, [reverse 1..60],
+        'get: no max_id, any state, all'
     );
-    note('--- get: no max_id, any state, partial');
     get_and_check_list(
-        $storage, $loop, $unloop, {%base, count => 20}, [reverse 41..60]
+        $storage, $loop, $unloop, {%base, count => 20}, [reverse 41..60],
+        'get: no max_id, any state, partial'
     );
-    note('--- get: no max_id, any state, both states');
     get_and_check_list(
-        $storage, $loop, $unloop, {%base, count => 40}, [reverse 21..60]
+        $storage, $loop, $unloop, {%base, count => 40}, [reverse 21..60],
+        'get: no max_id, any state, both states'
     );
-    note('--- get: no max_id, any state, count larger than the size');
     get_and_check_list(
-        $storage, $loop, $unloop, {%base, count => 120}, [reverse 1..60]
+        $storage, $loop, $unloop, {%base, count => 120}, [reverse 1..60],
+        'get: no max_id, any state, count larger than the size'
     );
 
-    note('--- get: no max_id unconfirmed, all');
     get_and_check_list(
         $storage, $loop, $unloop,
         {%base, confirm_state => 'unconfirmed', count => 'all'},
-        [reverse 31..60]
+        [reverse 31..60],
+        'get: no max_id unconfirmed, all'
     );
-    note('--- get: no max_id, unconfirmed, partial');
     get_and_check_list(
         $storage, $loop, $unloop,
         {%base, confirm_state => 'unconfirmed', count => 15},
-        [reverse 46..60 ]
+        [reverse 46..60 ],
+        'get: no max_id, unconfirmed, partial'
     );
-    note('--- get: no max_id, unconfirmed, larger than the unconfirmed size');
     get_and_check_list(
         $storage, $loop, $unloop,
         {%base, confirm_state => 'unconfirmed', count => 50},
-        [reverse 31..60]
+        [reverse 31..60],
+        'get: no max_id, unconfirmed, larger than the unconfirmed size'
     );
 
-    note('--- get: no max_id, confirmed, all');
     get_and_check_list(
         $storage, $loop, $unloop,
         {%base, confirm_state => 'confirmed', count => 'all'},
-        [reverse 1..30]
+        [reverse 1..30],
+        'get: no max_id, confirmed, all'
     );
-    note('--- get: no max_id, confirmed, partial');
     get_and_check_list(
         $storage, $loop, $unloop,
         {%base, confirm_state => 'confirmed', count => 25},
-        [reverse 6..30]
+        [reverse 6..30],
+        'get: no max_id, confirmed, partial'
     );
-    note('--- get: no max_id, confirmed, larger than the confirmed size');
     get_and_check_list(
         $storage, $loop, $unloop,
         {%base, confirm_state => 'confirmed', count => 70},
-        [reverse 1..30]
+        [reverse 1..30],
+        'get: no max_id, confirmed, larger than the confirmed size'
+    );
+    
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', max_id => 40, count => 'all'},
+        [reverse 1..40],
+        'get: max_id in unconfirmed, any state, all'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', max_id => 20, count => 'all'},
+        [reverse 1..20],
+        'get: max_id in confirmed, any state, all'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', max_id => 70, count => 'all'},
+        [],
+        'get: non-existent max_id, any state, all'
+    );
+
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', max_id => 50, count => 10},
+        [reverse 41..50],
+        'get: max_id in unconfirmed, any state, count inside unconfirmed zone'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', max_id => 50, count => 40},
+        [reverse 11..50],
+        'get: max_id in unconfirmed, any state, count to confirmed zone'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', max_id => 30, count => 20},
+        [reverse 11..30],
+        'get: max_id in confirmed, any state, partial'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', max_id => 10, count => 40},
+        [reverse 1..10],
+        'get: max_id in confirmed, any state, count larger than the confirmed size'
     );
     
 
   TODO: {
         our $TODO = "test must be written.";
+        fail("max_id, state confirmed/unconfirmed.");
+        fail('wait two sec and confirm');
         fail("scramble created_at and confirmed_at");
         fail('max_id to existent but different state.');
     }
