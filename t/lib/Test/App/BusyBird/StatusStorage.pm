@@ -158,7 +158,7 @@ sub test_status_storage {
     $unloop ||= sub {};
     my $callbacked = 0;
     note("--- clear the timelines");
-    foreach my $tl ('_test_tl1', "_test_tl2", "_test_time line") {
+    foreach my $tl ('_test_tl1', "_test  tl2") {
         $callbacked = 0;
         $storage->delete_statuses(
             timeline => $tl,
@@ -219,7 +219,7 @@ sub test_status_storage {
         '5 unconfirmed status'
     );
 
-    note('--- get_statuses');
+    note('--- get_statuses: any, all');
     $callbacked = 0;
     $storage->get_statuses(
         timeline => '_test_tl1',
@@ -239,7 +239,7 @@ sub test_status_storage {
     $loop->();
     ok($callbacked, "callbacked");
 
-    note('--- confirm_statuses');
+    note('--- confirm_statuses: all');
     $callbacked = 0;
     $storage->confirm_statuses(
         timeline => '_test_tl1',
@@ -407,18 +407,103 @@ sub test_status_storage {
         {$storage->get_unconfirmed_counts(timeline => '_test_tl1')},
         {total => 7, 1 => 1, 2 => 2, 7 => 4}, "3 levels"
     );
-    
+
+    note('--- put(insert): to another timeline');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test  tl2',
+        mode => 'insert', target => [map { status($_) } (1..10)],
+        exp_change => 10, exp_unconfirmed => [1..10], exp_confirmed => []
+    );
+    is_deeply(
+        {$storage->get_unconfirmed_counts(timeline => '_test  tl2')},
+        {total => 10, 0 => 10}, '10 unconfirmed statuses'
+    );
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test  tl2',
+        mode => 'confirm', target => [1..5],
+        exp_change => 5, exp_unconfirmed => [6..10], exp_confirmed => [1..5]
+    );
+    note('--- get: single, any state');
+    foreach my $id (1..10) {
+        on_statuses $storage, $loop, $unloop, {
+            timeline => '_test  tl2', count => 1, max_id => $id
+        }, sub {
+            my $statuses = shift;
+            is(int(@$statuses), 1, "get 1 status");
+            is($statuses->[0]{id}, $id, "... and its ID is $id");
+        };
+    }
+    note('--- get: single, specific state');
+    foreach my $id (1..10) {
+        my $correct_state = ($id <= 5) ? 'confirmed' : 'unconfirmed';
+        my $wrong_state = $correct_state eq 'confirmed' ? 'unconfirmed' : 'confirmed';
+        on_statuses $storage, $loop, $unloop, {
+            timeline => '_test  tl2', count => 1, max_id => $id,
+            confirm_state => $correct_state,
+        }, sub {
+            my $statuses = shift;
+            is(int(@$statuses), 1, "get 1 status");
+            is($statuses->[0]{id}, $id, "... and its ID is $id");
+        };
+        foreach my $count ('all', 1, 10) {
+            on_statuses $storage, $loop, $unloop, {
+                timeline => '_test  tl2', count => $count, max_id => $id,
+                confirm_state => $wrong_state
+            }, sub {
+                my $statuses = shift;
+                is(int(@$statuses), 0,
+                   "no status returned when status specified" . 
+                       " max_id is not the correct confirm_state".
+                           " even when count = $count");
+            };    
+        }
+    }
+    note('--- timeline is independent of each other');
+    on_statuses $storage, $loop, $unloop, {
+        timeline => "_test_tl1", count => "all"
+    }, sub {
+        my $statuses = shift;
+        test_status_id_set($statuses, [1..7], "7 statuses in _test_tl1");
+    };
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test  tl2', count => "all",
+    }, sub {
+        my $statuses = shift;
+        test_status_id_set($statuses, [1..10], "10 statuses in _test  tl2");
+    };
+    note('--- access to non-existent statuses');
+    foreach my $mode (qw(update delete confirm)) {
+        my $target = $mode eq 'update'
+            ? [map { status($_) } (11..15) ] : [11..15];
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test  tl2',
+            mode => $mode, target => $target, label => "mode $mode",
+            exp_change => 0, exp_unconfirmed => [6..10],
+            exp_confirmed => [1..5]
+        );
+    }
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test  tl2', count => 'all', max_id => 15,
+    }, sub {
+        my $statuses = shift;
+        is(int(@$statuses), 0, "get max_id=15 returns empty");
+    };
+    note('--- access to non-existent timeline');
+    foreach my $mode (qw(update delete confirm)) {
+        my $timeline = '_this_timeline_ probably does not exist';
+        my $target = $mode eq 'update'
+            ? status(1) : 1;
+        change_and_check(
+            $storage, $loop, $unloop, timeline => $timeline,
+            mode => $mode, target => $target, lable => "mode $mode",
+            exp_change => 0, exp_unconfirmed => [], exp_confirmed => []
+        );
+    }
     
 
   TODO: {
         local $TODO = "tests are going to be written.";
-        fail('get, put(update), delete, confirm: non-existent statuses');
-        fail('get: single status');
-        fail('get: try to get single status in different state');
-        fail('put_statuses (insert): insert confirmed statuses');
         fail('get_statuses: max_id, count -> ordered test');
-        fail('timeline independency');
-        fail('access to non-existent timeline');
         ## We do not test error mode cases here(?). It depends on implementations.
     }
 }
