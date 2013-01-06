@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use DateTime;
+use DateTime::Duration;
 use Test::More;
 use Test::Builder;
 use App::BusyBird::DateTime::Format;
@@ -670,7 +671,86 @@ sub test_status_order {
         [reverse 1..10],
         'get: max_id in confirmed, any state, count larger than the confirmed size'
     );
-    
+
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'unconfirmed', max_id => 45, count => 5},
+        [reverse 41..45],
+        'get: max_id in unconfirmed, unconfirmed state, count in unconfirmed'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'unconfirmed', max_id => 45, count => 25},
+        [reverse 31..45],
+        'get: max_id in unconfirmed, unconfirmed state, count larger than the unconfirmed size'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'unconfirmed', max_id => 20, count => 5},
+        [],
+        'get: max_id in confirmed, unconfirmed state'
+    );
+
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'confirmed', max_id => 50, count => 10},
+        [],
+        'get: max_id in unconfirmed, confirmed state, count in unconfirmed'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'confirmed', max_id => 45, count => 30},
+        [],
+        'get: max_id in unconfirmed, confirmed state, count larger than the unconfirmed size'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'confirmed', max_id => 20, count => 10},
+        [reverse 11..20],
+        'get: max_id in confirmed, confirmed state, count in confirmed'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'confirmed', max_id => 10, count => 30},
+        [reverse 1..10],
+        'get: max_id in confirmed, confirmed state, count larger than confirmed size'
+    );
+
+    {
+        note('--- more confirmed statuses');
+        my $now = DateTime->now(time_zone => 'UTC');
+        my $yesterday = $now - DateTime::Duration->new(days => 1);
+        my $tomorrow = $now + DateTime::Duration->new(days => 1);
+        my @more_statuses = (
+            (map { status $_, 0, $datetime_formatter->format_datetime($tomorrow)  } 61..70),
+            (map { status $_, 0, $datetime_formatter->format_datetime($yesterday) }  71..80)
+        );
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_tl3',
+            mode => 'insert', target => \@more_statuses,
+            exp_change => 20, exp_unconfirmed => [31..60], exp_confirmed => [1..30, 61..80]
+        );
+    }
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', count => 'all'},
+        [reverse(71..80, 1..30, 61..70, 31..60)],
+        'get: mixed confirmed_at, no max_id, any state, all'
+    );
+    note('--- move from confirmed to unconfirmed');
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test_tl3', confirmed_state => 'confirmed',
+        max_id => 30, count => 10
+    }, sub {
+        my $statuses = shift;
+        delete $_->{busybird}{confirmed_at} foreach @$statuses;
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_tl3',
+            mode => 'update', target => $statuses,
+            exp_change => 10,
+            exp_unconfirmed => [21..60], exp_confirmed => [1..20, 61..80]
+        );
+    };
 
   TODO: {
         our $TODO = "test must be written.";
