@@ -214,7 +214,7 @@ end_call $mocknt;
 }
 
 if(!$ENV{AUTHOR_TEST}) {
-    note("Set AUTHOR_TEST env to test filepath option");
+    diag("Set AUTHOR_TEST env to test filepath option");
 }else {
     note('--- AUTHOR_TEST: filepath option');
     my $filename = "test_persistence_file_input_twitter";
