@@ -782,14 +782,73 @@ sub test_status_order {
             exp_unconfirmed => [21..60], exp_confirmed => [1..20, 61..80]
         );
     };
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', count => 'all'},
+        [reverse(71..80, 1..20, 61..70, 21..60)],
+        'get:mixed confirmed_at, no max_id, any state, all'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', max_id => 30, count => 30},
+        [reverse(11..20, 61..70, 21..30)],
+        'get:mixed confirmed_at, max_id in unconfirmed, any state, count larger than unconfirmed size'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', max_id => 15, count => 20},
+        [reverse(76..80, 1..15)],
+        'get:mixed confirmed_at, max_id in confirmed, any state, count in confirmed'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'unconfirmed', max_id => 50, count => 50},
+        [reverse(21..50)],
+        'get:mixed confirmed_at, max_id in unconfirmed, unconfirmed state, count larger than unconfirmed size'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'confirmed', max_id => 65, count => 30},
+        [reverse(76..80, 1..20, 61..65)],
+        'get:mixed confirmed_at, max_id in confirmed, confirmed state, count in confirmed area'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'unconfirmed', max_id => 20, count => 30},
+        [],
+        'get:mixed confirmed_at, max_id in confirmed, unconfirmed state'
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'confirmed', max_id => 40, count => 30},
+        [],
+        'get:mixed confirmed_at, max_id in unconfirmed, confirmed state'
+    );
 
-  TODO: {
-        our $TODO = "test must be written.";
-        fail("max_id, state confirmed/unconfirmed.");
-        fail('wait two sec and confirm');
-        fail("scramble created_at and confirmed_at");
-        fail('max_id to existent but different state.');
-    }
+    note('--- messing with created_at');
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test_tl3', count => 'all'
+    }, sub {
+        my $statuses = shift;
+        is(int(@$statuses), 80, "80 statuses");
+        foreach my $s (@$statuses) {
+            $s->{created_at} = $datetime_formatter->format_datetime(
+                $datetime_formatter->parse_datetime($s->{created_at})
+                    + DateTime::Duration->new(days => 100 - $s->{id})
+            );
+        }
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_tl3',
+            mode => 'update', target => $statuses, exp_change => 80,
+            exp_unconfirmed => [21..60], exp_confirmed => [1..20, 61..80]
+        );
+    };
+    get_and_check_list(
+        $storage, $loop, $unloop,
+        {%base, confirm_state => 'any', count => 'all'},
+        [21..60, 61..70, 1..20, 71..80],
+        'sorted by descending order of created_at within confirmed_at group'
+    );
 }
 
 =pod
