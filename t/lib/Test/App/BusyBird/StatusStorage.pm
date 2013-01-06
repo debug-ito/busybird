@@ -525,6 +525,37 @@ sub test_status_storage {
             exp_change => 0, exp_unconfirmed => [], exp_confirmed => []
         );
     }
+    note('--- changes done to obtained statuses do not affect storage.');
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test  tl2', count => 'all'
+    }, sub {
+        my $statuses = shift;
+        is(int(@$statuses), 10, "10 statuses");
+        $_->{id} = 100 foreach @$statuses;
+    };
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test  tl2', count => 'all'
+    }, sub {
+        my $statuses = shift;
+        test_status_id_set($statuses, [1..10], "ID set in storage is not changed.");
+    };
+    {
+        note('--- changes done to inserted/updated statuses do not affect storage.');
+        my @upserted = map { status $_ } 1..20;
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test  tl2',
+            mode => 'upsert', target => \@upserted, exp_change => 20,
+            exp_confirmed => [], exp_unconfirmed => [1..20]
+        );
+        $_->{id} = 100 foreach @upserted;
+        on_statuses $storage, $loop, $unloop, {
+            timeline => '_test  tl2', count => 'all'
+        }, sub {
+            my $statuses = shift;
+            test_status_id_set($statuses, [1..20], 'ID set in storage is not changed');
+        };
+    }
+
     note('--- clean up');
     foreach my $tl ('_test_tl1', '_test  tl2') {
         $callbacked = 0;
