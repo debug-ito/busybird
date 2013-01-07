@@ -10,7 +10,7 @@ use App::BusyBird::DateTime::Format;
 use Carp;
 
 our %EXPORT_TAGS = (
-    storage => [qw(test_storage_common test_storage_ordered)],
+    storage => [qw(test_storage_common test_storage_ordered test_storage_truncation)],
     status => [qw(test_status_id_set test_status_id_list)],
 );
 our @EXPORT_OK = ();
@@ -192,6 +192,7 @@ sub get_and_check_list {
 
 sub test_storage_common {
     my ($storage, $loop, $unloop) = @_;
+    note('-------- test_storage_common');
     $loop ||= sub {};
     $unloop ||= sub {};
     my $callbacked = 0;
@@ -863,6 +864,65 @@ sub test_storage_ordered {
     );
 }
 
+sub test_storage_truncation {
+    my ($storage, $max_status_num, $loop, $unloop) = @_;
+    note("-------- test_storage_truncation max_status_num = $max_status_num");
+    $loop ||= sub {};
+    $unloop ||= sub {};
+    $max_status_num = int($max_status_num);
+    croak 'max_status_num must be bigger than 0' if $max_status_num <= 0;
+    note('--- clear the timeline');
+    my $callbacked = 0;
+    my %base = (timeline => '_test_tl4');
+    $storage->delete_statuses(%base, callback => sub {
+        $callbacked = 1;
+        $unloop->();
+    });
+    $loop->();
+    ok($callbacked, 'callbacked');
+    on_statuses $storage, $loop, $unloop, {
+        %base, count => 'all'
+    }, sub {
+        my ($statuses) = @_;
+        is(int(@$statuses), 0, 'no statuses');
+    };
+    note('--- populate to the max');
+    change_and_check(
+        $storage, $loop, $unloop, %base,
+        mode => 'insert', target => [map {status($_)} (1..$max_status_num)],
+        exp_change => $max_status_num, exp_unconfirmed => [1..$max_status_num],
+        exp_confirmed => []
+    );
+    note('--- insert another one');
+    change_and_check(
+        $storage, $loop, $unloop, %base,
+        mode => 'insert', target => status($max_status_num+1),
+        exp_change => 1, exp_unconfirmed => [2..($max_status_num+1)],
+        exp_confirmed => []
+    );
+    note('--- insert multiple statuses');
+    change_and_check(
+        $storage, $loop, $unloop, %base,
+        mode => 'insert', target => [map { status($max_status_num+1+$_) } 1..4],
+        exp_change => 4, exp_unconfirmed => [6..($max_status_num+5)],
+        exp_confirmed => []
+    );
+    note('--- confirmed the top');
+    change_and_check(
+        $storage, $loop, $unloop, %base,
+        mode => 'confirm', target => ($max_status_num+5),
+        exp_change => 1, exp_unconfirmed => [6 .. $max_status_num+4],
+        exp_confirmed => [$max_status_num+5]
+    );
+    note('--- inserting another one removes the confirmed status');
+    change_and_check(
+        $storage, $loop, $unloop, %base,
+        mode => 'insert', target => status($max_status_num+6),
+        exp_change => 1, exp_unconfirmed => [6 .. $max_status_num+4, $max_status_num+6],
+        exp_confirmed => []
+    );
+}
+
 =pod
 
 =head1 NAME
@@ -918,6 +978,21 @@ documented in L<App::BusyBird::StatusStorage>.
 StatusStorage that does not confirm to the guideline should not run this test.
 
 The arguments are the same as C<test_storage_common> function.
+
+
+=head2 test_storage_truncation($storage, $max_status_num $loop, $unloop)
+
+Test if statuses are properly truncated in the storage.
+
+This test assumes the C<$storage> passes C<test_storage_ordered()> test.
+In each timeline, the "oldest" status is removed first.
+
+C<$storage> is the StatusStorage object to be tested.
+C<$max_status_num> is the maximum number of statuses per timeline
+that C<$storage> can store.
+C<$loop> and C<$unloop> are the same as C<test_storage_common> function.
+
+
 
 =head1 :status TAG FUNCTIONS
 
