@@ -11,9 +11,13 @@ use List::Util qw(min);
 sub new {
     my ($class, %options) = @_;
     my $self = bless {
-        timelines => {}, ## timelines should be always sorted.
+        timelines => {}, ## timelines should always be sorted.
     }, $class;
     $self->set_param(\%options, 'filepath', undef);
+    $self->set_param(\%options, 'max_status_num', 4096);
+    if($self->{max_status_num} <= 0) {
+        croak "max_status_num option must be bigger than 0.";
+    }
     return $self;
 }
 
@@ -78,6 +82,9 @@ sub put_statuses {
     }
     if($put_count > 0) {
         $self->{timelines}{$timeline} = sort_statuses($self->{timelines}{$timeline});
+        if(int(@{$self->{timelines}{$timeline}}) > $self->{max_status_num}) {
+            splice(@{$self->{timelines}{$timeline}}, -(int(@{$self->{timelines}{$timeline}}) - $self->{max_status_num}));
+        }
     }
     if($args{callback}) {
         @_ = ($put_count);
@@ -283,6 +290,24 @@ when the process is terminated by a signal.
 =head2 $storage = App::BusyBird::StatusStorage::Memory->new(%options)
 
 Creates the storage object.
+
+You can specify the folowing options in C<%options>.
+
+=over
+
+=item C<filepath> => FILE_PATH (optional, default: C<undef>)
+
+Specifies the path to the file to which the statuses in the storage
+is saved by C<save()> method.
+
+If C<filepath> is C<undef> or omitted, the statuses are never saved.
+
+=item C<max_status_num> => MAX_STATUS_NUM (optional, default: 4096)
+
+Specifies the maximum number of statuses the storage can store.
+If more statuses are added to the full storage, the oldest statuses are removed automatically.
+
+=back
 
 =head1 OBJECTS METHODS
 

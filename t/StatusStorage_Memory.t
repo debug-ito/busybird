@@ -15,6 +15,11 @@ BEGIN {
     test_storage_ordered($storage);
 }
 
+{
+    my $storage = new_ok('App::BusyBird::StatusStorage::Memory', [max_status_num => 5]);
+    test_storage_truncation($storage, 5);
+}
+
 TODO: {
     our $TODO = "test and implementaion must be done";
     fail("save() and load() method");
