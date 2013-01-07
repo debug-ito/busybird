@@ -9,7 +9,19 @@ use Test::Builder;
 use App::BusyBird::DateTime::Format;
 use Carp;
 
-our @EXPORT = qw(test_status_storage test_status_order);
+our %EXPORT_TAGS = (
+    storage => [qw(test_storage_common test_storage_ordered)],
+    status => [qw(test_status_id_set test_status_id_list)],
+);
+our @EXPORT_OK = ();
+{
+    my @all = ();
+    foreach my $tag (keys %EXPORT_TAGS) {
+        push(@all, @{$EXPORT_TAGS{$tag}});
+        push(@EXPORT_OK, @{$EXPORT_TAGS{$tag}});
+    }
+    $EXPORT_TAGS{all} = \@all;
+}
 
 my $datetime_formatter = 'App::BusyBird::DateTime::Format';
 
@@ -178,7 +190,7 @@ sub get_and_check_list {
 }
 
 
-sub test_status_storage {
+sub test_storage_common {
     my ($storage, $loop, $unloop) = @_;
     $loop ||= sub {};
     $unloop ||= sub {};
@@ -569,11 +581,11 @@ sub test_status_storage {
     }
 }
 
-sub test_status_order {
+sub test_storage_ordered {
     my ($storage, $loop, $unloop) = @_;
     $loop ||= sub {};
     $unloop ||= sub {};
-    note('-------- test_status_order');
+    note('-------- test_storage_ordered');
     note('--- clear timeline');
     my $callbacked = 0;
     $storage->delete_statuses(timeline => "_test_tl3", callback => sub {
@@ -857,9 +869,32 @@ sub test_status_order {
 
 Test::App::BusyBird::StatusStorage - Test routines for StatusStorage
 
-=head1 FUNCTION
+=head1 SYNOPSIS
 
-=head2 test_status_storage($storage, $loop, $unloop)
+
+    use My::Storage;
+    use Test::More;
+    use Test::App::BusyBird::StatusStorage qw(:storage);
+    
+    my $storage = My::Storage->new();
+    test_storage_common($storage);
+    test_storage_ordered($storage);
+    done_testing();
+
+
+=head1 DESCRIPTION
+
+This module provides some functions mainly for testing StatusStorage objects.
+
+This module exports nothing by default, but the following functions can be imported explicitly.
+The functions are categorized by tags.
+
+If you want to import all functions, import C<:all> tag.
+
+
+=head1 :storage TAG FUNCTIONS
+
+=head2 test_storage_common($storage, $loop, $unloop)
 
 Test the StatusStorage object.
 All StatusStorage implementations should pass this test.
@@ -874,7 +909,7 @@ This allows implementations to modify statuses internally.
 In addition, statuses are tested unordered.
 
 
-=head2 test_status_order($storage, $loop, $unloop)
+=head2 test_storage_ordered($storage, $loop, $unloop)
 
 Test the order of statuses obtained by C<get_statuses()> method.
 
@@ -882,7 +917,24 @@ This test assumes the C<$storage> conforms to the "Order of Statuses" guideline
 documented in L<App::BusyBird::StatusStorage>.
 StatusStorage that does not confirm to the guideline should not run this test.
 
-The arguments are the same as C<test_status_storage> function.
+The arguments are the same as C<test_storage_common> function.
+
+=head1 :status TAG FUNCTIONS
+
+=head2 test_status_id_set ($got_statuses, $exp_statuses_or_ids, $msg)
+
+Test if the set of statuses is expected.
+
+This function only checks IDs of given statuses. The test does not care about any other fields
+in statuses. This function does not care about the order of statuses either.
+
+C<$got_statuses> is an array-ref of status objects to be tested.
+C<$exp_statues_or_ids> is an array-ref of status objects or IDs that are expected.
+C<$msg> is the test message.
+
+=head2 test_status_id_list ($got_statuses, $exp_statuses_or_ids, $msg)
+
+Almost the same as the C<test_status_id_set> function, but this test DOES care the order of statuses.
 
 
 =head1 AUTHOR
