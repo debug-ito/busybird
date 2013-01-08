@@ -6,6 +6,9 @@ use Test::MockObject;
 use Test::Exception;
 use DateTime::TimeZone;
 use List::Util qw(min);
+use FindBin;
+use lib ("$FindBin::RealBin/lib");
+use Test::App::BusyBird::Input_Twitter qw(:all);
 use utf8;
 
 BEGIN {
@@ -14,53 +17,10 @@ BEGIN {
 
 $App::BusyBird::Input::Twitter::STATUS_TIMEZONE = DateTime::TimeZone->new(name => '+0900');
 
-sub limit {
-    my ($orig, $min, $max) = @_;
-    $$orig = $min if $$orig < $min;
-    $$orig = $max if $$orig > $max;
-}
-
-sub mock_timeline {
-    my ($self, $params) = @_;
-    my $page_size = $params->{count} || $params->{per_page} || $params->{rpp} || 10;
-    my $max_id = $params->{max_id} || 100;
-    my $since_id = $params->{since_id} || 0;
-    limit \$max_id,   1, 100;
-    limit \$since_id, 0, 100;
-    my @result = ();
-    for(my $id = $max_id ; $id > $since_id && int(@result) < $page_size ; $id--) {
-        push(@result, { id => $id });
-    }
-    return \@result;
-}
-
-sub mock_search {
-    my ($self, $params) = @_;
-    my $statuses = mock_timeline($self, $params);
-    return { results => $statuses };
-}
-
-sub statuses {
-    my (@ids) = @_;
-    return map { +{id => $_} } @ids;
-}
-
 sub test_mock {
     my ($param, $exp_ids, $msg) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     is_deeply(main->mock_timeline($param), [statuses(@$exp_ids)], $msg);
-}
-
-sub test_call {
-    my ($mock, $method, @method_args) = @_;
-    local $Test::Builder::Level = $Test::Builder::Level + 1;
-    is_deeply([$mock->next_call], [$method, [$mock, @method_args]], "mock method $method");
-}
-
-sub end_call {
-    my ($mock, $msg) = @_;
-    local $Test::Builder::Level = $Test::Builder::Level + 1;
-    ok(!defined(scalar($mock->next_call)), $msg || "call end");
 }
 
 note('--- test the mock itself');
@@ -78,9 +38,7 @@ test_mock {since_id => -100}, [reverse(91..100)], "mock since_id negative";
 test_mock {max_id => 40, since_id => 35}, [reverse(36..40)], "mock max_id and since_id";
 test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
 
-my $mocknt = Test::MockObject->new();
-$mocknt->mock($_, \&mock_timeline) foreach qw(home_timeline user_timeline public_timeline list_statuses);
-$mocknt->mock('search', \&mock_search);
+my $mocknt = mock_twitter();
 
 note('--- iteration by user_timeline');
 my $bbin = App::BusyBird::Input::Twitter->new(
@@ -213,84 +171,6 @@ end_call $mocknt;
     ok(!defined($result), "the result should be undef then.") or diag("result is $result");
 }
 
-if(!$ENV{AUTHOR_TEST}) {
-    diag("Set AUTHOR_TEST env to test filepath option");
-}else {
-    note('--- AUTHOR_TEST: filepath option');
-    my $filename = "test_persistence_file_input_twitter";
-    if(-r $filename) {
-        unlink($filename) or die "Cannot remove $filename: $!";
-    }
-    my $bbin = App::BusyBird::Input::Twitter->new(
-        backend => $mocknt, filepath => $filename, page_next_delay => 0, logger => undef, transformer => undef
-    );
-    $mocknt->clear;
-    is_deeply(
-        $bbin->user_timeline({max_id => 30, since_id => 5, count => 20, user_id => 88}),
-        [statuses reverse 6..30],
-        "user_timeline: init"
-    );
-    test_call $mocknt, 'user_timeline', {user_id => 88, count => 20, since_id => 5, max_id => 30};
-    test_call $mocknt, 'user_timeline', {user_id => 88, count => 20, since_id => 5, max_id => 11};
-    test_call $mocknt, 'user_timeline', {user_id => 88, count => 20, since_id => 5, max_id => 6};
-    end_call $mocknt;
-    
-    ok(-r $filename, "$filename created");
-
-    $mocknt->clear;
-    is_deeply(
-        $bbin->user_timeline({max_id => 70, count => 35, user_id => 88}),
-        [statuses reverse 31..70],
-        "user_timmeline: from the previous max_id"
-    );
-    test_call $mocknt, 'user_timeline', {user_id => 88, count => 35, since_id => 30, max_id => 70};
-    test_call $mocknt, 'user_timeline', {user_id => 88, count => 35, since_id => 30, max_id => 36};
-    test_call $mocknt, 'user_timeline', {user_id => 88, count => 35, since_id => 30, max_id => 31};
-    end_call $mocknt;
-
-    $mocknt->clear;
-    is_deeply(
-        $bbin->user_timeline({count => 5, screen_name => "hoge"}),
-        [statuses reverse 96..100],
-        "user_timeline: different label"
-    );
-    test_call $mocknt, "user_timeline", {count => 5, screen_name => 'hoge'};
-    end_call $mocknt;
-
-    $mocknt->clear;
-    is_deeply(
-        $bbin->search({q => 'ほ げ', max_id => 60, count => 10}),
-        [statuses reverse 51..60],
-        "search: hoge first"
-    );
-    test_call $mocknt, "search", {q => 'ほ げ', count => 10, max_id => 60};
-    end_call $mocknt;
-
-    $mocknt->clear;
-    is_deeply(
-        $bbin->search({q => 'ふーばー', count => 10}),
-        [statuses reverse 91..100],
-        "search: foobar first"
-    );
-    test_call $mocknt, "search", {q => 'ふーばー', count => 10};
-    end_call $mocknt;
-
-    $mocknt->clear;
-    is_deeply(
-        $bbin->search({q => 'ほ げ', count => 30}),
-        [statuses reverse 61..100],
-        "search: hoge second. it continues from ID=61"
-    );
-    test_call $mocknt, "search", {q => 'ほ げ', count => 30, since_id => 60};
-    test_call $mocknt, "search", {q => 'ほ げ', count => 30, since_id => 60, max_id => 71};
-    test_call $mocknt, "search", {q => 'ほ げ', count => 30, since_id => 60, max_id => 61};
-    end_call $mocknt;
-
-    ok(-r $filename, "$filename exists");
-    unlink($filename);
-}
-
-
 {
     note('--- transforms');
     my $tmock = Test::MockObject->new;
@@ -384,8 +264,5 @@ if(!$ENV{AUTHOR_TEST}) {
         'transformer_default'
     );
 }
-
-
-
 
 done_testing();
