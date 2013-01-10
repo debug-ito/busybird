@@ -1,5 +1,4 @@
 package App::BusyBird::Input::Twitter;
-
 use strict;
 use warnings;
 use App::BusyBird::Util qw(set_param);
@@ -7,7 +6,7 @@ use App::BusyBird::Log;
 use App::BusyBird::DateTime::Format;
 use Time::HiRes qw(sleep);
 use JSON;
-use Data::Clone;
+use Storable qw(dclone);
 use Try::Tiny;
 use Carp;
 use DateTime::TimeZone;
@@ -49,7 +48,7 @@ my %_SEARCH_KEY_MAP = (
 
 sub transform_search_status {
     my ($self, $status) = @_;
-    my $new_status = clone($status);
+    my $new_status = dclone($status);
     if(exists($status->{created_at})) {
         $new_status->{created_at} = $DATETIME_FORMATTER->format_datetime(
             $DATETIME_FORMATTER->parse_datetime($status->{created_at})
@@ -68,7 +67,7 @@ sub transform_status_id {
     my ($self, $status) = @_;
     my $prefix = $self->{backend}->apiurl;
     $prefix =~ s|/+$||;
-    my $new_status = clone($status);
+    my $new_status = dclone($status);
     foreach my $key (qw(id id_str in_reply_to_status_id in_reply_to_status_id_str)) {
         next if not defined $status->{$key};
         $new_status->{$key} = "$prefix/" . $status->{$key};
@@ -92,7 +91,7 @@ sub transform_permalink {
         return $status if not defined($status->{user}{screen_name});
     }
     $apiurl =~ s|/+$||;
-    my $new_status = clone($status);
+    my $new_status = dclone($status);
     $new_status->{busybird}{status_permalink} = sprintf(
         "%s/%s/status/%s", $apiurl, $status->{user}{screen_name}, $id
     );
@@ -105,7 +104,7 @@ sub transform_timezone {
     my $dt = $DATETIME_FORMATTER->parse_datetime($status->{created_at});
     croak 'Invalid created_at field in a status' if not defined $dt;
     $dt->set_time_zone($timezone);
-    my $new_status = clone($status);
+    my $new_status = dclone($status);
     $new_status->{created_at} = $DATETIME_FORMATTER->format_datetime($dt);
     return $new_status;
 }

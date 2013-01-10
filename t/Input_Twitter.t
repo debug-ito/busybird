@@ -9,6 +9,7 @@ use List::Util qw(min);
 use FindBin;
 use lib ("$FindBin::RealBin/lib");
 use Test::App::BusyBird::Input_Twitter qw(:all);
+use JSON;
 use utf8;
 
 BEGIN {
@@ -234,18 +235,26 @@ end_call $mocknt;
     );
 
     is_deeply(
-        $bbin->transformer_default([{
-            id => 5, id_str => "5", created_at => "Wed, 05 Dec 2012 14:09:11 +0000",
-            in_reply_to_status_id => 12, in_reply_to_status_id_str => "12",
-            from_user => 'foobar',
-            from_user_id => 100,
-            from_user_id_str => "100"
-        }]),
+        $bbin->transformer_default([decode_json(q{
+{
+            "id": 5, "id_str": "5", "created_at": "Wed, 05 Dec 2012 14:09:11 +0000",
+            "in_reply_to_status_id": 12, "in_reply_to_status_id_str": "12",
+            "from_user": "foobar",
+            "from_user_id": 100,
+            "from_user_id_str": "100",
+            "true_flag": true,
+            "false_flag": false,
+            "null_value": null
+        }
+})]),
         [{
             id => "${apiurl}5", id_str => "${apiurl}5",
             in_reply_to_status_id => "${apiurl}12",
             in_reply_to_status_id_str => "${apiurl}12",
             created_at => "Wed Dec 05 23:09:11 +0900 2012",
+            true_flag => JSON::true,
+            false_flag => JSON::false,
+            null_value => undef,
             user => {
                 screen_name => "foobar",
                 id => 100,

@@ -4,7 +4,7 @@ use warnings;
 use App::BusyBird::Util qw(set_param sort_statuses);
 use App::BusyBird::DateTime::Format;
 use DateTime;
-use Data::Clone;
+use Storable qw(dclone);
 use Carp;
 use List::Util qw(min);
 
@@ -73,10 +73,10 @@ sub put_statuses {
             $is_insert = (!$existent);
         }
         if($is_insert) {
-            unshift(@{$self->{timelines}{$timeline}}, clone($s));
+            unshift(@{$self->{timelines}{$timeline}}, dclone($s));
         }else {
             ## update
-            $self->{timelines}{$timeline}[$tl_index] = clone($s);
+            $self->{timelines}{$timeline}[$tl_index] = dclone($s);
         }
         $put_count++;
     }
@@ -176,7 +176,7 @@ sub get_statuses {
     $count = int(@indice) if $count eq 'all';
     $count = min($count, int(@indice));
     my $result_statuses = $count <= 0 ? [] : [ map {
-        clone($self->{timelines}{$timeline}[$_])
+        dclone($self->{timelines}{$timeline}[$_])
     } @indice[0 .. ($count-1)] ];
 
     @_ = ($result_statuses);
