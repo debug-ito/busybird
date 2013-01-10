@@ -181,6 +181,7 @@ sub _load_timeline {
     my @result = ();
     my $load_count = 0;
     my %loaded_ids = ();
+    my $next_since_id;
     while($load_count < $page_max) {
         $params{max_id} = $max_id if defined $max_id;
         $self->_log_query($method, \%params);
@@ -197,6 +198,7 @@ sub _load_timeline {
         last if !@$loaded;
         $loaded_ids{$_->{id}} = 1 foreach @$loaded;
         $max_id = $loaded->[-1]{id};
+        $next_since_id = $loaded->[0]{id} if not defined $next_since_id;
         $loaded = $self->{transformer}->($self, $loaded) if defined $self->{transformer};
         if(ref($loaded) ne "ARRAY") {
             croak("transformer must return array-ref");
@@ -208,8 +210,8 @@ sub _load_timeline {
     if($load_count == $self->{page_max}) {
         $self->_log("warn", "page has reached the max value of " . $self->{page_max});
     }
-    if(@result) {
-        $since_ids->{$label} = $result[0]->{id};
+    if(defined($next_since_id)) {
+        $since_ids->{$label} = $next_since_id;
         $self->_save_next_since_id_file($since_ids);
     }
     return \@result;

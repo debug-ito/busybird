@@ -4,9 +4,10 @@ use warnings;
 use Test::Builder;
 use Test::More;
 use Test::MockObject;
+use Storable qw(dclone);
 use Exporter qw(import);
 
-our @EXPORT_OK = qw(test_call end_call mock_timeline mock_search mock_twitter statuses);
+our @EXPORT_OK = qw(test_call end_call mock_timeline mock_search mock_twitter statuses negative_id_transformer);
 our %EXPORT_TAGS = (
     all => \@EXPORT_OK
 );
@@ -59,6 +60,13 @@ sub mock_twitter {
     $mocknt->mock($_, \&mock_timeline) foreach qw(home_timeline user_timeline public_timeline list_statuses);
     $mocknt->mock('search', \&mock_search);
     return $mocknt;
+}
+
+sub negative_id_transformer {
+    my ($input, $status_arrayref) = @_;
+    return [map {
+        my $c = dclone($_); $c->{id} = -$c->{id}; $c;
+    } @$status_arrayref];
 }
 
 

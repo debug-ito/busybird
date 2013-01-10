@@ -39,139 +39,6 @@ test_mock {since_id => -100}, [reverse(91..100)], "mock since_id negative";
 test_mock {max_id => 40, since_id => 35}, [reverse(36..40)], "mock max_id and since_id";
 test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
 
-my $mocknt = mock_twitter();
-
-note('--- iteration by user_timeline');
-my $bbin = App::BusyBird::Input::Twitter->new(
-    backend => $mocknt, page_next_delay => 0, page_max => 500, logger => undef, transformer => undef
-);
-is_deeply(
-    $bbin->user_timeline({since_id => 10, screen_name => "someone"}),
-    [statuses reverse 11..100],
-    "user_timeline since_id"
-);
-test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10};
-test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 91};
-test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 82};
-test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 73};
-test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 64};
-test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 55};
-test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 46};
-test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 37};
-test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 28};
-test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 19};
-test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 11};
-end_call $mocknt;
-
-$mocknt->clear;
-is_deeply(
-    $bbin->user_timeline({user_id => 1919, count => 30}),
-    [statuses reverse 71..100],
-    "user_timeline no since_id"
-);
-test_call $mocknt, 'user_timeline', {user_id => 1919, count => 30};
-end_call $mocknt;
-
-$mocknt->clear;
-is_deeply(
-    $bbin->user_timeline({max_id => 50, count => 25}),
-    [statuses reverse 26..50],
-    "user_timeline max_id"
-);
-test_call $mocknt, 'user_timeline', {count => 25, max_id => 50};
-end_call $mocknt;
-
-$mocknt->clear;
-is_deeply(
-    $bbin->user_timeline({max_id => 20, since_id => 5, count => 5}),
-    [statuses reverse 6..20],
-    "user_timeline max_id and since_id"
-);
-test_call $mocknt, 'user_timeline', {count => 5, max_id => 20, since_id => 5};
-test_call $mocknt, 'user_timeline', {count => 5, max_id => 16, since_id => 5};
-test_call $mocknt, 'user_timeline', {count => 5, max_id => 12, since_id => 5};
-test_call $mocknt, 'user_timeline', {count => 5, max_id => 8, since_id => 5};
-test_call $mocknt, 'user_timeline', {count => 5, max_id => 6, since_id => 5};
-end_call $mocknt;
-
-$bbin = App::BusyBird::Input::Twitter->new(
-    backend => $mocknt, page_next_delay => 0, page_max => 2, logger => undef, transformer => undef
-);
-$mocknt->clear;
-is_deeply(
-    $bbin->user_timeline({since_id => 5, screen_name => "foo"}),
-    [statuses reverse 82..100],
-    "page_max option"
-);
-test_call $mocknt, 'user_timeline', {screen_name => "foo", since_id => 5};
-test_call $mocknt, 'user_timeline', {screen_name => "foo", since_id => 5, max_id => 91};
-end_call $mocknt;
-
-$bbin = App::BusyBird::Input::Twitter->new(
-    backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 3, logger => undef, transformer => undef
-);
-$mocknt->clear;
-is_deeply(
-    $bbin->user_timeline({max_id => 80, count => 11}),
-    [statuses reverse 50..80],
-    "page_max_no_since_id option"
-);
-test_call $mocknt, 'user_timeline', {count => 11, max_id => 80};
-test_call $mocknt, 'user_timeline', {count => 11, max_id => 70};
-test_call $mocknt, 'user_timeline', {count => 11, max_id => 60};
-end_call $mocknt;
-
-$bbin = App::BusyBird::Input::Twitter->new(
-    backend => $mocknt, page_next_delay => 0, logger => undef, transformer => undef
-);
-foreach my $method_name (qw(home_timeline list_statuses search)) {
-    note("--- iteration by $method_name");
-    $mocknt->clear;
-    is_deeply(
-        $bbin->$method_name({max_id => 40, since_id => 5, count => 20}),
-        [statuses reverse 6..40],
-        "$method_name iterates"
-    );
-    test_call $mocknt, $method_name, {count => 20, since_id => 5, max_id => 40};
-    test_call $mocknt, $method_name, {count => 20, since_id => 5, max_id => 21};
-    test_call $mocknt, $method_name, {count => 20, since_id => 5, max_id => 6};
-    end_call $mocknt;
-}
-
-note('--- public_statuses should never iterate');
-$bbin = App::BusyBird::Input::Twitter->new(
-    backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 10, logger => undef, transformer => undef
-);
-$mocknt->clear;
-is_deeply(
-    $bbin->public_timeline(),
-    [statuses reverse 91..100],
-    "public_timeline does not iterate even if page_max_no_since_id > 1"
-);
-test_call $mocknt, 'public_timeline', {};
-end_call $mocknt;
-
-{
-    note('--- it should return undef if backend throws an exception.');
-    my $diemock = Test::MockObject->new;
-    my $call_count = 0;
-    $diemock->mock('user_timeline', sub {
-        my ($self, $params) = @_;
-        $call_count++;
-        if($call_count == 1) {
-            return mock_timeline($self, $params);
-        }else {
-            die "Some network error.";
-        }
-    });
-    my $diein = App::BusyBird::Input::Twitter->new(
-        backend => $diemock, page_next_delay => 0, logger => undef, transformer => undef
-    );
-    my $result;
-    lives_ok { $result = $diein->user_timeline({since_id => 10, count => 5}) } '$diein should not throw exception even if backend does.';
-    ok(!defined($result), "the result should be undef then.") or diag("result is $result");
-}
-
 {
     note('--- transforms');
     my $tmock = Test::MockObject->new;
@@ -179,7 +46,7 @@ end_call $mocknt;
     $tmock->mock($_, \&mock_timeline) foreach qw(home_timeline);
     $tmock->mock('search', \&mock_search);
     $tmock->mock('-apiurl', sub { $apiurl });
-    $bbin = App::BusyBird::Input::Twitter->new(
+    my $bbin = App::BusyBird::Input::Twitter->new(
         backend => $tmock, page_next_delay => 0, logger => undef
     );
     is_deeply(
@@ -273,5 +140,145 @@ end_call $mocknt;
         'transformer_default'
     );
 }
+
+my $mocknt = mock_twitter();
+
+note('--- iteration by user_timeline');
+my $bbin = App::BusyBird::Input::Twitter->new(
+    backend => $mocknt, page_next_delay => 0, page_max => 500, logger => undef,
+    transformer => \&negative_id_transformer,
+);
+is_deeply(
+    $bbin->user_timeline({since_id => 10, screen_name => "someone"}),
+    [statuses -100 .. -11],
+    "user_timeline since_id"
+);
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 91};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 82};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 73};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 64};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 55};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 46};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 37};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 28};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 19};
+test_call $mocknt, 'user_timeline', {screen_name => "someone", since_id => 10, max_id => 11};
+end_call $mocknt;
+
+$mocknt->clear;
+is_deeply(
+    $bbin->user_timeline({user_id => 1919, count => 30}),
+    [statuses -100..-71],
+    "user_timeline no since_id"
+);
+test_call $mocknt, 'user_timeline', {user_id => 1919, count => 30};
+end_call $mocknt;
+
+$mocknt->clear;
+is_deeply(
+    $bbin->user_timeline({max_id => 50, count => 25}),
+    [statuses -50..-26],
+    "user_timeline max_id"
+);
+test_call $mocknt, 'user_timeline', {count => 25, max_id => 50};
+end_call $mocknt;
+
+$mocknt->clear;
+is_deeply(
+    $bbin->user_timeline({max_id => 20, since_id => 5, count => 5}),
+    [statuses -20..-6],
+    "user_timeline max_id and since_id"
+);
+test_call $mocknt, 'user_timeline', {count => 5, max_id => 20, since_id => 5};
+test_call $mocknt, 'user_timeline', {count => 5, max_id => 16, since_id => 5};
+test_call $mocknt, 'user_timeline', {count => 5, max_id => 12, since_id => 5};
+test_call $mocknt, 'user_timeline', {count => 5, max_id => 8, since_id => 5};
+test_call $mocknt, 'user_timeline', {count => 5, max_id => 6, since_id => 5};
+end_call $mocknt;
+
+$bbin = App::BusyBird::Input::Twitter->new(
+    backend => $mocknt, page_next_delay => 0, page_max => 2, logger => undef,
+    transformer => \&negative_id_transformer
+);
+$mocknt->clear;
+is_deeply(
+    $bbin->user_timeline({since_id => 5, screen_name => "foo"}),
+    [statuses -100..-82],
+    "page_max option"
+);
+test_call $mocknt, 'user_timeline', {screen_name => "foo", since_id => 5};
+test_call $mocknt, 'user_timeline', {screen_name => "foo", since_id => 5, max_id => 91};
+end_call $mocknt;
+
+$bbin = App::BusyBird::Input::Twitter->new(
+    backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 3, logger => undef,
+    transformer => \&negative_id_transformer
+);
+$mocknt->clear;
+is_deeply(
+    $bbin->user_timeline({max_id => 80, count => 11}),
+    [statuses -80..-50],
+    "page_max_no_since_id option"
+);
+test_call $mocknt, 'user_timeline', {count => 11, max_id => 80};
+test_call $mocknt, 'user_timeline', {count => 11, max_id => 70};
+test_call $mocknt, 'user_timeline', {count => 11, max_id => 60};
+end_call $mocknt;
+
+$bbin = App::BusyBird::Input::Twitter->new(
+    backend => $mocknt, page_next_delay => 0, logger => undef,
+    transformer => \&negative_id_transformer
+);
+foreach my $method_name (qw(home_timeline list_statuses search)) {
+    note("--- iteration by $method_name");
+    $mocknt->clear;
+    is_deeply(
+        $bbin->$method_name({max_id => 40, since_id => 5, count => 20}),
+        [statuses -40..-6],
+        "$method_name iterates"
+    );
+    test_call $mocknt, $method_name, {count => 20, since_id => 5, max_id => 40};
+    test_call $mocknt, $method_name, {count => 20, since_id => 5, max_id => 21};
+    test_call $mocknt, $method_name, {count => 20, since_id => 5, max_id => 6};
+    end_call $mocknt;
+}
+
+note('--- public_statuses should never iterate');
+$bbin = App::BusyBird::Input::Twitter->new(
+    backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 10, logger => undef,
+    transformer => \&negative_id_transformer
+);
+$mocknt->clear;
+is_deeply(
+    $bbin->public_timeline(),
+    [statuses -100..-91],
+    "public_timeline does not iterate even if page_max_no_since_id > 1"
+);
+test_call $mocknt, 'public_timeline', {};
+end_call $mocknt;
+
+{
+    note('--- it should return undef if backend throws an exception.');
+    my $diemock = Test::MockObject->new;
+    my $call_count = 0;
+    $diemock->mock('user_timeline', sub {
+        my ($self, $params) = @_;
+        $call_count++;
+        if($call_count == 1) {
+            return mock_timeline($self, $params);
+        }else {
+            die "Some network error.";
+        }
+    });
+    my $diein = App::BusyBird::Input::Twitter->new(
+        backend => $diemock, page_next_delay => 0, logger => undef,
+        transformer => \&negative_id_transformer,
+    );
+    my $result;
+    lives_ok { $result = $diein->user_timeline({since_id => 10, count => 5}) } '$diein should not throw exception even if backend does.';
+    ok(!defined($result), "the result should be undef then.") or diag("result is $result");
+}
+
 
 done_testing();
