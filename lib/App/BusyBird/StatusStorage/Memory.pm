@@ -3,10 +3,13 @@ use strict;
 use warnings;
 use App::BusyBird::Util qw(set_param sort_statuses);
 use App::BusyBird::DateTime::Format;
+use App::BusyBird::Log;
 use DateTime;
 use Storable qw(dclone);
 use Carp;
 use List::Util qw(min);
+use JSON;
+use Try::Tiny;
 
 sub new {
     my ($class, %options) = @_;
@@ -18,13 +21,26 @@ sub new {
     if($self->{max_status_num} <= 0) {
         croak "max_status_num option must be bigger than 0.";
     }
+    $self->{logger} = exists($options{logger})
+        ? $options{logger} : App::BusyBird::Log->logger;
+    $self->load();
     return $self;
+}
+
+sub DESTROY {
+    my ($self) = @_;
+    $self->save();
 }
 
 ## sub _exists {
 ##     my ($self, $timeline, $id) = @_;
 ##     return exists($self->{indices}{$timeline}{$id});
 ## }
+
+sub _log {
+    my ($self, $level, $msg) = @_;
+    $self->{logger}->($level, __PACKAGE__ . ": " . $msg) if defined $self->{logger};
+}
 
 sub _index {
     my ($self, $timeline, $id) = @_;
@@ -39,6 +55,49 @@ sub _confirmed {
     my ($self, $status) = @_;
     no autovivification;
     return $status->{busybird}{confirmed_at};
+}
+
+sub save {
+    my ($self) = @_;
+    return 1 if not defined $self->{filepath};
+    my $file;
+    if(!open $file, ">", $self->{filepath}) {
+        $self->_log("error", "Cannot open $self->{filepath} to write.");
+        return 0;
+    }
+    my $success;
+    try {
+        print $file encode_json($self->{timelines});
+        $success = 1;
+    }catch {
+        my $e = shift;
+        $self->_log("error", "Error while saving: $e");
+        $success = 0;
+    };
+    close $file;
+    return $success;
+}
+
+sub load {
+    my ($self) = @_;
+    return 1 if not defined $self->{filepath};
+    my $file;
+    if(!open $file, "<", $self->{filepath}) {
+        $self->_log("notice", "Cannot open $self->{filepath} to read");
+        return 0;
+    }
+    my $success;
+    try {
+        my $text = do { local $/; <$file> };
+        $self->{timelines} = decode_json($text);
+        $success = 1;
+    }catch {
+        my $e = shift;
+        $self->_log("error", "Error while loading: $e");
+        $success = 0;
+    };
+    close $file;
+    return $success;
 }
 
 sub put_statuses {
@@ -255,7 +314,15 @@ App::BusyBird::StatusStorage::Memory - Simple status storage in the process memo
 
 =head1 SYNOPSIS
 
-    TODO;
+    use App::BusyBird::StatusStorage::Memory;
+    
+    ## ephemeral storage: the statuses will be lost when the process is terminated
+    my $storage = App::BusyBird::StatusStorage::Memory->new();
+    
+    ## Statuses are saved to my_statuses.json when $storage is DESTROYed.
+    $storage = App::BusyBird::StatusStorage::Memory->new(
+        filepath => '~/my_statuses.json'
+    );
 
 
 =head1 DESCRIPTION
@@ -307,12 +374,38 @@ If C<filepath> is C<undef> or omitted, the statuses are never saved.
 Specifies the maximum number of statuses the storage can store.
 If more statuses are added to the full storage, the oldest statuses are removed automatically.
 
+=item C<logger> => CODEREF($level, $msg) (optional, default: C<< App::BusyBird::Log->logger >>)
+
+Specifies a subroutine reference that is called to log messages.
+By default, C<< App::BusyBird::Log->logger >> is used.
+
+If this option is set to C<undef>, log is suppressed.
+
+
 =back
 
 =head1 OBJECTS METHODS
 
-All methods described in L<App::BusyBird::StatusStorage> are supported.
+In addition to the following methods,
+all methods described in L<App::BusyBird::StatusStorage> are supported, too.
 
 
+=head2 $is_success = $storage->save()
+
+If C<filepath> option is set, save the current content of the storage to the file.
+If C<filepath> option is C<undef>, it does nothing and returns true.
+
+In success, it returns true. In failure, it returns false and the error will be logged.
+
+This method is called in C<DESTROY()>, so you usually don't have to call the method manually.
+
+=head2 $is_success = $storage->load()
+
+If C<filepath> option is set, load statuses from the file.
+If C<filepath> option is C<undef>, it does nothing and returns true.
+
+In success, it returns true. In failure, it returns false and the error will be logged.
+
+This method is called in C<new()>, so you usually don't have to call the method manually.
 
 =cut
