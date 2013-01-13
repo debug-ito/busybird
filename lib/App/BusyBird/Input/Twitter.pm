@@ -67,10 +67,11 @@ sub transform_status_id {
     my ($self, $status) = @_;
     my $prefix = $self->{backend}->apiurl;
     $prefix =~ s|/+$||;
+    $prefix =~ s|https:|http:|;
     my $new_status = dclone($status);
     foreach my $key (qw(id id_str in_reply_to_status_id in_reply_to_status_id_str)) {
         next if not defined $status->{$key};
-        $new_status->{$key} = "$prefix/" . $status->{$key};
+        $new_status->{$key} = "$prefix/statuses/show/" . $status->{$key} . ".json";
         $new_status->{busybird}{original}{$key} = $status->{$key};
     }
     return $new_status;

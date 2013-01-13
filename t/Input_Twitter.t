@@ -52,7 +52,8 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
     is_deeply(
         $bbin->transform_status_id({ id => 10, in_reply_to_status_id => 55}),
         {
-            id => "${apiurl}10", in_reply_to_status_id => "${apiurl}55",
+            id => "${apiurl}statuses/show/10.json",
+            in_reply_to_status_id => "${apiurl}statuses/show/55.json",
             busybird => { original => {
                 id => 10, in_reply_to_status_id => 55
             } }
@@ -115,9 +116,9 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
         }
 })]),
         [{
-            id => "${apiurl}5", id_str => "${apiurl}5",
-            in_reply_to_status_id => "${apiurl}12",
-            in_reply_to_status_id_str => "${apiurl}12",
+            id => "${apiurl}statuses/show/5.json", id_str => "${apiurl}statuses/show/5.json",
+            in_reply_to_status_id => "${apiurl}statuses/show/12.json",
+            in_reply_to_status_id_str => "${apiurl}statuses/show/12.json",
             created_at => "Wed Dec 05 23:09:11 +0900 2012",
             true_flag => JSON::true,
             false_flag => JSON::false,
