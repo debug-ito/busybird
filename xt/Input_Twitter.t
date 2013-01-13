@@ -14,7 +14,8 @@ my $mocknt = mock_twitter();
 note('--- AUTHOR TEST: filepath option');
 my $filename = "test_persistence_file_input_twitter";
 if(-r $filename) {
-    unlink($filename) or die "Cannot remove $filename: $!";
+    fail("$filename exists before test. Test aborted.");
+    exit(1);
 }
 my $bbin = App::BusyBird::Input::Twitter->new(
     backend => $mocknt, filepath => $filename, page_next_delay => 0, logger => undef,
