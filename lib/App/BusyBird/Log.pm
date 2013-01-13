@@ -27,9 +27,17 @@ sub log {
     print STDERR ("$level: $msg\n");
 }
 
-sub logger {
+sub logger_obj {
     my ($class) = @_;
     return $instance;
+}
+
+sub logger {
+    my ($class) = @_;
+    return sub {
+        my ($level, $msg) = @_;
+        $instance->log($level, $msg);
+    };
 }
 
 1;

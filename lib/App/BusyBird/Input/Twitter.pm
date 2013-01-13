@@ -128,7 +128,7 @@ sub _load_next_since_id_file {
 
 sub _log {
     my ($self, $level, $msg) = @_;
-    $self->{logger}->log($level, $msg) if defined $self->{logger};
+    $self->{logger}->($level, $msg) if defined $self->{logger};
 }
 
 sub _save_next_since_id_file {
@@ -356,25 +356,25 @@ Backend L<Net::Twitter> object.
 File path for saving and loading the next since_id.
 If this option is not specified, no file will be created or loaded.
 
-=item page_max (optional)
+=item page_max (optional, default: 10)
 
 Maximum number of pages this module tries to load when since_id is given.
 
-=item page_max_no_since_id (optional)
+=item page_max_no_since_id (optional, default: 1)
 
 Maximum number of pages this module tries to load when no since_id is given.
 
-=item page_next_delay (optional)
+=item page_next_delay (optional, default: 0.5)
 
 Delay in seconds before loading the next page.
 
-=item logger (optional)
+=item logger => CODEREF($level, $msg) (optional, default: C<< App::BusyBird::Log->logger >>)
 
-Logger object. By default L<App::BusyBird::Log> object is used.
+Logger subroutine reference.
 
 Setting it to C<undef> suppresses logging.
 
-=item transformer (optional)
+=item transformer (optional, default: C<transformer_default>)
 
 A subroutine reference that transforms the result from Net::Twitter methods.
 
