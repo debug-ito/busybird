@@ -4,6 +4,7 @@ use Test::More;
 use Test::Builder;
 use DateTime;
 use App::BusyBird::DateTime::Format;
+use Storable qw(dclone);
 
 BEGIN {
     use_ok('App::BusyBird::Util', 'sort_statuses');
@@ -47,7 +48,7 @@ sub test_sort {
         {id => 13, created_at => ""},
         {id => 14, created_at => "", busybird => { confirmed_at => dtstr(55432) }},
     );
-    test_sort(\@orig, [@orig[5,11,13, 9,3,10,6, 8,2, 14,7, 4,0,12, 1]], "sort ok");
+    test_sort(dclone(\@orig), [@orig[5,11,13, 9,3,10,6, 8,2, 14,7, 4,0,12, 1]], "sort ok");
 }
 
 

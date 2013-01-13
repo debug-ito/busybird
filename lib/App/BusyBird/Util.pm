@@ -55,11 +55,14 @@ sub sort_statuses {
     my ($statuses) = @_;
     my @dt_statuses = do {
         no autovivification;
-        map { [
-            $_,
-            _epoch_undef($_->{busybird}{confirmed_at}),
-            _epoch_undef($_->{created_at}),
-        ] } @$statuses;
+        map {
+            my $confirmed_at = $_->{busybird}{confirmed_at}; ## avoid autovivification
+            [
+                $_,
+                _epoch_undef($confirmed_at),
+                _epoch_undef($_->{created_at}),
+            ];
+        } @$statuses;
     };
     return [ map { $_->[0] } sort {
         foreach my $sort_key (1, 2) {
