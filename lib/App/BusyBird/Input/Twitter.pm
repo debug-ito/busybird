@@ -10,6 +10,7 @@ use Storable qw(dclone);
 use Try::Tiny;
 use Carp;
 use DateTime::TimeZone;
+use Scalar::Util qw(reftype blessed);
 
 our $VERSION = "0.01";
 
@@ -24,10 +25,19 @@ sub new {
     $self->set_param(\%params, 'page_max', 10);
     $self->set_param(\%params, 'page_max_no_since_id', 1);
     $self->set_param(\%params, 'page_next_delay', 0.5);
+    $self->set_param(\%params, 'apiurl', undef);
     $self->{logger} = exists($params{logger}) ? $params{logger} : App::BusyBird::Log->logger;
     $self->{transformer} =
         exists($params{transformer}) ? $params{transformer} : \&transformer_default;
     return $self;
+}
+
+sub _apiurl {
+    my ($self) = @_;
+    return $self->{apiurl} if defined $self->{apiurl};
+    return $self->{backend}->apiurl if blessed($self->{backend}) && $self->{backend}->can('apiurl');
+    return $self->{backend}{apiurl} if reftype($self->{backend}) eq 'HASH' && defined($self->{backend}{apiurl});
+    croak "Cannot determine API URL. Perhaps you have to set 'apiurl' option when calling new()";
 }
 
 sub transformer_default {
@@ -65,7 +75,7 @@ sub transform_search_status {
 
 sub transform_status_id {
     my ($self, $status) = @_;
-    my $prefix = $self->{backend}->apiurl;
+    my $prefix = $self->_apiurl;
     $prefix =~ s|/+$||;
     $prefix =~ s|https:|http:|;
     my $new_status = dclone($status);
@@ -79,7 +89,7 @@ sub transform_status_id {
 
 sub transform_permalink {
     my ($self, $status) = @_;
-    my $apiurl = $self->{backend}->apiurl;
+    my $apiurl = $self->_apiurl;
     my $id;
     {
         no autovivification;
@@ -348,26 +358,34 @@ Creates the object with the following C<%options>.
 
 =over
 
-=item backend (mandatory)
+=item backend => OBJECT (mandatory)
 
-Backend L<Net::Twitter> object.
+Backend L<Net::Twitter> object. L<Net::Twitter::Lite> object can be used, too.
 
-=item filepath (optional)
+=item filepath => FILEPATH (optional)
 
 File path for saving and loading the next since_id.
 If this option is not specified, no file will be created or loaded.
 
-=item page_max (optional, default: 10)
+=item page_max => INT (optional, default: 10)
 
 Maximum number of pages this module tries to load when since_id is given.
 
-=item page_max_no_since_id (optional, default: 1)
+=item page_max_no_since_id => INT (optional, default: 1)
 
 Maximum number of pages this module tries to load when no since_id is given.
 
-=item page_next_delay (optional, default: 0.5)
+=item page_next_delay => NUMBER (optional, default: 0.5)
 
-Delay in seconds before loading the next page.
+Delay in seconds before loading the next page. Fractional number can be used.
+
+=item apiurl => URL_STRING (optional, default: C<undef>)
+
+API URL of the backend source.
+
+By default, API URL is obtained from the C<backend> object,
+so you don't usually have to set this option.
+
 
 =item logger => CODEREF($level, $msg) (optional, default: C<< App::BusyBird::Log->logger >>)
 

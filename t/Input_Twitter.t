@@ -142,6 +142,50 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
     );
 }
 
+{
+    note('--- apiurl option');
+    my $apiurl = 'https://foobar.co.jp';
+    my $apiurlmock = Test::MockObject->new;
+    $apiurlmock->mock('apiurl', sub { $apiurl });
+    foreach my $newarg (
+        {label => "apiurl option", args => [backend => {}, apiurl => $apiurl]},
+        {label => "backend apiurl field", args => [backend => {apiurl => $apiurl}]},
+        {label => "apiurl option and backend field", args => [backend => {apiurl => "http://hogege.com"}, apiurl => $apiurl]},
+        {label => "backend apiurl method", args => [backend => $apiurlmock]}
+    ) {
+        my $bbin = new_ok('App::BusyBird::Input::Twitter', $newarg->{args});
+        my $label = $newarg->{label};
+        is_deeply(
+            $bbin->transform_status_id({id => 109}),
+            {
+                id => "http://foobar.co.jp/statuses/show/109.json",
+                busybird => { original => {
+                    id => 109
+                }}
+            },
+            "$label: transform_status_id ok"
+        );
+        is_deeply(
+            $bbin->transform_permalink({id => 110, user => { screen_name => "hoge" }}),
+            {
+                id => 110, user => {screen_name => "hoge"},
+                busybird => { status_permalink => 'https://foobar.co.jp/hoge/status/110' }
+            },
+            "$label: transform_permalink ok"
+        );
+    }
+    my $noapiurl_mock = Test::MockObject->new;
+    foreach my $newarg (
+        {label => "no apiurl field", args => [backend => []]},
+        {label => "no apiurl method", args => [backend => $noapiurl_mock]}
+    ) {
+        my $bbin = new_ok('App::BusyBird::Input::Twitter', $newarg->{args});
+        my $label = $newarg->{label};
+        my $status = { id => 100, user => {screen_name => "foobar"} };
+        throws_ok { $bbin->transform_status_id($status) } qr{cannot determine api url}i, "$label ok";
+    }
+}
+
 my $mocknt = mock_twitter();
 
 note('--- iteration by user_timeline');
