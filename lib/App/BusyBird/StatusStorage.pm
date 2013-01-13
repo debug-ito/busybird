@@ -92,6 +92,9 @@ The default value of this option is up to implementations.
 
 Confirms a timeline, that is, changing 'unconfirmed' statuses into 'confirmed'.
 
+Confirmed status is a status whose C<< $status->{busybird}{confirmed_at} >> field evaluates to true.
+Otherwise, the status is unconfirmed.
+
 Fields in C<%args> are as follows.
 
 =over
@@ -275,6 +278,13 @@ Never throw an exception but call C<callback> with C<$error> if you
 fail to complete the request, i.e. if you is to blame.
 
 =back
+
+
+=head2 confirmed_at Field
+
+C<confirm_statuses()> method should update C<< $status->{busybird}{confirmed_at} >> field
+of the target statuses to the date/time string of the current time.
+The date/fime format should be the same as C<< $status->{created_at} >> field.
 
 
 =head2 Order of Statuses
