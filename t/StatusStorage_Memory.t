@@ -1,8 +1,6 @@
 use strict;
 use warnings;
 use Test::More;
-use FindBin;
-use lib ("$FindBin::RealBin/lib");
 use Test::BusyBird::StatusStorage qw(:storage :status);
 
 BEGIN {
