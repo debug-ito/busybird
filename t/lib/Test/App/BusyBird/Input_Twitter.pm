@@ -57,7 +57,13 @@ sub statuses {
 
 sub mock_twitter {
     my $mocknt = Test::MockObject->new();
-    $mocknt->mock($_, \&mock_timeline) foreach qw(home_timeline user_timeline public_timeline list_statuses);
+    foreach my $method (
+        qw(home_timeline user_timeline public_timeline list_statuses
+           favorites mentions retweets_of_me)
+    ) {
+        $mocknt->mock($method, \&mock_timeline) 
+    }
+    
     $mocknt->mock('search', \&mock_search);
     return $mocknt;
 }

@@ -230,7 +230,7 @@ sub _load_timeline {
 
 sub user_timeline {
     my ($self, $nt_params) = @_;
-    return $self->_load_timeline($nt_params, undef, qw(user_id screen_name));
+    return $self->_load_timeline($nt_params, undef, qw(id user_id screen_name));
 }
 
 sub public_timeline {
@@ -245,12 +245,27 @@ sub home_timeline {
 
 sub list_statuses {
     my ($self, $nt_params) = @_;
-    return $self->_load_timeline($nt_params, undef, qw(user list_id));
+    return $self->_load_timeline($nt_params, undef, qw(list_id slug owner_screen_name owner_id));
 }
 
 sub search {
     my ($self, $nt_params) = @_;
     return $self->_load_timeline($nt_params, undef, qw(q lang locale));
+}
+
+sub favorites {
+    my ($self, $nt_params) = @_;
+    return $self->_load_timeline($nt_params, undef, qw(id user_id screen_name))
+}
+
+sub mentions {
+    my ($self, $nt_params) = @_;
+    return $self->_load_timeline($nt_params);
+}
+
+sub retweets_of_me {
+    my ($self, $nt_params) = @_;
+    return $self->_load_timeline($nt_params);
 }
 
 1;
@@ -420,6 +435,12 @@ Setting C<transformer> to C<undef> suppresses any transformation.
 =head2 $status_arrayref = $input->public_statuses($options_hashref)
 
 =head2 $status_arrayref = $input->search($options_hashref)
+
+=head2 $status_arrayref = $input->favorites($options_hashref)
+
+=head2 $status_arrayref = $input->mentions($options_hashref)
+
+=head2 $status_arrayref = $input->retweets_of_me($options_hashref)
 
 Wrapper methods for corresponding L<Net::Twitter> methods. See L<Net::Twitter> for specification of C<$options_hashref>.
 

@@ -275,7 +275,7 @@ $bbin = App::BusyBird::Input::Twitter->new(
     backend => $mocknt, page_next_delay => 0, logger => undef,
     transformer => \&negative_id_transformer
 );
-foreach my $method_name (qw(home_timeline list_statuses search)) {
+foreach my $method_name (qw(home_timeline list_statuses search favorites mentions retweets_of_me)) {
     note("--- iteration by $method_name");
     $mocknt->clear;
     is_deeply(
