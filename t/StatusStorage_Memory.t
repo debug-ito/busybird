@@ -3,7 +3,7 @@ use warnings;
 use Test::More;
 use FindBin;
 use lib ("$FindBin::RealBin/lib");
-use Test::App::BusyBird::StatusStorage qw(:storage :status);
+use Test::BusyBird::StatusStorage qw(:storage :status);
 
 BEGIN {
     use_ok('App::BusyBird::StatusStorage::Memory');

@@ -3,7 +3,7 @@ use warnings;
 use Test::More;
 use FindBin;
 use lib ("$FindBin::RealBin/../t/lib");
-use Test::App::BusyBird::Input_Twitter qw(:all);
+use Test::BusyBird::Input_Twitter qw(:all);
 
 BEGIN {
     use_ok('App::BusyBird::Input::Twitter');

@@ -8,7 +8,7 @@ use DateTime::TimeZone;
 use List::Util qw(min);
 use FindBin;
 use lib ("$FindBin::RealBin/lib");
-use Test::App::BusyBird::Input_Twitter qw(:all);
+use Test::BusyBird::Input_Twitter qw(:all);
 use JSON;
 use utf8;
 

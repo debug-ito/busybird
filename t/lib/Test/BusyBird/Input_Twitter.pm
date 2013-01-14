@@ -1,4 +1,4 @@
-package Test::App::BusyBird::Input_Twitter;
+package Test::BusyBird::Input_Twitter;
 use strict;
 use warnings;
 use Test::Builder;
@@ -82,7 +82,7 @@ sub negative_id_transformer {
 
 =head1 NAME
 
-Test::App::BusyBird::Input_Twitter - common utilities for testing Input::Twitter
+Test::BusyBird::Input_Twitter - common utilities for testing Input::Twitter
 
 =cut
 

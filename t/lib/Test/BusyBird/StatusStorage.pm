@@ -1,4 +1,4 @@
-package Test::App::BusyBird::StatusStorage;
+package Test::BusyBird::StatusStorage;
 use strict;
 use warnings;
 use Exporter qw(import);
@@ -927,14 +927,14 @@ sub test_storage_truncation {
 
 =head1 NAME
 
-Test::App::BusyBird::StatusStorage - Test routines for StatusStorage
+Test::BusyBird::StatusStorage - Test routines for StatusStorage
 
 =head1 SYNOPSIS
 
 
     use My::Storage;
     use Test::More;
-    use Test::App::BusyBird::StatusStorage qw(:storage);
+    use Test::BusyBird::StatusStorage qw(:storage);
     
     my $storage = My::Storage->new();
     test_storage_common($storage);
