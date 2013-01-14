@@ -975,7 +975,7 @@ Test the order of statuses obtained by C<get_statuses()> method.
 
 This test assumes the C<$storage> conforms to the "Order of Statuses" guideline
 documented in L<App::BusyBird::StatusStorage>.
-StatusStorage that does not confirm to the guideline should not run this test.
+StatusStorage that does not conform to the guideline should not run this test.
 
 The arguments are the same as C<test_storage_common> function.
 
@@ -985,7 +985,7 @@ The arguments are the same as C<test_storage_common> function.
 Test if statuses are properly truncated in the storage.
 
 This test assumes the C<$storage> passes C<test_storage_ordered()> test.
-In each timeline, the "oldest" status is removed first.
+In each timeline, the "oldest" status should be removed first.
 
 C<$storage> is the StatusStorage object to be tested.
 C<$max_status_num> is the maximum number of statuses per timeline
