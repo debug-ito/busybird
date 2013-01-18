@@ -222,6 +222,7 @@ sub _load_timeline {
         $self->_log("warn", "page has reached the max value of " . $self->{page_max});
     }
     if(defined($next_since_id)) {
+        $since_ids = $self->_load_next_since_id_file();
         $since_ids->{$label} = $next_since_id;
         $self->_save_next_since_id_file($since_ids);
     }
