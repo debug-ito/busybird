@@ -7,37 +7,19 @@ use Exporter qw(import);
 use strict;
 use warnings;
 
-our @EXPORT_OK = qw(bblog);
+my $logger = \&default_logger;
 
-my $instance = __PACKAGE__->new();
-
-sub bblog {
+sub default_logger {
     my ($level, $msg) = @_;
-    $instance->log($level, $msg);
-}
-
-sub new {
-    my ($class) = @_;
-    my $self = bless {}, $class;
-    return $self;
-}
-
-sub log {
-    my ($self, $level, $msg) = @_;
     print STDERR ("$level: $msg\n");
 }
 
-sub logger_obj {
-    my ($class) = @_;
-    return $instance;
-}
-
 sub logger {
-    my ($class) = @_;
-    return sub {
-        my ($level, $msg) = @_;
-        $instance->log($level, $msg);
-    };
+    my ($class, $in_logger) = @_;
+    if(@_ > 1) {
+        $logger = $in_logger || \&default_logger;
+    }
+    return $logger;
 }
 
 1;

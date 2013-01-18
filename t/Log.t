@@ -7,9 +7,14 @@ BEGIN {
     use_ok('App::BusyBird::Log');
 }
 
-my $logger_obj = App::BusyBird::Log->logger_obj();
-isa_ok($logger_obj, 'App::BusyBird::Log');
-can_ok($logger_obj, "log");
 is(ref(App::BusyBird::Log->logger), "CODE", "logger is coderef");
+
+my @log = ();
+my $logger = sub {
+    push(@log, @_);
+};
+is(App::BusyBird::Log->logger($logger), $logger, "logger set");
+App::BusyBird::Log->logger->("info", "information");
+is_deeply(\@log, ['info', 'information'], "logged");
 
 done_testing();
