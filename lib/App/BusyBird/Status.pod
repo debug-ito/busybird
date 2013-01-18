@@ -48,6 +48,17 @@ The following fields in a status object is used by BusyBird.
 
 =head2 $status->{busybird}{level}
 
+=head2 $status->{busybird}{source_name}
+
+=head2 $status->{busybird}{source_image_url}
+
+=head2 $status->{busybird}{status_permalink}
+
+=head2 $status->{busybird}{user_permalink}
+
+=head2 $status->{busybird}{source_permalink}
+
+
 
 =head1 AUTHOR
 
