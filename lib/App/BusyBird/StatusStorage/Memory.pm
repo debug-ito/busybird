@@ -304,6 +304,8 @@ sub get_unacked_counts {
 }
 
 
+our $VERSION = '0.01';
+
 1;
 
 =pod
@@ -311,6 +313,10 @@ sub get_unacked_counts {
 =head1 NAME
 
 App::BusyBird::StatusStorage::Memory - Simple status storage in the process memory
+
+=head1 VERSION
+
+Version 0.01
 
 =head1 SYNOPSIS
 
@@ -407,5 +413,9 @@ If C<filepath> option is C<undef>, it does nothing and returns true.
 In success, it returns true. In failure, it returns false and the error will be logged.
 
 This method is called in C<new()>, so you usually don't have to call the method manually.
+
+=head1 AUTHOR
+
+Toshio Ito C<< toshioito [at] cpan.org >>
 
 =cut
