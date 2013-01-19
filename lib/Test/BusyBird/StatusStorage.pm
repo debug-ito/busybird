@@ -26,7 +26,7 @@ our @EXPORT_OK = ();
 my $datetime_formatter = 'App::BusyBird::DateTime::Format';
 
 sub status {
-    my ($id, $level, $confirmed_at) = @_;
+    my ($id, $level, $acked_at) = @_;
     croak "you must specify id" if not defined $id;
     my $status = {
         id => $id,
@@ -35,7 +35,7 @@ sub status {
         ),
     };
     $status->{busybird}{level} = $level if defined $level;
-    $status->{busybird}{confirmed_at} = $confirmed_at if defined $confirmed_at;
+    $status->{busybird}{acked_at} = $acked_at if defined $acked_at;
     return $status;
 }
 
@@ -60,10 +60,10 @@ sub id_list {
     return map { ref($_) ? $_->{id} : $_ } @statuses_or_ids;
 }
 
-sub confirmed {
+sub acked {
     my ($s) = @_;
     no autovivification;
-    return $s->{busybird}{confirmed_at};
+    return $s->{busybird}{acked_at};
 }
 
 sub test_status_id_set {
@@ -131,7 +131,7 @@ sub change_and_check {
             callback => $callback_func,
         );
         $loop->();
-    }elsif($args{mode} eq 'delete' || $args{mode} eq 'confirm') {
+    }elsif($args{mode} eq 'delete' || $args{mode} eq 'ack') {
         my $method = "$args{mode}_statuses";
         $storage->$method(
             timeline => $args{timeline},
@@ -144,37 +144,37 @@ sub change_and_check {
     }
     on_statuses $storage, $loop, $unloop, {
         timeline => $args{timeline}, count => 'all',
-        confirm_state => 'confirmed'
+        ack_state => 'acked'
     }, sub {
         my $statuses = shift;
         test_status_id_set(
-            $statuses, $args{exp_confirmed},
-            "$label confirmed statuses OK"
+            $statuses, $args{exp_acked},
+            "$label acked statuses OK"
         );
         foreach my $s (@$statuses) {
-            ok(confirmed($s), "$label confirmed");
+            ok(acked($s), "$label acked");
         }
     };
     on_statuses $storage, $loop, $unloop, {
         timeline => $args{timeline}, count => 'all',
-        confirm_state => 'unconfirmed',
+        ack_state => 'unacked',
     }, sub {
         my $statuses = shift;
         test_status_id_set(
-            $statuses, $args{exp_unconfirmed},
-            "$label unconfirmed statuses OK"
+            $statuses, $args{exp_unacked},
+            "$label unacked statuses OK"
         );
         foreach my $s (@$statuses) {
-            ok(!confirmed($s), "$label not confirmed");
+            ok(!acked($s), "$label not acked");
         }
     };
     on_statuses $storage, $loop, $unloop, {
         timeline => $args{timeline}, count => 'all',
-        confirm_state => 'any',
+        ack_state => 'any',
     }, sub {
         my $statuses = shift;
         test_status_id_set(
-            $statuses, [@{$args{exp_confirmed}}, @{$args{exp_unconfirmed}}],
+            $statuses, [@{$args{exp_acked}}, @{$args{exp_unacked}}],
             "$label statuses in any state OK"
         );
     };
@@ -209,7 +209,7 @@ sub test_storage_common {
         $loop->();
         ok($callbacked, "callbacked");
         is_deeply(
-            { $storage->get_unconfirmed_counts(timeline => $tl) },
+            { $storage->get_unacked_counts(timeline => $tl) },
             { total => 0 },
             "$tl is empty"
         );
@@ -232,9 +232,9 @@ sub test_storage_common {
     $loop->();
     ok($callbacked, "callbacked");
     is_deeply(
-        { $storage->get_unconfirmed_counts(timeline => '_test_tl1') },
+        { $storage->get_unacked_counts(timeline => '_test_tl1') },
         { total => 1, 0 => 1 },
-        '1 unconfirmed status'
+        '1 unacked status'
     );
     note('--- put_statuses (insert), multiple');
     $callbacked = 0;
@@ -253,9 +253,9 @@ sub test_storage_common {
     $loop->();
     ok($callbacked, "callbacked");
     is_deeply(
-        { $storage->get_unconfirmed_counts(timeline => '_test_tl1') },
+        { $storage->get_unacked_counts(timeline => '_test_tl1') },
         { total => 5, 0 => 5 },
-        '5 unconfirmed status'
+        '5 unacked status'
     );
 
     note('--- get_statuses: any, all');
@@ -269,7 +269,7 @@ sub test_storage_common {
             test_status_id_set($statuses, [1..5], "1..5 statuses");
             foreach my $s (@$statuses) {
                 no autovivification;
-                ok(!$s->{busybird}{confirmed_at}, "status is not confirmed");
+                ok(!$s->{busybird}{acked_at}, "status is not acked");
             }
             $callbacked = 1;
             $unloop->();
@@ -278,14 +278,14 @@ sub test_storage_common {
     $loop->();
     ok($callbacked, "callbacked");
 
-    note('--- confirm_statuses: all');
+    note('--- ack_statuses: all');
     $callbacked = 0;
-    $storage->confirm_statuses(
+    $storage->ack_statuses(
         timeline => '_test_tl1',
         callback => sub {
             my ($num, $error) = @_;
-            is(int(@_), 1, "confirm_statuses succeed");
-            is($num, 5, "5 statuses confirmed.");
+            is(int(@_), 1, "ack_statuses succeed");
+            is($num, 5, "5 statuses acked.");
             $callbacked = 1;
             $unloop->();
         }
@@ -293,9 +293,9 @@ sub test_storage_common {
     $loop->();
     ok($callbacked, "callbacked");
     is_deeply(
-        { $storage->get_unconfirmed_counts(timeline => '_test_tl1') },
+        { $storage->get_unacked_counts(timeline => '_test_tl1') },
         { total => 0 },
-        "all confirmed"
+        "all acked"
     );
     on_statuses $storage, $loop, $unloop, {
         timeline => '_test_tl1', count => 'all'
@@ -304,7 +304,7 @@ sub test_storage_common {
         is(int(@$statuses), 5, "5 statueses");
         foreach my $s (@$statuses) {
             no autovivification;
-            ok($s->{busybird}{confirmed_at}, 'confirmed');
+            ok($s->{busybird}{acked_at}, 'acked');
         }
     };
 
@@ -379,71 +379,71 @@ sub test_storage_common {
         $storage, $loop, $unloop, timeline => '_test_tl1',
         mode => 'insert', target => [map { status $_ } (1,2,3,2,1,1,4,5,3)],
         exp_change => 5,
-        exp_unconfirmed => [1..5], exp_confirmed => []
+        exp_unacked => [1..5], exp_acked => []
     );
-    note('--- confirm_statuses: single confirmation');
+    note('--- ack_statuses: single acknowlendgement');
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl1',
-        mode => 'confirm', target => 3, exp_change => 1,
-        exp_unconfirmed => [1,2,4,5], exp_confirmed => [3]
+        mode => 'ack', target => 3, exp_change => 1,
+        exp_unacked => [1,2,4,5], exp_acked => [3]
     );
     is_deeply(
-        {$storage->get_unconfirmed_counts(timeline => '_test_tl1')},
-        {total => 4, 0 => 4}, "4 unconfirmed statuses"
+        {$storage->get_unacked_counts(timeline => '_test_tl1')},
+        {total => 4, 0 => 4}, "4 unacked statuses"
     );
-    note('--- confirm_statuses: multiple partial confirmation');
+    note('--- ack_statuses: multiple partial acknowledgement');
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl1',
-        mode => 'confirm', target => [1,5,3], exp_change => 3,
-        exp_unconfirmed => [2,4], exp_confirmed => [1,3,5]
+        mode => 'ack', target => [1,5,3], exp_change => 3,
+        exp_unacked => [2,4], exp_acked => [1,3,5]
     );
     note('--- put (insert): try to insert existent status');
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl1',
         mode => 'insert', target => status(3), exp_change => 0,
-        exp_unconfirmed => [2,4], exp_confirmed => [1,3,5]
+        exp_unacked => [2,4], exp_acked => [1,3,5]
     );
-    note('--- put (update): change to unconfirmed');
+    note('--- put (update): change to unacked');
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl1',
         mode => 'update', target => [map { status($_) } (3,5)],
-        exp_change => 2, exp_unconfirmed => [2,3,4,5], exp_confirmed => [1]
+        exp_change => 2, exp_unacked => [2,3,4,5], exp_acked => [1]
     );
     is_deeply(
-        {$storage->get_unconfirmed_counts(timeline => '_test_tl1')},
-        {total => 4, 0 => 4}, '4 unconfirmed statuses'
+        {$storage->get_unacked_counts(timeline => '_test_tl1')},
+        {total => 4, 0 => 4}, '4 unacked statuses'
     );
     note('--- put (update): change level');
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl1',
         mode => 'update',
         target => [map { status($_, ($_ % 2 + 1), $_ == 1 ? nowstring() : undef) } (1..5)],
-        exp_change => 5, exp_unconfirmed => [2,3,4,5], exp_confirmed => [1]
+        exp_change => 5, exp_unacked => [2,3,4,5], exp_acked => [1]
     );
     is_deeply(
-        {$storage->get_unconfirmed_counts(timeline => '_test_tl1')},
-        {total => 4, 1 => 2, 2 => 2}, "4 unconfirmed statuses in 2 levels"
+        {$storage->get_unacked_counts(timeline => '_test_tl1')},
+        {total => 4, 1 => 2, 2 => 2}, "4 unacked statuses in 2 levels"
     );
-    note('--- put (upsert): confirmed statuses');
+    note('--- put (upsert): acked statuses');
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl1',
         mode => 'upsert', target => [map { status($_, 7, nowstring()) } (4..7)],
-        exp_change => 4, exp_unconfirmed => [2,3], exp_confirmed => [1,4..7]
+        exp_change => 4, exp_unacked => [2,3], exp_acked => [1,4..7]
     );
-    note('--- get and put(update): back to unconfirmed');
+    note('--- get and put(update): back to unacked');
     on_statuses $storage, $loop, $unloop, {
-        timeline => '_test_tl1', count => 'all', confirm_state => 'confirmed'
+        timeline => '_test_tl1', count => 'all', ack_state => 'acked'
     }, sub {
         my $statuses = shift;
-        delete $_->{busybird}{confirmed_at} foreach @$statuses;
+        delete $_->{busybird}{acked_at} foreach @$statuses;
         change_and_check(
             $storage, $loop, $unloop, timeline => '_test_tl1',
             mode => 'update', target => $statuses,
-            exp_change => 5, exp_unconfirmed => [1..7], exp_confirmed => []
+            exp_change => 5, exp_unacked => [1..7], exp_acked => []
         );
     };
     is_deeply(
-        {$storage->get_unconfirmed_counts(timeline => '_test_tl1')},
+        {$storage->get_unacked_counts(timeline => '_test_tl1')},
         {total => 7, 1 => 1, 2 => 2, 7 => 4}, "3 levels"
     );
 
@@ -451,16 +451,16 @@ sub test_storage_common {
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test  tl2',
         mode => 'insert', target => [map { status($_) } (1..10)],
-        exp_change => 10, exp_unconfirmed => [1..10], exp_confirmed => []
+        exp_change => 10, exp_unacked => [1..10], exp_acked => []
     );
     is_deeply(
-        {$storage->get_unconfirmed_counts(timeline => '_test  tl2')},
-        {total => 10, 0 => 10}, '10 unconfirmed statuses'
+        {$storage->get_unacked_counts(timeline => '_test  tl2')},
+        {total => 10, 0 => 10}, '10 unacked statuses'
     );
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test  tl2',
-        mode => 'confirm', target => [1..5],
-        exp_change => 5, exp_unconfirmed => [6..10], exp_confirmed => [1..5]
+        mode => 'ack', target => [1..5],
+        exp_change => 5, exp_unacked => [6..10], exp_acked => [1..5]
     );
     note('--- get: single, any state');
     foreach my $id (1..10) {
@@ -474,11 +474,11 @@ sub test_storage_common {
     }
     note('--- get: single, specific state');
     foreach my $id (1..10) {
-        my $correct_state = ($id <= 5) ? 'confirmed' : 'unconfirmed';
-        my $wrong_state = $correct_state eq 'confirmed' ? 'unconfirmed' : 'confirmed';
+        my $correct_state = ($id <= 5) ? 'acked' : 'unacked';
+        my $wrong_state = $correct_state eq 'acked' ? 'unacked' : 'acked';
         on_statuses $storage, $loop, $unloop, {
             timeline => '_test  tl2', count => 1, max_id => $id,
-            confirm_state => $correct_state,
+            ack_state => $correct_state,
         }, sub {
             my $statuses = shift;
             is(int(@$statuses), 1, "get 1 status");
@@ -487,12 +487,12 @@ sub test_storage_common {
         foreach my $count ('all', 1, 10) {
             on_statuses $storage, $loop, $unloop, {
                 timeline => '_test  tl2', count => $count, max_id => $id,
-                confirm_state => $wrong_state
+                ack_state => $wrong_state
             }, sub {
                 my $statuses = shift;
                 is(int(@$statuses), 0,
                    "no status returned when status specified" . 
-                       " max_id is not the correct confirm_state".
+                       " max_id is not the correct ack_state".
                            " even when count = $count");
             };    
         }
@@ -511,14 +511,14 @@ sub test_storage_common {
         test_status_id_set($statuses, [1..10], "10 statuses in _test  tl2");
     };
     note('--- access to non-existent statuses');
-    foreach my $mode (qw(update delete confirm)) {
+    foreach my $mode (qw(update delete ack)) {
         my $target = $mode eq 'update'
             ? [map { status($_) } (11..15) ] : [11..15];
         change_and_check(
             $storage, $loop, $unloop, timeline => '_test  tl2',
             mode => $mode, target => $target, label => "mode $mode",
-            exp_change => 0, exp_unconfirmed => [6..10],
-            exp_confirmed => [1..5]
+            exp_change => 0, exp_unacked => [6..10],
+            exp_acked => [1..5]
         );
     }
     on_statuses $storage, $loop, $unloop, {
@@ -528,14 +528,14 @@ sub test_storage_common {
         is(int(@$statuses), 0, "get max_id=15 returns empty");
     };
     note('--- access to non-existent timeline');
-    foreach my $mode (qw(update delete confirm)) {
+    foreach my $mode (qw(update delete ack)) {
         my $timeline = '_this_timeline_ probably does not exist';
         my $target = $mode eq 'update'
             ? status(1) : 1;
         change_and_check(
             $storage, $loop, $unloop, timeline => $timeline,
             mode => $mode, target => $target, lable => "mode $mode",
-            exp_change => 0, exp_unconfirmed => [], exp_confirmed => []
+            exp_change => 0, exp_unacked => [], exp_acked => []
         );
     }
     note('--- changes done to obtained statuses do not affect storage.');
@@ -558,7 +558,7 @@ sub test_storage_common {
         change_and_check(
             $storage, $loop, $unloop, timeline => '_test  tl2',
             mode => 'upsert', target => \@upserted, exp_change => 20,
-            exp_confirmed => [], exp_unconfirmed => [1..20]
+            exp_acked => [], exp_unacked => [1..20]
         );
         $_->{id} = 100 foreach @upserted;
         on_statuses $storage, $loop, $unloop, {
@@ -601,18 +601,18 @@ sub test_storage_ordered {
         $storage, $loop, $unloop, timeline => '_test_tl3',
         mode => 'insert', target => [map {status $_} (1..30)],
         label => 'first insert',
-        exp_change => 30, exp_unconfirmed => [1..30], exp_confirmed => []
+        exp_change => 30, exp_unacked => [1..30], exp_acked => []
     );
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl3',
-        mode => 'confirm', target => undef, label => 'confirm all',
-        exp_change => 30, exp_unconfirmed => [], exp_confirmed => [1..30]
+        mode => 'ack', target => undef, label => 'ack all',
+        exp_change => 30, exp_unacked => [], exp_acked => [1..30]
     );
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl3',
         mode => 'insert', target => [map {status $_} (31..60)],
         label => "another insert", exp_change => 30,
-        exp_unconfirmed => [31..60], exp_confirmed => [1..30]
+        exp_unacked => [31..60], exp_acked => [1..30]
     );
     my %base = (timeline => '_test_tl3');
 
@@ -636,132 +636,132 @@ sub test_storage_ordered {
 
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'unconfirmed', count => 'all'},
+        {%base, ack_state => 'unacked', count => 'all'},
         [reverse 31..60],
-        'get: no max_id unconfirmed, all'
+        'get: no max_id unacked, all'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'unconfirmed', count => 15},
+        {%base, ack_state => 'unacked', count => 15},
         [reverse 46..60 ],
-        'get: no max_id, unconfirmed, partial'
+        'get: no max_id, unacked, partial'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'unconfirmed', count => 50},
+        {%base, ack_state => 'unacked', count => 50},
         [reverse 31..60],
-        'get: no max_id, unconfirmed, larger than the unconfirmed size'
+        'get: no max_id, unacked, larger than the unacked size'
     );
 
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'confirmed', count => 'all'},
+        {%base, ack_state => 'acked', count => 'all'},
         [reverse 1..30],
-        'get: no max_id, confirmed, all'
+        'get: no max_id, acked, all'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'confirmed', count => 25},
+        {%base, ack_state => 'acked', count => 25},
         [reverse 6..30],
-        'get: no max_id, confirmed, partial'
+        'get: no max_id, acked, partial'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'confirmed', count => 70},
+        {%base, ack_state => 'acked', count => 70},
         [reverse 1..30],
-        'get: no max_id, confirmed, larger than the confirmed size'
+        'get: no max_id, acked, larger than the acked size'
     );
     
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', max_id => 40, count => 'all'},
+        {%base, ack_state => 'any', max_id => 40, count => 'all'},
         [reverse 1..40],
-        'get: max_id in unconfirmed, any state, all'
+        'get: max_id in unacked, any state, all'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', max_id => 20, count => 'all'},
+        {%base, ack_state => 'any', max_id => 20, count => 'all'},
         [reverse 1..20],
-        'get: max_id in confirmed, any state, all'
+        'get: max_id in acked, any state, all'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', max_id => 70, count => 'all'},
+        {%base, ack_state => 'any', max_id => 70, count => 'all'},
         [],
         'get: non-existent max_id, any state, all'
     );
 
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', max_id => 50, count => 10},
+        {%base, ack_state => 'any', max_id => 50, count => 10},
         [reverse 41..50],
-        'get: max_id in unconfirmed, any state, count inside unconfirmed zone'
+        'get: max_id in unacked, any state, count inside unacked zone'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', max_id => 50, count => 40},
+        {%base, ack_state => 'any', max_id => 50, count => 40},
         [reverse 11..50],
-        'get: max_id in unconfirmed, any state, count to confirmed zone'
+        'get: max_id in unacked, any state, count to acked zone'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', max_id => 30, count => 20},
+        {%base, ack_state => 'any', max_id => 30, count => 20},
         [reverse 11..30],
-        'get: max_id in confirmed, any state, partial'
+        'get: max_id in acked, any state, partial'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', max_id => 10, count => 40},
+        {%base, ack_state => 'any', max_id => 10, count => 40},
         [reverse 1..10],
-        'get: max_id in confirmed, any state, count larger than the confirmed size'
+        'get: max_id in acked, any state, count larger than the acked size'
     );
 
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'unconfirmed', max_id => 45, count => 5},
+        {%base, ack_state => 'unacked', max_id => 45, count => 5},
         [reverse 41..45],
-        'get: max_id in unconfirmed, unconfirmed state, count in unconfirmed'
+        'get: max_id in unacked, unacked state, count in unacked'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'unconfirmed', max_id => 45, count => 25},
+        {%base, ack_state => 'unacked', max_id => 45, count => 25},
         [reverse 31..45],
-        'get: max_id in unconfirmed, unconfirmed state, count larger than the unconfirmed size'
+        'get: max_id in unacked, unacked state, count larger than the unacked size'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'unconfirmed', max_id => 20, count => 5},
+        {%base, ack_state => 'unacked', max_id => 20, count => 5},
         [],
-        'get: max_id in confirmed, unconfirmed state'
+        'get: max_id in acked, unacked state'
     );
 
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'confirmed', max_id => 50, count => 10},
+        {%base, ack_state => 'acked', max_id => 50, count => 10},
         [],
-        'get: max_id in unconfirmed, confirmed state, count in unconfirmed'
+        'get: max_id in unacked, acked state, count in unacked'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'confirmed', max_id => 45, count => 30},
+        {%base, ack_state => 'acked', max_id => 45, count => 30},
         [],
-        'get: max_id in unconfirmed, confirmed state, count larger than the unconfirmed size'
+        'get: max_id in unacked, acked state, count larger than the unacked size'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'confirmed', max_id => 20, count => 10},
+        {%base, ack_state => 'acked', max_id => 20, count => 10},
         [reverse 11..20],
-        'get: max_id in confirmed, confirmed state, count in confirmed'
+        'get: max_id in acked, acked state, count in acked'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'confirmed', max_id => 10, count => 30},
+        {%base, ack_state => 'acked', max_id => 10, count => 30},
         [reverse 1..10],
-        'get: max_id in confirmed, confirmed state, count larger than confirmed size'
+        'get: max_id in acked, acked state, count larger than acked size'
     );
 
     {
-        note('--- more confirmed statuses');
+        note('--- more acked statuses');
         my $now = DateTime->now(time_zone => 'UTC');
         my $yesterday = $now - DateTime::Duration->new(days => 1);
         my $tomorrow = $now + DateTime::Duration->new(days => 1);
@@ -772,70 +772,70 @@ sub test_storage_ordered {
         change_and_check(
             $storage, $loop, $unloop, timeline => '_test_tl3',
             mode => 'insert', target => \@more_statuses,
-            exp_change => 20, exp_unconfirmed => [31..60], exp_confirmed => [1..30, 61..80]
+            exp_change => 20, exp_unacked => [31..60], exp_acked => [1..30, 61..80]
         );
     }
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', count => 'all'},
+        {%base, ack_state => 'any', count => 'all'},
         [reverse(71..80, 1..30, 61..70, 31..60)],
-        'get: mixed confirmed_at, no max_id, any state, all'
+        'get: mixed acked_at, no max_id, any state, all'
     );
-    note('--- move from confirmed to unconfirmed');
+    note('--- move from acked to unacked');
     on_statuses $storage, $loop, $unloop, {
-        timeline => '_test_tl3', confirmed_state => 'confirmed',
+        timeline => '_test_tl3', acked_state => 'acked',
         max_id => 30, count => 10
     }, sub {
         my $statuses = shift;
-        delete $_->{busybird}{confirmed_at} foreach @$statuses;
+        delete $_->{busybird}{acked_at} foreach @$statuses;
         change_and_check(
             $storage, $loop, $unloop, timeline => '_test_tl3',
             mode => 'update', target => $statuses,
             exp_change => 10,
-            exp_unconfirmed => [21..60], exp_confirmed => [1..20, 61..80]
+            exp_unacked => [21..60], exp_acked => [1..20, 61..80]
         );
     };
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', count => 'all'},
+        {%base, ack_state => 'any', count => 'all'},
         [reverse(71..80, 1..20, 61..70, 21..60)],
-        'get:mixed confirmed_at, no max_id, any state, all'
+        'get:mixed acked_at, no max_id, any state, all'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', max_id => 30, count => 30},
+        {%base, ack_state => 'any', max_id => 30, count => 30},
         [reverse(11..20, 61..70, 21..30)],
-        'get:mixed confirmed_at, max_id in unconfirmed, any state, count larger than unconfirmed size'
+        'get:mixed acked_at, max_id in unacked, any state, count larger than unacked size'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', max_id => 15, count => 20},
+        {%base, ack_state => 'any', max_id => 15, count => 20},
         [reverse(76..80, 1..15)],
-        'get:mixed confirmed_at, max_id in confirmed, any state, count in confirmed'
+        'get:mixed acked_at, max_id in acked, any state, count in acked'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'unconfirmed', max_id => 50, count => 50},
+        {%base, ack_state => 'unacked', max_id => 50, count => 50},
         [reverse(21..50)],
-        'get:mixed confirmed_at, max_id in unconfirmed, unconfirmed state, count larger than unconfirmed size'
+        'get:mixed acked_at, max_id in unacked, unacked state, count larger than unacked size'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'confirmed', max_id => 65, count => 30},
+        {%base, ack_state => 'acked', max_id => 65, count => 30},
         [reverse(76..80, 1..20, 61..65)],
-        'get:mixed confirmed_at, max_id in confirmed, confirmed state, count in confirmed area'
+        'get:mixed acked_at, max_id in acked, acked state, count in acked area'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'unconfirmed', max_id => 20, count => 30},
+        {%base, ack_state => 'unacked', max_id => 20, count => 30},
         [],
-        'get:mixed confirmed_at, max_id in confirmed, unconfirmed state'
+        'get:mixed acked_at, max_id in acked, unacked state'
     );
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'confirmed', max_id => 40, count => 30},
+        {%base, ack_state => 'acked', max_id => 40, count => 30},
         [],
-        'get:mixed confirmed_at, max_id in unconfirmed, confirmed state'
+        'get:mixed acked_at, max_id in unacked, acked state'
     );
 
     note('--- messing with created_at');
@@ -853,14 +853,14 @@ sub test_storage_ordered {
         change_and_check(
             $storage, $loop, $unloop, timeline => '_test_tl3',
             mode => 'update', target => $statuses, exp_change => 80,
-            exp_unconfirmed => [21..60], exp_confirmed => [1..20, 61..80]
+            exp_unacked => [21..60], exp_acked => [1..20, 61..80]
         );
     };
     get_and_check_list(
         $storage, $loop, $unloop,
-        {%base, confirm_state => 'any', count => 'all'},
+        {%base, ack_state => 'any', count => 'all'},
         [21..60, 61..70, 1..20, 71..80],
-        'sorted by descending order of created_at within confirmed_at group'
+        'sorted by descending order of created_at within acked_at group'
     );
 }
 
@@ -890,36 +890,36 @@ sub test_storage_truncation {
     change_and_check(
         $storage, $loop, $unloop, %base,
         mode => 'insert', target => [map {status($_)} (1..$max_status_num)],
-        exp_change => $max_status_num, exp_unconfirmed => [1..$max_status_num],
-        exp_confirmed => []
+        exp_change => $max_status_num, exp_unacked => [1..$max_status_num],
+        exp_acked => []
     );
     note('--- insert another one');
     change_and_check(
         $storage, $loop, $unloop, %base,
         mode => 'insert', target => status($max_status_num+1),
-        exp_change => 1, exp_unconfirmed => [2..($max_status_num+1)],
-        exp_confirmed => []
+        exp_change => 1, exp_unacked => [2..($max_status_num+1)],
+        exp_acked => []
     );
     note('--- insert multiple statuses');
     change_and_check(
         $storage, $loop, $unloop, %base,
         mode => 'insert', target => [map { status($max_status_num+1+$_) } 1..4],
-        exp_change => 4, exp_unconfirmed => [6..($max_status_num+5)],
-        exp_confirmed => []
+        exp_change => 4, exp_unacked => [6..($max_status_num+5)],
+        exp_acked => []
     );
-    note('--- confirmed the top');
+    note('--- acked the top');
     change_and_check(
         $storage, $loop, $unloop, %base,
-        mode => 'confirm', target => ($max_status_num+5),
-        exp_change => 1, exp_unconfirmed => [6 .. $max_status_num+4],
-        exp_confirmed => [$max_status_num+5]
+        mode => 'ack', target => ($max_status_num+5),
+        exp_change => 1, exp_unacked => [6 .. $max_status_num+4],
+        exp_acked => [$max_status_num+5]
     );
-    note('--- inserting another one removes the confirmed status');
+    note('--- inserting another one removes the acked status');
     change_and_check(
         $storage, $loop, $unloop, %base,
         mode => 'insert', target => status($max_status_num+6),
-        exp_change => 1, exp_unconfirmed => [6 .. $max_status_num+4, $max_status_num+6],
-        exp_confirmed => []
+        exp_change => 1, exp_unacked => [6 .. $max_status_num+4, $max_status_num+6],
+        exp_acked => []
     );
 }
 

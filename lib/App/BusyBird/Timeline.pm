@@ -18,7 +18,7 @@ App::BusyBird::Timeline - a timeline object in BusyBird
 
 =head2 $timeline->add_statuses($arrayref_of_statuses, [$callback->($added_num, $error)])
 
-=head2 $timeline->confirm([$callback->($confirmed_num, $error)])
+=head2 $timeline->ack_statuses([$callback->($acked_num, $error)])
 
 =head2 $timeline->get_statuses(%options, $callback->($arrayref_of_statuses, $error))
 
@@ -28,13 +28,13 @@ App::BusyBird::Timeline - a timeline object in BusyBird
 
 =item C<count>
 
-=item C<confirm_state>
+=item C<ack_state>
 
 =back
 
 =head2 $timeline->contains($arrayref_of_ids, $callback->($contained_ids, $not_contained_ids, $error))
 
-=head2 %unconfirmed_counts = $timeline->unconfirmed_counts()
+=head2 %unacked_counts = $timeline->unacked_counts()
 
 =head2 $selector = $timeline->updates_selector()
 

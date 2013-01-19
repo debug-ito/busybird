@@ -53,14 +53,14 @@ argument can be any value. The second argument (C<$error>) is a
 defined scalar describing the error.
 
 
-=item C<confirm_state> => {'any', 'unconfirmed', 'confirmed'} (optional, default: 'any')
+=item C<ack_state> => {'any', 'unacked', 'acked'} (optional, default: 'any')
 
-Specifies the confirmed/unconfirmed state of the statuses.
+Specifies the acked/unacked state of the statuses.
 
-By setting it to C<'unconfirmed'>, this method returns only
-unconfirmed statuses from the storage. By setting it to
-C<'confirmed'>, it returns only confirmed statuses.  By setting it to
-C<'any'>, it returns both confirmed and unconfirmed statuses.
+By setting it to C<'unacked'>, this method returns only
+unacked statuses from the storage. By setting it to
+C<'acked'>, it returns only acked statuses.  By setting it to
+C<'any'>, it returns both acked and unacked statuses.
 
 
 =item C<max_id> => STATUS_ID (optional, default: C<undef>)
@@ -70,7 +70,7 @@ statues with IDs older than or equal to the specified C<max_id>.  See
 L</"Order of Statuses"> for detail.
 
 If there is no such status that has the ID equal to C<max_id> in
-specified C<confirm_state>, this method returns empty array-ref.
+specified C<ack_state>, this method returns empty array-ref.
 
 If this option is omitted or set to C<undef>, statuses starting from
 the latest status are fetched.
@@ -81,19 +81,19 @@ the latest status are fetched.
 Specifies the maximum number of statuses to be fetched.
 
 If C<'all'> is specified, all statuses starting from C<max_id> in
-specified C<confirm_state> are fetched.
+specified C<ack_state> are fetched.
 
 The default value of this option is up to implementations.
 
 =back
 
 
-=head2 $storage->confirm_statuses(%args)
+=head2 $storage->ack_statuses(%args)
 
-Confirms a timeline, that is, changing 'unconfirmed' statuses into 'confirmed'.
+Acknowledges a timeline, that is, changing 'unacked' statuses into 'acked'.
 
-Confirmed status is a status whose C<< $status->{busybird}{confirmed_at} >> field evaluates to true.
-Otherwise, the status is unconfirmed.
+Acked status is a status whose C<< $status->{busybird}{acked_at} >> field evaluates to true.
+Otherwise, the status is unacked.
 
 Fields in C<%args> are as follows.
 
@@ -105,23 +105,23 @@ Specifies the name of timeline.
 
 =item C<ids> => {C<undef>, ID, ARRAYREF_OF_IDS} (optional, default: C<undef>)
 
-Specifies the IDs of statuses to be confirmed.
+Specifies the IDs of statuses to be acked.
 
-If it is a defined scalar, the status with that ID is confirmed.  If
-it is an array-ref of IDs, the statuses with those IDs are confirmed.
-If it is C<undef> or not specified, all unconfirmed statuses in
-C<timeline> are confirmed.
+If it is a defined scalar, the status with that ID is acked.  If
+it is an array-ref of IDs, the statuses with those IDs are acked.
+If it is C<undef> or not specified, all unacked statuses in
+C<timeline> are acked.
 
 If there is no status with the specified ID in the C<timeline>, it is
 ignored.
 
-=item C<callback> => CODEREF($confirmed_count, $error) (optional, default: C<undef>)
+=item C<callback> => CODEREF($acked_count, $error) (optional, default: C<undef>)
 
 Specifies a subroutine reference that is called when the operation
 completes.
 
 In success, the C<callback> is called with one argument
-(C<$confirmed_count>), which is the number of confirmed statuses.
+(C<$acked_count>), which is the number of acked statuses.
 
 In failure, the C<callback> is called with two arguments,
 and the second one (C<$error>) describes the error.
@@ -216,9 +216,9 @@ and the second argument (C<$error>) describes the error.
 
 =back
 
-=head2 %unconfirmed_counts = $storage->get_unconfirmed_counts(%args)
+=head2 %unacked_counts = $storage->get_unacked_counts(%args)
 
-Returns numbers of unconfirmed statuses in a timeline.
+Returns numbers of unacked statuses in a timeline.
 
 This method operates synchronously and should be fast enough to
 deliver real-time updates to the BusyBird users.
@@ -233,21 +233,21 @@ Specifies the name of timeline.
 
 =back
 
-In success, this method returns a hash (C<%unconfirmed_counts>) describing numbers
-of unconfirmed statuses in each level.
+In success, this method returns a hash (C<%unacked_counts>) describing numbers
+of unacked statuses in each level.
 
-Fields in C<%unconfirmed_counts> are as follows.
+Fields in C<%unacked_counts> are as follows.
 
 =over
 
-=item LEVEL => COUNT_OF_UNCONFIRMED_STATUSES_IN_THE_LEVEL
+=item LEVEL => COUNT_OF_UNACKED_STATUSES_IN_THE_LEVEL
 
 Integer keys represent levels. The values is the number of
-unconfirmed statueses in the level.
+unacked statueses in the level.
 
-=item C<total> => COUNT_OF_ALL_UNCONFIRMED_STATUSES
+=item C<total> => COUNT_OF_ALL_UNACKED_STATUSES
 
-The key C<"total"> represents the total number of unconfirmed statuses
+The key C<"total"> represents the total number of unacked statuses
 in the timeline.
 
 =back
@@ -280,9 +280,9 @@ fail to complete the request, i.e. if you is to blame.
 =back
 
 
-=head2 confirmed_at Field
+=head2 acked_at Field
 
-C<confirm_statuses()> method should update C<< $status->{busybird}{confirmed_at} >> field
+C<ack_statuses()> method should update C<< $status->{busybird}{acked_at} >> field
 of the target statuses to the date/time string of the current time.
 The date/fime format should be the same as C<< $status->{created_at} >> field.
 
@@ -290,15 +290,17 @@ The date/fime format should be the same as C<< $status->{created_at} >> field.
 =head2 Order of Statuses
 
 In timelines, statuses are sorted in descending order of
-C<< $status->{busybird}{confirmed_at} >> field
+C<< $status->{busybird}{acked_at} >> field
 (interpreted as date/time).
-Unconfirmed statuses are always above confirmed statuses.
+Unacked statuses are always above acked statuses.
 Ties are broken by sorting the statuses
 in descending order of C<< $status->{created_at} >>
 field (interpreted as date/time).
 
-So the top of timeline is the latest created status in the latest
-confirmed ones.
+So the top of timeline is the latest created unacked status.
+Below unacked statuses are layers of acked statuses.
+The top of the acked statuses is the latest created status in the latest
+acked ones.
 
 
 =head1 AUTHOR

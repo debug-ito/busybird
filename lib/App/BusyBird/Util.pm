@@ -56,10 +56,10 @@ sub sort_statuses {
     my @dt_statuses = do {
         no autovivification;
         map {
-            my $confirmed_at = $_->{busybird}{confirmed_at}; ## avoid autovivification
+            my $acked_at = $_->{busybird}{acked_at}; ## avoid autovivification
             [
                 $_,
-                _epoch_undef($confirmed_at),
+                _epoch_undef($acked_at),
                 _epoch_undef($_->{created_at}),
             ];
         } @$statuses;

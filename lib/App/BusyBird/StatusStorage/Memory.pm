@@ -51,10 +51,10 @@ sub _index {
     return int(@ret) == 0 ? -1 : $ret[0];
 }
 
-sub _confirmed {
+sub _acked {
     my ($self, $status) = @_;
     no autovivification;
-    return $status->{busybird}{confirmed_at};
+    return $status->{busybird}{acked_at};
 }
 
 sub save {
@@ -201,13 +201,13 @@ sub get_statuses {
         @_ = ([]);
         goto $args{callback};
     }
-    my $confirm_state = $args{confirm_state} || 'any';
+    my $ack_state = $args{ack_state} || 'any';
     my $max_id = $args{max_id};
     my $count = defined($args{count}) ? $args{count} : 20;
-    my $confirm_test = $confirm_state eq 'unconfirmed' ? sub {
-        !$self->_confirmed(shift);
-    } : $confirm_state eq 'confirmed' ? sub {
-        $self->_confirmed(shift);
+    my $ack_test = $ack_state eq 'unacked' ? sub {
+        !$self->_acked(shift);
+    } : $ack_state eq 'acked' ? sub {
+        $self->_acked(shift);
     } : sub { 1 };
     my $start_index;
     if(defined($max_id)) {
@@ -217,14 +217,14 @@ sub get_statuses {
             goto $args{callback};
         }
         my $s = $self->{timelines}{$timeline}[$tl_index];
-        if(!$confirm_test->($s)) {
+        if(!$ack_test->($s)) {
             @_ = ([]);
             goto $args{callback};
         }
         $start_index = $tl_index;
     }
     my @indice = grep {
-        if(!$confirm_test->($self->{timelines}{$timeline}[$_])) {
+        if(!$ack_test->($self->{timelines}{$timeline}[$_])) {
             0;
         }elsif(defined($start_index) && $_ < $start_index) {
             0;
@@ -242,7 +242,7 @@ sub get_statuses {
     goto $args{callback};
 }
 
-sub confirm_statuses {
+sub ack_statuses {
     my ($self, %args) = @_;
     croak 'timeline arg is mandatory' if not defined $args{timeline};
     my $timeline = $args{timeline};
@@ -269,20 +269,20 @@ sub confirm_statuses {
         } @$ids;
     }else {
         @target_statuses = grep {
-            !$self->_confirmed($_)
+            !$self->_acked($_)
         } @{$self->{timelines}{$timeline}};
     }
-    my $confirm_str = App::BusyBird::DateTime::Format->format_datetime(
+    my $ack_str = App::BusyBird::DateTime::Format->format_datetime(
         DateTime->now(time_zone => 'UTC')
     );
-    $_->{busybird}{confirmed_at} = $confirm_str foreach @target_statuses;
+    $_->{busybird}{acked_at} = $ack_str foreach @target_statuses;
     if($args{callback}) {
         @_ = (int(@target_statuses));
         goto $args{callback};
     }
 }
 
-sub get_unconfirmed_counts {
+sub get_unacked_counts {
     my ($self, %args) = @_;
     croak 'timeline arg is mandatory' if not defined $args{timeline};
     my $timeline = $args{timeline};
@@ -290,7 +290,7 @@ sub get_unconfirmed_counts {
         return ( total => 0 );
     }
     my @statuses = grep {
-        !$self->_confirmed($_)
+        !$self->_acked($_)
     } @{$self->{timelines}{$timeline}};
     my %count = (total => int(@statuses));
     foreach my $status (@statuses) {

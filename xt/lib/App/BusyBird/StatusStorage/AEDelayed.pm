@@ -26,12 +26,12 @@ sub _delayed_call {
 
 sub get_statuses { my $self = shift; $self->_delayed_call(@_) }
 sub put_statuses { my $self = shift; $self->_delayed_call(@_) }
-sub confirm_statuses { my $self = shift; $self->_delayed_call(@_) }
+sub ack_statuses { my $self = shift; $self->_delayed_call(@_) }
 sub delete_statuses { my $self = shift; $self->_delayed_call(@_) }
 
-sub get_unconfirmed_counts {
+sub get_unacked_counts {
     my ($self, @args) = @_;
-    return $self->{backend}->get_unconfirmed_counts(@args);
+    return $self->{backend}->get_unacked_counts(@args);
 }
 
 

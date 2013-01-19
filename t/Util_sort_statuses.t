@@ -32,21 +32,21 @@ sub test_sort {
 
 {
     my @orig = (
-        {id =>  0, created_at => dtstr(16000), busybird => { confirmed_at => dtstr(44192) }},
-        {id =>  1, busybird => {confirmed_at => dtstr(32921)}},
-        {id =>  2, created_at => dtstr(21834), busybird => { confirmed_at => dtstr(88321) }},
+        {id =>  0, created_at => dtstr(16000), busybird => { acked_at => dtstr(44192) }},
+        {id =>  1, busybird => {acked_at => dtstr(32921)}},
+        {id =>  2, created_at => dtstr(21834), busybird => { acked_at => dtstr(88321) }},
         {id =>  3, created_at => dtstr(4440)},
-        {id =>  4, busybird => {confirmed_at => dtstr(44192)}},
-        {id =>  5, busybird => {confirmed_at => ""}},
+        {id =>  4, busybird => {acked_at => dtstr(44192)}},
+        {id =>  5, busybird => {acked_at => ""}},
         {id =>  6, created_at => dtstr(1200)},
-        {id =>  7, created_at => dtstr(383911), busybird => { confirmed_at => dtstr(55432) }},
-        {id =>  8, created_at => dtstr(393922), busybird => { confirmed_at => dtstr(88321) }},
+        {id =>  7, created_at => dtstr(383911), busybird => { acked_at => dtstr(55432) }},
+        {id =>  8, created_at => dtstr(393922), busybird => { acked_at => dtstr(88321) }},
         {id =>  9, created_at => dtstr(5000)},
-        {id => 10, created_at => dtstr(4440), busybird => { confirmed_at => "" } },
+        {id => 10, created_at => dtstr(4440), busybird => { acked_at => "" } },
         {id => 11, },
-        {id => 12, created_at => dtstr(5000), busybird => { confirmed_at => dtstr(44192) }},
+        {id => 12, created_at => dtstr(5000), busybird => { acked_at => dtstr(44192) }},
         {id => 13, created_at => ""},
-        {id => 14, created_at => "", busybird => { confirmed_at => dtstr(55432) }},
+        {id => 14, created_at => "", busybird => { acked_at => dtstr(55432) }},
     );
     test_sort(dclone(\@orig), [@orig[5,11,13, 9,3,10,6, 8,2, 14,7, 4,0,12, 1]], "sort ok");
 }

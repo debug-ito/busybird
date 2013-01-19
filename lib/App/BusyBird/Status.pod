@@ -42,7 +42,7 @@ The following fields in a status object is used by BusyBird.
 
 =head2 $status->{created_at}
 
-=head2 $status->{busybird}{confirmed_at}
+=head2 $status->{busybird}{acked_at}
 
 =head2 $status->{busybird}{timeline}
 
