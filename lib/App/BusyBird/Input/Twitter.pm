@@ -123,7 +123,7 @@ sub transform_timezone {
 sub _load_next_since_id_file {
     my ($self) = @_;
     return {} if not defined($self->{filepath});
-    open my $file, $self->{filepath} or return undef;
+    open my $file, "<", $self->{filepath} or return undef;
     my $json_text = do { local $/ = undef; <$file> };
     close $file;
     my $since_ids = try {
