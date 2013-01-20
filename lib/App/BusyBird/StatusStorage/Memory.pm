@@ -10,6 +10,7 @@ use Carp;
 use List::Util qw(min);
 use JSON;
 use Try::Tiny;
+use Devel::GlobalDestruction;
 
 sub new {
     my ($class, %options) = @_;
@@ -28,6 +29,7 @@ sub new {
 }
 
 sub DESTROY {
+    return if in_global_destruction;
     my ($self) = @_;
     $self->save();
 }
