@@ -131,14 +131,23 @@ sub change_and_check {
             callback => $callback_func,
         );
         $loop->();
-    }elsif($args{mode} eq 'delete' || $args{mode} eq 'ack') {
+    }elsif($args{mode} eq 'delete') {
         my $method = "$args{mode}_statuses";
-        $storage->$method(
+        my %method_args = (
             timeline => $args{timeline},
-            ids => $args{target},
             callback => $callback_func,
         );
+        $method_args{ids} = $args{target} if exists($args{target});
+        $storage->$method(%method_args);
         $loop->();
+    }elsif($args{mode} eq 'ack') {
+        my $method = "$args{mode}_statuses";
+        my %method_args = (
+            timeline => $args{timeline},
+            callback => $callback_func,
+        );
+        $method_args{max_id} = $args{target} if exists($args{target});
+        $storage->$method(%method_args);
     }else {
         croak "Invalid mode";
     }
@@ -381,26 +390,76 @@ sub test_storage_common {
         exp_change => 5,
         exp_unacked => [1..5], exp_acked => []
     );
-    note('--- ack_statuses: single acknowlendgement');
-    change_and_check(
-        $storage, $loop, $unloop, timeline => '_test_tl1',
-        mode => 'ack', target => 3, exp_change => 1,
-        exp_unacked => [1,2,4,5], exp_acked => [3]
+    note('--- ack_statuses: with max_id');
+    $callbacked = 0;
+    $storage->ack_statuses(
+        timeline => '_test_tl1', max_id => 3, callback => sub {
+            my ($ack_count, $error) = @_;
+            is(int(@_), 1, "ack_statuses succeed");
+            cmp_ok($ack_count, ">=", 1, "$ack_count (>= 1) acked.");
+            $callbacked = 1;
+            $unloop->();
+        }
     );
-    is_deeply(
-        {$storage->get_unacked_counts(timeline => '_test_tl1')},
-        {total => 4, 0 => 4}, "4 unacked statuses"
+    $loop->();
+    ok($callbacked, 'callbacked');
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test_tl1', max_id => 3, count => 1
+    }, sub {
+        my ($statuses, $error) = @_;
+        test_status_id_set $statuses, [3], 'get status ID = 3';
+        ok(acked($statuses->[0]), 'at least status ID = 3 is acked.');
+    };
+    note('--- ack_statuses: try to ack already acked statuses');
+    $callbacked = 0;
+    $storage->ack_statuses(
+        timeline => '_test_tl1', max_id => 3, callback => sub {
+            my ($ack_count, $error) = @_;
+            is(int(@_), 1, 'ack_statuses succeed');
+            is($ack_count, 0, 'acks nothing.');
+            $callbacked = 1;
+            $unloop->();
+        }
     );
-    note('--- ack_statuses: multiple partial acknowledgement');
-    change_and_check(
-        $storage, $loop, $unloop, timeline => '_test_tl1',
-        mode => 'ack', target => [1,5,3], exp_change => 3,
-        exp_unacked => [2,4], exp_acked => [1,3,5]
+    $loop->();
+    ok($callbacked, "callbacked");
+    note('--- ack_statuses: ack all with max_id => undef');
+    $callbacked = 0;
+    $storage->ack_statuses(
+        timeline => '_test_tl1', max_id => undef, callback => sub {
+            my ($ack_count, $error) = @_;
+            is(int(@_), 1, 'ack_statuses succeed');
+            $callbacked = 1;
+            $unloop->();
+        }
     );
+    $loop->();
+    ok($callbacked, "callbacked");
+    on_statuses $storage, $loop, $unloop, {
+        timeline => '_test_tl1', count => 'all',
+    }, sub {
+        my $statuses = shift;
+        test_status_id_set($statuses, [1..5], "5 statuses");
+        foreach my $s (@$statuses) {
+            ok(acked($s), "Status ID = $s->{id} is acked");
+        }
+    };
     note('--- put (insert): try to insert existent status');
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl1',
         mode => 'insert', target => status(3), exp_change => 0,
+        exp_unacked => [], exp_acked => [1..5]
+    );
+    note('--- put (update): change to unacked');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl1',
+        mode => 'update', target => [map {status($_) (2,4)}], exp_change => 2,
+        exp_unacked => [2,4], exp_acked => [1,3,5]
+    );
+    note('--- ack: try to ack already acked status, again');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl1',
+        mode => 'ack', target => 5, exp_change => 0,
         exp_unacked => [2,4], exp_acked => [1,3,5]
     );
     note('--- put (update): change to unacked');
@@ -457,9 +516,14 @@ sub test_storage_common {
         {$storage->get_unacked_counts(timeline => '_test  tl2')},
         {total => 10, 0 => 10}, '10 unacked statuses'
     );
+    ## change_and_check(
+    ##     $storage, $loop, $unloop, timeline => '_test  tl2',
+    ##     mode => 'ack', target => [1..5],
+    ##     exp_change => 5, exp_unacked => [6..10], exp_acked => [1..5]
+    ## );
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test  tl2',
-        mode => 'ack', target => [1..5],
+        mode => 'update', target => [map {status($_, undef, nowstring())} (1..5)],
         exp_change => 5, exp_unacked => [6..10], exp_acked => [1..5]
     );
     note('--- get: single, any state');
@@ -511,12 +575,14 @@ sub test_storage_common {
         test_status_id_set($statuses, [1..10], "10 statuses in _test  tl2");
     };
     note('--- access to non-existent statuses');
-    foreach my $mode (qw(update delete ack)) {
-        my $target = $mode eq 'update'
-            ? [map { status($_) } (11..15) ] : [11..15];
+    foreach my $test_set (
+        {mode => 'update', target => [map { status($_) } (11..15) ]},
+        {mode => 'delete', target => [11..15]},
+        {mode => 'ack', target => 11}
+    ) {
         change_and_check(
             $storage, $loop, $unloop, timeline => '_test  tl2',
-            mode => $mode, target => $target, label => "mode $mode",
+            mode => $test_set->{mode}, target => $test_set->{target}, label => "mode $test_set->{mode}",
             exp_change => 0, exp_unacked => [6..10],
             exp_acked => [1..5]
         );
