@@ -11,8 +11,6 @@ BEGIN {
     my $storage = new_ok('App::BusyBird::StatusStorage::Memory', [logger => undef]);
     test_storage_common($storage);
     test_storage_ordered($storage);
-    ok($storage->save(), "save() without filepath option returns true");
-    ok($storage->load(), "load() without filepath option returns true");
 }
 
 {

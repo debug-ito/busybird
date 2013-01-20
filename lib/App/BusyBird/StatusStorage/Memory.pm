@@ -10,31 +10,19 @@ use Carp;
 use List::Util qw(min);
 use JSON;
 use Try::Tiny;
-use Devel::GlobalDestruction;
 
 sub new {
     my ($class, %options) = @_;
     my $self = bless {
         timelines => {}, ## timelines should always be sorted.
     }, $class;
-    $self->set_param(\%options, 'filepath', undef);
     $self->set_param(\%options, 'max_status_num', 4096);
     if($self->{max_status_num} <= 0) {
         croak "max_status_num option must be bigger than 0.";
     }
     $self->{logger} = exists($options{logger})
         ? $options{logger} : App::BusyBird::Log->logger;
-    $self->load();
     return $self;
-}
-
-sub DESTROY {
-    if(in_global_destruction) {
-        warn "App::BusyBird::StatusStorage::Memory object is destroyed in GlobalDestruction phase. The statuses are NOT saved.\n";
-        return;
-    } 
-    my ($self) = @_;
-    $self->save();
 }
 
 ## sub _exists {
@@ -63,11 +51,13 @@ sub _acked {
 }
 
 sub save {
-    my ($self) = @_;
-    return 1 if not defined $self->{filepath};
+    my ($self, $filepath) = @_;
+    if(not defined($filepath)) {
+        croak '$filepath is not specified.';
+    }
     my $file;
-    if(!open $file, ">", $self->{filepath}) {
-        $self->_log("error", "Cannot open $self->{filepath} to write.");
+    if(!open $file, ">", $filepath) {
+        $self->_log("error", "Cannot open $filepath to write.");
         return 0;
     }
     my $success;
@@ -84,11 +74,13 @@ sub save {
 }
 
 sub load {
-    my ($self) = @_;
-    return 1 if not defined $self->{filepath};
+    my ($self, $filepath) = @_;
+    if(not defined($filepath)) {
+        croak '$filepath is not specified.';
+    }
     my $file;
-    if(!open $file, "<", $self->{filepath}) {
-        $self->_log("notice", "Cannot open $self->{filepath} to read");
+    if(!open $file, "<", $filepath) {
+        $self->_log("notice", "Cannot open $filepath to read");
         return 0;
     }
     my $success;
@@ -327,23 +319,24 @@ Version 0.01
 
     use App::BusyBird::StatusStorage::Memory;
     
-    ## ephemeral storage: the statuses will be lost when the process is terminated
+    ## The statuses are stored in the process memory.
     my $storage = App::BusyBird::StatusStorage::Memory->new();
+
+    ## Save the content of the storage into a file
+    $storage->save("my_statuses.json");
     
-    ## Statuses are saved to my_statuses.json when $storage is DESTROYed.
-    $storage = App::BusyBird::StatusStorage::Memory->new(
-        filepath => '~/my_statuses.json'
-    );
+    ## Load statuses from a file
+    $storage->load("my_statuses.json");
 
 
 =head1 DESCRIPTION
 
 This module is an implementation of L<App::BusyBird::StatusStorage>.
 
-This storage stores all statuses in the process memory. The stored statuses are
-saved to a file when the storage object is DESTROYed
-(or C<save()> method is called manually).
-It tries to load statuses from the file when initialized.
+This storage stores all statuses in the process memory.
+The stored statuses can be saved to a file in JSON format.
+The saved statuses can be loaded from the file.
+
 
 =head1 CAVEATS
 
@@ -356,10 +349,8 @@ forked servers cannot share the storage.
 
 =item *
 
-Because this storage saves statuses into a file on C<DESTROY>,
-it's up to server implementation if statuses are saved properly
-when the process is terminated by a signal.
-(If a terminating signal is not caught, C<DESTROY> is never called)
+Because this storage stores statuses in the process memory,
+the stored statuses are lost when the process is terminated.
 
 =back
 
@@ -372,13 +363,6 @@ Creates the storage object.
 You can specify the folowing options in C<%options>.
 
 =over
-
-=item C<filepath> => FILE_PATH (optional, default: C<undef>)
-
-Specifies the path to the file to which the statuses in the storage
-is saved by C<save()> method.
-
-If C<filepath> is C<undef> or omitted, the statuses are never saved.
 
 =item C<max_status_num> => MAX_STATUS_NUM (optional, default: 4096)
 
@@ -401,23 +385,19 @@ In addition to the following methods,
 all methods described in L<App::BusyBird::StatusStorage> are supported, too.
 
 
-=head2 $is_success = $storage->save()
+=head2 $is_success = $storage->save($filepath)
 
-If C<filepath> option is set, save the current content of the storage to the file.
-If C<filepath> option is C<undef>, it does nothing and returns true.
-
-In success, it returns true. In failure, it returns false and the error will be logged.
-
-This method is called in C<DESTROY()>, so you usually don't have to call the method manually.
-
-=head2 $is_success = $storage->load()
-
-If C<filepath> option is set, load statuses from the file.
-If C<filepath> option is C<undef>, it does nothing and returns true.
+Saves the current content of the storage to the file named C<$filepath>.
 
 In success, it returns true. In failure, it returns false and the error will be logged.
 
-This method is called in C<new()>, so you usually don't have to call the method manually.
+
+=head2 $is_success = $storage->load($filepath)
+
+Loads statuses from the file named C<$filepath>.
+
+In success, it returns true. In failure, it returns false and the error will be logged.
+
 
 =head1 AUTHOR
 

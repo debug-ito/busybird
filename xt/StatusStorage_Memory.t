@@ -36,15 +36,15 @@ if(-r $filepath) {
 
 {
     my $storage = new_ok('App::BusyBird::StatusStorage::Memory', [
-        filepath => $filepath,
         logger => sub { push(@logs, [@_]) },
     ]);
+    ok(!$storage->load($filepath), "load() returns false if the file does not exist.");
     test_log_contains \@logs, qr{cannot.*read}i, "fails to load from $filepath";
     $storage->put_statuses(
         timeline => "hoge_tl", mode => 'insert',
         statuses => [ map { status($_) } 1..10 ],
     );
-    ok($storage->save(), "save() succeed");
+    ok($storage->save($filepath), "save() succeed");
     ok((-r $filepath), "$filepath is created");
     
     $storage->put_statuses(
@@ -54,8 +54,9 @@ if(-r $filepath) {
 
     {
         my $another_storage = new_ok('App::BusyBird::StatusStorage::Memory', [
-            filepath => $filepath, logger => undef
+            logger => undef
         ]);
+        $another_storage->load($filepath);
         my $callbacked = 0;
         $another_storage->get_statuses(
             timeline => 'hoge_tl', count => 'all', callback => sub {
@@ -70,9 +71,10 @@ if(-r $filepath) {
             timeline => 'hoge_tl', mode => 'insert',
             statuses => [ map { status($_) } 11..15 ]
         );
+        $another_storage->save($filepath);
     }
 
-    ok($storage->load(), "load() succeed");
+    ok($storage->load($filepath), "load() succeed");
     my $callbacked = 0;
     $storage->get_statuses(
         timeline => 'hoge_tl', count => 'all', callback => sub {
@@ -83,10 +85,6 @@ if(-r $filepath) {
         }
     );
     ok($callbacked, "callbacked");
-    $storage->put_statuses(
-        timeline => 'hoge_tl', mode => 'insert',
-        statuses => [map { status($_) } 31..35]
-    );
 }
 
 ok((-r $filepath), "$filepath exists");
