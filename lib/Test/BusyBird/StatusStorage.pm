@@ -45,6 +45,15 @@ sub nowstring {
     );
 }
 
+sub add_datetime_days {
+    my ($datetime_str, $days) = @_;
+    my $dtd = DateTime::Duration->new(days => ($days > 0 ? $days : -$days));
+    my $orig_dt = $datetime_formatter->parse_datetime($datetime_str);
+    return $datetime_formatter->format_datetime(
+        ($days > 0) ? ($orig_dt + $dtd) : ($orig_dt - $dtd)
+    );
+}
+
 sub id_counts {
     my @statuses_or_ids = @_;
     my %id_counts = ();
@@ -682,7 +691,6 @@ sub test_storage_ordered {
     );
     my %base = (timeline => '_test_tl3');
 
-    note();
     get_and_check_list(
         $storage, $loop, $unloop, {%base, count => 'all'}, [reverse 1..60],
         'get: no max_id, any state, all'
@@ -928,8 +936,95 @@ sub test_storage_ordered {
         [21..60, 61..70, 1..20, 71..80],
         'sorted by descending order of created_at within acked_at group'
     );
+
+    note('--- -- ack test');
+    note('--- change acked_at for testing');
+    on_statuses $storage, $loop, $unloop, {
+        %base, count => 'all', ack_state => 'acked'
+    }, sub {
+        my $statuses = shift;
+        foreach my $s (@$statuses) {
+            $s->{busybird}{acked_at} =
+                add_datetime_days($s->{busybird}{acked_at}, +2);
+        }
+        change_and_check(
+            $storage, $loop, $unloop, %base, mode => 'update',
+            target => $statuses, exp_change => 40,
+            exp_unacked => [21..60], exp_acked => [61..70, 1..20, 71..80]
+        );
+    };
+    change_and_check(
+        $storage, $loop, $unloop, %base, mode => 'ack', target => 51,
+        exp_change => 10, exp_unacked => [21..50], exp_acked => [61..70, 1..20, 71..80, 51..60]
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop, {%base, ack_state => 'any', count => 'all'},
+        [21..50, 61..70, 1..20, 71..80, 51..60],
+        '10 acked statuses are at the bottom, because other acked statuses have acked_at of future.'
+    );
     
-    fail('ack_statuses: ordered test. which statuses are acked by ack_statuses with max_id ??');
+    note('--- populate another timeline');
+    my %base4 = (timeline => '_test_tl4');
+    $callbacked = 0;
+    $storage->delete_statuses(%base4, callback => sub {
+        is(int(@_), 1, "delete succeed");
+        $callbacked = 1;
+        $unloop->();
+    });
+    $loop->();
+    ok($callbacked, "callbacked");
+    change_and_check(
+        $storage, $loop, $unloop, %base4,
+        mode => 'insert', target => [map {status($_)} (31..40)],
+        exp_change => 10, exp_unacked => [31..40], exp_acked => []
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop, {%base4, count => 'all'}, [reverse 31..40],
+        '10 unacked'
+    );
+    change_and_check(
+        $storage, $loop, $unloop, %base4,
+        mode => 'ack', target => 35, exp_change => 5,
+        exp_unacked => [36..40], exp_acked => [31..35]
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop, {%base4, count => 'all', ack_state => 'acked'},
+        [reverse 31..35], '5 acked'
+    );
+    change_and_check(
+        $storage, $loop, $unloop, %base4,
+        mode => 'insert', target => [map {status($_)} (26..30, 41..45)],
+        exp_change => 10, exp_unacked => [26..30, 36..45], exp_acked => [31..35]
+    );
+    get_and_check_list(
+        $storage, $loop, $unloop, {%base4, count => 'all', ack_state => 'unacked'},
+        [reverse 26..30, 36..45], '15 unacked statuses'
+    );
+    note('--- For testing, set acked_at sufficiently old.');
+    on_statuses $storage, $loop, $unloop, {
+        %base4, count => 'all', ack_state => 'acked'
+    }, sub {
+        my $statuses = shift;
+        foreach my $s (@$statuses) {
+            $s->{busybird}{acked_at} = add_datetime_days($s->{busybird}{acked_at}, -1);
+        }
+        change_and_check(
+            $storage, $loop, $unloop, %base4, mode => 'update', target => $statuses,
+            exp_change => 5, exp_unacked => [26..30, 36..45], exp_acked => [31..35]
+        );
+    };
+    change_and_check(
+        $storage, $loop, $unloop, %base4, mode => 'ack', target => 40, exp_change => 10,
+        exp_unacked => [41..45], exp_acked => [36..40, 26..30, 31..35]
+    );
+    get_and_check(
+        $storage, $loop, $unloop, {%base4, count => 'all', ack_state => 'acked'},
+        [reverse(36..40), reverse(26..30), reverse(31..35)]
+    );
+    change_and_check(
+        $storage, $loop, $unloop, %base4, mode => 'ack', exp_change => 5,
+        exp_unacked => [], exp_acked => [26..45]
+    );
 }
 
 sub test_storage_truncation {
