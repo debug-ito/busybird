@@ -453,7 +453,7 @@ sub test_storage_common {
     note('--- put (update): change to unacked');
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl1',
-        mode => 'update', target => [map {status($_) (2,4)}], exp_change => 2,
+        mode => 'update', target => [map {status($_)} (2,4)], exp_change => 2,
         exp_unacked => [2,4], exp_acked => [1,3,5]
     );
     note('--- ack: try to ack already acked status, again');
@@ -928,6 +928,8 @@ sub test_storage_ordered {
         [21..60, 61..70, 1..20, 71..80],
         'sorted by descending order of created_at within acked_at group'
     );
+    
+    fail('ack_statuses: ordered test. which statuses are acked by ack_statuses with max_id ??');
 }
 
 sub test_storage_truncation {
@@ -973,13 +975,19 @@ sub test_storage_truncation {
         exp_change => 4, exp_unacked => [6..($max_status_num+5)],
         exp_acked => []
     );
-    note('--- acked the top');
-    change_and_check(
-        $storage, $loop, $unloop, %base,
-        mode => 'ack', target => ($max_status_num+5),
-        exp_change => 1, exp_unacked => [6 .. $max_status_num+4],
-        exp_acked => [$max_status_num+5]
-    );
+    note('--- the top to acked');
+    on_statuses $storage, $loop, $unloop, {
+        %base, count => 1, max_id => ($max_status_num+5)
+    }, sub {
+        my ($statuses) = @_;
+        $statuses->[0]{busybird}{acked_at} = nowstring();
+        change_and_check(
+            $storage, $loop, $unloop, %base,
+            mode => 'update', target => $statuses,
+            exp_change => 1, exp_unacked => [6 .. $max_status_num+4],
+            exp_acked => [$max_status_num+5]
+        );
+    };
     note('--- inserting another one removes the acked status');
     change_and_check(
         $storage, $loop, $unloop, %base,
