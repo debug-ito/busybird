@@ -1,5 +1,7 @@
 package App::BusyBird::StatusStorage;
 
+our $VERSION = '0.01';
+
 1;
 
 =pod
@@ -7,6 +9,10 @@ package App::BusyBird::StatusStorage;
 =head1 NAME
 
 App::BusyBird::StatusStorage - Common interface of Status Storages
+
+=head1 SPEC VERSION
+
+Version 0.01
 
 =head1 DESCRIPTION
 
@@ -67,7 +73,7 @@ C<'any'>, it returns both acked and unacked statuses.
 
 Specifies the latest ID of the statuses to be fetched.  It fetches
 statues with IDs older than or equal to the specified C<max_id>.  See
-L</"Order of Statuses"> for detail.
+L</Order of Statuses> for detail.
 
 If there is no such status that has the ID equal to C<max_id> in
 specified C<ack_state>, this method returns empty array-ref.
@@ -103,17 +109,15 @@ Fields in C<%args> are as follows.
 
 Specifies the name of timeline.
 
-=item C<ids> => {C<undef>, ID, ARRAYREF_OF_IDS} (optional, default: C<undef>)
+=item C<max_id> => ID (optional, default: C<undef>)
 
-Specifies the IDs of statuses to be acked.
+Specifies the latest ID of the statuses to be acked.
 
-If it is a defined scalar, the status with that ID is acked.  If
-it is an array-ref of IDs, the statuses with those IDs are acked.
-If it is C<undef> or not specified, all unacked statuses in
-C<timeline> are acked.
+If specified, unacked statuses with IDs older than or equal to the specified C<max_id> are acked.
+If there is no unacked status with ID C<max_id>, no status is acked.
 
-If there is no status with the specified ID in the C<timeline>, it is
-ignored.
+If this option is omitted or set to C<undef>, all unacked statuses are acked.
+
 
 =item C<callback> => CODEREF($acked_count, $error) (optional, default: C<undef>)
 
