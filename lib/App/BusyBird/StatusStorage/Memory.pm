@@ -29,7 +29,10 @@ sub new {
 }
 
 sub DESTROY {
-    return if in_global_destruction;
+    if(in_global_destruction) {
+        warn "App::BusyBird::StatusStorage::Memory object is destroyed in GlobalDestruction phase. The statuses are NOT saved.\n";
+        return;
+    } 
     my ($self) = @_;
     $self->save();
 }
