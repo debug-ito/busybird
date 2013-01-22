@@ -1017,7 +1017,7 @@ sub test_storage_ordered {
         $storage, $loop, $unloop, %base4, mode => 'ack', target => 40, exp_change => 10,
         exp_unacked => [41..45], exp_acked => [36..40, 26..30, 31..35]
     );
-    get_and_check(
+    get_and_check_list(
         $storage, $loop, $unloop, {%base4, count => 'all', ack_state => 'acked'},
         [reverse(36..40), reverse(26..30), reverse(31..35)]
     );

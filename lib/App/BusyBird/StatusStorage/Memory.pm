@@ -243,40 +243,43 @@ sub ack_statuses {
     my ($self, %args) = @_;
     croak 'timeline arg is mandatory' if not defined $args{timeline};
     my $timeline = $args{timeline};
+    my $callback = $args{callback} || sub {};
     if(!$self->{timelines}{$timeline}) {
-        if($args{callback}) {
-            @_ = (0);
-            goto $args{callback};
-        }
-        return;
-    }
-    my $ids = $args{ids};
-    my @target_statuses = ();
-    if(defined($ids)) {
-        if(!ref($ids)) {
-            $ids = [$ids];
-        }elsif(ref($ids) eq 'ARRAY') {
-            ;
-        }else {
-            croak "ids arg must be undef/ID/ARRAYREF_OF_IDS";
-        }
-        @target_statuses = map {
-            my $tl_index = $self->_index($timeline, $_);
-            $tl_index < 0 ? () : ($self->{timelines}{$timeline}[$tl_index]);
-        } @$ids;
-    }else {
-        @target_statuses = grep {
-            !$self->_acked($_)
-        } @{$self->{timelines}{$timeline}};
+        @_ = (0);
+        goto $callback;
     }
     my $ack_str = App::BusyBird::DateTime::Format->format_datetime(
         DateTime->now(time_zone => 'UTC')
     );
-    $_->{busybird}{acked_at} = $ack_str foreach @target_statuses;
-    if($args{callback}) {
-        @_ = (int(@target_statuses));
-        goto $args{callback};
-    }
+    $self->get_statuses(
+        timeline => $args{timeline},
+        max_id => $args{max_id}, count => 'all',
+        ack_state => 'unacked',
+        callback => sub {
+            my ($statuses, $error) = @_;
+            if(int(@_) != 1) {
+                @_ = (undef, "get error: $error");
+                goto $callback;
+            }
+            if(@$statuses == 0) {
+                @_ = (0);
+                goto $callback;
+            }
+            $_->{busybird}{acked_at} = $ack_str foreach @$statuses;
+            $self->put_statuses(
+                timeline => $args{timeline}, mode => 'update',
+                statuses => $statuses, callback => sub {
+                    my ($changed, $error) = @_;
+                    if(int(@_) != 1) {
+                        @_ = (undef, "put error: $error");
+                        goto $callback;
+                    }
+                    @_ = ($changed);
+                    goto $callback;
+                }
+            );
+        }
+    );
 }
 
 sub get_unacked_counts {
