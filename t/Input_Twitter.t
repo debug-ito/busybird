@@ -149,6 +149,7 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
     $apiurlmock->mock('apiurl', sub { $apiurl });
     foreach my $newarg (
         {label => "apiurl option", args => [backend => {}, apiurl => $apiurl]},
+        {label => 'only apiurl option', args => [apiurl => $apiurl]},
         {label => "backend apiurl field", args => [backend => {apiurl => $apiurl}]},
         {label => "apiurl option and backend field", args => [backend => {apiurl => "http://hogege.com"}, apiurl => $apiurl]},
         {label => "backend apiurl method", args => [backend => $apiurlmock]}
@@ -307,6 +308,7 @@ end_call $mocknt;
     note('--- it should return undef if backend throws an exception.');
     my $diemock = Test::MockObject->new;
     my $call_count = 0;
+    my @log = ();
     $diemock->mock('user_timeline', sub {
         my ($self, $params) = @_;
         $call_count++;
@@ -317,12 +319,26 @@ end_call $mocknt;
         }
     });
     my $diein = App::BusyBird::Input::Twitter->new(
-        backend => $diemock, page_next_delay => 0, logger => undef,
+        backend => $diemock, page_next_delay => 0, logger => sub { push(@log, [@_]) },
         transformer => \&negative_id_transformer,
     );
     my $result;
-    lives_ok { $result = $diein->user_timeline({since_id => 10, count => 5}) } '$diein should not throw exception even if backend does.';
+    lives_ok { $result = $diein->user_timeline({screen_name => 'hoge', since_id => 10, count => 5}) } '$diein should not throw exception even if backend does.';
     ok(!defined($result), "the result should be undef then.") or diag("result is $result");
+    cmp_ok(scalar(grep {$_->[0] =~ /err/} @log), ">=", 1, "at least 1 error reported.");
+}
+
+{
+    note('--- call timeline method with no backend');
+    my @log = ();
+    my $bbin = new_ok('App::BusyBird::Input::Twitter', [
+        apiurl => 'http://fake.com/', logger => sub { push(@log, [@_]) },
+        page_next_delay => 0,
+    ]);
+    my $result;
+    lives_ok { $result = $bbin->user_timeline({screen_name => 'hoge'}) } 'calling user_timeline without backend should not throw exception.';
+    ok(!defined($result), 'the result should be undef then');
+    cmp_ok(scalar(grep {$_->[0] =~ /err/} @log), ">=", 1, "at least 1 error reported.");
 }
 
 

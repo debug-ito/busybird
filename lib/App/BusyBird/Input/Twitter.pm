@@ -20,7 +20,7 @@ my $DATETIME_FORMATTER = 'App::BusyBird::DateTime::Format';
 sub new {
     my ($class, %params) = @_;
     my $self = bless {}, $class;
-    $self->set_param(\%params, 'backend', undef, 1);
+    $self->set_param(\%params, 'backend', undef);
     $self->set_param(\%params, 'filepath', undef);
     $self->set_param(\%params, 'page_max', 10);
     $self->set_param(\%params, 'page_max_no_since_id', 1);
@@ -29,6 +29,9 @@ sub new {
     $self->{logger} = exists($params{logger}) ? $params{logger} : App::BusyBird::Log->logger;
     $self->{transformer} =
         exists($params{transformer}) ? $params{transformer} : \&transformer_default;
+    if(!defined($self->{backend}) && !defined($self->{apiurl})) {
+        croak("Please specify either 'backend' or 'apiurl' option.");
+    }
     return $self;
 }
 
@@ -36,7 +39,8 @@ sub _apiurl {
     my ($self) = @_;
     return $self->{apiurl} if defined $self->{apiurl};
     return $self->{backend}->apiurl if blessed($self->{backend}) && $self->{backend}->can('apiurl');
-    return $self->{backend}{apiurl} if reftype($self->{backend}) eq 'HASH' && defined($self->{backend}{apiurl});
+    my $backend_reftype = reftype($self->{backend});
+    return $self->{backend}{apiurl} if defined($backend_reftype) && $backend_reftype  eq 'HASH' && defined($self->{backend}{apiurl});
     croak "Cannot determine API URL. Perhaps you have to set 'apiurl' option when calling new()";
 }
 
@@ -198,6 +202,9 @@ sub _load_timeline {
         $self->_log_query($method, \%params);
         my $loaded;
         try {
+            if(not defined($self->{backend})) {
+                croak 'backend parameter is undef. You must specify it in new()';
+            }
             $loaded = $self->{backend}->$method({%params});
         }catch {
             my $e = shift;
@@ -319,7 +326,7 @@ Version 0.01
 
 =head1 DESCRIPTION
 
-This module is a wrapper for L<Net::Twitter> to make it easy
+This module is a wrapper for L<Net::Twitter> (or L<Net::Twitter::Lite>) to make it easy
 to load a timeline for L<App::BusyBird>.
 
 =head1 FEATURES
@@ -353,7 +360,7 @@ Add BusyBird-specific fields to the statuses.
 
 Normalize status objects from Search API.
 
-It might be unnecesary in Twitter API v1.1, other Twitter API
+It might be unnecesary in Twitter API v1.1, but other Twitter API
 implementations like identi.ca might need it.
 
 
@@ -374,9 +381,12 @@ Creates the object with the following C<%options>.
 
 =over
 
-=item backend => OBJECT (mandatory)
+=item backend => OBJECT (semi-optional)
 
 Backend L<Net::Twitter> object. L<Net::Twitter::Lite> object can be used, too.
+
+If you use timeline methods, this parameter is mandatory.
+If you use transformation methods only, you can omit this parameter as long as you specify C<apiurl> option.
 
 =item filepath => FILEPATH (optional)
 
@@ -399,23 +409,25 @@ Delay in seconds before loading the next page. Fractional number can be used.
 
 API URL of the backend source.
 
-By default, API URL is obtained from the C<backend> object,
-so you don't usually have to set this option.
+By default, API URL is obtained from the C<backend> object, so usually you can omit this option.
+
+If C<backend> is omitted, you must specify this option.
+If both C<backend> and C<apiurl> options are specified, C<apiurl> option is used as API URL.
 
 
 =item logger => CODEREF($level, $msg) (optional, default: C<< App::BusyBird::Log->logger >>)
 
-Logger subroutine reference.
+Logger subroutine reference. See L<App::BusyBird::Log> for the spec of the logger.
 
 Setting it to C<undef> suppresses logging.
 
 =item transformer (optional, default: C<transformer_default>)
 
-A subroutine reference that transforms the result from Net::Twitter methods.
+A subroutine reference that transforms the result from L<Net::Twitter> methods.
 
 The transformer takes two arguments.
 The first is the L<App::BusyBird::Input::Twitter> object.
-The second is the array-ref of status objects obtained by Net::Twitter methods (C<home_timeline>, C<user_timeline> etc.).
+The second is the array-ref of status objects obtained by L<Net::Twitter> methods (C<home_timeline>, C<user_timeline> etc.).
 
 The output from the transformer is an array-ref of the transformed result.
 
@@ -425,7 +437,7 @@ Setting C<transformer> to C<undef> suppresses any transformation.
 
 =back
 
-=head1 OBJECT METHODS
+=head1 OBJECT METHODS - TIMELINE METHODS
 
 =head2 $status_arrayref = $input->home_timeline($options_hashref)
 
@@ -455,8 +467,12 @@ if C<since_id> is not specified.
 
 If the operation succeeds, the return value of these methods is an array-ref of status objects transformed by C<transformer> option.
 If the backend L<Net::Twitter> methods throw an exception due to network failure or something,
-the exception is catched and C<undef> is returned.
+the exception is catched internally and C<undef> is returned.
 
+=head1 OBJECT METHODS - TRANSFORMATION METHODS
+
+The following methods transform status objects.
+If you use these methods only, you can omit C<backend> parameter when calling C<new()> as long as you specify C<apiurl> option instead.
 
 =head2 $transformed_status_arrayref = $input->transformer_default($status_arrayref)
 
