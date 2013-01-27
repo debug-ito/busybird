@@ -315,7 +315,7 @@ acked ones.
 
 =head1 AUTHOR
 
-Toshio Ito
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut
 

@@ -116,14 +116,38 @@ In success, C<$callback> is called with one argument (C<$arrayref_of_statuses>),
 In failure, C<$callback> is called with two arguments, and the second argument (C<$error>) describes the error.
 
 
-=head2 %unacked_counts = $timeline->unacked_counts()
+=head2 $timeline->put_statuses($mode, $arrayref_of_statuses, [$callback->($put_num, $error)])
 
-Returns number of unacked statuses for each status level.
-This is the front-end of C<get_unacked_counts()> method of L<App::BusyBird::StatusStorage>.
+Inserts statuses to the C<$timeline> or updates statuses in the C<$timeline>.
+This is the front-end of C<put_statuses()> method of L<App::BusyBird::StatusStorage>.
 
-See L<< App::BusyBird::StatusStorage/%unacked_counts = $storage->get_unacked_counts(%args) >> for detail about the return value (C<%unacked_count>).
+Usually you should use C<add_statuses()> method to add new statuses to the C<$timeline>,
+because statuses inserted by C<put_statuses()> bypasses the C<$timeline>'s filter.
 
-In failure, this method throws an exception.
+Arguments C<$mode>, C<$arrayref_of_statuses> and C<$callback> correspond to
+C<mode>, C<statuses> and C<callback> parameter of C<put_statuses()> method of L<App::BusyBird::StatusStorage>, respectively.
+
+=head2 $timeline->delete_statuses($arrayref_of_ids, [$callback->($deleted_num, $error)])
+
+Deletes statuses from the C<$timeline>.
+This is the front-end of C<delete_statuses()> method of L<App::BusyBird::StatusStorage>.
+
+C<$arrayref_of_ids> is an array-ref of status IDs to be deleted.
+
+Optional parameter C<$callback> is a subroutine reference that is called when the operation has completed.
+In success, C<$callback> is called with one argument (C<$deleted_num>), which is the number of statuses deleted.
+In failure, C<$callback> is called with two arguments, and the second argument (C<$error>) describes the error.
+
+=head2 $timeline->get_unacked_counts($callback->($unacked_counts, $error))
+
+Fetches numbers of unacked statuses for each level.
+This is the front-end of C<get_unacked_counts()> methods of L<App::BusyBird::StatusStorage>.
+
+C<$callback> is a subroutine reference that is called when the operation has completed.
+In success, C<$callback> is called with one argument (C<$unacked_counts>), which is a hash-ref.
+In failure, C<$callback> is called with two arguments, and the second argument (C<$error>) describes the error.
+
+See L<App::BusyBird::StatusStorage> for details of C<$unacked_counts>.
 
 
 =head2 $timeline->contains($arrayref_of_statuses_or_ids, $callback->($contained, $not_contained, $error))
@@ -174,9 +198,7 @@ TBW...
 Where should I write the specification of updates?
 Maybe Web API documetion is the right place.
 
-=head2 $storage = $timeline->status_storage()
 
-Returns the status storage object that the C<$timeline> uses.
 
 =head1 AUTHOR
 
