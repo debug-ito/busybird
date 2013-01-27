@@ -220,12 +220,9 @@ and the second argument (C<$error>) describes the error.
 
 =back
 
-=head2 %unacked_counts = $storage->get_unacked_counts(%args)
+=head2 $storage->get_unacked_counts(%args)
 
-Returns numbers of unacked statuses in a timeline.
-
-This method operates synchronously and should be fast enough to
-deliver real-time updates to the BusyBird users.
+Fetches numbers of unacked statuses in a timeline.
 
 Fields in C<%args> are as follows.
 
@@ -235,12 +232,19 @@ Fields in C<%args> are as follows.
 
 Specifies the name of timeline.
 
+=item C<callback> => CODEREF($unacked_counts, $error) (mandatory)
+
+Specifies a subroutine reference that is called when the operation completes.
+
+In success, the C<callback> is called with one argument (C<$unacked_counts>),
+which is the hash-ref describing numbers of unacked statuses in each level.
+
+In failure, the C<callback> is called with two arguments,
+and the second argument (C<$error>) describes the error.
+
 =back
 
-In success, this method returns a hash (C<%unacked_counts>) describing numbers
-of unacked statuses in each level.
-
-Fields in C<%unacked_counts> are as follows.
+Fields in C<%$unacked_counts> are as follows.
 
 =over
 
@@ -259,8 +263,6 @@ The key C<"total"> represents the total number of unacked statuses
 in the timeline.
 
 =back
-
-In failure, this method throws an exception describing the error.
 
 
 =head1 GUIDELINE

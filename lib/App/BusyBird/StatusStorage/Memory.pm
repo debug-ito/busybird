@@ -285,9 +285,11 @@ sub ack_statuses {
 sub get_unacked_counts {
     my ($self, %args) = @_;
     croak 'timeline arg is mandatory' if not defined $args{timeline};
+    croak 'callback arg is mandatory' if not defined $args{callback};
     my $timeline = $args{timeline};
     if(!$self->{timelines}{$timeline}) {
-        return ( total => 0 );
+        @_ = ({total => 0});
+        goto $args{callback};
     }
     my @statuses = grep {
         !$self->_acked($_)
@@ -300,7 +302,8 @@ sub get_unacked_counts {
         };
         $count{$level}++;
     }
-    return %count;
+    @_ = (\%count);
+    goto $args{callback};
 }
 
 

@@ -28,11 +28,7 @@ sub get_statuses { my $self = shift; $self->_delayed_call(@_) }
 sub put_statuses { my $self = shift; $self->_delayed_call(@_) }
 sub ack_statuses { my $self = shift; $self->_delayed_call(@_) }
 sub delete_statuses { my $self = shift; $self->_delayed_call(@_) }
-
-sub get_unacked_counts {
-    my ($self, @args) = @_;
-    return $self->{backend}->get_unacked_counts(@args);
-}
+sub get_unacked_counts { my $self = shift; $self->_delayed_call(@_) }
 
 
 1;
@@ -45,7 +41,7 @@ App::BusyBird::StatusStorage::AEDelayed - StatusStorage wrapper for delayed oper
 
 =head1 DESCRIPTION
 
-This is a StatusStorage wrapper just for testing asynchronous operations for C<*_statuses> methods.
+This is a StatusStorage wrapper just for testing asynchronous operations.
 
 =head1 CLASS METHODS
 

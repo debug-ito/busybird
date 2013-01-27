@@ -113,6 +113,25 @@ sub sync_get {
     return $statuses;
 }
 
+sub sync_get_unacked_counts {
+    my ($storage, $loop, $unloop, $timeline) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my $callbacked = 0;
+    my $result;
+    $storage->get_unacked_counts(
+        timeline => $timeline, callback => sub {
+            my ($unacked_counts, $error) = @_;
+            is(int(@_), 1, 'operation succeed');
+            $result = $unacked_counts;
+            $callbacked = 1;
+            $unloop->();
+        }
+    );
+    $loop->();
+    ok($callbacked, 'callbacked');
+    return %$result;
+}
+
 sub on_statuses {
     my ($storage, $loop, $unloop, $query_ref, $code) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
@@ -227,7 +246,7 @@ sub test_storage_common {
         $loop->();
         ok($callbacked, "callbacked");
         is_deeply(
-            { $storage->get_unacked_counts(timeline => $tl) },
+            { sync_get_unacked_counts($storage, $loop, $unloop, $tl) },
             { total => 0 },
             "$tl is empty"
         );
@@ -250,7 +269,7 @@ sub test_storage_common {
     $loop->();
     ok($callbacked, "callbacked");
     is_deeply(
-        { $storage->get_unacked_counts(timeline => '_test_tl1') },
+        { sync_get_unacked_counts($storage, $loop, $unloop, '_test_tl1') },
         { total => 1, 0 => 1 },
         '1 unacked status'
     );
@@ -271,7 +290,7 @@ sub test_storage_common {
     $loop->();
     ok($callbacked, "callbacked");
     is_deeply(
-        { $storage->get_unacked_counts(timeline => '_test_tl1') },
+        { sync_get_unacked_counts($storage, $loop, $unloop, '_test_tl1') },
         { total => 5, 0 => 5 },
         '5 unacked status'
     );
@@ -311,7 +330,7 @@ sub test_storage_common {
     $loop->();
     ok($callbacked, "callbacked");
     is_deeply(
-        { $storage->get_unacked_counts(timeline => '_test_tl1') },
+        { sync_get_unacked_counts($storage, $loop, $unloop, '_test_tl1') },
         { total => 0 },
         "all acked"
     );
@@ -478,7 +497,7 @@ sub test_storage_common {
         exp_change => 2, exp_unacked => [2,3,4,5], exp_acked => [1]
     );
     is_deeply(
-        {$storage->get_unacked_counts(timeline => '_test_tl1')},
+        {sync_get_unacked_counts($storage, $loop, $unloop, '_test_tl1')},
         {total => 4, 0 => 4}, '4 unacked statuses'
     );
     note('--- put (update): change level');
@@ -489,7 +508,7 @@ sub test_storage_common {
         exp_change => 5, exp_unacked => [2,3,4,5], exp_acked => [1]
     );
     is_deeply(
-        {$storage->get_unacked_counts(timeline => '_test_tl1')},
+        {sync_get_unacked_counts($storage, $loop, $unloop, '_test_tl1')},
         {total => 4, 1 => 2, 2 => 2}, "4 unacked statuses in 2 levels"
     );
     note('--- put (upsert): acked statuses');
@@ -511,7 +530,7 @@ sub test_storage_common {
         );
     };
     is_deeply(
-        {$storage->get_unacked_counts(timeline => '_test_tl1')},
+        {sync_get_unacked_counts($storage, $loop, $unloop, '_test_tl1')},
         {total => 7, 1 => 1, 2 => 2, 7 => 4}, "3 levels"
     );
 
@@ -522,7 +541,7 @@ sub test_storage_common {
         exp_change => 10, exp_unacked => [1..10], exp_acked => []
     );
     is_deeply(
-        {$storage->get_unacked_counts(timeline => '_test  tl2')},
+        {sync_get_unacked_counts($storage, $loop, $unloop, '_test  tl2')},
         {total => 10, 0 => 10}, '10 unacked statuses'
     );
     ## change_and_check(
