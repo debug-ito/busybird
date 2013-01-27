@@ -38,25 +38,35 @@ JSON and deserializable from JSON.
 
 The following fields in a status object is used by BusyBird.
 
-=head2 $status->{id}
-
 =head2 $status->{created_at}
 
 =head2 $status->{busybird}{acked_at}
 
-=head2 $status->{busybird}{timeline}
-
 =head2 $status->{busybird}{level}
-
-=head2 $status->{busybird}{source_name}
 
 =head2 $status->{busybird}{source_image_url}
 
+=head2 $status->{busybird}{source_name}
+
+=head2 $status->{busybird}{source_permalink}
+
 =head2 $status->{busybird}{status_permalink}
+
+=head2 $status->{busybird}{timeline}
 
 =head2 $status->{busybird}{user_permalink}
 
-=head2 $status->{busybird}{source_permalink}
+=head2 $status->{entities}{urls}
+
+=head2 $status->{id}
+
+=head2 $status->{retweeted_status}
+
+=head2 $status->{text}
+
+=head2 $status->{user}{screen_name}
+
+=head2 $status->{user}{profile_image_url}
 
 
 

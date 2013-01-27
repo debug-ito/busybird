@@ -22,7 +22,7 @@ App::BusyBird::Main - main application object of App::BusyBird
 
 =head2 $timeline = $main->timeline($name, [$timeline])
 
-=head2 $timeline = $main->get_timeline()
+=head2 $timeline = $main->get_timeline($name)
 
 =head2 @timelines = $main->get_all_timelines()
 

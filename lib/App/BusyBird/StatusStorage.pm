@@ -247,7 +247,11 @@ Fields in C<%unacked_counts> are as follows.
 =item LEVEL => COUNT_OF_UNACKED_STATUSES_IN_THE_LEVEL
 
 Integer keys represent levels. The values is the number of
-unacked statueses in the level.
+unacked statuses in the level.
+
+A status's level is the C<< $status->{busybird}{level} >> field.
+See L<App::BusyBird::Status> for detail.
+
 
 =item C<total> => COUNT_OF_ALL_UNACKED_STATUSES
 
