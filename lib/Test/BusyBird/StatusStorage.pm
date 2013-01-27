@@ -664,13 +664,16 @@ sub test_storage_ordered {
     note('-------- test_storage_ordered');
     note('--- clear timeline');
     my $callbacked = 0;
-    $storage->delete_statuses(timeline => "_test_tl3", callback => sub {
-        is(int(@_), 1, "operation succeed");
-        $callbacked = 1;
-        $unloop->();
-    });
-    $loop->();
-    ok($callbacked, "callbacked");
+    foreach my $tl (qw(_test_tl3 _test_tl4 _test_tl5)) {
+        $callbacked = 0;
+        $storage->delete_statuses(timeline => $tl, callback => sub {
+            is(int(@_), 1, "operation succeed");
+            $callbacked = 1;
+            $unloop->();
+        });
+        $loop->();
+        ok($callbacked, "callbacked");    
+    }
     note('--- populate timeline');
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl3',
@@ -1025,6 +1028,34 @@ sub test_storage_ordered {
         $storage, $loop, $unloop, %base4, mode => 'ack', exp_change => 5,
         exp_unacked => [], exp_acked => [26..45]
     );
+    {
+        note('--- same timestamp: order is free, but must be consistent.');
+        my %base5 = (timeline => '_test_tl5');
+        my @in_statuses = map {status($_)} (1..10);
+        my $created_at = nowstring;
+        $_->{created_at} = $created_at foreach @in_statuses;
+        change_and_check(
+            $storage, $loop, $unloop, %base5, mode => 'insert', target => [@in_statuses[0..4]],
+            label => 'insert first five', exp_change => 5, exp_unacked => [1..5], exp_acked => []
+        );
+        change_and_check(
+            $storage, $loop, $unloop, %base5, mode => 'ack', target => undef,
+            label => 'ack first five', exp_change => 5, exp_unacked => [], exp_acked => [1..5]
+        );
+        change_and_check(
+            $storage, $loop, $unloop, %base5, mode => 'insert', target => [@in_statuses[5..9]],
+            label => 'insert next five', exp_change => 5, exp_unacked => [6..10], exp_acked => [1..5]
+        );
+        my $whole_timeline = sync_get($storage, $loop, $unloop, %base5, count => 'all');
+        foreach my $start_index (0..9) {
+            my $max_id = $whole_timeline->[$start_index]{id};
+            get_and_check_list(
+                $storage, $loop, $unloop, {%base5, count => 'all', max_id => $max_id},
+                [ map {$_->{id}} @{$whole_timeline}[$start_index .. 9] ],
+                "start_index = $start_index, max_id = $max_id: order is the same as the whole_timeline"
+            );
+        }
+    }
 }
 
 sub test_storage_truncation {
