@@ -22,5 +22,48 @@ sub logger {
     return $logger;
 }
 
+our $VERSION = '0.01';
+
 1;
+
+=pod
+
+=head1 NAME
+
+App::BusyBird::Log - logger singleton in App::BusyBird
+
+=head1 VERSION
+
+0.01
+
+=head1 SYNOPSIS
+
+    use App::BusyBird::Log;
+    
+    App::BusyBird::Log->logger->(sub {
+        my ($level, $msg) = @_;
+        print STDERR ("$level: $msg\n");
+    });
+
+
+=head1 DESCRIPTION
+
+L<App::BusyBird::Log> stores the logger singleton object.
+The object is used as the default logger throughout various components in L<App::BusyBird>.
+
+=head1 CLASS METHODS
+
+=head2 $logger = App::BusyBird::Log->logger([$logger])
+
+Accessor for the logger singleton.
+
+The logger object is just a subroutine reference that takes two arguments: C<$level> and C<$msg>.
+C<$level> is a string of log level such as 'info', 'warn', 'error', 'critical' etc.
+C<$msg> is the log message body.
+
+=head1 AUTHOR
+
+Toshio Ito C<< toshioito [at] cpan.org >>
+
+=cut
 
