@@ -72,7 +72,7 @@ The following fields in a status object is used by BusyBird.
 
 =head1 AUTHOR
 
-Toshio Ito C<< toshioito [at] cpan.org >>
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut
 

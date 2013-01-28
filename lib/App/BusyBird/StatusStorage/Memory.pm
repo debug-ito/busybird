@@ -328,11 +328,11 @@ Version 0.01
     ## The statuses are stored in the process memory.
     my $storage = App::BusyBird::StatusStorage::Memory->new();
 
-    ## Save the content of the storage into a file
-    $storage->save("my_statuses.json");
-    
     ## Load statuses from a file
     $storage->load("my_statuses.json");
+    
+    ## Save the content of the storage into a file
+    $storage->save("my_statuses.json");
 
 
 =head1 DESCRIPTION
