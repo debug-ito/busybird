@@ -7,6 +7,7 @@ use Test::MockObject;
 use Test::BusyBird::StatusStorage qw(:status);
 use App::BusyBird::DateTime::Format;
 use DateTime;
+use Storable qw(dclone);
 
 BEGIN {
     use_ok('App::BusyBird::Timeline');
@@ -75,6 +76,23 @@ sub test_error_back {
     like($result[$error_index], $exp_error, "$label: error message is as expected.");
 }
 
+sub filter {
+    my ($timeline, $mode, $sync_filter) = @_;
+    my $method;
+    my $filter;
+    if($mode eq 'sync') {
+        $method = 'add_filter';
+        $filter = $sync_filter;
+    }elsif($mode eq 'async') {
+        $method = 'add_filter_async';
+        $filter = sub {
+            my ($statuses, $done) = @_;
+            $done->($sync_filter->($statuses));
+        };
+    }
+    $timeline->$method($filter);
+}
+
 my $CLASS = 'App::BusyBird::Timeline';
 
 {
@@ -118,7 +136,9 @@ my $CLASS = 'App::BusyBird::Timeline';
         is(int(@_), 1, 'add succeed');
         is($added_num, 10, '10 added');
         $callbacked = 1;
+        $UNLOOP->();
     });
+    $LOOP->();
     ok($callbacked, 'add callbacked');
     test_content($timeline, {count => 'all', ack_state => 'unacked'}, [reverse 11..20], '10 unacked');
     test_content($timeline, {connt => 'all', ack_state => "acked"}, [reverse 1..10], '10 acked');
@@ -198,12 +218,141 @@ my $CLASS = 'App::BusyBird::Timeline';
                     error_index => 2, exp_error => qr/get_statuses/);
 }
 
+{
+    note('--- filters');
+    foreach my $mode (qw(sync async)) {
+        note("--- --- filter mode = $mode");
+        my $timeline = new_ok($CLASS, [name => 'test', storage => create_storage(), logger => undef]);
+        filter($timeline, $mode, sub {
+            ## in-place modification
+            my $statuses = shift;
+            $_->{counter} = [1] foreach @$statuses;
+            return $statuses;
+        });
+        sync($timeline, 'add_statuses', statuses => status(1));
+        my ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+        test_status_id_list($statuses, [1], 'IDs OK');
+        is_deeply($statuses->[0]{counter}, [1], "filtered.");
+        filter($timeline, $mode, sub {
+            ## replace original
+            my $original = shift;
+            my $cloned = dclone($original);
+            push(@{$_->{counter}}, 2) foreach @$cloned;
+            push(@{$_->{counter}}, 3) foreach @$original;
+            return $cloned;
+        });
+        my $callbacked = 0;
+        $timeline->add([map {status($_)} (2,3)], sub {
+            $callbacked = 1;
+            $UNLOOP->();
+        });
+        $LOOP->();
+        ok($callbacked, "callbacked");
+        ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+        test_status_id_list($statuses, [3,2,1], "IDs OK");
+        is_deeply($statuses->[0]{counter}, [1,2], "ID 3, filter OK");
+        is_deeply($statuses->[1]{counter}, [1,2], 'ID 2, filter OK');
+        is_deeply($statuses->[2]{counter}, [1], 'ID 1 is not changed.');
+        filter($timeline, $mode, sub { [] }); ## null filter
+        my ($ret) = sync($timeline, 'add_statuses', statuses => [map {status($_)} 11..30]);
+        is($ret, 0, 'nothing added because of the null filter');
+        ($ret) = sync($timeline, 'put_statuses', mode => 'insert', statuses => status(4));
+        is($ret, 1, 'put_statuses bypasses the filter');
+        ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+        test_status_id_list($statuses, [reverse 1..4], "IDs OK");
+        ok(!exists($statuses->[0]{counter}), 'ID 4 does not have counter');
+        is_deeply($statuses->[1]{counter}, [1,2], "ID 3 is not changed");
+        is_deeply($statuses->[2]{counter}, [1,2], 'ID 2 is not changed');
+        is_deeply($statuses->[3]{counter}, [1],   'ID 1 is not changed');
+        ($ret) = sync($timeline, 'put_statuses', mode => 'update', statuses => [map {status($_)} (1..3)]);
+        is($ret, 3, '3 updated without interference from filters');
+        ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+        test_status_id_list($statuses, [reverse 1..4], "IDs OK");
+        ok(!exists($statuses->[0]{counter}), 'ID 4 does not have counter');
+        ok(!exists($statuses->[1]{counter}), 'ID 3 is updated');
+        ok(!exists($statuses->[2]{counter}), 'ID 2 is updated');
+        ok(!exists($statuses->[3]{counter}), 'ID 1 is updated');
+
+        foreach my $case (
+            {name => 'integer', junk => 10},
+            {name => 'undef', junk => undef},
+            {name => 'hash-ref', junk => {}},
+            {name => 'code-ref', junk => sub {}},
+        ) {
+            note("--- --- filter mode = $mode: junk filter: $case->{name}");
+            my @log = ();
+            my $timeline = new_ok($CLASS, [
+                name => 'test',
+                storage => create_storage(),
+                logger => sub { push(@log, [@_]) }
+            ]);
+            filter($timeline, $mode, sub { return $case->{junk} });
+            ($ret) = sync($timeline, 'add_statuses', statuses => status(1));
+            is($ret, 1, "add succeed");
+            cmp_ok(int(grep { $_->[0] =~ /warn/i } @log), '>=', 1, 'at least 1 warning is logged.');
+            ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+            test_status_id_list($statuses, [1], "status OK");
+        }
+    }
+}
+
+{
+    note('--- mixed sync/async filters. concurrency regulation.');
+    my $timeline = new_ok($CLASS, [
+        name => 'test', storage => create_storage(), logger => undef
+    ]);
+    my @triggers = ([], []);
+    my $trigger_counts = sub { [ map { int(@$_) } @triggers ] };
+    $timeline->add_filter(sub {
+        my $s = shift;
+        $_->{counter} = [1] foreach @$s;
+        return $s;
+    });
+    $timeline->add_filter_async(sub {
+        my ($s, $done) = @_;
+        push(@{$_->{counter}}, 2) foreach @$s;
+        push(@{$triggers[0]}, sub { $done->($s) });
+    });
+    $timeline->add_filter(sub {
+        my $s = shift;
+        push(@{$_->{counter}}, 3) foreach @$s;
+        return $s;
+    });
+    $timeline->add_filter_async(sub {
+        my ($s, $done) = @_;
+        push(@{$_->{counter}}, 4) foreach @$s;
+        push(@{$triggers[1]}, sub { $done->($s) });
+    });
+    
+    my @done = ();
+    foreach my $id (1, 2) {
+        $timeline->add(status($id), sub {
+            push(@done, $id);
+        });
+    }
+    is_deeply(\@done, [], "none of the additions is complete.");
+    is_deeply($trigger_counts->(), [1, 0], 'only 1 trigger. concurrency is regulated.');
+    shift(@{$triggers[0]})->();
+    is_deeply($trigger_counts->(), [0, 1], 'move to next trigger.');
+    shift(@{$triggers[1]})->();
+    is_deeply($trigger_counts->(), [1, 0], 'next status is in the filter.');
+    is_deeply(\@done, [1], 'ID 1 is complete');
+    shift(@{$triggers[0]})->();
+    is_deeply($trigger_counts->(), [0, 1], 'move to next trigger');
+    shift(@{$triggers[1]})->();
+    is_deeply($trigger_counts->(), [0, 0], 'no more status');
+    is_deeply(\@done, [1, 2], "all complete");
+    my ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+    test_status_id_list($statuses, [2, 1], "IDs OK");
+    foreach my $s (@$statuses) {
+        is_deeply($s->{counter}, [1,2,3,4], "ID $s->{id} counter OK");
+    }
+}
+
 
 TODO: {
     local $TODO = "I will write these tests. I swear.";
-    fail('todo: filters');
     fail('todo: timeline is properly destroyed. no cyclic reference between resource provider (see 2013/01/27)');
-    fail('todo: concurrency control for asynchronous filters. The concurrency must be regulated.');
 }
 
 done_testing();
