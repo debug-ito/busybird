@@ -35,12 +35,14 @@ sub sync {
 }
 
 sub status {
-    my ($id) = @_;
+    my ($id, $level) = @_;
+    my %level_elem = defined($level) ? (busybird => { level => $level }) : ();
     return {
         id => $id,
         created_at => App::BusyBird::DateTime::Format->format_datetime(
             DateTime->from_epoch(epoch => $id, time_zone => 'UTC')
-        )
+        ),
+        %level_elem
     };
 }
 
@@ -49,6 +51,13 @@ sub test_content {
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     my ($statuses) = sync($timeline, 'get_statuses', %$args_ref);
     test_status_id_list($statuses, $exp, $msg);
+}
+
+sub test_unacked_counts {
+    my ($timeline, $exp, $msg) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my ($got) = sync($timeline, 'get_unacked_counts');
+    is_deeply($got, $exp, $msg);
 }
 
 my $CLASS = 'App::BusyBird::Timeline';
@@ -77,11 +86,13 @@ my $CLASS = 'App::BusyBird::Timeline';
     my $timeline = new_ok($CLASS, [%newbase, name => 'test']);
     is($timeline->name(), 'test', 'name OK');
     test_content($timeline, {count => 'all'}, [], 'status is empty');
+    test_unacked_counts($timeline, {total => 0});
     my ($ret) = sync($timeline, 'add_statuses', statuses => [map {status($_)} (1..10)]);
     is($ret, 10, '10 added');
     test_content($timeline, {count => 'all', ack_state => 'unacked'},
                  [reverse 1..10], '10 unacked');
     test_content($timeline, {count => 'all', ack_state => 'acked'}, [], '0 acked');
+    test_unacked_counts($timeline, {total => 10, 0 => 10});
     ($ret) = sync($timeline, 'ack_statuses');
     is($ret, 10, '10 acked');
     test_content($timeline, {count => 'all', ack_state => 'unacked'}, [], '0 unacked');
@@ -102,23 +113,28 @@ my $CLASS = 'App::BusyBird::Timeline';
     ($ret) = sync($timeline, 'ack_statuses', max_id => 15);
     is($ret, 5, '5 acked');
     test_content($timeline, {count => 'all', ack_state => 'unacked'}, [reverse 16..20], '5 unacked');
+    test_unacked_counts($timeline, {total => 5, 0 => 5});
     ($ret) = sync($timeline, 'delete_statuses', ids => 18);
     is($ret, 1, '1 deleted');
     test_content($timeline, {count => 'all', ack_state => 'unacked'}, [reverse 16,17,19,20], '4 unacked');
+    test_unacked_counts($timeline, {total => 4, 0 => 4});
     ($ret) = sync($timeline, 'delete_statuses', ids => [15,16,17,18]);
     is($ret, 3, '3 deleted');
     test_content($timeline, {count => 'all'}, [reverse 1..14, 19..20], '14 acked, 2 unacked');
     ($ret) = sync($timeline, 'put_statuses', mode => 'insert', statuses => [map {status($_)} 19..22]);
     is($ret, 2, '2 inserted');
     test_content($timeline, {count => 'all'}, [reverse 1..14, 19..22], '14 acked, 4 unacked');
-    ($ret) = sync($timeline, 'put_statuses', mode => 'update', statuses => [map {status($_)} 13..17]);
+    test_unacked_counts($timeline, {total => 4, 0 => 4});
+    ($ret) = sync($timeline, 'put_statuses', mode => 'update', statuses => [map {status($_, 1)} 13..17]);
     is($ret, 2, '2 updated');
     test_content($timeline, {count => 'all', ack_state => "unacked"}, [reverse 13,14,19..22], '6 unacked');
-    test_content($timeline, {count => 'all', ack_state => "acked"}, [reverse 1..12], '12 unacked');
-    ($ret) = sync($timeline, 'put_statuses', mode => 'upsert', statuses => [map {status($_)} 11..18]);
+    test_content($timeline, {count => 'all', ack_state => "acked"}, [reverse 1..12], '12 acked');
+    test_unacked_counts($timeline, {total => 6, 1 => 2, 0 => 4});
+    ($ret) = sync($timeline, 'put_statuses', mode => 'upsert', statuses => [map {status($_, 2)} 11..18]);
     is($ret, 8, '8 upserted');
     test_content($timeline, {count => 'all', ack_state => "unacked"}, [reverse 11..22], '12 unacked');
-    test_content($timeline, {count => 'all', ack_state => "acked"}, [reverse 1..10], '10 unacked');
+    test_content($timeline, {count => 'all', ack_state => "acked"}, [reverse 1..10], '10 acked');
+    test_unacked_counts($timeline, {total => 12, 2 => 8, 0 => 4});
     my ($con, $ncon) = sync($timeline, 'contains', query => 5);
     is_deeply($con, [5], '5 is contained');
     is_deeply($ncon, [], '5 is contained');
@@ -135,6 +151,7 @@ my $CLASS = 'App::BusyBird::Timeline';
     dies_ok { $timeline->contains(query => 5) } 'contains: callback is missing';
     is($ret, 22, 'delete all');
     test_content($timeline, {count => 'all'}, [], 'all deleted');
+    test_unacked_counts($timeline, {total => 0});
 }
 
 
@@ -142,6 +159,7 @@ my $CLASS = 'App::BusyBird::Timeline';
 TODO: {
     local $TODO = "I will write these tests. I swear.";
     fail('todo: get_unacked_counts');
+    fail('todo: what if StatusStorage returns error? Use mock!');
     fail('todo: timeline is properly destroyed. no cyclic reference between resource provider (see 2013/01/27)');
     fail('todo: concurrency control for asynchronous filters. The concurrency must be regulated.');
 }
