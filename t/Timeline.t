@@ -141,6 +141,7 @@ my $CLASS = 'App::BusyBird::Timeline';
 
 TODO: {
     local $TODO = "I will write these tests. I swear.";
+    fail('todo: get_unacked_counts');
     fail('todo: timeline is properly destroyed. no cyclic reference between resource provider (see 2013/01/27)');
     fail('todo: concurrency control for asynchronous filters. The concurrency must be regulated.');
 }

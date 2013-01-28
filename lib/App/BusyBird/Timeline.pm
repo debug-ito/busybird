@@ -1,6 +1,119 @@
 package App::BusyBird::Timeline;
 use strict;
 use warnings;
+use App::BusyBird::Util qw(set_param);
+use App::BusyBird::Log;
+use Carp;
+use CPS qw(kforeach);
+
+our @CARP_NOT = ();
+
+sub new {
+    my ($class, %args) = @_;
+    my $self = bless {}, $class;
+    $self->set_param(\%args, 'name', undef, 1);
+    $self->set_param(\%args, 'storage', undef, 1);
+    $self->set_param(\%args, 'logger', App::BusyBird::Log->logger);
+    croak 'name must not be empty' if $self->{name} eq '';
+    croak 'name must consist only of [a-zA-Z0-9_-]' if $self->{name} !~ /^[a-zA-Z0-9_-]+$/;
+    return $self;
+}
+
+sub name {
+    return shift->{name};
+}
+
+sub get_statuses {
+    my ($self, %args) = @_;
+    $args{timeline} = $self->name;
+    local @CARP_NOT = (ref($self->{storage}));
+    $self->{storage}->get_statuses(%args);
+}
+
+sub get_unacked_counts {
+    my ($self, %args) = @_;
+    $args{timeline} = $self->name;
+    local @CARP_NOT = (ref($self->{storage}));
+    $self->{storage}->get_unacked_counts(%args);
+}
+
+sub _write_statuses {
+    my ($self, $method, $args_ref) = @_;
+    $args_ref->{timeline} = $self->name;
+    local @CARP_NOT = (ref($self->{storage}));
+    $self->{storage}->$method(%$args_ref);
+}
+
+sub put_statuses {
+    my ($self, %args) = @_;
+    $self->_write_statuses('put_statuses', \%args);
+}
+
+sub delete_statuses {
+    my ($self, %args) = @_;
+    $self->_write_statuses('delete_statuses', \%args);
+}
+
+sub ack_statuses {
+    my ($self, %args) = @_;
+    $self->_write_statuses('ack_statuses', \%args);
+}
+
+sub add_statuses {
+    my ($self, %args) = @_;
+    $args{mode} = 'insert';
+    $self->_write_statuses('put_statuses', \%args);
+}
+
+sub add {
+    my ($self, $statuses, $callback) = @_;
+    $self->add_statuses(statuses => $statuses, callback => $callback);
+}
+
+sub contains {
+    my ($self, %args) = @_;
+    my $query = $args{query};
+    my $callback = $args{callback};
+    croak 'query argument is mandatory' if not defined($query);
+    croak 'callback argument is mandatory' if not defined($callback);
+    if(ref($query) eq 'ARRAY') {
+        ;
+    }elsif(ref($query) eq 'HASH' || !ref($query)) {
+        $query = [$query];
+    }else {
+        croak 'query argument must be either STATUS, ID or ARRAYREF_OF_STATUSES_OR_IDS';
+    }
+    my @contained = ();
+    my @not_contained = ();
+    my $error_occurred = 0;
+    my $error;
+    kforeach $query, sub {
+        my ($query_elem, $knext, $klast) = @_;
+        my $id = ref($query_elem) ? $query_elem->{id} : $query_elem;
+        $self->get_statuses(count => 1, max_id => $id, callback => sub {
+            if(@_ >= 2) {
+                $error_occurred = 1;
+                $error = $_[1];
+                $klast->();
+                return;
+            }
+            my $statuses = shift;
+            if(@$statuses) {
+                push(@contained, $query_elem);
+            }else {
+                push(@not_contained, $query_elem);
+            }
+            $knext->();
+        });
+    }, sub {
+        if($error_occurred) {
+            $callback->(undef, undef, "get_statuses error: $error");
+            return;
+        }
+        $callback->(\@contained, \@not_contained);
+    };
+}
+
 
 our $VERSION = '0.01';
 
