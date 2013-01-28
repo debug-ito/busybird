@@ -3,6 +3,7 @@ use warnings;
 use Test::More;
 use Test::Builder;
 use Test::Exception;
+use Test::MockObject;
 use Test::BusyBird::StatusStorage qw(:status);
 use App::BusyBird::DateTime::Format;
 use DateTime;
@@ -58,6 +59,20 @@ sub test_unacked_counts {
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     my ($got) = sync($timeline, 'get_unacked_counts');
     is_deeply($got, $exp, $msg);
+}
+
+sub test_error_back {
+    my (%args) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my $timeline = $args{timeline};
+    my $method = $args{method};
+    my $args = $args{args};
+    my $error_index = $args{error_index};
+    my $exp_error = $args{exp_error};
+    my $label = $args{label} || '';
+    my @result = sync($timeline, $method, %$args);
+    cmp_ok(int(@result), ">", $error_index, "$label: error expected.");
+    like($result[$error_index], $exp_error, "$label: error message is as expected.");
 }
 
 my $CLASS = 'App::BusyBird::Timeline';
@@ -154,12 +169,39 @@ my $CLASS = 'App::BusyBird::Timeline';
     test_unacked_counts($timeline, {total => 0});
 }
 
+{
+    note('--- in case status storage returns errors.');
+    my $mock = Test::MockObject->new();
+    foreach my $method ('get_unacked_counts', map {"${_}_statuses"} qw(get put ack delete)) {
+        $mock->mock($method, sub {
+            my ($self, %args) = @_;
+            if(defined($args{callback})) {
+                $args{callback}->(undef, "error: $method");
+            }
+        });
+    }
+    my $timeline = new_ok($CLASS, [name => 'test', storage => $mock, logger => undef]);
+    my %t = (timeline => $timeline);
+    test_error_back(%t, method => 'get_statuses', args => {count => 'all'}, label => "get",
+                    error_index => 1, exp_error => qr/get_statuses/);
+    test_error_back(%t, method => 'put_statuses',
+                    args => {mode => 'insert', statuses => status(1)},
+                    label => "put",
+                    error_index => 1, exp_error => qr/put_statuses/);
+    test_error_back(%t, method => 'ack_statuses', args => {}, label => "ack",
+                    error_index => 1, exp_error => qr/ack_statuses/);
+    test_error_back(%t, method => 'delete_statuses', args => {ids => undef}, label => "delete",
+                    error_index => 1, exp_error => qr/delete_statuses/);
+    test_error_back(%t, method => 'get_unacked_counts', args => {}, label => "get_unacked_counts",
+                    error_index => 1, exp_error => qr/get_unacked_counts/);
+    test_error_back(%t, method => 'contains', args => {query => [10,11,12]}, label => "contains",
+                    error_index => 2, exp_error => qr/get_statuses/);
+}
 
 
 TODO: {
     local $TODO = "I will write these tests. I swear.";
-    fail('todo: get_unacked_counts');
-    fail('todo: what if StatusStorage returns error? Use mock!');
+    fail('todo: filters');
     fail('todo: timeline is properly destroyed. no cyclic reference between resource provider (see 2013/01/27)');
     fail('todo: concurrency control for asynchronous filters. The concurrency must be regulated.');
 }
