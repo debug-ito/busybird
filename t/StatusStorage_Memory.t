@@ -11,6 +11,7 @@ BEGIN {
     my $storage = new_ok('App::BusyBird::StatusStorage::Memory', [logger => undef]);
     test_storage_common($storage);
     test_storage_ordered($storage);
+    test_storage_missing_arguments($storage);
 }
 
 {

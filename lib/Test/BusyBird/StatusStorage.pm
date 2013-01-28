@@ -6,11 +6,12 @@ use DateTime;
 use DateTime::Duration;
 use Test::More;
 use Test::Builder;
+use Test::Exception;
 use App::BusyBird::DateTime::Format;
 use Carp;
 
 our %EXPORT_TAGS = (
-    storage => [qw(test_storage_common test_storage_ordered test_storage_truncation)],
+    storage => [qw(test_storage_common test_storage_ordered test_storage_truncation test_storage_missing_arguments)],
     status => [qw(test_status_id_set test_status_id_list)],
 );
 our @EXPORT_OK = ();
@@ -238,6 +239,7 @@ sub test_storage_common {
         $callbacked = 0;
         $storage->delete_statuses(
             timeline => $tl,
+            ids => undef,
             callback => sub {
                 $callbacked = 1;
                 $unloop->();
@@ -666,7 +668,7 @@ sub test_storage_common {
     note('--- clean up');
     foreach my $tl ('_test_tl1', '_test  tl2') {
         $callbacked = 0;
-        $storage->delete_statuses(timeline => $tl, callback => sub {
+        $storage->delete_statuses(timeline => $tl, ids => undef, callback => sub {
             is(int(@_), 1, "operation succeed");
             $callbacked = 1;
             $unloop->();
@@ -685,7 +687,7 @@ sub test_storage_ordered {
     my $callbacked = 0;
     foreach my $tl (qw(_test_tl3 _test_tl4 _test_tl5)) {
         $callbacked = 0;
-        $storage->delete_statuses(timeline => $tl, callback => sub {
+        $storage->delete_statuses(timeline => $tl, ids => undef, callback => sub {
             is(int(@_), 1, "operation succeed");
             $callbacked = 1;
             $unloop->();
@@ -988,7 +990,7 @@ sub test_storage_ordered {
     note('--- populate another timeline');
     my %base4 = (timeline => '_test_tl4');
     $callbacked = 0;
-    $storage->delete_statuses(%base4, callback => sub {
+    $storage->delete_statuses(%base4, ids => undef, callback => sub {
         is(int(@_), 1, "delete succeed");
         $callbacked = 1;
         $unloop->();
@@ -1087,7 +1089,7 @@ sub test_storage_truncation {
     note('--- clear the timeline');
     my $callbacked = 0;
     my %base = (timeline => '_test_tl4');
-    $storage->delete_statuses(%base, callback => sub {
+    $storage->delete_statuses(%base, ids => undef, callback => sub {
         $callbacked = 1;
         $unloop->();
     });
@@ -1140,6 +1142,26 @@ sub test_storage_truncation {
         exp_change => 1, exp_unacked => [6 .. $max_status_num+4, $max_status_num+6],
         exp_acked => []
     );
+}
+
+sub test_storage_missing_arguments {
+    my ($storage, $loop, $unloop) = @_;
+    dies_ok { $storage->ack_statuses() } 'ack: timeline is missing';
+    dies_ok { $storage->get_statuses(callback => sub {}) } 'get: timeline is missing';
+    dies_ok { $storage->get_statuses(timeline => 'tl') } 'get: callback is missing';
+    dies_ok {
+        $storage->put_statuses(mode => 'insert', statuses => []);
+    } 'put: timeline is missing';
+    dies_ok {
+        $storage->put_statuses(timeline => 'tl', mode => 'insert');
+    } 'put: statuses is missing';
+    dies_ok {
+        $storage->put_statuses(timeline => 'tl', statuses => []);
+    } 'put: mode is missing';
+    dies_ok { $storage->delete_statuses(ids => undef) } 'delete: timeline is missing';
+    dies_ok { $storage->delete_statuses(timeline => 'tl') } 'delete: ids is missing';
+    dies_ok { $storage->get_unacked_counts(callback => sub {}) } 'get_unacked: timeline is missing';
+    dies_ok { $storage->get_unacked_counts(timeline => 'tl') } 'get_unacked: callback is missing';
 }
 
 =pod
@@ -1211,6 +1233,11 @@ C<$max_status_num> is the maximum number of statuses per timeline
 that C<$storage> can store.
 C<$loop> and C<$unloop> are the same as C<test_storage_common> function.
 
+=head2 test_storage_missing_arguments($storage, $loop, $unloop)
+
+Test if the C<$storage> throws an exception when a mandatory argument is missing.
+
+The arguments are the same as C<test_storage_common> function.
 
 
 =head1 :status TAG FUNCTIONS

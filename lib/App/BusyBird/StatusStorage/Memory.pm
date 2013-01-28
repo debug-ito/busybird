@@ -151,6 +151,7 @@ sub put_statuses {
 sub delete_statuses {
     my ($self, %args) = @_;
     croak 'timeline arg is mandatory' if not defined $args{timeline};
+    croak 'ids arg is mandatory' if not exists $args{ids};
     my $timeline = $args{timeline};
     if(!$self->{timelines}{$timeline}) {
         if($args{callback}) {

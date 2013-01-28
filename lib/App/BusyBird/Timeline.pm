@@ -250,15 +250,14 @@ Fields in C<%args> are as follows.
 
 =over
 
-=item C<ids> => {C<undef>, ID, ARRAYREF_OF_IDS} (optional, default: C<undef>)
+=item C<ids> => {C<undef>, ID, ARRAYREF_OF_IDS} (mandatory)
 
 Specifies the IDs (value of C<< $status->{id} >> field) of the
 statuses to be deleted.
 
 If it is a defined scalar, the status with the specified ID is
 deleted.  If it is an array-ref of IDs, the statuses with those IDs
-are deleted.  If it is C<undef> or not specified, all statuses in the
-C<$timeline> are deleted.
+are deleted.  If it is C<undef>, all statuses in the C<$timeline> are deleted.
 
 
 =item C<callback> => CODEREF($deleted_num, $error) (optional, default: C<undef>)
