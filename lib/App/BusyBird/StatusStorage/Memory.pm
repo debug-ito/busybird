@@ -20,8 +20,6 @@ sub new {
     if($self->{max_status_num} <= 0) {
         croak "max_status_num option must be bigger than 0.";
     }
-    $self->{logger} = exists($options{logger})
-        ? $options{logger} : App::BusyBird::Log->logger;
     return $self;
 }
 
@@ -32,7 +30,7 @@ sub new {
 
 sub _log {
     my ($self, $level, $msg) = @_;
-    $self->{logger}->($level, __PACKAGE__ . ": " . $msg) if defined $self->{logger};
+    bblog($level, $msg);
 }
 
 sub _index {
@@ -344,6 +342,7 @@ This storage stores all statuses in the process memory.
 The stored statuses can be saved to a file in JSON format.
 The saved statuses can be loaded from the file.
 
+This module uses L<App::BusyBird::Log> for logging.
 
 =head1 CAVEATS
 
@@ -375,13 +374,6 @@ You can specify the folowing options in C<%options>.
 
 Specifies the maximum number of statuses the storage can store.
 If more statuses are added to the full storage, the oldest statuses are removed automatically.
-
-=item C<logger> => CODEREF($level, $msg) (optional, default: C<< App::BusyBird::Log->logger >>)
-
-Specifies a subroutine reference that is called to log messages.
-By default, C<< App::BusyBird::Log->logger >> is used.
-
-If this option is set to C<undef>, log is suppressed.
 
 
 =back

@@ -26,7 +26,6 @@ sub new {
     $self->set_param(\%params, 'page_max_no_since_id', 1);
     $self->set_param(\%params, 'page_next_delay', 0.5);
     $self->set_param(\%params, 'apiurl', undef);
-    $self->{logger} = exists($params{logger}) ? $params{logger} : App::BusyBird::Log->logger;
     $self->{transformer} =
         exists($params{transformer}) ? $params{transformer} : \&transformer_default;
     if(!defined($self->{backend}) && !defined($self->{apiurl})) {
@@ -143,7 +142,7 @@ sub _load_next_since_id_file {
 
 sub _log {
     my ($self, $level, $msg) = @_;
-    $self->{logger}->($level, $msg) if defined $self->{logger};
+    bblog($level, $msg);
 }
 
 sub _save_next_since_id_file {
@@ -304,7 +303,7 @@ Version 0.01
     
     my $input = App::BusyBird::Input::Twitter->new(
         backend => Net::Twitter->new(
-            traits => [qw(OAuth API::REST API::Search)],
+            traits => [qw(OAuth API::RESTv1_1)],
             consumer_key => "YOUR_CONSUMER_KEY_HERE",
             consumer_secret => "YOUR_CONSUMER_SECRET_HERE",
             access_token => "YOUR_ACCESS_TOKEN_HERE",
@@ -337,6 +336,8 @@ Version 0.01
 This module is a wrapper for L<Net::Twitter> (or L<Net::Twitter::Lite>) to make it easy
 to load a timeline for L<App::BusyBird>.
 
+This module uses L<App::BusyBird::Log> for logging.
+
 =head1 FEATURES
 
 =over
@@ -367,10 +368,6 @@ Add BusyBird-specific fields to the statuses.
 =item *
 
 Normalize status objects from Search API.
-
-It might be unnecesary in Twitter API v1.1, but other Twitter API
-implementations like identi.ca might need it.
-
 
 =item *
 
@@ -421,13 +418,6 @@ By default, API URL is obtained from the C<backend> object, so usually you can o
 
 If C<backend> is omitted, you must specify this option.
 If both C<backend> and C<apiurl> options are specified, C<apiurl> option is used as API URL.
-
-
-=item logger => CODEREF($level, $msg) (optional, default: C<< App::BusyBird::Log->logger >>)
-
-Logger subroutine reference. See L<App::BusyBird::Log> for the spec of the logger.
-
-Setting it to C<undef> suppresses logging.
 
 =item transformer (optional, default: C<transformer_default>)
 
@@ -527,6 +517,6 @@ This method does not modify the input C<$status>. The transformation is done to 
 
 =head1 AUTHOR
 
-Toshio Ito
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut

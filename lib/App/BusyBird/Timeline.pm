@@ -13,7 +13,6 @@ sub new {
     my $self = bless {}, $class;
     $self->set_param(\%args, 'name', undef, 1);
     $self->set_param(\%args, 'storage', undef, 1);
-    $self->set_param(\%args, 'logger', App::BusyBird::Log->logger);
     croak 'name must not be empty' if $self->{name} eq '';
     croak 'name must consist only of [a-zA-Z0-9_-]' if $self->{name} !~ /^[a-zA-Z0-9_-]+$/;
     return $self;
@@ -143,6 +142,7 @@ Using status filters, you can modify or even drop the added statuses before they
 actually inserted to the timeline.
 Statuse filters are executed in the same order as they are added.
 
+This module uses L<App::BusyBird::Log> for logging.
 
 =head1 CLASS METHODS
 
@@ -166,11 +166,6 @@ It must be a string consisting only of C<[a-zA-Z0-9_-]>.
 
 Specifies the status storage object that implements the interface documented in L<App::BusyBird::StatusStorage>.
 Statuses in C<$timeline> is saved to the C<storage>.
-
-=item C<logger> => CODEREF($level, $msg) (optional, default: C<< App::BusyBird::Log->logger >>)
-
-Specifies the logger subroutine reference.
-See L<App::BusyBird::Log> for the spec of the logger.
 
 =back
 

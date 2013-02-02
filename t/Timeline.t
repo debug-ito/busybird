@@ -6,6 +6,7 @@ use Test::Exception;
 use Test::MockObject;
 use Test::BusyBird::StatusStorage qw(:status);
 use App::BusyBird::DateTime::Format;
+use App::BusyBird::Log;
 use DateTime;
 use Storable qw(dclone);
 
@@ -13,6 +14,8 @@ BEGIN {
     use_ok('App::BusyBird::Timeline');
     use_ok('App::BusyBird::StatusStorage::Memory');
 }
+
+$App::BusyBird::Log::LOGGER = undef;
 
 my $LOOP = sub {};
 my $UNLOOP = sub {};
@@ -97,7 +100,7 @@ my $CLASS = 'App::BusyBird::Timeline';
 
 {
     note('-- checking names');
-    my %s = (storage => create_storage(), logger => undef);
+    my %s = (storage => create_storage());
     dies_ok { $CLASS->new(%s, name => '') } 'NG: empty name';
     my $ng_symbols = '!"#$%&\\(){}[]<>@*+;:.,^~|/?' . "' \t\r\n";
     foreach my $i (0 .. (length($ng_symbols)-1)) {
@@ -114,7 +117,6 @@ my $CLASS = 'App::BusyBird::Timeline';
     note('--- status methods');
     my %newbase = (
         storage => create_storage(),
-        logger => undef
     );
     my $timeline = new_ok($CLASS, [%newbase, name => 'test']);
     is($timeline->name(), 'test', 'name OK');
@@ -200,7 +202,7 @@ my $CLASS = 'App::BusyBird::Timeline';
             }
         });
     }
-    my $timeline = new_ok($CLASS, [name => 'test', storage => $mock, logger => undef]);
+    my $timeline = new_ok($CLASS, [name => 'test', storage => $mock]);
     my %t = (timeline => $timeline);
     test_error_back(%t, method => 'get_statuses', args => {count => 'all'}, label => "get",
                     error_index => 1, exp_error => qr/get_statuses/);
@@ -222,7 +224,7 @@ my $CLASS = 'App::BusyBird::Timeline';
     note('--- filters');
     foreach my $mode (qw(sync async)) {
         note("--- --- filter mode = $mode");
-        my $timeline = new_ok($CLASS, [name => 'test', storage => create_storage(), logger => undef]);
+        my $timeline = new_ok($CLASS, [name => 'test', storage => create_storage()]);
         filter($timeline, $mode, sub {
             ## in-place modification
             my $statuses = shift;
@@ -281,10 +283,10 @@ my $CLASS = 'App::BusyBird::Timeline';
         ) {
             note("--- --- filter mode = $mode: junk filter: $case->{name}");
             my @log = ();
+            local $App::BusyBird::Log::LOGGER = sub { push(@log, [@_]) };
             my $timeline = new_ok($CLASS, [
                 name => 'test',
                 storage => create_storage(),
-                logger => sub { push(@log, [@_]) }
             ]);
             filter($timeline, $mode, sub { return $case->{junk} });
             ($ret) = sync($timeline, 'add_statuses', statuses => status(1));
@@ -299,7 +301,7 @@ my $CLASS = 'App::BusyBird::Timeline';
 {
     note('--- mixed sync/async filters. concurrency regulation.');
     my $timeline = new_ok($CLASS, [
-        name => 'test', storage => create_storage(), logger => undef
+        name => 'test', storage => create_storage(),
     ]);
     my @triggers = ([], []);
     my $trigger_counts = sub { [ map { int(@$_) } @triggers ] };
@@ -353,6 +355,7 @@ my $CLASS = 'App::BusyBird::Timeline';
 TODO: {
     local $TODO = "I will write these tests. I swear.";
     fail('todo: timeline is properly destroyed. no cyclic reference between resource provider (see 2013/01/27)');
+    fail('todo: watch_updates for add, ack, put, delete.');
 }
 
 done_testing();

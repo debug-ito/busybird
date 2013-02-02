@@ -9,6 +9,7 @@ use List::Util qw(min);
 use FindBin;
 use lib ("$FindBin::RealBin/lib");
 use Test::BusyBird::Input_Twitter qw(:all);
+use App::BusyBird::Log;
 use JSON;
 use utf8;
 
@@ -17,6 +18,7 @@ BEGIN {
 }
 
 $App::BusyBird::Input::Twitter::STATUS_TIMEZONE = DateTime::TimeZone->new(name => '+0900');
+$App::BusyBird::Log::LOGGER = undef;
 
 sub test_mock {
     my ($param, $exp_ids, $msg) = @_;
@@ -47,7 +49,7 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
     $tmock->mock('search', \&mock_search);
     $tmock->mock('-apiurl', sub { $apiurl });
     my $bbin = App::BusyBird::Input::Twitter->new(
-        backend => $tmock, page_next_delay => 0, logger => undef
+        backend => $tmock, page_next_delay => 0,
     );
     is_deeply(
         $bbin->transform_status_id({ id => 10, in_reply_to_status_id => 55}),
@@ -191,7 +193,7 @@ my $mocknt = mock_twitter();
 
 note('--- iteration by user_timeline');
 my $bbin = App::BusyBird::Input::Twitter->new(
-    backend => $mocknt, page_next_delay => 0, page_max => 500, logger => undef,
+    backend => $mocknt, page_next_delay => 0, page_max => 500,
     transformer => \&negative_id_transformer,
 );
 is_deeply(
@@ -244,7 +246,7 @@ test_call $mocknt, 'user_timeline', {count => 5, max_id => 6, since_id => 5};
 end_call $mocknt;
 
 $bbin = App::BusyBird::Input::Twitter->new(
-    backend => $mocknt, page_next_delay => 0, page_max => 2, logger => undef,
+    backend => $mocknt, page_next_delay => 0, page_max => 2,
     transformer => \&negative_id_transformer
 );
 $mocknt->clear;
@@ -258,7 +260,7 @@ test_call $mocknt, 'user_timeline', {screen_name => "foo", since_id => 5, max_id
 end_call $mocknt;
 
 $bbin = App::BusyBird::Input::Twitter->new(
-    backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 3, logger => undef,
+    backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 3,
     transformer => \&negative_id_transformer
 );
 $mocknt->clear;
@@ -273,7 +275,7 @@ test_call $mocknt, 'user_timeline', {count => 11, max_id => 60};
 end_call $mocknt;
 
 $bbin = App::BusyBird::Input::Twitter->new(
-    backend => $mocknt, page_next_delay => 0, logger => undef,
+    backend => $mocknt, page_next_delay => 0,
     transformer => \&negative_id_transformer
 );
 foreach my $method_name (qw(home_timeline list_statuses search favorites mentions retweets_of_me)) {
@@ -292,7 +294,7 @@ foreach my $method_name (qw(home_timeline list_statuses search favorites mention
 
 note('--- public_statuses should never iterate');
 $bbin = App::BusyBird::Input::Twitter->new(
-    backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 10, logger => undef,
+    backend => $mocknt, page_next_delay => 0, page_max_no_since_id => 10,
     transformer => \&negative_id_transformer
 );
 $mocknt->clear;
@@ -309,6 +311,7 @@ end_call $mocknt;
     my $diemock = Test::MockObject->new;
     my $call_count = 0;
     my @log = ();
+    local $App::BusyBird::Log::LOGGER = sub { push(@log, [@_]) };
     $diemock->mock('user_timeline', sub {
         my ($self, $params) = @_;
         $call_count++;
@@ -319,7 +322,7 @@ end_call $mocknt;
         }
     });
     my $diein = App::BusyBird::Input::Twitter->new(
-        backend => $diemock, page_next_delay => 0, logger => sub { push(@log, [@_]) },
+        backend => $diemock, page_next_delay => 0,
         transformer => \&negative_id_transformer,
     );
     my $result;
@@ -331,8 +334,9 @@ end_call $mocknt;
 {
     note('--- call timeline method with no backend');
     my @log = ();
+    local $App::BusyBird::Log::LOGGER = sub { push(@log, [@_]) };
     my $bbin = new_ok('App::BusyBird::Input::Twitter', [
-        apiurl => 'http://fake.com/', logger => sub { push(@log, [@_]) },
+        apiurl => 'http://fake.com/',
         page_next_delay => 0,
     ]);
     my $result;

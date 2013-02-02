@@ -4,10 +4,13 @@ use Test::More;
 use FindBin;
 use lib ("$FindBin::RealBin/../t/lib");
 use Test::BusyBird::Input_Twitter qw(:all);
+use App::BusyBird::Log;
 
 BEGIN {
     use_ok('App::BusyBird::Input::Twitter');
 }
+
+$App::BusyBird::Log::LOGGER = undef;
 
 my $mocknt = mock_twitter();
 
@@ -18,7 +21,7 @@ if(-r $filename) {
     exit(1);
 }
 my $bbin = App::BusyBird::Input::Twitter->new(
-    backend => $mocknt, filepath => $filename, page_next_delay => 0, logger => undef,
+    backend => $mocknt, filepath => $filename, page_next_delay => 0,
     transformer => \&negative_id_transformer
 );
 $mocknt->clear;

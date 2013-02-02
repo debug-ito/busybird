@@ -7,19 +7,19 @@ use Exporter qw(import);
 use strict;
 use warnings;
 
-my $logger = \&default_logger;
+our @EXPORT = qw(bblog);
+our @EXPORT_OK = @EXPORT;
+our $LOGGER = \&default_logger;
 
 sub default_logger {
     my ($level, $msg) = @_;
-    print STDERR ("$level: $msg\n");
+    my ($caller_package) = caller(0);
+    print STDERR ("$caller_package: $level: $msg\n");
 }
 
-sub logger {
-    my ($class, $in_logger) = @_;
-    if(@_ > 1) {
-        $logger = $in_logger || \&default_logger;
-    }
-    return $logger;
+sub bblog {
+    my ($level, $msg) = @_;
+    $LOGGER->($level, $msg) if defined $LOGGER;
 }
 
 our $VERSION = '0.01';
@@ -30,7 +30,7 @@ our $VERSION = '0.01';
 
 =head1 NAME
 
-App::BusyBird::Log - logger singleton in App::BusyBird
+App::BusyBird::Log - simple logging infrastructure for App::BusyBird
 
 =head1 VERSION
 
@@ -38,32 +38,55 @@ App::BusyBird::Log - logger singleton in App::BusyBird
 
 =head1 SYNOPSIS
 
+
     use App::BusyBird::Log;
     
-    App::BusyBird::Log->logger->(sub {
-        my ($level, $msg) = @_;
-        print STDERR ("$level: $msg\n");
-    });
+    bblog('error', 'Something bad happens');
+    
+    {
+        my @logs = ();
+        
+        ## Temporarily change the LOGGER
+        local $App::BusyBird::Log::LOGGER = sub {
+            my ($level, $msg) = @_;
+            push(@logs, [$level, $msg]);
+        };
+
+        bblog('info', 'This goes to @logs array.');
+    }
 
 
 =head1 DESCRIPTION
 
-L<App::BusyBird::Log> stores the logger singleton object.
-The object is used as the default logger throughout various components in L<App::BusyBird>.
+L<App::BusyBird::Log> manages the logger singleton used in L<App::BusyBird>.
+By default, C<bblog()> function of L<App::BusyBird::Log> prints the log to STDERR.
 
-=head1 CLASS METHODS
 
-=head2 $logger = App::BusyBird::Log->logger([$logger])
+=head1 EXPORTED FUNCTIONS
 
-Accessor for the logger singleton.
+=head2 bblog($level, $msg)
 
-The logger object is just a subroutine reference that takes two arguments: C<$level> and C<$msg>.
+C<bblog()> function is exported by default.
+This function logs the given message.
+
 C<$level> is a string of log level such as 'info', 'warn', 'error', 'critical' etc.
 C<$msg> is the log message body.
 
+
+=head1 PACKAGE VARIABLES
+
+=head2 $App::BusyBird::Log::LOGGER = CODEREF($level, $msg)
+
+A subroutine reference that is called when C<bblog()> is called.
+The subroutine is supposed to do the logging.
+
+Setting this to C<undef> disables logging at all.
+
+
+
 =head1 AUTHOR
 
-Toshio Ito C<< toshioito [at] cpan.org >>
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut
 

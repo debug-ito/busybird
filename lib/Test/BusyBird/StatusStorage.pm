@@ -1203,7 +1203,7 @@ All StatusStorage implementations should pass this test.
 C<$storage> is the StatusStorage object to be tested.
 C<$loop> is a subroutine reference to go into the event loop,
 C<$unloop> is a subroutine reference to go out of the event loop.
-If the storage does not use any event loop mechanism, C<$loop> and <$unloop> can be omitted.
+If the storage does not use any event loop mechanism, C<$loop> and C<$unloop> can be omitted.
 
 In general test of statuses are based on status IDs.
 This allows implementations to modify statuses internally.

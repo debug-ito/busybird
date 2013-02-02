@@ -5,8 +5,11 @@ use Test::More;
 use Test::Builder;
 use App::BusyBird::StatusStorage::Memory;
 use App::BusyBird::DateTime::Format;
+use App::BusyBird::Log;
 use DateTime;
 use utf8;
+
+$App::BusyBird::Log::LOGGER = undef;
 
 sub test_log_contains {
     my ($logs_arrayref, $msg_pattern, $test_msg) = @_;
@@ -35,9 +38,8 @@ if(-r $filepath) {
 }
 
 {
-    my $storage = new_ok('App::BusyBird::StatusStorage::Memory', [
-        logger => sub { push(@logs, [@_]) },
-    ]);
+    local $App::BusyBird::Log::LOGGER = sub { push(@logs, [@_]) };
+    my $storage = new_ok('App::BusyBird::StatusStorage::Memory');
     ok(!$storage->load($filepath), "load() returns false if the file does not exist.");
     test_log_contains \@logs, qr{cannot.*read}i, "fails to load from $filepath";
     $storage->put_statuses(
@@ -53,9 +55,7 @@ if(-r $filepath) {
     );
 
     {
-        my $another_storage = new_ok('App::BusyBird::StatusStorage::Memory', [
-            logger => undef
-        ]);
+        my $another_storage = new_ok('App::BusyBird::StatusStorage::Memory');
         $another_storage->load($filepath);
         my $callbacked = 0;
         $another_storage->get_statuses(
