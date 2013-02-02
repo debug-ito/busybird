@@ -139,8 +139,8 @@ sub test_backend {
 my $config = load_config(CONFIG_FILEPATH);
 
 test_backend(
-    'Net::Twitter API v1.0', Net::Twitter->new(
-        traits => [qw(API::REST API::Search OAuth)], ssl => 1,
+    'Net::Twitter API v1.1', Net::Twitter->new(
+        traits => [qw(API::RESTv1_1 OAuth)], ssl => 1,
         ## apiurl => 'https://api.twitter.com/1.1/',
         get_oauth_config($config)
     )

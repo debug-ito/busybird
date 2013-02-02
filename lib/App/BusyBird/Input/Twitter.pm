@@ -169,11 +169,19 @@ sub _log_query {
 
 sub _normalize_search_result {
     my ($self, $nt_result) = @_;
-    if(ref($nt_result) eq 'HASH' && ref($nt_result->{results}) eq 'ARRAY') {
-        return $nt_result->{results};
-    }else {
+
+    if(!ref($nt_result)) {
+        die "Scalar is returned by the backend. Something is wrong.\n";
+    }elsif(ref($nt_result) eq 'ARRAY') {
         return $nt_result;
+    }elsif(ref($nt_result) eq 'HASH') {
+        if(ref($nt_result->{statuses}) eq 'ARRAY') {
+            return $nt_result->{statuses};
+        }elsif(ref($nt_result->{results}) eq 'ARRAY') {
+            return $nt_result->{results};
+        }
     }
+    die "Unknown type of data returned by the backend. Something is wrong.\n";
 }
 
 sub _load_timeline {
@@ -206,12 +214,12 @@ sub _load_timeline {
                 croak 'backend parameter is undef. You must specify it in new()';
             }
             $loaded = $self->{backend}->$method({%params});
+            $loaded = $self->_normalize_search_result($loaded) if defined $loaded;
         }catch {
             my $e = shift;
             $self->_log("error", $e);
         };
         return undef if not defined $loaded;
-        $loaded = $self->_normalize_search_result($loaded);
         @$loaded = grep { !$loaded_ids{$_->{id}} } @$loaded;
         last if !@$loaded;
         $loaded_ids{$_->{id}} = 1 foreach @$loaded;
