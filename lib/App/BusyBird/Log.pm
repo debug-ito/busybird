@@ -13,7 +13,7 @@ our $LOGGER = \&default_logger;
 
 sub default_logger {
     my ($level, $msg) = @_;
-    my ($caller_package) = caller(0);
+    my ($caller_package) = caller(1);
     print STDERR ("$caller_package: $level: $msg\n");
 }
 
