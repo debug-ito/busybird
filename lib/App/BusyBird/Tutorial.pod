@@ -1,0 +1,28 @@
+
+=pod
+
+=head1 NAME
+
+App::BusyBird::Tutorial - Tutorial to use BusyBird
+
+=head1 Installation
+
+=head1 Start BusyBird
+
+=head1 Input Statuses
+
+=head2 Input Statuses from Twitter
+
+=head1 Status Level
+
+=head1 Configuration
+
+=head2 Configure Timelines
+
+=head2 Input Statuses from Inside
+
+=head1 Filters
+
+
+=cut
+
