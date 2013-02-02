@@ -351,6 +351,22 @@ my $CLASS = 'App::BusyBird::Timeline';
     }
 }
 
+{
+    note('--- filter should not change the original status objects');
+    my $timeline = new_ok($CLASS, [name => 'test', storage => create_storage()]);
+    $timeline->add_filter(sub {
+        my ($statuses) = @_;
+        $_->{added_field} = 1 foreach @$statuses;
+        return $statuses;
+    });
+    my $s = status(1);
+    $timeline->add([$s], sub { $UNLOOP->() });
+    $LOOP->();
+    ok(!defined($s->{added_field}), "original status does not have added_field.");
+    my ($results) = sync($timeline, 'get_statuses', count => 'all');
+    test_status_id_list($results, [1], "status ID ok");
+    is($results->[0]{added_field}, 1, "added_field ok");
+}
 
 TODO: {
     local $TODO = "I will write these tests. I swear.";
