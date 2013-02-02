@@ -454,33 +454,30 @@ In failure, C<$callback> is called with three arguments, and the third argument 
 =back
 
 
-=head2 $timeline->add_filter($filter->($arrayref_of_statuses))
+=head2 $timeline->add_filter($filter->($arrayref_of_statuses, [$done]), [$is_async])
 
 Add a status filter to the C<$timeline>.
 
-C<$filter> is a subroutine reference that takes one argument (C<$arrayref_of_statuses>).
+C<$filter> is a subroutine reference that is called upon added statuses.
+C<$is_async> specifies whether the C<$filter> is synchronous or asynchronous.
 
+C<$filter> subroutine will be called with at least one argument (C<$arrayref_of_statuses>).
 C<$arrayref_of_statuses> is an array-ref of statuses that is injected to the filter.
 C<$filter> can use and modify the C<$arrayref_of_statuses>.
 
-C<$filter> must return an array-ref of statuses, which is going to be passed to the next filter
+If C<$is_async> is false, C<$filter> must return an array-ref of statuses, which is going to be passed to the next filter
 (or the status storage if there is no next filter).
 The return value of C<$filter> may be either C<$arrayref_of_statuses> or a new array-ref.
-
 If C<$filter> returns anything other than an array-ref,
 a warning is logged and C<$arrayref_of_statuses> is passed to the next.
 
+If C<$is_async> is true, C<$filter> is given the additional second argument C<$done>, which is a subroutine reference.
+Instead of returning the result, C<$filter> must call C<< $done->($result) >> when it completes the filtering task.
+The argument to the C<$done> callback (C<$result>) is an array-ref of statuses that is the result of the filter.
 
 =head2 $timeline->add_filter_async($filter->($arrayref_of_statuses, $done))
 
-Add an asynchronous status filter to the C<$timeline>.
-
-C<$filter> is a subroutine reference that takes two arguments (C<$arrayref_of_statuses>, C<$done>).
-C<$arrayref_of_statuses> is an array-ref of statuses that is injected to the filter.
-C<$done> is a subroutine reference.
-
-Instead of returning the result, C<$filter> must call C<< $done->($result) >> when it completes the filtering task.
-The argument to the C<$done> callback (C<$result>) is an array-ref, which is the result of the filter.
+Add an asynchronous status filter. This is equivalent to C<< $timeline->add_filter($filter, 1) >>.
 
 
 =head2 $watcher = $timeline->watch_updates(%watch_spec, $callback->($w, %updates))

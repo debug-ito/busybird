@@ -81,19 +81,14 @@ sub test_error_back {
 
 sub filter {
     my ($timeline, $mode, $sync_filter) = @_;
-    my $method;
-    my $filter;
     if($mode eq 'sync') {
-        $method = 'add_filter';
-        $filter = $sync_filter;
+        $timeline->add_filter($sync_filter);
     }elsif($mode eq 'async') {
-        $method = 'add_filter_async';
-        $filter = sub {
+        $timeline->add_filter(sub {
             my ($statuses, $done) = @_;
             $done->($sync_filter->($statuses));
-        };
+        }, 1);
     }
-    $timeline->$method($filter);
 }
 
 my $CLASS = 'App::BusyBird::Timeline';
@@ -226,16 +221,14 @@ my $CLASS = 'App::BusyBird::Timeline';
     my @in_statuses = (status(1));
     my $callbacked = 0;
     $timeline->add_filter(sub {
-        my ($statuses, $tl) = @_;
+        my ($statuses) = @_;
         is_deeply($statuses, \@in_statuses, 'sync: input statuses OK');
-        is($tl, $timeline, "sync: input timeline OK");
         $callbacked++;
         return $statuses;
     });
     $timeline->add_filter(sub {
-        my ($statuses, $tl, $done) = @_;
+        my ($statuses, $done) = @_;
         is_deeply($statuses, \@in_statuses, 'async: input statuses OK');
-        is($tl, $timeline, 'async: input timeline OK');
         is(ref($done), 'CODE', 'async: done callback OK');
         $callbacked++;
         $done->($statuses);
