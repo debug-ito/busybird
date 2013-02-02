@@ -221,7 +221,32 @@ my $CLASS = 'App::BusyBird::Timeline';
 }
 
 {
-    note('--- filters');
+    note('--- filters: argument spec.');
+    my $timeline = new_ok($CLASS, [name => 'test', storage => create_storage()]);
+    my @in_statuses = (status(1));
+    my $callbacked = 0;
+    $timeline->add_filter(sub {
+        my ($statuses, $tl) = @_;
+        is_deeply($statuses, \@in_statuses, 'sync: input statuses OK');
+        is($tl, $timeline, "sync: input timeline OK");
+        $callbacked++;
+        return $statuses;
+    });
+    $timeline->add_filter(sub {
+        my ($statuses, $tl, $done) = @_;
+        is_deeply($statuses, \@in_statuses, 'async: input statuses OK');
+        is($tl, $timeline, 'async: input timeline OK');
+        is(ref($done), 'CODE', 'async: done callback OK');
+        $callbacked++;
+        $done->($statuses);
+    }, 'async');
+    $timeline->add(\@in_statuses, sub { $callbacked++;  $UNLOOP->() });
+    $LOOP->();
+    is($callbacked, 3, '2 filters and finish callback called');
+}
+
+{
+    note('--- filters changing statuses');
     foreach my $mode (qw(sync async)) {
         note("--- --- filter mode = $mode");
         my $timeline = new_ok($CLASS, [name => 'test', storage => create_storage()]);
