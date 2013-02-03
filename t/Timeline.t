@@ -391,6 +391,34 @@ my $CLASS = 'App::BusyBird::Timeline';
     is($results->[0]{added_field}, 1, "added_field ok");
 }
 
+{
+    note('--- watch_unacked_counts');
+    my $timeline = new_ok($CLASS, [name => 'test', storage => create_storage()]);
+    note('--- -- watch immediate: total 0');
+    foreach my $case (
+        {label => '1 total', watch => {total => 1}, exp_callback => 1},
+        {label => '0 total, 3 level.1', watch => {total => 0, 1 => 3}, exp_callback => 1},
+        {label => 'no total, 4 level.2', watch => {2 => 4}, exp_callback => 1},
+        {label => 'empty', watch => {}, exp_callback => 1},
+        {label => '0 total', watch => {total => 0}, exp_callback => 0},
+        {label => 'no total, 0 level.4', watch => {4 => 0}, exp_callback => 0},
+        {label => '0 levels.2,3', watch => {2 => 0, 3 => 0}, exp_callback => 0},
+    ) {
+        my $callbacked = 0;
+        my $label = $case->{label};
+        my $watcher = $timeline->watch_unacked_counts(%{$case->{watch}}, sub {
+            my ($w, %unacked_counts) = @_;
+            $callbacked = 1;
+            is_deeply(\%unacked_counts, {total => 0}, "$label: no unacked counts");
+            $w->cancel();
+        });
+        is($callbacked, $case->{exp_callback}, "$label: callback is OK");
+        $watcher->cancel();
+    }
+    note('--- -- watch immediate: some on 2 levels, some acked.');
+    note('--- -- watch delayed. add, ack, put, delete');
+}
+
 TODO: {
     local $TODO = "I will write these tests. I swear.";
     fail('todo: timeline is properly destroyed. no cyclic reference between resource provider (see 2013/01/27)');
