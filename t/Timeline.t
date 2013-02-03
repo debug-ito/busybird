@@ -249,7 +249,7 @@ my $CLASS = 'App::BusyBird::Timeline';
             $_->{counter} = [1] foreach @$statuses;
             return $statuses;
         });
-        sync($timeline, 'add_statuses', statuses => status(1));
+        sync($timeline, 'add_statuses', statuses => [status(1)]);
         my ($statuses) = sync($timeline, 'get_statuses', count => 'all');
         test_status_id_list($statuses, [1], 'IDs OK');
         is_deeply($statuses->[0]{counter}, [1], "filtered.");
@@ -307,7 +307,7 @@ my $CLASS = 'App::BusyBird::Timeline';
                 storage => create_storage(),
             ]);
             filter($timeline, $mode, sub { return $case->{junk} });
-            ($ret) = sync($timeline, 'add_statuses', statuses => status(1));
+            ($ret) = sync($timeline, 'add_statuses', statuses => [status(1)]);
             is($ret, 1, "add succeed");
             cmp_ok(int(grep { $_->[0] =~ /warn/i } @log), '>=', 1, 'at least 1 warning is logged.');
             ($statuses) = sync($timeline, 'get_statuses', count => 'all');
@@ -346,7 +346,7 @@ my $CLASS = 'App::BusyBird::Timeline';
     
     my @done = ();
     foreach my $id (1, 2) {
-        $timeline->add(status($id), sub {
+        $timeline->add([status($id)], sub {
             push(@done, $id);
         });
     }

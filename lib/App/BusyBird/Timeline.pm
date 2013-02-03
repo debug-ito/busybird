@@ -3,14 +3,18 @@ use strict;
 use warnings;
 use App::BusyBird::Util qw(set_param);
 use App::BusyBird::Log;
+use App::BusyBird::Flow;
 use Carp;
 use CPS qw(kforeach);
+use Storable qw(dclone);
 
 our @CARP_NOT = ();
 
 sub new {
     my ($class, %args) = @_;
-    my $self = bless {}, $class;
+    my $self = bless {
+        filter_flow => App::BusyBird::Flow->new
+    }, $class;
     $self->set_param(\%args, 'name', undef, 1);
     $self->set_param(\%args, 'storage', undef, 1);
     croak 'name must not be empty' if $self->{name} eq '';
@@ -60,8 +64,16 @@ sub ack_statuses {
 
 sub add_statuses {
     my ($self, %args) = @_;
-    $args{mode} = 'insert';
-    $self->_write_statuses('put_statuses', \%args);
+    if(!ref($args{statuses}) || ref($args{statuses}) ne 'ARRAY') {
+        croak 'statuses argument must be an array-ref of statuses';
+    }
+    my $statuses = dclone($args{statuses});
+    $self->{filter_flow}->execute($statuses, sub {
+        my $filter_result = shift;
+        $args{mode} = 'insert';
+        $args{statuses} = $filter_result;
+        $self->_write_statuses('put_statuses', \%args);
+    });
 }
 
 sub add {
@@ -111,6 +123,24 @@ sub contains {
         }
         $callback->(\@contained, \@not_contained);
     };
+}
+
+sub add_filter {
+    my ($self, $filter, $is_async) = @_;
+    if(!$is_async) {
+        my $sync_filter = $filter;
+        $filter = sub {
+            my ($statuses, $done) = @_;
+            @_ = $sync_filter->($statuses);
+            goto $done;
+        };
+    }
+    $self->{filter_flow}->add($filter);
+}
+
+sub add_filter_async {
+    my ($self, $filter) = @_;
+    $self->add_filter($filter, 1);
 }
 
 
