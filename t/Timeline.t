@@ -415,9 +415,110 @@ my $CLASS = 'App::BusyBird::Timeline';
         is($callbacked, $case->{exp_callback}, "$label: callback is OK");
         $watcher->cancel();
     }
-    note('--- -- watch immediate: some on 2 levels, some acked.');
-    note('--- -- watch delayed. add, ack, put, delete');
+    sync($timeline, 'add_statuses',
+         statuses => [status(0,0), status(1,1), status(2,2)]);
+    sync($timeline, 'ack_statuses');
+    sync($timeline, 'add_statuses',
+         statuses => [status(3), status(4,1), status(5,2), status(6,0)]);
+    note('--- -- watch immediate: some on 3 levels, some acked.');
+    foreach my $case (
+        {label => '0 total', watch => {total => 0}, exp_callback => 1},
+        {label => 'empty', watch => {}, exp_callback => 1},
+        {label => 'single diff', watch => {total => 4, 0 => 1, 1 => 1, 2 => 1}, exp_callback => 1},
+        {label => 'all up-to-date', watch => {total => 4, 0 => 2, 1 => 1, 2 => 1}, exp_callback => 0},
+        {label => 'only total diff', watch => {total => 2}, exp_callback => 1},
+        {label => 'only level.2', watch => {2 => 1}, exp_callback => 0},
+        {label => 'levels.0,2 up-to-date', watch => {0 => 2, 2 => 1}, exp_callback => 0},
+        {label => '0 irrelevant levels', watch => {10 => 0, 32 => 0, -10 => 0}, exp_callback => 0}
+    ) {
+        my $callbacked = 0;
+        my $label = $case->{label};
+        my $watcher = $timeline->watch_unacked_counts(%{$case->{watch}}, sub {
+            my ($w, %unacked_counts) = @_;
+            $callbacked = 1;
+            is_deeply(\%unacked_counts, {total => 4, 0 => 2, 1 => 1, 2 => 1}, "$label: unacked counts OK");
+            $w->cancel();
+        });
+        is($callbacked, $case->{exp_callback}, "$label: callback is OK");
+        $watcher->cancel();
+    }
 }
+
+{
+    note('--- -- watch delayed. add, ack, put, delete');
+    my $timeline = new_ok('App::BusyBird::Timeline', [name => 'test', storage => create_storage()]);
+    my $callbacked = 0;
+    my $result;
+    my $watch = sub {
+        my (%watch_spec) = @_;
+        $timeline->watch_unacked_counts(%watch_spec, sub {
+            my ($w, %unacked_counts) = @_;
+            $result = \%unacked_counts;
+            $callbacked = 1;
+            $w->cancel();
+        });
+    };
+    $watch->(total => 0);
+    ok(!$callbacked, "not callbacked yet");
+    sync($timeline, 'add_statuses', statuses => [status(1), status(2,1)]);
+    ok($callbacked, 'callbacked');
+    is_deeply($result, {total => 2, 0 => 1, 1 => 1}, "result OK");
+
+    $callbacked = 0;
+    undef $result;
+    $watch->(total => 2);
+    ok(!$callbacked, 'not callbacked yet');
+    sync($timeline, 'ack_statuses');
+    ok($callbacked, 'callbacked');
+    is_deeply($result, {total => 0}, "result OK");
+
+    $callbacked = 0;
+    undef $result;
+    $watch->(2 => 0);
+    ok(!$callbacked, 'not callbacked yet');
+    sync($timeline, 'put_statuses', mode => 'insert', statuses => status(3,2));
+    ok($callbacked, 'callbacked');
+    is_deeply($result, {total => 1, 2 => 1}, 'result OK');
+
+    $callbacked = 0;
+    undef $result;
+    $watch->(1 => 0, 2 => 1);
+    ok(!$callbacked, 'not callbacked yet');
+    sync($timeline, 'put_statuses', mode => 'update', statuses => status(2,1));
+    ok($callbacked, 'callbacked');
+    is_deeply($result, {total => 2, 1 => 1, 2 => 1}, "result OK");
+    
+    $callbacked = 0;
+    undef $result;
+    $watch->(3 => 0);
+    ok(!$callbacked, 'not callbacked yet');
+    sync($timeline, 'put_statuses', mode => 'upsert', statuses => [status(4,3), status(1)]);
+    ok($callbacked, 'callbacked');
+    is_deeply($result, {total => 4, 0 => 1, 1 => 1, 2 => 1, 3 => 1}, "result OK");
+
+    $callbacked = 0;
+    undef $result;
+    $watch->(total => 4, 2 => 1);
+    ok(!$callbacked, 'not callbacked yet');
+    sync($timeline, 'delete_statuses', ids => 4);
+    ok($callbacked, 'callbacked');
+    is_deeply($result, {total => 3, 0 => 1, 1 => 1, 2 => 1}, "result OK");
+
+    note('--- -- watch delayed. put(update) to change levels.');
+    $callbacked = 0;
+    undef $result;
+    $watch->(total => 3);
+    ok(!$callbacked, 'not callbacked yet');
+    sync($timeline, "put_statuses", mode => 'update', statuses => status(1,1));
+    ok(!$callbacked, 'not callbacked yet');
+    sync($timeline, "delete_statuses", ids => 3);
+    ok($callbacked, "clalbacked");
+    is_deeply($result, {total => 2, 1 => 2}, "result OK");
+
+    note('--- -- todo: insert acked statuses (no fire)');
+    note('--- -- todo: delete added statuses in filter (no fire)');
+}
+
 
 TODO: {
     local $TODO = "I will write these tests. I swear.";
