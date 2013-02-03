@@ -160,6 +160,10 @@ App::BusyBird::Timeline - a timeline object in BusyBird
 
 =head1 SYNOPSIS
 
+
+    Write synopsis!!
+
+
 =head1 DESCRIPTION
 
 L<App::BusyBird::Timeline> stores and manages a timeline, which is an ordered sequence of statuses.
@@ -438,17 +442,20 @@ Fields in C<%$unacked_counts> are as follows.
 
 =item LEVEL => COUNT_OF_UNACKED_STATUSES_IN_THE_LEVEL
 
-Integer keys represent levels. The values is the number of
-unacked statuses in the level.
+LEVEL is an integer key that represents the status level.
+The value is the number of unacked statuses in the level.
 
 A status's level is the C<< $status->{busybird}{level} >> field.
 See L<App::BusyBird::Status> for detail.
+
+LEVEL key-value pair is present for each level in which
+there are some unacked statuses.
 
 
 =item C<total> => COUNT_OF_ALL_UNACKED_STATUSES
 
 The key C<"total"> represents the total number of unacked statuses
-in the timeline.
+in the C<$timeline>.
 
 =back
 
@@ -510,13 +517,27 @@ The argument to the C<$done> callback (C<$result>) is an array-ref of statuses t
 Add an asynchronous status filter. This is equivalent to C<< $timeline->add_filter($filter, 1) >>.
 
 
-=head2 $watcher = $timeline->watch_updates(%watch_spec, $callback->($w, %updates))
+=head2 $watcher = $timeline->watch_unacked_counts(%watch_spec, $callback->($w, %unacked_counts))
 
-TBW...
+Watch updates of unacked counts in the C<$timeline>.
 
-Where should I write the specification of updates?
-Maybe Web API documetion is the right place.
+In C<%watch_spec>, caller must describe numbers of unacked statuses (i.e. unacked counts) for each status level and/or in total.
+If the given unacked counts is different from the true unacked counts in C<$timeline>,
+C<$callback> subroutine reference is called with the true unacked counts (C<%unacked_counts>).
+If the given unacked counts is the same as the true unacked counts, execution of C<$callback> is delayed
+until there is some difference between them.
 
+Format of C<%watch_spec> and C<%unacked_counts> is the same as C<%$unacked_counts> returned by C<get_unacked_counts()> method.
+
+Caller does not have to specify the complete set of unacked counts in C<%watch_spec>.
+Updates are checked only for levels (or 'total') that are explicitly specified in C<%watch_spec>.
+Therefore, if some updates happen in levels that are not in C<%watch_spec>, C<$callback> is never called.
+
+If C<%watch_spec> is empty, C<$callback> is always called immediately.
+
+This method returns L<Async::Selector::Watcher> object (C<$watcher>).
+You can call C<< $watcher->cancel() >> to cancel the watcher.
+The first argument for C<$callback> (C<$w>) is the same object as C<$watcher>.
 
 
 =head1 AUTHOR
