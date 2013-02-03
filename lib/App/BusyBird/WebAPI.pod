@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-App::BusyBird::Web_API - Web API reference
+App::BusyBird::WebAPI - Web API reference
 
 =head1 DESCRIPTION
 
@@ -45,6 +45,8 @@ B<Query Parameters>
 =item C<ack_state> = {any,acked,unacked} (optional, default: any)
 
 =item C<max_id> = STATUS_ID (optional, default: none)
+
+=item C<tag> = HTML_TAG (optional, default: li)
 
 =back
 
