@@ -5,6 +5,7 @@ use Test::Builder;
 use Test::Exception;
 use Test::MockObject;
 use Test::BusyBird::StatusStorage qw(:status);
+use Test::Memory::Cycle;
 use App::BusyBird::DateTime::Format;
 use App::BusyBird::Log;
 use DateTime;
@@ -236,6 +237,7 @@ my $CLASS = 'App::BusyBird::Timeline';
     $timeline->add(\@in_statuses, sub { $callbacked++;  $UNLOOP->() });
     $LOOP->();
     is($callbacked, 3, '2 filters and finish callback called');
+    memory_cycle_ok($timeline, 'timeline does not have cycle-ref.');
 }
 
 {
@@ -268,6 +270,7 @@ my $CLASS = 'App::BusyBird::Timeline';
         });
         $LOOP->();
         ok($callbacked, "callbacked");
+        memory_cycle_ok($timeline, 'timeline does not have cycle-ref.');
         ($statuses) = sync($timeline, 'get_statuses', count => 'all');
         test_status_id_list($statuses, [3,2,1], "IDs OK");
         is_deeply($statuses->[0]{counter}, [1,2], "ID 3, filter OK");
@@ -350,6 +353,7 @@ my $CLASS = 'App::BusyBird::Timeline';
             push(@done, $id);
         });
     }
+    memory_cycle_exists($timeline, 'there IS cyclic refs while a status is flowing in filters.');
     is_deeply(\@done, [], "none of the additions is complete.");
     is_deeply($trigger_counts->(), [1, 0], 'only 1 trigger. concurrency is regulated.');
     shift(@{$triggers[0]})->();
@@ -362,6 +366,7 @@ my $CLASS = 'App::BusyBird::Timeline';
     shift(@{$triggers[1]})->();
     is_deeply($trigger_counts->(), [0, 0], 'no more status');
     is_deeply(\@done, [1, 2], "all complete");
+    memory_cycle_ok($timeline, "there is no cyclic refs once it completes all addtions.");
     my ($statuses) = sync($timeline, 'get_statuses', count => 'all');
     test_status_id_list($statuses, [2, 1], "IDs OK");
     foreach my $s (@$statuses) {
