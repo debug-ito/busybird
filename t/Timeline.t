@@ -515,15 +515,41 @@ my $CLASS = 'App::BusyBird::Timeline';
     ok($callbacked, "clalbacked");
     is_deeply($result, {total => 2, 1 => 2}, "result OK");
 
-    note('--- -- todo: insert acked statuses (no fire)');
-    note('--- -- todo: delete added statuses in filter (no fire)');
 }
 
+{
+    my $timeline = new_ok('App::BusyBird::Timeline', [name => 'test', storage => create_storage()]);
+    $timeline->add_filter(sub { [] }); ## null filter
+    my $callbacked = 0;
+    my $result;
+    my $nowstring  = App::BusyBird::DateTime::Format->format_datetime(
+        DateTime->now(time_zone => 'UTC')
+    );
+    my $watcher = $timeline->watch_unacked_counts(total => 0, sub {
+        my ($w, %unacked_counts) = @_;
+        $callbacked = 1;
+        $result = \%unacked_counts;
+        $w->cancel();
+    });
+    ok(!$callbacked, 'not callbacked yet');
+    my @statuses = map { my $s = status($_); $s->{busybird}{acked_at} = $nowstring; $s } 1..3;
+    my ($put_result) = sync($timeline, 'put_statuses', mode => 'insert', statuses => \@statuses);
+    is($put_result, 3, "3 statuses put");
+    ok(!$callbacked, 'not callbacked because the inserted statuses are already acked.');
+    my ($add_result) = sync($timeline, 'add_statuses', statuses => [status(5)]);
+    is($add_result, 0, '0 status added, because of null filter');
+    ok(!$callbacked, 'not callbacked because of null filter');
+    ($put_result) = sync($timeline, 'put_statuses', mode => 'update', statuses => status(2,5));
+    is($put_result, 1, '1 status updated');
+    ok($callbacked, 'callbacked');
+    is_deeply($result, {total => 1, 5 => 1}, "result OK");
+    ok(!$watcher->active, 'watcher is now inactive');
+    memory_cycle_ok($timeline, 'no cyclic ref in timeline');
+}
 
 TODO: {
     local $TODO = "I will write these tests. I swear.";
     fail('todo: timeline is properly destroyed. no cyclic reference between resource provider (see 2013/01/27)');
-    fail('todo: watch_updates for add, ack, put, delete.');
 }
 
 done_testing();
