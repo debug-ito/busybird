@@ -26,6 +26,8 @@ App::BusyBird::Main - main application object of App::BusyBird
 
 =head2 @timelines = $main->get_all_timelines()
 
+=head2 $main->delete_timeline($name)
+
 =head2 $storage = $main->default_storage([$storage])
 
 
