@@ -569,15 +569,13 @@ my $CLASS = 'App::BusyBird::Timeline';
     is($add_count, 1, '1 added');
     is($callbacked, 2, 'callbacked again');
     $watcher->cancel;
+    memory_cycle_ok($timeline, 'no cyclic ref in timeline');
     ($add_count) = sync($timeline, 'add_statuses', statuses => [status(3)]);
     is($add_count, 1, '1 added');
     is($callbacked, 2, 'not callbacked anymore');
 }
 
 
-TODO: {
-    local $TODO = "I will write these tests. I swear.";
-    fail('todo: timeline is properly destroyed. no cyclic reference between resource provider (see 2013/01/27)');
-}
-
 done_testing();
+
+fail('todo: how about watcher quota?');

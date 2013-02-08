@@ -4,22 +4,68 @@ use warnings;
 use App::BusyBird::Util qw(set_param);
 use App::BusyBird::Log;
 use App::BusyBird::Flow;
+use Async::Selector 1.0;
 use Carp;
 use CPS qw(kforeach);
 use Storable qw(dclone);
+use Scalar::Util qw(weaken looks_like_number);
 
 our @CARP_NOT = ();
 
 sub new {
     my ($class, %args) = @_;
     my $self = bless {
-        filter_flow => App::BusyBird::Flow->new
+        filter_flow => App::BusyBird::Flow->new,
+        selector => Async::Selector->new,
+        unacked_counts => {total => 0},
     }, $class;
     $self->set_param(\%args, 'name', undef, 1);
     $self->set_param(\%args, 'storage', undef, 1);
     croak 'name must not be empty' if $self->{name} eq '';
     croak 'name must consist only of [a-zA-Z0-9_-]' if $self->{name} !~ /^[a-zA-Z0-9_-]+$/;
+    $self->_init_selector();
+    $self->_update_unacked_counts();
     return $self;
+}
+
+sub _log {
+    my ($self, $level, $msg) = @_;
+    bblog($level, $self->name . ": $msg");
+}
+
+sub _update_unacked_counts {
+    my ($self) = @_;
+    $self->get_unacked_counts(callback => sub {
+        my ($unacked_counts, $error) = @_;
+        if(@_ >= 2) {
+            $self->_log('error', "error while updating unacked count: $error");
+            return;
+        }
+        $self->{unacked_counts} = $unacked_counts;
+        $self->{selector}->trigger('unacked_counts');
+    });
+}
+
+sub _init_selector {
+    my ($self) = @_;
+    weaken $self;
+    $self->{selector}->register(unacked_counts => sub {
+        my ($exp_unacked_counts) = @_;
+        if(!defined($exp_unacked_counts) || ref($exp_unacked_counts) ne 'HASH') {
+            croak "unacked_counts watcher: condition input must be a hash-ref";
+        }
+        foreach my $key (keys %$exp_unacked_counts) {
+            next if $key eq 'total' || (looks_like_number($key) && int($key) == $key);
+            delete $exp_unacked_counts->{$key};
+        }
+        return $self->{unacked_counts} if !%$exp_unacked_counts;
+        foreach my $key (keys %$exp_unacked_counts) {
+            my $exp_val = $exp_unacked_counts->{$key} || 0;
+            my $got_val = $self->{unacked_counts}{$key} || 0;
+            return $self->{unacked_counts} if $exp_val != $got_val;
+        }
+        return undef;
+    });
 }
 
 sub name {
@@ -44,7 +90,11 @@ sub _write_statuses {
     my ($self, $method, $args_ref) = @_;
     $args_ref->{timeline} = $self->name;
     local @CARP_NOT = (ref($self->{storage}));
-    $self->{storage}->$method(%$args_ref);
+    my $orig_callback = $args_ref->{callback};
+    $self->{storage}->$method(%$args_ref, callback => sub {
+        $self->_update_unacked_counts();
+        goto $orig_callback if defined($orig_callback);
+    });
 }
 
 sub put_statuses {
@@ -141,6 +191,19 @@ sub add_filter {
 sub add_filter_async {
     my ($self, $filter) = @_;
     $self->add_filter($filter, 1);
+}
+
+sub watch_unacked_counts {
+    my $self = shift;
+    my $callback = pop;
+    my %watch_spec = @_;
+    if(!defined($callback) || ref($callback) ne 'CODE') {
+        croak "watch_unacked_counts: callback must be a code-ref";
+    }
+    return $self->{selector}->watch(unacked_counts => \%watch_spec, sub {
+        my ($w, %res) = @_;
+        $callback->($w, %{$res{unacked_counts}});
+    });
 }
 
 
