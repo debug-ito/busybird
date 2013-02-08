@@ -403,6 +403,9 @@ my $CLASS = 'App::BusyBird::Timeline';
         {label => '0 total', watch => {total => 0}, exp_callback => 0},
         {label => 'no total, 0 level.4', watch => {4 => 0}, exp_callback => 0},
         {label => '0 levels.2,3', watch => {2 => 0, 3 => 0}, exp_callback => 0},
+        {label => 'only junk 0', watch => {junk => 0}, exp_callback => 1},
+        {label => 'junks with total 0', watch => {total => 0, junk1 => 1, _ => 101293}, exp_callback => 0},
+        {label => 'junks with total 1', watch => {total => 1, _ => 0}, exp_callback => 1}
     ) {
         my $callbacked = 0;
         my $label = $case->{label};
@@ -429,7 +432,9 @@ my $CLASS = 'App::BusyBird::Timeline';
         {label => 'only total diff', watch => {total => 2}, exp_callback => 1},
         {label => 'only level.2', watch => {2 => 1}, exp_callback => 0},
         {label => 'levels.0,2 up-to-date', watch => {0 => 2, 2 => 1}, exp_callback => 0},
-        {label => '0 irrelevant levels', watch => {10 => 0, 32 => 0, -10 => 0}, exp_callback => 0}
+        {label => '0 irrelevant levels', watch => {10 => 0, 32 => 0, -10 => 0}, exp_callback => 0},
+        {label => 'correct levels with junk', watch => {0 => 2, 1 => 1, _ => 1192}, exp_callback => 0},
+        {label => 'wrong levels with junks 0', watch => {total => 3, 2 => 1, junk1 => 0, _ => 0}, exp_callback => 1},
     ) {
         my $callbacked = 0;
         my $label = $case->{label};
@@ -546,6 +551,29 @@ my $CLASS = 'App::BusyBird::Timeline';
     ok(!$watcher->active, 'watcher is now inactive');
     memory_cycle_ok($timeline, 'no cyclic ref in timeline');
 }
+
+{
+    note('--- watch_unacked_counts - persistent watcher');
+    my $timeline = new_ok('App::BusyBird::Timeline', [name => 'test', storage => create_storage()]);
+    my $callbacked = 0;
+    my $watcher = $timeline->watch_unacked_counts(total => 1, sub {
+        my ($w, %unacked_counts) = @_;
+        $callbacked++;
+    });
+    is($callbacked, 1, '1 callbacked');
+    ok($watcher->active, 'watcher still active');
+    my ($add_count) = sync($timeline, 'add_statuses', statuses => [status(1)]);
+    is($add_count, 1, '1 added');
+    is($callbacked, 1, 'no callback at this addition');
+    ($add_count) = sync($timeline, 'add_statuses', statuses => [status(2)]);
+    is($add_count, 1, '1 added');
+    is($callbacked, 2, 'callbacked again');
+    $watcher->cancel;
+    ($add_count) = sync($timeline, 'add_statuses', statuses => [status(3)]);
+    is($add_count, 1, '1 added');
+    is($callbacked, 2, 'not callbacked anymore');
+}
+
 
 TODO: {
     local $TODO = "I will write these tests. I swear.";
