@@ -115,10 +115,12 @@ sub put_statuses {
     }else {
         croak 'statuses arg must be STATUS/ARRAYREF_OF_STATUSES';
     }
+    foreach my $s (@$statuses) {
+        croak "{id} field is mandatory in statuses" if not defined $s->{id};
+    }
     my $put_count = 0;
     foreach my $status_index (reverse 0 .. $#$statuses) {
         my $s = $statuses->[$status_index];
-        croak "{id} field is mandatory in statuses" if not defined $s->{id};
         my $tl_index = $self->_index($timeline, $s->{id});
         my $existent = ($tl_index >= 0);
         next if ($mode eq 'insert' && $existent) || ($mode eq 'update' && !$existent);

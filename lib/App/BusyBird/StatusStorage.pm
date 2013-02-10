@@ -23,6 +23,8 @@ This document is mainly for implementors of App::BusyBird::StatusStorage::* modu
 An L<App::BusyBird::StatusStorage> implementation stores and serves status objects for multiple timelines.
 End-users usually access the status storage via L<App::BusyBird::Timeline> objects.
 
+To test if an implementation of StatusStorage meets the specification,
+you can use functions provided by L<Test::BusyBird::StatusStorage>.
 
 
 =head1 CLASS METHODS
@@ -86,6 +88,11 @@ the user is to blame.
 
 Never throw an exception but call C<callback> with C<$error> if you
 fail to complete the request, i.e. if you is to blame.
+
+=item 3.
+
+If some statuses given to C<put_statuses()> method do not have their C<id> fields,
+the method either throws an exception or automatically generates IDs for them and proceeds.
 
 =back
 

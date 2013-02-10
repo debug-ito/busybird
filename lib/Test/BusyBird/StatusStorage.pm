@@ -11,7 +11,10 @@ use App::BusyBird::DateTime::Format;
 use Carp;
 
 our %EXPORT_TAGS = (
-    storage => [qw(test_storage_common test_storage_ordered test_storage_truncation test_storage_missing_arguments)],
+    storage => [
+        qw(test_storage_common test_storage_ordered test_storage_truncation test_storage_missing_arguments),
+        qw(test_storage_put_requires_ids)
+    ],
     status => [qw(test_status_id_set test_status_id_list)],
 );
 our @EXPORT_OK = ();
@@ -1146,6 +1149,7 @@ sub test_storage_truncation {
 
 sub test_storage_missing_arguments {
     my ($storage, $loop, $unloop) = @_;
+    note("-------- test_storage_missing_arguments");
     dies_ok { $storage->ack_statuses() } 'ack: timeline is missing';
     dies_ok { $storage->get_statuses(callback => sub {}) } 'get: timeline is missing';
     dies_ok { $storage->get_statuses(timeline => 'tl') } 'get: callback is missing';
@@ -1162,6 +1166,40 @@ sub test_storage_missing_arguments {
     dies_ok { $storage->delete_statuses(timeline => 'tl') } 'delete: ids is missing';
     dies_ok { $storage->get_unacked_counts(callback => sub {}) } 'get_unacked: timeline is missing';
     dies_ok { $storage->get_unacked_counts(timeline => 'tl') } 'get_unacked: callback is missing';
+}
+
+sub test_storage_put_requires_ids {
+    my ($storage, $loop, $unloop) = @_;
+    note("-------- test_storage_put_requires_ids");
+    $loop ||= sub {};
+    $unloop ||= sub {};
+    my %cases = (
+        no_id => status(1),
+        undef_id => status(2),
+    );
+    my $ok_status = status(3);
+    delete $cases{no_id}{id};
+    $cases{undef_id}{id} = undef;
+    my %base = (timeline => '_test_tl_put_requires_ids');
+    my $callbacked = 0;
+    $storage->delete_statuses(%base, ids => undef, callback => sub {
+        is(int(@_), 1, 'delete succeed');
+        $callbacked = 1;
+        $unloop->();
+    });
+    $loop->();
+    ok($callbacked, 'callbacked');
+    foreach my $case (keys %cases) {
+        my $s = $cases{$case};
+        dies_ok { $storage->put_statuses(%base, mode => 'insert', statuses => $s) } "case: $case, insert, single: dies OK";
+        dies_ok { $storage->put_statuses(%base, mode => 'update', statuses => $s) } "case: $case, update, single: dies OK";
+        dies_ok { $storage->put_statuses(%base, mode => 'upsert', statuses => $s) } "case: $case, upsert, single: dies OK";
+        dies_ok { $storage->put_statuses(%base, mode => 'insert', statuses => [$ok_status, $s]) } "case: $case, insert, array: dies OK";
+        dies_ok { $storage->put_statuses(%base, mode => 'update', statuses => [$ok_status, $s]) } "case: $case, update, array: dies OK";
+        dies_ok { $storage->put_statuses(%base, mode => 'upsert', statuses => [$ok_status, $s]) } "case: $case, upsert, array: dies OK";
+        my $statuses = sync_get($storage, $loop, $unloop, %base, count => 'all');
+        is(int(@$statuses), 0, 'storage is empty');
+    }
 }
 
 =pod
@@ -1239,6 +1277,12 @@ Test if the C<$storage> throws an exception when a mandatory argument is missing
 
 The arguments are the same as C<test_storage_common> function.
 
+=head2 test_storage_put_requires_ids($storage, $loop, $unloop)
+
+Test if the C<$storage> throws an exception when some C<statuses> given to C<put_statuses()> method
+do not have their C<id> fields.
+
+The arguments are the same as C<test_storage_common> function.
 
 =head1 :status TAG FUNCTIONS
 
