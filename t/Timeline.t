@@ -678,6 +678,32 @@ my $CLASS = 'App::BusyBird::Timeline';
     }
 }
 
+{
+    note('--- restore timeline when created ');
+    my $storage = create_storage();
+    my $timeline = new_ok('App::BusyBird::Timeline', [name => 'hoge', storage => $storage]);
+    sync($timeline, 'add_statuses', statuses => [status(1,0)]);
+    sync($timeline, 'ack_statuses');
+    sync($timeline, 'add_statuses', statuses => [status(2,1), status(3,2)]);
+
+    $timeline = new_ok('App::BusyBird::Timeline', [name => 'hoge', storage => $storage]);
+    test_content($timeline, {count => 'all'}, [3,2,1], 'any statuses OK');
+    test_content($timeline, {count => 'all', ack_state => 'acked'}, [1], 'acked statuses OK');
+    test_content($timeline, {count => 'all', ack_state => 'unacked'}, [3,2], 'unacked statuses OK');
+    
+    my $callbacked = 0;
+    $timeline->watch_unacked_counts(total => 0, sub {
+        my ($w, $unacked_counts) = @_;
+        is(int(@_), 2, 'watch succeed');
+        is_deeply($unacked_counts, { total => 2, 1 => 1, 2 => 1 }, 'unacked_counts OK');
+        $callbacked = 1;
+        $w->cancel();
+    });
+    ok($callbacked, 'callbacked');
+
+    test_unacked_counts($timeline, { total => 2, 1 => 1, 2 => 1}, 'unacked_counts OK');
+}
+
 
 done_testing();
 
