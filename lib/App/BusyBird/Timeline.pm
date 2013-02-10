@@ -262,14 +262,35 @@ App::BusyBird::Timeline - a timeline object in BusyBird
 L<App::BusyBird::Timeline> stores and manages a timeline, which is an ordered sequence of statuses.
 You can add statuses to a timeline, and get statuses from the timeline.
 
+This module uses L<App::BusyBird::Log> for logging.
+
+=head2 Filters
+
 You can set status filters to a timeline.
 A status filter is a subroutine that is called when new statuses are added to the timeline
 via C<add_statuses()> method.
+
 Using status filters, you can modify or even drop the added statuses before they are
 actually inserted to the timeline.
 Statuse filters are executed in the same order as they are added.
 
-This module uses L<App::BusyBird::Log> for logging.
+=head2 Status Storage
+
+A timeline's statuses are actually saved in a StatusStorage object.
+
+When you create a timeline via C<new()> method, you have to specify a StatusStorage object explicitly.
+For example, the following modules can be used as StatusStorage.
+
+=over
+
+=item *
+
+L<App::BusyBird::StatusStorage::Memory> - storage in the process memory.
+
+=back
+
+See each module's documentation for details.
+
 
 =head1 CLASS METHODS
 
