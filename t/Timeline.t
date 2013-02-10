@@ -92,6 +92,18 @@ sub filter {
     }
 }
 
+sub test_sets {
+    my ($got_set_array, $exp_set_array, $msg) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my ($got_set_hash, $exp_set_hash) = map {
+        my $a = $_;
+        my $h = {};
+        $h->{$_}++ foreach @$a;
+        $h;
+    } ($got_set_array, $exp_set_array);
+    is_deeply($got_set_hash, $exp_set_hash, $msg);
+}
+
 my $CLASS = 'App::BusyBird::Timeline';
 
 {
@@ -580,7 +592,92 @@ my $CLASS = 'App::BusyBird::Timeline';
     is($callbacked, 2, 'not callbacked anymore');
 }
 
+{
+    note('--- watch_unacked_counts - watcher quota');
+    my $timeline = new_ok('App::BusyBird::Timeline', [
+        name => 'test', storage => create_storage(),
+        watcher_max => 3
+    ]);
+    my @watchers = ();
+    my @results = ();
+    foreach my $i (0..2) {
+        my $watcher = $timeline->watch_unacked_counts(total => 0, sub {
+            push(@results, [$i, @_]);
+        });
+        ok($watcher->active, "watcher $i is active.");
+        push(@watchers, $watcher);
+    }
+    {
+        my $new_watcher = $timeline->watch_unacked_counts(2 => 0, sub {
+            push(@results, [3, @_]);
+        });
+        ok($new_watcher->active, "watcher 3 is active");
+        push(@watchers, $new_watcher);
+    }
+    ok(!$watchers[0]->active, 'now watcher 0 is inactive because it is cancelled by the quota');
+    is(int(@results), 1, "got 1 result");
+    is($results[0][0], 0, '... it is from watcher 0');
+    is(int(@{$results[0]}), 4, '... it indicates error');
+    
+    @results = ();
+    sync($timeline, 'add_statuses', statuses => [status(0)]);
+    is(int(@results), 2, 'got 2 results');
+    test_sets([$results[0][0], $results[1][0]], [1,2], "... they are from watchers 1,2");
+    foreach my $r (@results) {
+        is(int(@$r), 3, "... callback succeed");
+        is_deeply($r->[2], {total => 1, 0 => 1}, "... unacked counts OK");
+    }
+    $_->cancel foreach @watchers[1,2];
+
+    @results = ();
+    {
+        my $watcher = $timeline->watch_unacked_counts(2 => 0, sub { push(@results, [4, @_]) });
+        ok($watcher->active, 'watcher 4 is active');
+        push(@watchers, $watcher);
+    }
+    is(int(@results), 0, 'no watcher fires yet');
+    foreach my $lv0_count (1..4) {
+        @results = ();
+        my $watcher = $timeline->watch_unacked_counts(0 => $lv0_count, sub { push(@results, [-1, @_]) });
+        is(int(@results), 0, "lv0_count = $lv0_count: no watcher fired");
+        sync($timeline, 'add_statuses', statuses => [status($lv0_count)]);
+        is(int(@results), 1, "lv0_count != $lv0_count: 1 watcher fired");
+        is($results[0][0], -1, "... and it's the ephemeral watcher");
+        is(int(@{$results[0]}), 3, "... and it succeeded");
+        is_deeply($results[0][2], {total => $lv0_count + 1, 0 => $lv0_count + 1}, "... unacked counts OK");
+        $watcher->cancel();
+    }
+
+    @results = ();
+    {
+        my $watcher = $timeline->watch_unacked_counts(0 => 5, sub { push(@results, [5, @_]) });
+        push(@watchers, $watcher);
+        is(int(@results), 0, "watcher 5 added. no watcher fired.");
+
+        $watcher = $timeline->watch_unacked_counts(total => 0, sub { push(@results, [-1, @_]); $_[0]->cancel() });
+        is(!$watcher->active, "the ephemeral watcher immediately fired and became inactive.");
+        is(int(@results), 1, "... in this case, the quota does nothing to pending watchers.");
+        is($results[0][0], -1, "... only the ephemeral watcher fired.");
+        is(int(@{$results[0]}), 3, "... and it's success");
+        is_deeply($results[0][2], {total => 5, 0 => 5}, "... unacked counts OK");
+    }
+
+    @results = ();
+    {
+        my $watcher = $timeline->watch_unacked_counts(total => 5, sub { push(@results, [6, @_]); $_[0]->cancel() });
+        ok($watcher->active, "watcher 6 is active.");
+        push(@watchers, $watcher);
+        is(int(@results), 2, "2 watchers are cancelled by the quota because they are too old.");
+        ok(!$watchers[3]->active, "watcher 3 is inactive");
+        ok(!$watchers[4]->active, "watcher 4 is inactive");
+        ok( $watchers[5]->active, "watcher 5 is active");
+        test_sets([$results[0][0], $results[1][0]], [3, 4], "the 2 results are from watchers 3, 4");
+        foreach my $r (@results) {
+            is(int(@$r), 4, "... the result indicates error");
+        }
+    }
+}
+
 
 done_testing();
 
-fail('todo: watcher quote: rewrite POD and test. $error is given to watcher callback when removed. hidden option for new() to control quota size.');
