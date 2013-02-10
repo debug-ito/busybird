@@ -21,6 +21,7 @@ sub new {
     }, $class;
     $self->set_param(\%args, 'name', undef, 1);
     $self->set_param(\%args, 'storage', undef, 1);
+    $self->set_param(\%args, 'watcher_max', 512);
     croak 'name must not be empty' if $self->{name} eq '';
     croak 'name must consist only of [a-zA-Z0-9_-]' if $self->{name} !~ /^[a-zA-Z0-9_-]+$/;
     $self->_init_selector();
@@ -65,6 +66,15 @@ sub _init_selector {
             return { %{$self->{unacked_counts}} } if $exp_val != $got_val;
         }
         return undef;
+    });
+    $self->{selector}->register(watcher_quota => sub {
+        my ($in) = @_;
+        my @watchers = $self->{selector}->watchers('watcher_quota');
+        if(int(@watchers) <= $self->{watcher_max}) {
+            return undef;
+        }
+        my $watcher_age = $in->{age} || 0;
+        return $watcher_age > $self->{watcher_max} ? 1 : undef;
     });
 }
 
@@ -200,10 +210,30 @@ sub watch_unacked_counts {
     if(!defined($callback) || ref($callback) ne 'CODE') {
         croak "watch_unacked_counts: callback must be a code-ref";
     }
-    return $self->{selector}->watch(unacked_counts => \%watch_spec, sub {
-        my ($w, %res) = @_;
-        $callback->($w, $res{unacked_counts});
-    });
+    my $watcher = $self->{selector}->watch(
+        unacked_counts => \%watch_spec, watcher_quota => { age => 0 }, sub {
+            my ($w, %res) = @_;
+            if($res{watcher_quota}) {
+                $w->cancel;
+                $callback->($w, undef, "watcher cancelled because it is too old");
+                return;
+            }
+            if($res{unacked_counts}) {
+                $callback->($w, $res{unacked_counts});
+                return;
+            }
+            confess("Something terrible happened.");
+        }
+    );
+    if($watcher->active) {
+        my @quota_watchers = $self->{selector}->watchers('watcher_quota');
+        foreach my $w (@quota_watchers) {
+            my %cond = $w->conditions;
+            $cond{watcher_quota}{age}++;
+        }
+        $self->{selector}->trigger('watcher_quota');
+    }
+    return $watcher;
 }
 
 

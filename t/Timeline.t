@@ -655,7 +655,7 @@ my $CLASS = 'App::BusyBird::Timeline';
         is(int(@results), 0, "watcher 5 added. no watcher fired.");
 
         $watcher = $timeline->watch_unacked_counts(total => 0, sub { push(@results, [-1, @_]); $_[0]->cancel() });
-        is(!$watcher->active, "the ephemeral watcher immediately fired and became inactive.");
+        ok(!$watcher->active, "the ephemeral watcher immediately fired and became inactive.");
         is(int(@results), 1, "... in this case, the quota does nothing to pending watchers.");
         is($results[0][0], -1, "... only the ephemeral watcher fired.");
         is(int(@{$results[0]}), 3, "... and it's success");
@@ -667,14 +667,14 @@ my $CLASS = 'App::BusyBird::Timeline';
         my $watcher = $timeline->watch_unacked_counts(total => 5, sub { push(@results, [6, @_]); $_[0]->cancel() });
         ok($watcher->active, "watcher 6 is active.");
         push(@watchers, $watcher);
-        is(int(@results), 2, "2 watchers are cancelled by the quota because they are too old.");
-        ok(!$watchers[3]->active, "watcher 3 is inactive");
-        ok(!$watchers[4]->active, "watcher 4 is inactive");
+        is(int(@results), 1, "1 watcher is cancelled by the quota because it is too old.");
+        ok($results[0][0] == 3 || $results[0][0] == 4, "the canceled is watcher 3 or 4. They are both too old, but either one of them is canceled.");
+        is(int(@{$results[0]}), 4, "the result indicates error");
+        my $canceled = $results[0][0];
+        my $not_canceled = $canceled == 3 ? 4 : 3;
+        ok(!$watchers[$canceled]->active, "watcher $canceled is inactive");
+        ok( $watchers[$not_canceled]->active, "watcher $not_canceled is inactive");
         ok( $watchers[5]->active, "watcher 5 is active");
-        test_sets([$results[0][0], $results[1][0]], [3, 4], "the 2 results are from watchers 3, 4");
-        foreach my $r (@results) {
-            is(int(@$r), 4, "... the result indicates error");
-        }
     }
 }
 
