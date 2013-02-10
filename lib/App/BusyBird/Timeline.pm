@@ -62,7 +62,7 @@ sub _init_selector {
         foreach my $key (keys %$exp_unacked_counts) {
             my $exp_val = $exp_unacked_counts->{$key} || 0;
             my $got_val = $self->{unacked_counts}{$key} || 0;
-            return $self->{unacked_counts} if $exp_val != $got_val;
+            return { %{$self->{unacked_counts}} } if $exp_val != $got_val;
         }
         return undef;
     });
@@ -202,7 +202,7 @@ sub watch_unacked_counts {
     }
     return $self->{selector}->watch(unacked_counts => \%watch_spec, sub {
         my ($w, %res) = @_;
-        $callback->($w, %{$res{unacked_counts}});
+        $callback->($w, $res{unacked_counts});
     });
 }
 
@@ -580,17 +580,28 @@ The argument to the C<$done> callback (C<$result>) is an array-ref of statuses t
 Add an asynchronous status filter. This is equivalent to C<< $timeline->add_filter($filter, 1) >>.
 
 
-=head2 $watcher = $timeline->watch_unacked_counts(%watch_spec, $callback->($w, %unacked_counts))
+=head2 $watcher = $timeline->watch_unacked_counts(%watch_spec, $callback->($w, $unacked_counts, $error))
 
 Watch updates of unacked counts in the C<$timeline>.
 
 In C<%watch_spec>, caller must describe numbers of unacked statuses (i.e. unacked counts) for each status level and/or in total.
 If the given unacked counts is different from the true unacked counts in C<$timeline>,
-C<$callback> subroutine reference is called with the true unacked counts (C<%unacked_counts>).
+C<$callback> subroutine reference is called with the true unacked counts (C<$unacked_counts>).
 If the given unacked counts is the same as the true unacked counts, execution of C<$callback> is delayed
 until there is some difference between them.
 
-Format of C<%watch_spec> and C<%unacked_counts> is the same as C<%$unacked_counts> returned by C<get_unacked_counts()> method.
+Format of C<%watch_spec> and C<%$unacked_counts> is the same as C<%$unacked_counts> returned by C<get_unacked_counts()> method.
+
+In success, the C<$callback> is called with two arguments (C<$w>, C<$unacked_counts>).
+C<$w> is an L<Async::Selector::Watcher> object representing this watch.
+C<$unacked_counts> is a hash-ref describing the current unacked counts of the C<$timeline>.
+
+In failure, the C<$callback> is called with three arguments, and the third argument (C<$error>) describes the error.
+
+The return value of this method (C<$watcher>) is an L<Async::Selector::Watcher> object.
+It is the same instance as C<$w>.
+You can call C<< $watcher->cancel() >> or C<< $w->cancel() >> to cancel the watcher.
+Otherwise, the C<$callback> can be called repeatedly.
 
 Caller does not have to specify the complete set of unacked counts in C<%watch_spec>.
 Updates are checked only for levels (or 'total') that are explicitly specified in C<%watch_spec>.
@@ -598,9 +609,6 @@ Therefore, if some updates happen in levels that are not in C<%watch_spec>, C<$c
 
 If C<%watch_spec> is empty, C<$callback> is always called immediately.
 
-This method returns L<Async::Selector::Watcher> object (C<$watcher>).
-You can call C<< $watcher->cancel() >> to cancel the watcher.
-The first argument for C<$callback> (C<$w>) is the same object as C<$watcher>.
 
 
 =head1 AUTHOR

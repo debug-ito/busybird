@@ -410,9 +410,10 @@ my $CLASS = 'App::BusyBird::Timeline';
         my $callbacked = 0;
         my $label = $case->{label};
         my $watcher = $timeline->watch_unacked_counts(%{$case->{watch}}, sub {
-            my ($w, %unacked_counts) = @_;
+            my ($w, $unacked_counts) = @_;
+            is(int(@_), 2, "$label: succeed.");
             $callbacked = 1;
-            is_deeply(\%unacked_counts, {total => 0}, "$label: no unacked counts");
+            is_deeply($unacked_counts, {total => 0}, "$label: no unacked counts");
             $w->cancel();
         });
         is($callbacked, $case->{exp_callback}, "$label: callback is OK");
@@ -439,9 +440,10 @@ my $CLASS = 'App::BusyBird::Timeline';
         my $callbacked = 0;
         my $label = $case->{label};
         my $watcher = $timeline->watch_unacked_counts(%{$case->{watch}}, sub {
-            my ($w, %unacked_counts) = @_;
+            my ($w, $unacked_counts) = @_;
+            is(int(@_), 2, "$label: succeed");
             $callbacked = 1;
-            is_deeply(\%unacked_counts, {total => 4, 0 => 2, 1 => 1, 2 => 1}, "$label: unacked counts OK");
+            is_deeply($unacked_counts, {total => 4, 0 => 2, 1 => 1, 2 => 1}, "$label: unacked counts OK");
             $w->cancel();
         });
         is($callbacked, $case->{exp_callback}, "$label: callback is OK");
@@ -457,8 +459,9 @@ my $CLASS = 'App::BusyBird::Timeline';
     my $watch = sub {
         my (%watch_spec) = @_;
         $timeline->watch_unacked_counts(%watch_spec, sub {
-            my ($w, %unacked_counts) = @_;
-            $result = \%unacked_counts;
+            my ($w, $unacked_counts) = @_;
+            is(int(@_), 2, "watch_unacked_counts succeed.");
+            $result = $unacked_counts;
             $callbacked = 1;
             $w->cancel();
         });
@@ -531,9 +534,10 @@ my $CLASS = 'App::BusyBird::Timeline';
         DateTime->now(time_zone => 'UTC')
     );
     my $watcher = $timeline->watch_unacked_counts(total => 0, sub {
-        my ($w, %unacked_counts) = @_;
+        my ($w, $unacked_counts) = @_;
+        is(int(@_), 2, "watch_unacked_counts succeed");
         $callbacked = 1;
-        $result = \%unacked_counts;
+        $result = $unacked_counts;
         $w->cancel();
     });
     ok(!$callbacked, 'not callbacked yet');
@@ -557,7 +561,8 @@ my $CLASS = 'App::BusyBird::Timeline';
     my $timeline = new_ok('App::BusyBird::Timeline', [name => 'test', storage => create_storage()]);
     my $callbacked = 0;
     my $watcher = $timeline->watch_unacked_counts(total => 1, sub {
-        my ($w, %unacked_counts) = @_;
+        my ($w, $unacked_counts) = @_;
+        is(int(@_), 2, "watch_unacked_counts succeed");
         $callbacked++;
     });
     is($callbacked, 1, '1 callbacked');
@@ -578,4 +583,4 @@ my $CLASS = 'App::BusyBird::Timeline';
 
 done_testing();
 
-fail('todo: how about watcher quota?');
+fail('todo: watcher quote: rewrite POD and test. $error is given to watcher callback when removed. hidden option for new() to control quota size.');
