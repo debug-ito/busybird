@@ -675,7 +675,11 @@ my $CLASS = 'App::BusyBird::Timeline';
         ok(!$watchers[$canceled]->active, "watcher $canceled is inactive");
         ok( $watchers[$not_canceled]->active, "watcher $not_canceled is inactive");
         ok( $watchers[5]->active, "watcher 5 is active");
+        $watchers[$not_canceled]->cancel;
+        $watchers[5]->cancel;
+        $watcher->cancel;
     }
+    memory_cycle_ok($timeline, "no cyclic ref when all watchers are released.");
 }
 
 {
