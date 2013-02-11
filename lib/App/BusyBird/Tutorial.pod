@@ -23,6 +23,10 @@ App::BusyBird::Tutorial - Tutorial to use BusyBird
 
 =head1 Filters
 
+Exec filter. pointer to L<App::BusyBird::Timeline>'s C<add_filter()> method.
+
+=head1 Configure StatusStorage
+
 
 =cut
 

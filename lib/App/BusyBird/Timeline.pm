@@ -277,19 +277,7 @@ Statuse filters are executed in the same order as they are added.
 =head2 Status Storage
 
 A timeline's statuses are actually saved in a StatusStorage object.
-
 When you create a timeline via C<new()> method, you have to specify a StatusStorage object explicitly.
-For example, the following modules can be used as StatusStorage.
-
-=over
-
-=item *
-
-L<App::BusyBird::StatusStorage::Memory> - storage in the process memory.
-
-=back
-
-See each module's documentation for details.
 
 
 =head1 CLASS METHODS
