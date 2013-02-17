@@ -4,10 +4,10 @@ use DateTime;
 use Test::More;
 
 BEGIN {
-    use_ok('App::BusyBird::DateTime::Format');
+    use_ok('BusyBird::DateTime::Format');
 }
 
-my $formatter = 'App::BusyBird::DateTime::Format';
+my $formatter = 'BusyBird::DateTime::Format';
 
 sub DT {
     my ($year, $month, $day, $hour, $minute, $second, $time_zone) = @_;
@@ -56,7 +56,7 @@ checkFormat DT(qw(2012 1 1 15 8 45 +2000)), "Sun Jan 01 15:08:45 +2000 2012";
 {
     note('--- synopsis');
 
-    my $f = 'App::BusyBird::DateTime::Format';
+    my $f = 'BusyBird::DateTime::Format';
 
     ## Twitter API format
     my $dt1 = $f->parse_datetime('Fri Feb 08 11:02:15 +0900 2013');

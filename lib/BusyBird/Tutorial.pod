@@ -1,0 +1,32 @@
+
+=pod
+
+=head1 NAME
+
+BusyBird::Tutorial - Tutorial to use BusyBird
+
+=head1 Installation
+
+=head1 Start BusyBird
+
+=head1 Input Statuses
+
+=head2 Input Statuses from Twitter
+
+=head1 Status Level
+
+=head1 Configuration
+
+=head2 Configure Timelines
+
+=head2 Input Statuses from Inside
+
+=head1 Filters
+
+Exec filter. pointer to L<BusyBird::Timeline>'s C<add_filter()> method.
+
+=head1 Configure StatusStorage
+
+
+=cut
+

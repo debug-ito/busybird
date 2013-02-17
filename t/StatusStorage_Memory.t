@@ -1,14 +1,14 @@
 use strict;
 use warnings;
 use Test::More;
-use Test::BusyBird::StatusStorage qw(:storage :status);
+use BusyBird::Test::StatusStorage qw(:storage :status);
 
 BEGIN {
-    use_ok('App::BusyBird::StatusStorage::Memory');
+    use_ok('BusyBird::StatusStorage::Memory');
 }
 
 {
-    my $storage = new_ok('App::BusyBird::StatusStorage::Memory', [logger => undef]);
+    my $storage = new_ok('BusyBird::StatusStorage::Memory', [logger => undef]);
     test_storage_common($storage);
     test_storage_ordered($storage);
     test_storage_missing_arguments($storage);
@@ -16,7 +16,7 @@ BEGIN {
 }
 
 {
-    my $storage = new_ok('App::BusyBird::StatusStorage::Memory', [max_status_num => 5, logger => undef]);
+    my $storage = new_ok('BusyBird::StatusStorage::Memory', [max_status_num => 5, logger => undef]);
     test_storage_truncation($storage, 5);
 }
 

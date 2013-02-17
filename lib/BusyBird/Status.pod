@@ -1,0 +1,78 @@
+=pod
+
+=head1 NAME
+
+BusyBird::Status - Status object specification
+
+=head1 SYNOPSIS
+
+
+    my $status = {
+        id => 'http://api.example.com/2291',
+        created_at => 'Thu Jan 03 02:24:43 +0000 2013',
+        text => "sample status",
+        user => {
+            screen_name => "debug_ito",
+            name => "Toshio Ito",
+        },
+        busybird => {
+            level => 0,
+            confiremd_at => 'Thu Jan 03 14:44:12 +0900 2013',
+            timeline => "my_home",
+            status_permalink => "http://example.com/status/2291",
+        },
+    };
+
+
+=head1 DESCRIPTION
+
+This is not a class or module but a specification of a status object
+that is handled by L<BusyBird::StatusStorage> and
+L<BusyBird::Timeline>.
+
+A status object is just a hash reference. It should be serializable to
+JSON and deserializable from JSON.
+
+
+=head1 FIELDS
+
+The following fields in a status object is used by BusyBird.
+
+=head2 $status->{created_at}
+
+=head2 $status->{busybird}{acked_at}
+
+=head2 $status->{busybird}{level}
+
+=head2 $status->{busybird}{source_image_url}
+
+=head2 $status->{busybird}{source_name}
+
+=head2 $status->{busybird}{source_permalink}
+
+=head2 $status->{busybird}{status_permalink}
+
+=head2 $status->{busybird}{timeline}
+
+=head2 $status->{busybird}{user_permalink}
+
+=head2 $status->{entities}{urls}
+
+=head2 $status->{id}
+
+=head2 $status->{retweeted_status}
+
+=head2 $status->{text}
+
+=head2 $status->{user}{screen_name}
+
+=head2 $status->{user}{profile_image_url}
+
+
+
+=head1 AUTHOR
+
+Toshio Ito C<< <toshioito [at] cpan.org> >>
+
+=cut
+

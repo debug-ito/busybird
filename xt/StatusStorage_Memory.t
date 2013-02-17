@@ -3,13 +3,13 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Builder;
-use App::BusyBird::StatusStorage::Memory;
-use App::BusyBird::DateTime::Format;
-use App::BusyBird::Log;
+use BusyBird::StatusStorage::Memory;
+use BusyBird::DateTime::Format;
+use BusyBird::Log;
 use DateTime;
 use utf8;
 
-$App::BusyBird::Log::LOGGER = undef;
+$BusyBird::Log::LOGGER = undef;
 
 sub test_log_contains {
     my ($logs_arrayref, $msg_pattern, $test_msg) = @_;
@@ -24,7 +24,7 @@ sub status {
     my ($id) = @_;
     return {
         id => $id, text => "てくすと $_",
-        created_at => App::BusyBird::DateTime::Format->format_datetime(
+        created_at => BusyBird::DateTime::Format->format_datetime(
             DateTime->from_epoch(epoch => $id, time_zone => 'UTC')
         )
     };
@@ -38,8 +38,8 @@ if(-r $filepath) {
 }
 
 {
-    local $App::BusyBird::Log::LOGGER = sub { push(@logs, [@_]) };
-    my $storage = new_ok('App::BusyBird::StatusStorage::Memory');
+    local $BusyBird::Log::LOGGER = sub { push(@logs, [@_]) };
+    my $storage = new_ok('BusyBird::StatusStorage::Memory');
     ok(!$storage->load($filepath), "load() returns false if the file does not exist.");
     test_log_contains \@logs, qr{cannot.*read}i, "fails to load from $filepath";
     $storage->put_statuses(
@@ -55,7 +55,7 @@ if(-r $filepath) {
     );
 
     {
-        my $another_storage = new_ok('App::BusyBird::StatusStorage::Memory');
+        my $another_storage = new_ok('BusyBird::StatusStorage::Memory');
         $another_storage->load($filepath);
         my $callbacked = 0;
         $another_storage->get_statuses(

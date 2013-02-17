@@ -5,18 +5,18 @@ use Test::More;
 use Test::Warn;
 
 BEGIN {
-    use_ok('App::BusyBird::Log');
+    use_ok('BusyBird::Log');
 }
 
 {
-    local $App::BusyBird::Log::LOGGER = undef;
+    local $BusyBird::Log::LOGGER = undef;
     warning_is { bblog('error', 'log is suppressed') } undef, 'Log is suppressed.';
 }
 
 
 my $log = "";
 
-$App::BusyBird::Log::LOGGER = sub {
+$BusyBird::Log::LOGGER = sub {
     my ($level, $msg) = @_;
     $log .= "$level: $msg\n";
 };
@@ -26,7 +26,7 @@ is($log, "notice: log test\n", "log OK");
 
 {
     my @logs = ();
-    local $App::BusyBird::Log::LOGGER = sub {
+    local $BusyBird::Log::LOGGER = sub {
         my ($level, $msg) = @_;
         push(@logs, [$level, $msg]);
     };

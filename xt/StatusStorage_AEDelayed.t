@@ -3,9 +3,9 @@ use warnings;
 use FindBin;
 use lib ("$FindBin::RealBin/../t/lib");
 use Test::More;
-use Test::BusyBird::StatusStorage qw(:all);
-use App::BusyBird::StatusStorage::Memory;
-use Test::BusyBird::StatusStorage::AEDelayed;
+use BusyBird::Test::StatusStorage qw(:all);
+use BusyBird::StatusStorage::Memory;
+use BusyBird::Test::StatusStorage::AEDelayed;
 use AnyEvent;
 
 my $cv;
@@ -21,8 +21,8 @@ sub unloop {
 
 sub storage {
     my (%backend_args) = @_;
-    return Test::BusyBird::StatusStorage::AEDelayed->new(
-        backend => App::BusyBird::StatusStorage::Memory->new(%backend_args)
+    return BusyBird::Test::StatusStorage::AEDelayed->new(
+        backend => BusyBird::StatusStorage::Memory->new(%backend_args)
     );
 }
 

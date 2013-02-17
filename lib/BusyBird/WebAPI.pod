@@ -1,0 +1,112 @@
+
+=pod
+
+=head1 NAME
+
+BusyBird::WebAPI - Web API reference
+
+=head1 DESCRIPTION
+
+This is a reference guide to Web API of L<BusyBird>.
+
+The API paths are based on the path root (C</>) of the application.
+
+For all HTTP requests with the message body,
+data format of the body must be JSON,
+and C<Content-Type> header should be C<application/json>.
+
+The data format of HTTP responses is determined by the extension (string after period (C<.>))
+of endpoint paths.
+
+=head1 ENDPOINTS
+
+=head2 GET /timelines/{timeline}/statuses.{format}
+
+B<Path Parameters>
+
+=over
+
+=item C<timeline> = STR (required)
+
+Timeline name.
+
+=item C<format> = {json,html} (required)
+
+Response format. It is either C<json> or C<html>.
+
+=back
+
+B<Query Parameters>
+
+=over
+
+=item C<count> = NUM (optional, default: 20)
+
+=item C<ack_state> = {any,acked,unacked} (optional, default: any)
+
+=item C<max_id> = STATUS_ID (optional, default: none)
+
+=item C<tag> = HTML_TAG (optional, default: li)
+
+=back
+
+
+=head2 POST /timelines/{timeline}/ack.json
+
+B<Path Parameters>
+
+=over
+
+=item C<timeline> = STR (required)
+
+Timeline name.
+
+=back
+
+B<Request Body Parameters>
+
+=over
+
+=item C<max_id> = STATUS_ID (optional, default: none)
+
+=back
+
+
+=head2 POST /timelines/{timeline}/statuses.json
+
+
+=head2 GET /timelines/{timeline}/updates/unacked_counts.json
+
+B<Path Parameters>
+
+=over
+
+=item C<timeline> = STR (required)
+
+Timeline name.
+
+=back
+
+B<Query Parameters>
+
+=over
+
+=item C<total> = NUM (optional)
+
+=item C<{level}> = NUM (optional)
+
+=back
+
+=head2 GET /updates/unacked_counts.json
+
+B<Query Parameters>
+
+=over
+
+=item C<level> = {total,NUM} (optional, default: total)
+
+=item C<tl_{timeline}> = NUM (optional)
+
+=back
+
+=cut

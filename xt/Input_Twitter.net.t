@@ -3,7 +3,7 @@ use warnings;
 use Test::More;
 use Test::Builder;
 use Test::MockObject::Extends;
-use App::BusyBird::Input::Twitter;
+use BusyBird::Input::Twitter;
 use Encode;
 use Time::HiRes;
 use Net::Twitter;
@@ -69,7 +69,7 @@ sub test_backend {
         exit 1;
     }
     my @logs = ();
-    my $input = new_ok('App::BusyBird::Input::Twitter', [
+    my $input = new_ok('BusyBird::Input::Twitter', [
         backend => $backend, page_max_no_since_id => 2, page_next_delay => 1,
         filepath => SINCE_ID_FILEPATH,
         logger => sub {

@@ -3,14 +3,14 @@ use warnings;
 use Test::More;
 use FindBin;
 use lib ("$FindBin::RealBin/../t/lib");
-use Test::BusyBird::Input_Twitter qw(:all);
-use App::BusyBird::Log;
+use BusyBird::Test::Input_Twitter qw(:all);
+use BusyBird::Log;
 
 BEGIN {
-    use_ok('App::BusyBird::Input::Twitter');
+    use_ok('BusyBird::Input::Twitter');
 }
 
-$App::BusyBird::Log::LOGGER = undef;
+$BusyBird::Log::LOGGER = undef;
 
 my $mocknt = mock_twitter();
 
@@ -20,7 +20,7 @@ if(-r $filename) {
     fail("$filename exists before test. Test aborted.");
     exit(1);
 }
-my $bbin = App::BusyBird::Input::Twitter->new(
+my $bbin = BusyBird::Input::Twitter->new(
     backend => $mocknt, filepath => $filename, page_next_delay => 0,
     transformer => \&negative_id_transformer
 );

@@ -3,16 +3,16 @@ use warnings;
 use Test::More;
 use Test::Builder;
 use DateTime;
-use App::BusyBird::DateTime::Format;
+use BusyBird::DateTime::Format;
 use Storable qw(dclone);
 
 BEGIN {
-    use_ok('App::BusyBird::Util', 'sort_statuses');
+    use_ok('BusyBird::Util', 'sort_statuses');
 }
 
 sub dtstr {
     my ($epoch) = @_;
-    return App::BusyBird::DateTime::Format->format_datetime(
+    return BusyBird::DateTime::Format->format_datetime(
         DateTime->from_epoch(epoch => $epoch, time_zone => 'UTC')
     );
 }

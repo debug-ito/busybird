@@ -6,19 +6,19 @@ use Test::More;
 use Test::Builder;
 use Test::Exception;
 use Test::MockObject;
-use Test::BusyBird::StatusStorage qw(:status);
+use BusyBird::Test::StatusStorage qw(:status);
 use Test::Memory::Cycle;
-use App::BusyBird::DateTime::Format;
-use App::BusyBird::Log;
+use BusyBird::DateTime::Format;
+use BusyBird::Log;
 use DateTime;
 use Storable qw(dclone);
 
 BEGIN {
-    use_ok('App::BusyBird::Timeline');
-    use_ok('App::BusyBird::StatusStorage::Memory');
+    use_ok('BusyBird::Timeline');
+    use_ok('BusyBird::StatusStorage::Memory');
 }
 
-$App::BusyBird::Log::LOGGER = undef;
+$BusyBird::Log::LOGGER = undef;
 
 our $LOOP;
 our $UNLOOP;
@@ -44,7 +44,7 @@ sub status {
     my %level_elem = defined($level) ? (busybird => { level => $level }) : ();
     return {
         id => $id,
-        created_at => App::BusyBird::DateTime::Format->format_datetime(
+        created_at => BusyBird::DateTime::Format->format_datetime(
             DateTime->from_epoch(epoch => $id, time_zone => 'UTC')
         ),
         %level_elem
@@ -103,7 +103,7 @@ sub test_sets {
     is_deeply($got_set_hash, $exp_set_hash, $msg);
 }
 
-my $CLASS = 'App::BusyBird::Timeline';
+my $CLASS = 'BusyBird::Timeline';
 
 sub test_timeline {
     {
@@ -316,7 +316,7 @@ sub test_timeline {
             ) {
                 note("--- --- filter mode = $mode: junk filter: $case->{name}");
                 my @log = ();
-                local $App::BusyBird::Log::LOGGER = sub { push(@log, [@_]) };
+                local $BusyBird::Log::LOGGER = sub { push(@log, [@_]) };
                 my $timeline = new_ok($CLASS, [
                     name => 'test',
                     storage => $CREATE_STORAGE->(),
@@ -557,7 +557,7 @@ sub test_timeline {
         $timeline->add_filter(sub { [] }); ## null filter
         my $callbacked = 0;
         my $result;
-        my $nowstring  = App::BusyBird::DateTime::Format->format_datetime(
+        my $nowstring  = BusyBird::DateTime::Format->format_datetime(
             DateTime->now(time_zone => 'UTC')
         );
         my $watcher = $timeline->watch_unacked_counts(total => 0, sub {
@@ -738,13 +738,13 @@ sub test_timeline {
     note('---------- sync storage');
     local $LOOP = sub {};
     local $UNLOOP = sub {};
-    local $CREATE_STORAGE = sub { App::BusyBird::StatusStorage::Memory->new };
+    local $CREATE_STORAGE = sub { BusyBird::StatusStorage::Memory->new };
     test_timeline();
 }
 
 {
     local $@;
-    eval('use Test::BusyBird::StatusStorage::AEDelayed');
+    eval('use BusyBird::Test::StatusStorage::AEDelayed');
     if($@) {
         diag("SKIP: Error while loading AEDelayed: $@");
     }else {
@@ -760,8 +760,8 @@ sub test_timeline {
             $cv->send;
         };
         local $CREATE_STORAGE = sub {
-            Test::BusyBird::StatusStorage::AEDelayed->new(
-                backend => App::BusyBird::StatusStorage::Memory->new,
+            BusyBird::Test::StatusStorage::AEDelayed->new(
+                backend => BusyBird::StatusStorage::Memory->new,
                 delay_sec => 0
             );
         };

@@ -1,6 +1,6 @@
-lib/App/BusyBird/Input/Twitter.pm
-lib/App/BusyBird/StatusStorage/Memory.pm
-lib/App/BusyBird/Log.pm
-lib/App/BusyBird/Flow.pm
-lib/App/BusyBird/Timeline.pm
-lib/App/BusyBird/DateTime/Format.pm
+lib/BusyBird/Input/Twitter.pm
+lib/BusyBird/StatusStorage/Memory.pm
+lib/BusyBird/Log.pm
+lib/BusyBird/Flow.pm
+lib/BusyBird/Timeline.pm
+lib/BusyBird/DateTime/Format.pm
