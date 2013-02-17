@@ -411,6 +411,21 @@ sub test_timeline {
         my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
         sync($timeline, 'get_statuses', count => 1); ## go into event loop
         note('--- -- watch immediate: total 0');
+        my $test_case = sub {
+            my ($case, $exp_current_unacked_counts) = @_;
+            local $Test::Builder::Level = $Test::Builder::Level + 1;
+            my $callbacked = 0;
+            my $label = $case->{label};
+            my $watcher = $timeline->watch_unacked_counts(%{$case->{watch}}, sub {
+                my ($w, $unacked_counts) = @_;
+                is(int(@_), 2, "$label: succeed.");
+                $callbacked = 1;
+                is_deeply($unacked_counts, $exp_current_unacked_counts, "$label: unacked counts OK");
+                $w->cancel();
+            });
+            is($callbacked, $case->{exp_callback}, "$label: callback is OK");
+            $watcher->cancel();
+        };
         foreach my $case (
             {label => '1 total', watch => {total => 1}, exp_callback => 1},
             {label => '0 total, 3 level.1', watch => {total => 0, 1 => 3}, exp_callback => 1},
@@ -423,17 +438,7 @@ sub test_timeline {
             {label => 'junks with total 0', watch => {total => 0, junk1 => 1, _ => 101293}, exp_callback => 0},
             {label => 'junks with total 1', watch => {total => 1, _ => 0}, exp_callback => 1}
         ) {
-            my $callbacked = 0;
-            my $label = $case->{label};
-            my $watcher = $timeline->watch_unacked_counts(%{$case->{watch}}, sub {
-                my ($w, $unacked_counts) = @_;
-                is(int(@_), 2, "$label: succeed.");
-                $callbacked = 1;
-                is_deeply($unacked_counts, {total => 0}, "$label: no unacked counts");
-                $w->cancel();
-            });
-            is($callbacked, $case->{exp_callback}, "$label: callback is OK");
-            $watcher->cancel();
+            $test_case->($case, {total => 0});
         }
         sync($timeline, 'add_statuses',
              statuses => [status(0,0), status(1,1), status(2,2)]);
@@ -454,17 +459,19 @@ sub test_timeline {
             {label => 'correct levels with junk', watch => {0 => 2, 1 => 1, _ => 1192}, exp_callback => 0},
             {label => 'wrong levels with junks 0', watch => {total => 3, 2 => 1, junk1 => 0, _ => 0}, exp_callback => 1},
         ) {
-            my $callbacked = 0;
-            my $label = $case->{label};
-            my $watcher = $timeline->watch_unacked_counts(%{$case->{watch}}, sub {
-                my ($w, $unacked_counts) = @_;
-                is(int(@_), 2, "$label: succeed");
-                $callbacked = 1;
-                is_deeply($unacked_counts, {total => 4, 0 => 2, 1 => 1, 2 => 1}, "$label: unacked counts OK");
-                $w->cancel();
-            });
-            is($callbacked, $case->{exp_callback}, "$label: callback is OK");
-            $watcher->cancel();
+            $test_case->($case, {total => 4, 0 => 2, 1 => 1, 2 => 1});
+        }
+        note('--- -- watch immediate: negative level');
+        sync($timeline, 'add_statuses', statuses => [status(7, -3)]);
+        sync($timeline, 'get_statuses', count => 1); ## go into event loop to update unacked_counts.
+        foreach my $case (
+            {label => '0 total', watch => {total => 0}, exp_callback => 1},
+            {label => '-3 OK', watch => {-3 => 1}, exp_callback => 0},
+            {label => '-3 and 1 OK', watch => {-3 => 1, 1 => 1}, exp_callback => 0},
+            {label => 'empty', watch => {}, exp_callback => 1},
+            {label => '-3 wrong', watch => {-3 => 5}, exp_callback => 1},
+        ) {
+            $test_case->($case, {total => 5, -3 => 1, 0 => 2, 1 => 1, 2 => 1});
         }
     }
 
@@ -768,9 +775,6 @@ sub test_timeline {
         test_timeline();
     }
 }
-
-
-
 
 done_testing();
 
