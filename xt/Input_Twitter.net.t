@@ -4,6 +4,7 @@ use Test::More;
 use Test::Builder;
 use Test::MockObject::Extends;
 use BusyBird::Input::Twitter;
+use BusyBird::Log;
 use Encode;
 use Time::HiRes;
 use Net::Twitter;
@@ -69,13 +70,13 @@ sub test_backend {
         exit 1;
     }
     my @logs = ();
+    local $BusyBird::Log::LOGGER = sub {
+        my ($level, $msg) = @_;
+        push(@logs, [$level, $msg]);
+    };
     my $input = new_ok('BusyBird::Input::Twitter', [
         backend => $backend, page_max_no_since_id => 2, page_next_delay => 1,
         filepath => SINCE_ID_FILEPATH,
-        logger => sub {
-            my ($level, $msg) = @_;
-            push(@logs, [$level, $msg]);
-        }
     ]);
 
     my %tests = (
