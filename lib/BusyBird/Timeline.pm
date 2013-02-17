@@ -55,10 +55,6 @@ sub _init_selector {
         if(!defined($exp_unacked_counts) || ref($exp_unacked_counts) ne 'HASH') {
             croak "unacked_counts watcher: condition input must be a hash-ref";
         }
-        foreach my $key (keys %$exp_unacked_counts) {
-            next if $key eq 'total' || (looks_like_number($key) && int($key) == $key);
-            delete $exp_unacked_counts->{$key};
-        }
         return { %{$self->{unacked_counts}} } if !%$exp_unacked_counts;
         foreach my $key (keys %$exp_unacked_counts) {
             my $exp_val = $exp_unacked_counts->{$key} || 0;
@@ -209,6 +205,10 @@ sub watch_unacked_counts {
     my %watch_spec = @_;
     if(!defined($callback) || ref($callback) ne 'CODE') {
         croak "watch_unacked_counts: callback must be a code-ref";
+    }
+    foreach my $key (keys %watch_spec) {
+        next if $key eq 'total' || (looks_like_number($key) && int($key) == $key);
+        delete $watch_spec{$key};
     }
     my $watcher = $self->{selector}->watch(
         unacked_counts => \%watch_spec, watcher_quota => { age => 0 }, sub {
