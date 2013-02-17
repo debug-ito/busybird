@@ -59,7 +59,7 @@ sub _init_selector {
             next if $key eq 'total' || (looks_like_number($key) && int($key) == $key);
             delete $exp_unacked_counts->{$key};
         }
-        return $self->{unacked_counts} if !%$exp_unacked_counts;
+        return { %{$self->{unacked_counts}} } if !%$exp_unacked_counts;
         foreach my $key (keys %$exp_unacked_counts) {
             my $exp_val = $exp_unacked_counts->{$key} || 0;
             my $got_val = $self->{unacked_counts}{$key} || 0;
