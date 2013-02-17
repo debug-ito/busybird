@@ -45,13 +45,34 @@ checkParse "Thu Jan 03 14:44:12 +0900 2013", DT qw(2013 1 3 14 44 12 +0900);
 checkParse "some text here. Wed  Feb  29 23:34:06 +0900  2012", undef;
 checkParse "Thu, 06 Oct 2011 19:36:17 +0000", DT qw(2011 10 6 19 36 17 +0000);
 checkParse "Sun, 23 Oct 2011 19:03:12 -0500", DT qw(2011 10 23 19 3 12 -0500);
-checkParse "2012-09-23T11:00:10+0800", undef;
-checkParse "2012-09-23T11:00:10+08:00", DT qw(2012 9 23 11 0 10 +0800);
-checkParse "2011/07/12 04:02:00-10:30", undef;
+## checkParse "2012-09-23T11:00:10+0800", undef;
+## checkParse "2012-09-23T11:00:10+08:00", DT qw(2012 9 23 11 0 10 +0800);
+## checkParse "2011/07/12 04:02:00-10:30", undef;
 checkParse undef, undef;
 
 checkFormat DT(qw(2010 8 22 3 34 0 +0900)), "Sun Aug 22 03:34:00 +0900 2010";
 checkFormat DT(qw(2012 1 1 15 8 45 +2000)), "Sun Jan 01 15:08:45 +2000 2012";
 
+{
+    note('--- synopsis');
+
+    my $f = 'App::BusyBird::DateTime::Format';
+
+    ## Twitter API format
+    my $dt1 = $f->parse_datetime('Fri Feb 08 11:02:15 +0900 2013');
+
+    ## Twitter Search API format
+    my $dt2 = $f->parse_datetime('Sat, 16 Feb 2013 23:02:54 +0000');
+
+    my $str = $f->format_datetime($dt2);
+    ## $str: 'Sat Feb 16 23:02:54 +0000 2013'
+
+    ##################
+    cmp_ok(DateTime->compare($dt1, DT(qw(2013 2 8 11 2 15 +0900))), '==', 0, 'dt1 OK');
+    cmp_ok(DateTime->compare($dt2, DT(qw(2013 2 16 23 2 54 +0000))), '==', 0, 'dt2 OK');
+    is($str, 'Sat Feb 16 23:02:54 +0000 2013', 'str OK');
+}
+
 
 done_testing();
+

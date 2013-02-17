@@ -2,7 +2,6 @@ package App::BusyBird::DateTime::Format;
 use strict;
 use warnings;
 use DateTime::Format::Strptime;
-use DateTime::Format::RFC3339;
 use Try::Tiny;
 
 our $preferred = 0;
@@ -21,7 +20,6 @@ my @FORMATS = (
         %OPT_DEFAULT,
         pattern => '%a, %d %b %Y %T %z',
     ),
-    DateTime::Format::RFC3339->new(),
 );
 
 sub new {
@@ -57,6 +55,21 @@ sub format_datetime {
 
 App::BusyBird::DateTime::Format - DateTime::Format for App::BusyBird
 
+=head1 SYNOPSIS
+
+    use App::BusyBird::DateTime::Format;
+    my $f = 'App::BusyBird::DateTime::Format';
+
+    ## Twitter API format
+    my $dt1 = $f->parse_datetime('Fri Feb 08 11:02:15 +0900 2013');
+
+    ## Twitter Search API format
+    my $dt2 = $f->parse_datetime('Sat, 16 Feb 2013 23:02:54 +0000');
+
+    my $str = $f->format_datetime($dt2);
+    ## $str: 'Sat Feb 16 23:02:54 +0000 2013'
+
+
 =head1 DESCRIPTION
 
 This class is the standard DateTime::Format in App::BusyBird.
@@ -72,10 +85,6 @@ It can parse the following format.
 =item *
 
 'created_at' format of Twitter Search API v1.0.
-
-=item *
-
-RFC3339 format. See L<DateTime::Format::RFC3339>.
 
 =back
 
@@ -105,7 +114,7 @@ Format L<DateTime> object to a string.
 
 =head1 AUTHOR
 
-Toshio Ito 
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 
 =cut

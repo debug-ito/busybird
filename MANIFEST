@@ -3,3 +3,4 @@ lib/App/BusyBird/StatusStorage/Memory.pm
 lib/App/BusyBird/Log.pm
 lib/App/BusyBird/Flow.pm
 lib/App/BusyBird/Timeline.pm
+lib/App/BusyBird/DateTime/Format.pm
