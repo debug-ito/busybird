@@ -7,6 +7,7 @@ use Test::Builder;
 use Test::Exception;
 use Test::MockObject;
 use BusyBird::Test::StatusStorage qw(:status);
+use BusyBird::Test::Timeline_Util qw(sync status *LOOP *UNLOOP);
 use Test::Memory::Cycle;
 use BusyBird::DateTime::Format;
 use BusyBird::Log;
@@ -20,36 +21,7 @@ BEGIN {
 
 $BusyBird::Log::LOGGER = undef;
 
-our $LOOP;
-our $UNLOOP;
 our $CREATE_STORAGE;
-
-sub sync {
-    my ($timeline, $method, %args) = @_;
-    local $Test::Builder::Level = $Test::Builder::Level + 1;
-    my $callbacked = 0;
-    my @result;
-    $timeline->$method(%args, callback => sub {
-        @result = @_;
-        $callbacked = 1;
-        $UNLOOP->();
-    });
-    $LOOP->();
-    ok($callbacked, "sync $method callbacked.");
-    return @result;
-}
-
-sub status {
-    my ($id, $level) = @_;
-    my %level_elem = defined($level) ? (busybird => { level => $level }) : ();
-    return {
-        id => $id,
-        created_at => BusyBird::DateTime::Format->format_datetime(
-            DateTime->from_epoch(epoch => $id, time_zone => 'UTC')
-        ),
-        %level_elem
-    };
-}
 
 sub test_content {
     my ($timeline, $args_ref, $exp, $msg) = @_;
