@@ -104,9 +104,67 @@ L<BusyBird::StatusStorage::Memory> - storage in the process memory
 See each module's documentation for details.
 
 
-=head2 $main->watch_unacked_counts($level, $watch_spec, $callback->($w, $tl_unacked_counts, $error))
+=head2 $watcher = $main->watch_unacked_counts($level, $watch_spec, $callback->($w, $tl_unacked_counts, $error))
 
-(Not provider $watcher to outside. You should not take C<$w> out of C<$callback>'s scope)
+Watch updates in numbers of unacked statuses (i.e. unacked counts) in timelines.
+
+When this method is called, the current unacked counts are compared with the unacked counts given in the arguments (C<$level> and C<$watch_spec>).
+If the current and given unacked counts are different, the C<$callback> subroutine reference is called
+with the current unacked counts (C<$tl_unacked_counts>).
+If the current and given unacked counts are the same, the execution of the C<$callback> is delayed until there is some difference between them.
+
+C<$level> is the status level you want to watch.
+It is either an integer number or the string of C<'total'>.
+If an integer is specified, the unacked counts in that status level are watched.
+If C<'total'> is specified, the total unacked counts are watched.
+
+C<$watch_spec> is a hash-ref specifying the given unacked count for each timeline.
+Its key is the name of the timeline you want to watch, and its value
+is the given unacked counts for the timeline in the status level specified by C<$level>.
+You can watch multiple timelines by a single call of this method.
+
+C<$callback> is a subroutine reference that is called when the current unacked counts
+are different from the given unacked counts in some way.
+
+In success, C<$callback> is called with two arguments (C<$w> and C<$tl_unacked_counts>).
+C<$w> is an L<Async::Selector::Aggregator> object representing the watch.
+C<$tl_unacked_counts> is a hash-ref describing the current unacked counts for watched timelines.
+
+For example, if you call this method with the following arguments,
+
+    $level = 'total';
+    $watch_spec = {
+        TL1 => 0, TL2 => 0, TL3 => 5
+    };
+
+This means the caller assumes there is no unacked statuses in TL1 and TL2,
+and there are 5 unacked statuses in TL3.
+Then, the C<$callback> may be called with C<$tl_unacked_counts> like,
+
+    $tl_unacked_counts = {
+        TL1 => {
+            total => 2,
+            0     => 1,
+            2     => 1,
+        },
+    };
+
+This means the timeline named C<'TL1'> actually has 2 unacked statuses in total,
+one of which is in level 0 and the other is in level 2.
+
+Note that although you can specify multiple timelines in C<$watch_spec>,
+the returned C<$tl_unacked_counts> may not contain all the specified timelines.
+
+In failure, C<$callback> is called with three arguments, and the third argument (C<$error>) describes the error.
+
+The return value of this method (C<$watcher>) is the same instance as C<$w>.
+You can use C<< $watcher->cancel() >> or C<< $w->cancel() >> method to cancel the watch.
+Otherwise, the C<$callback> is repeatedly called whenever some updates in unacked counts happen and
+the current and given unacked counts are different.
+
+In C<$watch_spec>, the timeline names that are not in C<$main> are ignored.
+If there is no existent timeline name in C<$watch_spec>, this method croaks.
+
 
 
 =head1 AUTHOR

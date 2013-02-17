@@ -561,6 +561,17 @@ in the C<$timeline>.
 
 =back
 
+For example, C<$unacked_counts> is structured like:
+
+    $unacked_counts = {
+        total => 3,
+        0     => 1,
+        1     => 2,
+    };
+
+This means there are 3 unacked statuses in total, one of which is in level 0,
+and the rest is in level 2.
+
 
 =head2 $timeline->contains(%args)
 
@@ -624,9 +635,9 @@ Add an asynchronous status filter. This is equivalent to C<< $timeline->add_filt
 Watch updates of unacked counts in the C<$timeline>.
 
 In C<%watch_spec>, caller must describe numbers of unacked statuses (i.e. unacked counts) for each status level and/or in total.
-If the given unacked counts is different from the true unacked counts in C<$timeline>,
-C<$callback> subroutine reference is called with the true unacked counts (C<$unacked_counts>).
-If the given unacked counts is the same as the true unacked counts, execution of C<$callback> is delayed
+If the given unacked counts is different from the current unacked counts in C<$timeline>,
+C<$callback> subroutine reference is called with the current unacked counts (C<$unacked_counts>).
+If the given unacked counts is the same as the current unacked counts, execution of C<$callback> is delayed
 until there is some difference between them.
 
 Format of C<%watch_spec> and C<%$unacked_counts> is the same as C<%$unacked_counts> returned by C<get_unacked_counts()> method.

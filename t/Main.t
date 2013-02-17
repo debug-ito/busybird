@@ -9,5 +9,6 @@ fail('todo: change default_storage after creating timeline');
 fail('todo: author test: create timelines without setting default_storage');
 fail('todo: install_timeline: replacement.');
 fail('Main: install Timeline into CARP_NOT if necessary');
+fail('todo: what if non-existent timeline is watched? it should croak.');
 
 1;
