@@ -1,6 +1,7 @@
 package BusyBird::StatusStorage::Memory;
 use strict;
 use warnings;
+use base ('BusyBird::StatusStorage');
 use BusyBird::Util qw(set_param sort_statuses);
 use BusyBird::DateTime::Format;
 use BusyBird::Log;

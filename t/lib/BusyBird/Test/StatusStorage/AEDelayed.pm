@@ -1,6 +1,7 @@
 package BusyBird::Test::StatusStorage::AEDelayed;
 use strict;
 use warnings;
+use base ('BusyBird::StatusStorage');
 use AnyEvent;
 
 sub new {
