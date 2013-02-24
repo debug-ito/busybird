@@ -20,6 +20,14 @@ our $CREATE_STORAGE = sub {
     return BusyBird::StatusStorage::Memory->new;
 };
 
+sub test_watcher_basic {
+    my ($watcher) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    isa_ok($watcher, 'BusyBird::Watcher');
+    can_ok($watcher, 'active', 'cancel');
+}
+
+
 {
     my $main = new_ok('BusyBird::Main');
     my $storage = $CREATE_STORAGE->();
@@ -146,6 +154,7 @@ our $CREATE_STORAGE = sub {
             }
             $w->cancel();
         });
+        test_watcher_basic($watcher);
         is($callbacked, $case->{exp_callback}, "callbacked is $case->{exp_callback}");
         $watcher->cancel();
     }

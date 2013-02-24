@@ -127,7 +127,7 @@ C<$callback> is a subroutine reference that is called when the current unacked c
 are different from the given unacked counts in some way.
 
 In success, C<$callback> is called with two arguments (C<$w> and C<$tl_unacked_counts>).
-C<$w> is an L<Async::Selector::Aggregator> object representing the watch.
+C<$w> is an L<BusyBird::Watcher> object representing the watch.
 C<$tl_unacked_counts> is a hash-ref describing the current unacked counts for watched timelines.
 
 For example, if you call this method with the following arguments,

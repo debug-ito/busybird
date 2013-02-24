@@ -17,6 +17,7 @@ use Storable qw(dclone);
 BEGIN {
     use_ok('BusyBird::Timeline');
     use_ok('BusyBird::StatusStorage::Memory');
+    use_ok('BusyBird::Watcher');
 }
 
 $BusyBird::Log::LOGGER = undef;
@@ -73,6 +74,13 @@ sub test_sets {
         $h;
     } ($got_set_array, $exp_set_array);
     is_deeply($got_set_hash, $exp_set_hash, $msg);
+}
+
+sub test_watcher_basic {
+    my ($watcher) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    isa_ok($watcher, 'BusyBird::Watcher');
+    can_ok($watcher, 'active', 'cancel');
 }
 
 my $CLASS = 'BusyBird::Timeline';
@@ -395,6 +403,7 @@ sub test_timeline {
                 is_deeply($unacked_counts, $exp_current_unacked_counts, "$label: unacked counts OK");
                 $w->cancel();
             });
+            test_watcher_basic($watcher);
             is($callbacked, $case->{exp_callback}, "$label: callback is OK");
             $watcher->cancel();
         };

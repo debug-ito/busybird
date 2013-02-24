@@ -643,12 +643,12 @@ until there is some difference between them.
 Format of C<%watch_spec> and C<%$unacked_counts> is the same as C<%$unacked_counts> returned by C<get_unacked_counts()> method.
 
 In success, the C<$callback> is called with two arguments (C<$w>, C<$unacked_counts>).
-C<$w> is an L<Async::Selector::Watcher> object representing this watch.
+C<$w> is an L<BusyBird::Watcher> object representing this watch.
 C<$unacked_counts> is a hash-ref describing the current unacked counts of the C<$timeline>.
 
 In failure, the C<$callback> is called with three arguments, and the third argument (C<$error>) describes the error.
 
-The return value of this method (C<$watcher>) is an L<Async::Selector::Watcher> object.
+The return value of this method (C<$watcher>) is an L<BusyBird::Watcher> object.
 It is the same instance as C<$w>.
 You can call C<< $watcher->cancel() >> or C<< $w->cancel() >> to cancel the watcher.
 Otherwise, the C<$callback> can be called repeatedly.
