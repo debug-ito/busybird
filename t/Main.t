@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Exception;
+use Test::Memory::Cycle;
 use FindBin;
 use lib ("$FindBin::RealBin/lib");
 use BusyBird::Test::Timeline_Util qw(status sync);
@@ -113,6 +114,7 @@ sub test_watcher_basic {
 {
     note('--- -- watch_unacked_counts');
     my $main = BusyBird::Main->new();
+    memory_cycle_ok($main, 'no cyclic ref in main');
     $main->default_status_storage($CREATE_STORAGE->());
     $main->timeline('a');
     sync($main->timeline('b'), 'add_statuses', statuses => [status(1), status(2, 2)]);
@@ -157,9 +159,11 @@ sub test_watcher_basic {
             $inside_w = $w;
         });
         test_watcher_basic($watcher);
+        memory_cycle_ok($main, "$label: no cyclic ref in main");
+        memory_cycle_ok($watcher, "$label: no cyclic ref in watcher");
         is($callbacked, $case->{exp_callback}, "callbacked is $case->{exp_callback}");
         if($callbacked) {
-            is($inside_w, $weatcher, "$label: watcher inside is the same as the watcher outside");
+            is($inside_w, $watcher, "$label: watcher inside is the same as the watcher outside");
         }
         $watcher->cancel();
     }
@@ -180,6 +184,8 @@ sub test_watcher_basic {
         };
         $reset->();
         my $watcher = $main->watch_unacked_counts('total', {a => 0, b => 2, c => 3}, $callback_func);
+        memory_cycle_ok($main, "no cyclic ref in main");
+        memory_cycle_ok($watcher, 'no cyclic ref in watcher');
         sync($main->timeline('b'), 'ack_statuses');
         sync($main->timeline('c'), 'delete_statuses', ids => [4]);
         sync($main->timeline('a'), 'add_statuses', statuses => [status(6, 1)]);
@@ -216,7 +222,6 @@ sub test_watcher_basic {
     $w->cancel();
 }
 
-fail('todo: no cyclic reference when watcher aggregation (see 2013/01/27)');
 fail('todo: author test: create timelines without setting default_storage');
 fail('Main: install Timeline class into CARP_NOT if necessary');
 
