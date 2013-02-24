@@ -30,15 +30,6 @@ To test if an implementation of L<BusyBird::StatusStorage> meets the specificati
 you can use functions provided by L<BusyBird::Test::StatusStorage>.
 
 
-=head1 CLASS METHODS
-
-=head2 $storage = $class->new(@args)
-
-Creates a Status Storage object from C<@args>.
-
-Specification of C<@args> is up to implementations.
-
-
 =head1 OBJECT METHODS
 
 =head2 $storage->ack_statuses(%args)
