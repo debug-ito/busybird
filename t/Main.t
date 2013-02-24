@@ -202,7 +202,7 @@ sub test_watcher_basic {
         sync($main->timeline('a'), 'put_statuses', mode => 'update', statuses => [status(6)]);
         sync($main->timeline('a'), 'get_statuses', count => 1); ## go into event loop
         is($callbacked, 3, '3 callbacked');
-        is_deeply(\%results, {a => [{total => 1, 0 => 1}], b => [{total => 1, 1 => 1}], c => {[total => 2, 0 => 1, -3 => 1]}},
+        is_deeply(\%results, {a => [{total => 1, 0 => 1}], b => [{total => 1, 1 => 1}], c => [{total => 2, 0 => 1, -3 => 1}]},
                   "results OK");
         $watcher->cancel();
     }
@@ -223,7 +223,6 @@ sub test_watcher_basic {
 }
 
 fail('todo: author test: create timelines without setting default_storage');
-fail('Main: install Timeline class into CARP_NOT if necessary');
 
 
 1;

@@ -1,7 +1,112 @@
 package BusyBird::Main;
 use strict;
 use warnings;
+use BusyBird::StatusStorage::Memory;
+use BusyBird::Timeline;
+use BusyBird::Watcher::Aggregator;
+use Tie::IxHash;
+use Carp;
+use Scalar::Util qw(looks_like_number);
 
+our @CARP_NOT = ('BusyBird::Timeline');
+
+sub new {
+    my ($class) = @_;
+    tie(my %timelines, 'Tie::IxHash');
+    my $self = bless {
+        timelines => \%timelines,
+        default_status_storage => undef
+    }, $class;
+    return $self;
+}
+
+sub to_app {
+    my ($self) = @_;
+    if(!%{$self->{timelines}}) {
+        $self->timeline('home');
+    }
+    return sub {}; ## STUB...
+}
+
+sub default_status_storage {
+    my ($self, $storage) = @_;
+    if(defined $storage) {
+        $self->{default_status_storage} = $storage;
+    }
+    if(not defined $self->{default_status_storage}) {
+        $self->{default_status_storage} = BusyBird::StatusStorage::Memory->new;
+    }
+    return $self->{default_status_storage};
+}
+
+sub timeline {
+    my ($self, $name) = @_;
+    my $timeline = $self->get_timeline($name);
+    if(not defined $timeline) {
+        $timeline = BusyBird::Timeline->new(name => $name, storage => $self->default_status_storage);
+        $self->install_timeline($timeline);
+    }
+    return $timeline;
+}
+
+sub get_timeline {
+    my ($self, $name) = @_;
+    return $self->{timelines}{$name};
+}
+
+sub get_all_timelines {
+    my ($self) = @_;
+    return values %{$self->{timelines}};
+}
+
+sub install_timeline {
+    my ($self, $timeline) = @_;
+    $self->{timelines}{$timeline->name} = $timeline;
+}
+
+sub uninstall_timeline {
+    my ($self, $name) = @_;
+    my $timeline = $self->get_timeline($name);
+    delete $self->{timelines}{$name};
+    return $timeline;
+}
+
+sub watch_unacked_counts {
+    my ($self, $level, $watch_spec, $callback) = @_;
+    ## if(looks_like_number($level)) {
+    ##     croak "level must be an integer or 'total'" if int($level) != $level;
+    ## }else {
+    ##     croak "level must be an integer or 'total'" if $level ne 'total';
+    ## }
+    if(!defined(ref($watch_spec)) || ref($watch_spec) ne 'HASH') {
+        croak 'watch_spec must be a hash-ref';
+    }
+    if(!defined(ref($callback)) || ref($callback) ne 'CODE') {
+        croak "callback must be a code-ref";
+    }
+    my $watcher = BusyBird::Watcher::Aggregator->new;
+    foreach my $tl_name (keys %$watch_spec) {
+        my $timeline = $self->get_timeline($tl_name);
+        next if not defined $timeline;
+        my $tl_watcher = $timeline->watch_unacked_counts($level => $watch_spec->{$tl_name}, sub {
+            my ($w, $unacked_counts, $error) = @_;
+            if(@_ == 2) {
+                $callback->($watcher, { $tl_name => $unacked_counts });
+            }else {
+                $callback->($watcher, undef, "Error from timeline $tl_name: $error");
+            }
+        });
+        if(!$tl_watcher->isa('Async::Selector::Aggregator')) {
+            confess '$tl_watcher is not a Async::Selector::Aggregator. Something is terribly wrong.';
+        }
+        $watcher->add($tl_watcher);
+        last if !$watcher->active;
+    }
+    if(!$watcher->watchers) {
+        croak "watch_spec does not contain any installed timeline.";
+    }
+    return $watcher;
+}
 
 our $VERSION = '0.01';
 
