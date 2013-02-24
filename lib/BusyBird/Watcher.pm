@@ -1,5 +1,7 @@
 package BusyBird::Watcher;
 
+our $VERSION = '0.01';
+
 1;
 
 =pod
@@ -7,6 +9,10 @@ package BusyBird::Watcher;
 =head1 NAME
 
 BusyBird::Watcher - interface for watcher objects
+
+=head1 VERSION
+
+Version 0.01
 
 
 =for test_synopsis
