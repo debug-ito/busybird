@@ -33,9 +33,8 @@ It keeps application configuration and timelines (L<BusyBird::Timeline> objects)
 Creates a L<BusyBird::Main> object.
 
 Users usually don't have to call this method.
-The singleton instance of L<BusyBird::Main> object is created and obtained
-by C<busybird()> method from L<BusyBird> module.
-See L<BusyBird::Tutorial> for detail.
+The singleton instance of L<BusyBird::Main> object is maintained by L<BusyBird> module.
+See L<BusyBird> and L<BusyBird::Tutorial> for detail.
 
 =head1 OBJECT METHODS
 
@@ -90,7 +89,7 @@ This method returns the current (changed) default StatusStorage object.
 Note that the default StatusStorage object is referred to only when creating timelines via C<timeline()> method.
 Existing timelines are not affected by changing the default StatusStorage object.
 
-A StatusStorage object is an object implementing L<BusyBird::StatusStorage> interface specification.
+A StatusStorage object is an implementation of L<BusyBird::StatusStorage> interface.
 For example, the following modules can be used as StatusStorage.
 
 =over

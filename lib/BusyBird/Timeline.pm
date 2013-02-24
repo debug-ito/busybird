@@ -279,8 +279,8 @@ Statuse filters are executed in the same order as they are added.
 
 =head2 Status Storage
 
-A timeline's statuses are actually saved in a StatusStorage object.
-When you create a timeline via C<new()> method, you have to specify a StatusStorage object explicitly.
+A timeline's statuses are actually saved in a L<BusyBird::StatusStorage> object.
+When you create a timeline via C<new()> method, you have to specify a L<BusyBird::StatusStorage> object explicitly.
 
 
 =head1 CLASS METHODS
@@ -303,7 +303,7 @@ It must be a string consisting only of C<[a-zA-Z0-9_-]>.
 
 =item C<storage> => STATUS_STORAGE (mandatory)
 
-Specifies the status storage object that implements the interface documented in L<BusyBird::StatusStorage>.
+Specifies a L<BusyBird::StatusStorage> object.
 Statuses in C<$timeline> is saved to the C<storage>.
 
 =back

@@ -23,7 +23,7 @@ An L<BusyBird::StatusStorage> implementation stores and serves status objects fo
 End-users usually access the status storage via L<BusyBird::Timeline> objects.
 
 This class does not implement anything.
-Implementations of L<BusyBird::StatusStorage> must be a subclass of L<BusyBird::StatusStorage>
+An implementation of L<BusyBird::StatusStorage> must be a subclass of L<BusyBird::StatusStorage>
 and implement the following methods.
 
 To test if an implementation of L<BusyBird::StatusStorage> meets the specification,
