@@ -8,6 +8,7 @@ use Test::More;
 use Test::Builder;
 use Test::Exception;
 use BusyBird::DateTime::Format;
+use BusyBird::StatusStorage;
 use Carp;
 
 our %EXPORT_TAGS = (
@@ -237,6 +238,8 @@ sub test_storage_common {
     $loop ||= sub {};
     $unloop ||= sub {};
     my $callbacked = 0;
+    isa_ok($storage, 'BusyBird::StatusStorage');
+    can_ok($storage, 'get_unacked_counts', map { "${_}_statuses" } qw(ack get put delete));
     note("--- clear the timelines");
     foreach my $tl ('_test_tl1', "_test  tl2") {
         $callbacked = 0;
@@ -1211,7 +1214,6 @@ BusyBird::Test::StatusStorage - Test routines for StatusStorage
 =head1 SYNOPSIS
 
 
-    use My::Storage;
     use Test::More;
     use BusyBird::Test::StatusStorage qw(:storage);
     

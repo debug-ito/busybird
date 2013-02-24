@@ -8,22 +8,25 @@ our $VERSION = '0.01';
 
 =head1 NAME
 
-BusyBird::StatusStorage - Common interface of Status Storages
+BusyBird::StatusStorage - interface for status storage objects
 
-=head1 SPEC VERSION
+=head1 VERSION
 
 Version 0.01
 
 =head1 DESCRIPTION
 
-This is a common interface specification of
-BusyBird::StatusStorage::* module family.
+This is an interface (or role) class for status storage objects.
 This document is mainly for implementors of BusyBird::StatusStorage::* modules.
 
 An L<BusyBird::StatusStorage> implementation stores and serves status objects for multiple timelines.
 End-users usually access the status storage via L<BusyBird::Timeline> objects.
 
-To test if an implementation of StatusStorage meets the specification,
+This class does not implement anything.
+Implementations of L<BusyBird::StatusStorage> must be a subclass of L<BusyBird::StatusStorage>
+and implement the following methods.
+
+To test if an implementation of L<BusyBird::StatusStorage> meets the specification,
 you can use functions provided by L<BusyBird::Test::StatusStorage>.
 
 
@@ -106,10 +109,10 @@ The date/fime format should be the same as C<< $status->{created_at} >> field.
 
 =head2 Order of Statuses
 
-In timelines, statuses are sorted in descending order of
+In timelines, statuses should be sorted in descending order of
 C<< $status->{busybird}{acked_at} >> field
 (interpreted as date/time).
-Unacked statuses are always above acked statuses.
+Unacked statuses should always be above acked statuses.
 Ties are broken by sorting the statuses
 in descending order of C<< $status->{created_at} >>
 field (interpreted as date/time).

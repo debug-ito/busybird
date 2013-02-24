@@ -5,3 +5,4 @@ lib/BusyBird/Flow.pm
 lib/BusyBird/Timeline.pm
 lib/BusyBird/DateTime/Format.pm
 lib/BusyBird/Watcher.pm
+lib/BusyBird/Test/StatusStorage.pm
