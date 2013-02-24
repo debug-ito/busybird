@@ -396,15 +396,20 @@ sub test_timeline {
             local $Test::Builder::Level = $Test::Builder::Level + 1;
             my $callbacked = 0;
             my $label = $case->{label};
+            my $inside_w;
             my $watcher = $timeline->watch_unacked_counts(%{$case->{watch}}, sub {
                 my ($w, $unacked_counts) = @_;
                 is(int(@_), 2, "$label: succeed.");
                 $callbacked = 1;
                 is_deeply($unacked_counts, $exp_current_unacked_counts, "$label: unacked counts OK");
                 $w->cancel();
+                $inside_w = $w;
             });
             test_watcher_basic($watcher);
             is($callbacked, $case->{exp_callback}, "$label: callback is OK");
+            if($callbacked) {
+                is($inside_w, $watcher, "$label: watcher inside is the same as watcher outside");
+            }
             $watcher->cancel();
         };
         foreach my $case (

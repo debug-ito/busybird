@@ -138,6 +138,7 @@ sub test_watcher_basic {
     ) {
         my $label = defined($case->{label}) ? $case->{label} : "";
         my $callbacked = 0;
+        my $inside_w;
         my $watcher = $main->watch_unacked_counts(@{$case->{watch}}, sub {
             my ($w, $got_counts) = @_;
             $callbacked = 1;
@@ -153,9 +154,13 @@ sub test_watcher_basic {
                 is_deeply($got_counts->{$key}, $exp_counts{$key}, "$label: unacked counts for $key OK");
             }
             $w->cancel();
+            $inside_w = $w;
         });
         test_watcher_basic($watcher);
         is($callbacked, $case->{exp_callback}, "callbacked is $case->{exp_callback}");
+        if($callbacked) {
+            is($inside_w, $weatcher, "$label: watcher inside is the same as the watcher outside");
+        }
         $watcher->cancel();
     }
 
