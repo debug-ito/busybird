@@ -4,6 +4,7 @@ use warnings;
 use BusyBird::Util qw(set_param);
 use BusyBird::Log;
 use BusyBird::Flow;
+use BusyBird::Watcher::Aggregator;
 use Async::Selector 1.0;
 use Carp;
 use CPS qw(kforeach);
@@ -210,21 +211,23 @@ sub watch_unacked_counts {
         next if $key eq 'total' || (looks_like_number($key) && int($key) == $key);
         delete $watch_spec{$key};
     }
-    my $watcher = $self->{selector}->watch(
+    my $watcher = BusyBird::Watcher::Aggregator->new();
+    my $orig_watcher = $self->{selector}->watch(
         unacked_counts => \%watch_spec, watcher_quota => { age => 0 }, sub {
-            my ($w, %res) = @_;
+            my ($orig_w, %res) = @_;
             if($res{watcher_quota}) {
-                $w->cancel;
-                $callback->($w, undef, "watcher cancelled because it is too old");
+                $watcher->cancel();
+                $callback->($watcher, undef, "watcher cancelled because it is too old");
                 return;
             }
             if($res{unacked_counts}) {
-                $callback->($w, $res{unacked_counts});
+                $callback->($watcher, $res{unacked_counts});
                 return;
             }
             confess("Something terrible happened.");
         }
     );
+    $watcher->add($orig_watcher);
     if($watcher->active) {
         my @quota_watchers = $self->{selector}->watchers('watcher_quota');
         foreach my $w (@quota_watchers) {
