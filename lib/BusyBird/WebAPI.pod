@@ -22,7 +22,7 @@ of endpoint paths.
 
 =head2 GET /timelines/{timeline}/statuses.{format}
 
-Returns an array of statuses from the specified timeline.
+Fetches an array of statuses from the specified timeline.
 See L<BusyBird::Status> for the structure of a status object.
 
 
@@ -39,9 +39,8 @@ Timeline name.
 Response format. It is either C<json> or C<html>.
 
 If C<html> format is specified, the response message is
-a sequence of HTML elements.
-The elements' tags are C<li> by default, but you can change it
-by C<tag> query parameter.
+a sequence of HTML C<< <li> >> elements.
+
 
 =back
 
@@ -69,19 +68,15 @@ If this option is omitted, statuses starting from the latest status are fetched.
 
 Specifies the maximum number of statuses to be fetched.
 
-=item C<tag> = HTML_TAG (optional, default: li)
-
-Specifies the HTML tag for status elements.
-This option is only valid when C<format> path parameter is C<html>.
-
 =back
 
 B<Response>
 
 In success, the HTTP response code is 200.
-If C<format> is C<json>, the response is a JSON array of status objects.
+If C<format> is C<json>, the response is a JSON object.
+C<is_success> attribute of the object is C<true>, and C<statuses> attribute is the array of status objects fetched.
 The array can be empty.
-If C<format> is C<html>, the response is a sequence of HTML elements,
+If C<format> is C<html>, the response is a sequence of HTML C<< <li> >> elements,
 each of which represents a status object.
 
 In failure, the HTTP response code is 4** or 5**.
@@ -181,6 +176,13 @@ TBW...
 
 =head2 GET /timelines/{timeline}/updates/unacked_counts.json
 
+Watches updates in numbers of unacked statuses (i.e. unacked counts) in the specified timeline, and gets them when necessary.
+
+This is an endpoint for long-polling (Comet) access.
+The response is delayed until the current unacked counts are different
+from the unacked counts given in the query parameters.
+
+
 B<Path Parameters>
 
 =over
@@ -193,24 +195,83 @@ Timeline name.
 
 B<Query Parameters>
 
+The query parameters specify the assumed unacked counts.
+As long as the current unacked counts are the same as the assumed unacked counts,
+the response is delayed.
+
+The assumed unacked counts can be specified per status level and/or in total.
+
 =over
 
 =item C<total> = NUM (optional)
 
+Specifies the total number of unacked statuses in the timeline.
+
 =item C<{level}> = NUM (optional)
+
+Specifies the number of unacked statuses in the status level of C<{level}>.
+C<{level}> can be any integer.
 
 =back
 
+B<Response>
+
+The response is a JSON object.
+
+In success, the HTTP response code is 200.
+C<is_success> attribute of the response object is C<true> and
+C<unacked_counts> attribute is an object describing the current unacked counts (See Example).
+
+In failure, the HTTP response code is 4** or 5**.
+C<is_success> attribute of the response object is C<false> and C<error> attribute describes the error.
+
+B<Example>
+
+TBW...
+
 =head2 GET /updates/unacked_counts.json
 
+Watches updates in numbers of unacked statuses (i.e. unacked counts) from multiple timelines, and gets them when necessary.
+
+This is an endpoint for long-polling (Comet) access.
+The response is delayed until the current unacked counts are different from the unacked counts given in the query parameters.
+
+
 B<Query Parameters>
+
+The query parameters specify the assumed unacked counts.
+As long as the current unacked counts are the same as the assumed unacked counts,
+the response is delayed.
+
+This endpoint allows you to watch updates in multiple timelines,
+but you can watch only one status level (or 'total').
 
 =over
 
 =item C<level> = {total,NUM} (optional, default: total)
 
+Specifies the status level to be watched.
+
 =item C<tl_{timeline}> = NUM (optional)
 
+Specifies the unacked counts for the timeline C<{timeline}> in the status level.
+C<{timeline}> is the name of the timeline you want to watch.
+
 =back
+
+B<Response>
+
+The response is a JSON object.
+
+In success, the HTTP response code is 200.
+C<is_success> attribute of the response object is C<true> and
+C<unacked_counts> attribute is an object describing the current unacked counts (See Example).
+
+In failure, the HTTP response code is 4** or 5**.
+C<is_success> attribute of the response object is C<false> and C<error> attribute describes the error.
+
+B<Example>
+
+TBW...
 
 =cut
