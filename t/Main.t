@@ -222,7 +222,4 @@ sub test_watcher_basic {
     $w->cancel();
 }
 
-fail('todo: author test: create timelines without setting default_storage');
-
-
-1;
+done_testing();
