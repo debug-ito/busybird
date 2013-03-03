@@ -22,6 +22,10 @@ of endpoint paths.
 
 =head2 GET /timelines/{timeline}/statuses.{format}
 
+Returns an array of statuses from the specified timeline.
+See L<BusyBird::Status> for the structure of a status object.
+
+
 B<Path Parameters>
 
 =over
@@ -34,24 +38,71 @@ Timeline name.
 
 Response format. It is either C<json> or C<html>.
 
+If C<html> format is specified, the response message is
+a sequence of HTML elements.
+The elements' tags are C<li> by default, but you can change it
+by C<tag> query parameter.
+
 =back
 
 B<Query Parameters>
 
 =over
 
-=item C<count> = NUM (optional, default: 20)
-
 =item C<ack_state> = {any,acked,unacked} (optional, default: any)
+
+Specifies the acked/unacked state of the statuses to be fetched.
+
+By setting it to C<unacked>, it returns only unacked statuses from the timeline.
+By setting it to C<acked>, it returns only acked
+statuses.
+By setting it to C<any>, it returns both acked and unacked statuses.
 
 =item C<max_id> = STATUS_ID (optional, default: none)
 
+Specifies the latest ID of the statuses to be fetched.
+It fetches statuses with IDs older than or equal to the specified C<max_id>.
+
+If this option is omitted, statuses starting from the latest status are fetched.
+
+=item C<count> = NUM (optional, default: 20)
+
+Specifies the maximum number of statuses to be fetched.
+
 =item C<tag> = HTML_TAG (optional, default: li)
+
+Specifies the HTML tag for status elements.
+This option is only valid when C<format> path parameter is C<html>.
 
 =back
 
+B<Response>
+
+In success, the HTTP response code is 200.
+If C<format> is C<json>, the response is a JSON array of status objects.
+The array can be empty.
+If C<format> is C<html>, the response is a sequence of HTML elements,
+each of which represents a status object.
+
+In failure, the HTTP response code is 4** or 5**.
+If C<format> is C<json>, the response is a JSON object.
+C<is_success> attribute of the object is C<false> and C<error> attribute
+describes the error.
+If C<format> is C<html>, the response is an HTML element describing the error.
+
+B<Example>
+
+TBW...
+
 
 =head2 POST /timelines/{timeline}/ack.json
+
+Acknowledges statuses in the specified timeline, that is, changing 'unacked' statuses into 'acked'.
+You should ack statuses when you load and display them for the user.
+
+You can set parameters in the request body as a JSON object.
+If you omit all parameters, you can omit the entire request body.
+
 
 B<Path Parameters>
 
@@ -69,11 +120,64 @@ B<Request Body Parameters>
 
 =item C<max_id> = STATUS_ID (optional, default: none)
 
+Specifies the latest ID of the statuses to be acked.
+
+If specified, unacked statuses with IDs older than or equal to the specified C<max_id> are acked.
+If there is no unacked status with ID C<max_id>, no status is acked.
+
+If this option is omitted, all unacked statuses are acked.
+
 =back
+
+B<Response>
+
+The response is a JSON object.
+
+In success, the HTTP response code is 200.
+C<is_success> attribute of the response object is C<true>,
+and C<count> attribute is the number of acked statuses.
+
+In failure, the HTTP response code is 4** or 5**.
+C<is_success> attribute of the response object is C<false>, and C<error> attribute describes the error.
+
+B<Example>
+
+TBW...
 
 
 =head2 POST /timelines/{timeline}/statuses.json
 
+Adds new statuses to the specified timeline.
+
+B<Path Parameters>
+
+=over
+
+=item C<timeline> = STR (required)
+
+Timeline name.
+
+=back
+
+B<Request Body>
+
+A status object or an array of status objects in JSON format.
+
+See L<BusyBird::Status> for the structure of status objects.
+
+B<Response>
+
+The response is a JSON object.
+
+In success, the HTTP response code is 200.
+C<is_success> attribute of the response object is C<true> and C<count> attribute is the number of statuses added.
+
+In failure, the HTTP response code is 4** or 5**.
+C<is_success> attribute of the response object is C<false> and C<error> attribute describes the error.
+
+B<Example>
+
+TBW...
 
 =head2 GET /timelines/{timeline}/updates/unacked_counts.json
 
