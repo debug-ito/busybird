@@ -257,11 +257,11 @@ sub test_error_request {
     test_psgi $main->to_app, sub {
         my $tester = BusyBird::Test::HTTP->new(requester => shift);
         my $weird_id_status = {
-            id => q{!"#$%&'(){}=*+>< []\\|/-_;^~: 3},
+            id => q{!"#$%&'(){}=*+>< []\\|/-_;^~@`?: 3},
             created_at => "Thu Jan 01 00:00:03 +0000 1970",
             text => q{変なIDのステータス。},
         };
-        my $encoded_id = '%21%22%23%24%25%26%27%28%29%7B%7D%3D%2A%2B%3E%3C%20%5B%5D%5C%7C%2F-_%3B%5E~%3A%203';
+        my $encoded_id = '%21%22%23%24%25%26%27%28%29%7B%7D%3D%2A%2B%3E%3C%20%5B%5D%5C%7C%2F-_%3B%5E~%40%60%3F%3A%203';
         my $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
                                             json_array(map { create_json_status($_) } 1,2,4,5),
                                             qr/^200$/, 'POST normal statuses OK');
