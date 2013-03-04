@@ -283,8 +283,81 @@ sub test_error_request {
     };
 }
 
+{
+    note('--- For examples');
+    my $main = create_main();
+    my @cases = (
+        {endpoint => 'POST /timelines/home/statuses.json',
+         content => <<EOD,
+[
+  {
+    "id": "http://example.com/page/2013/0204",
+    "created_at": "Mon Feb 04 11:02:45 +0900 2013",
+    "text": "content of the status",
+    "busybird": { "level": 3 }
+  },
+  {
+    "id": "http://example.com/page/2013/0202",
+    "created_at": "Sat Feb 02 17:38:12 +0900 2013",
+    "text": "another content"
+  }
+]
+EOD
+         exp_response => q{{"is_success": true, "count": 2}}},
+        {endpoint => 'GET /timelines/home/statuses.json?count=1&ack_state=any&max_id=http://example.com/page/2013/0202',
+         exp_response => <<EOD},
+{
+  "is_success": true,
+  "statuses": [
+    {
+      "id": "http://example.com/page/2013/0202",
+      "created_at": "Sat Feb 02 17:38:12 +0900 2013",
+      "text": "another content"
+    }
+  ]
+}
+EOD
+        {endpoint => 'GET /timelines/home/updates/unacked_counts.json?total=2&0=2',
+         exp_response => <<EOD},
+{
+  "is_success": true,
+  "unacked_counts": {
+    "total": 2,
+    "0": 1,
+    "3": 1
+  }
+}
+EOD
+        {endpoint => 'GET /updates/unacked_counts.json?level=total&tl_home=0&tl_foobar=0',
+         exp_response => <<EOD},
+{
+  "is_success": true,
+  "unacked_counts": {
+    "home": {
+      "total": 2,
+      "0": 1,
+      "3": 1
+    }
+  }
+}
+EOD
+        {endpoint => 'POST /timelines/home/ack.json',
+         content => q{{"max_id": "http://example.com/page/2013/0202"}},
+         exp_response => q{{"is_success": true, "count": 1}}}
+    );
+    test_psgi $main->to_app, sub {
+        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        foreach my $case (@cases) {
+            my ($method, $request_url) = split(/ +/, $case->{endpoint});
+            my $res_obj = $tester->request_json_ok($method, $request_url, $case->{content},
+                                                   qr/^200$/, "$case->{endpoint} OK");
+            my $exp_obj = decode_json($case->{exp_response});
+            is_deeply($res_obj, $exp_obj, "$case->{endpoint} response OK");
+        }
+    };
+}
+
 fail('todo: GET statuses: html format');
-fail('todo: examples');
 
 done_testing();
 

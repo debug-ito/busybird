@@ -88,7 +88,22 @@ If C<format> is C<html>, the response is an HTML element describing the error.
 
 B<Example>
 
-TBW...
+Request URL:
+
+    GET /timelines/home/statuses.json?count=1&ack_state=any&max_id=http://example.com/page/2013/0202
+
+Response Body:
+
+    {
+      "is_success": true,
+      "statuses": [
+        {
+          "id": "http://example.com/page/2013/0202",
+          "created_at": "Sat Feb 02 17:38:12 +0900 2013",
+          "text": "another content"
+        }
+      ]
+    }
 
 
 =head2 POST /timelines/{timeline}/ack.json
@@ -138,7 +153,17 @@ C<is_success> attribute of the response object is C<false>, and C<error> attribu
 
 B<Example>
 
-TBW...
+Request URL:
+
+    POST /timelines/home/ack.json
+
+Request Body:
+
+    {"max_id": "http://example.com/page/2013/0202"}
+
+Response Body:
+
+    {"is_success": true, "count": 1}
 
 
 =head2 POST /timelines/{timeline}/statuses.json
@@ -173,7 +198,30 @@ C<is_success> attribute of the response object is C<false> and C<error> attribut
 
 B<Example>
 
-TBW...
+Request URL:
+
+    POST /timelines/home/statuses.json
+
+Request Body:
+
+    [
+      {
+        "id": "http://example.com/page/2013/0204",
+        "created_at": "Mon Feb 04 11:02:45 +0900 2013",
+        "text": "content of the status",
+        "busybird": { "level": 3 }
+      },
+      {
+        "id": "http://example.com/page/2013/0202",
+        "created_at": "Sat Feb 02 17:38:12 +0900 2013",
+        "text": "another content"
+      }
+    ]
+
+Response Body:
+
+    {"is_success": true, "count": 2}
+
 
 =head2 GET /timelines/{timeline}/updates/unacked_counts.json
 
@@ -228,11 +276,30 @@ C<is_success> attribute of the response object is C<false> and C<error> attribut
 
 B<Example>
 
-TBW...
+Request URL:
+
+The following request means that you assume there are two unacked statuses in 'home' timeline,
+and they are both in level 0.
+
+    GET /timelines/home/updates/unacked_counts.json?total=2&0=2
+
+Response Body:
+
+The server sends back the following response because the current unacked count for level 0
+is one instead of two.
+
+    {
+      "is_success": true,
+      "unacked_counts": {
+        "total": 2,
+        "0": 1,
+        "3": 1
+      }
+    }
 
 =head2 GET /updates/unacked_counts.json
 
-Watches updates in numbers of unacked statuses (i.e. unacked counts) from multiple timelines, and gets them when necessary.
+Watches updates in numbers of unacked statuses (i.e. unacked counts) in multiple timelines, and gets them when necessary.
 
 This is an endpoint for long-polling (Comet) access.
 The response is delayed until the current unacked counts are different from the unacked counts given in the query parameters.
@@ -273,6 +340,25 @@ C<is_success> attribute of the response object is C<false> and C<error> attribut
 
 B<Example>
 
-TBW...
+Request URL:
+
+The following request means that you assume there are no unacked statuses in timeline 'home' or timeline 'foobar'.
+
+    GET /updates/unacked_counts.json?level=total&tl_home=0&tl_foobar=0
+
+Response Body:
+
+The server sends back the following response because there are two unacked statuses in timeline 'home'.
+
+    {
+      "is_success": true,
+      "unacked_counts": {
+        "home": {
+          "total": 2,
+          "0": 1,
+          "3": 1
+        }
+      }
+    }
 
 =cut
