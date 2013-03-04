@@ -60,6 +60,8 @@ The following fields in a status object is used by BusyBird.
 
 =head2 $status->{id}
 
+Must be all in ASCII.
+
 =head2 $status->{retweeted_status}
 
 =head2 $status->{text}
