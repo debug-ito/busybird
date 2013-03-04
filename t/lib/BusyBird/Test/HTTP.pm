@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use BusyBird::Util 'set_param';
 use HTTP::Request;
+use Test::More;
 use Test::Builder;
 use JSON qw(from_json);
 

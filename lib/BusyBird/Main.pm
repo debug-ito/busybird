@@ -4,6 +4,7 @@ use warnings;
 use BusyBird::StatusStorage::Memory;
 use BusyBird::Timeline;
 use BusyBird::Watcher::Aggregator;
+use BusyBird::Main::PSGI;
 use Tie::IxHash;
 use Carp;
 use Scalar::Util qw(looks_like_number);
@@ -25,7 +26,7 @@ sub to_app {
     if(!%{$self->{timelines}}) {
         $self->timeline('home');
     }
-    return sub {}; ## STUB...
+    return BusyBird::Main::PSGI->create_psgi_app($self);
 }
 
 sub default_status_storage {
