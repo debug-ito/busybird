@@ -12,11 +12,12 @@ This is a reference guide to Web API of L<BusyBird>.
 The API paths are based on the path root (C</>) of the application.
 
 For all HTTP requests with the message body,
-data format of the body must be JSON,
-and C<Content-Type> header should be C<application/json>.
+data format of the body must be JSON encoded by UTF-8,
+so C<Content-Type> header should be C<application/json; charset=utf-8>.
 
 The data format of HTTP responses is determined by the extension (string after period (C<.>))
-of endpoint paths.
+of endpoint paths. Text responses are always encoded by UTF-8.
+
 
 =head1 ENDPOINTS
 
