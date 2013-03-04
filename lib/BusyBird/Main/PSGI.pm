@@ -7,6 +7,7 @@ use Plack::Request;
 use Plack::Builder ();
 use Try::Tiny;
 use JSON qw(decode_json encode_json);
+use Scalar::Util qw(looks_like_number);
 
 sub create_psgi_app {
     my ($class, $main_obj) = @_;
@@ -59,6 +60,17 @@ sub _build_routes {
                         {method => '_handle_tl_get_statuses'}, {method => 'GET'});
     $tl_mapper->connect('/statuses.json',
                         {method => '_handle_tl_post_statuses'}, {method => 'POST'});
+    $tl_mapper->connect('/ack.json',
+                        {method => '_handle_tl_ack'}, {method => 'POST'});
+}
+
+sub _get_timeline {
+    my ($self, $dest) = @_;
+    my $timeline = $self->{main_obj}->get_timeline($dest->{timeline});
+    if(!defined($timeline)) {
+        die qq{No timeline named $dest->{timeline}};
+    }
+    return $timeline;
 }
 
 sub _json_bool {
@@ -91,8 +103,13 @@ sub _handle_tl_get_statuses {
         try {
             my $timeline = $self->_get_timeline($dest);
             my $count = $req->query_parameters->{count} || 20;
+            if(!looks_like_number($count)) {
+                die "count parameter must be an integer";
+            }
+            my $ack_state = $req->query_parameters->{ack_state} || 'any';
+            my $max_id = $req->query_parameters->{max_id};
             $timeline->get_statuses(
-                count => $count,
+                count => $count, ack_state => $ack_state, max_id => $max_id,
                 callback => sub {
                     my ($statuses, $error) = @_;
                     if(int(@_) >= 2) {
@@ -137,13 +154,33 @@ sub _handle_tl_post_statuses {
     };
 }
 
-sub _get_timeline {
-    my ($self, $dest) = @_;
-    my $timeline = $self->{main_obj}->get_timeline($dest->{timeline});
-    if(!defined($timeline)) {
-        die qq{No timeline named $dest->{timeline}};
-    }
-    return $timeline;
+sub _handle_tl_ack {
+    my ($self, $req, $dest) = @_;
+    return sub {
+        my $responder = shift;
+        try {
+            my $timeline = $self->_get_timeline($dest);
+            my $max_id = undef;
+            if($req->content) {
+                my $body_obj = decode_json($req->content);
+                $max_id = $body_obj->{max_id};
+            }
+            $timeline->ack_statuses(
+                max_id => $max_id,
+                callback => sub {
+                    my ($acked_num, $error) = @_;
+                    if(int(@_) >= 2) {
+                        $responder->(_json_response(500, 0, error => "$error"));
+                        return;
+                    }
+                    $responder->(_json_response(200, 1, count => $acked_num + 0));
+                }
+            );
+        }catch {
+            my $e = shift;
+            $responder->(_json_response(400, 0, error => "$e"));
+        };
+    };
 }
 
 1;
