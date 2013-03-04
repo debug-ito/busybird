@@ -107,7 +107,7 @@ sub _handle_tl_get_statuses {
         try {
             my $timeline = $self->_get_timeline($dest);
             my $count = $req->query_parameters->{count} || 20;
-            if(!looks_like_number($count)) {
+            if(!looks_like_number($count) || int($count) != $count) {
                 die "count parameter must be an integer";
             }
             my $ack_state = $req->query_parameters->{ack_state} || 'any';

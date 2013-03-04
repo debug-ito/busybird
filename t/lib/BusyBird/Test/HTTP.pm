@@ -27,13 +27,19 @@ sub post_json_ok {
 }
 
 sub request_json_ok {
+    my $self = shift;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    return from_json($self->request_ok(@_));
+}
+
+sub request_ok {
     my ($self, $method, $request_url, $content, $res_code_like, $msg) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     my $res = $self->{requester}->(HTTP::Request->new($method, $request_url, undef, $content));
     if(defined $res_code_like) {
         like($res->code, $res_code_like, $msg);
     }
-    return from_json($res->decoded_content(raise_error => 1));
+    return $res->decoded_content(raise_error => 1);
 }
 
 1;

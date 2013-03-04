@@ -3,19 +3,53 @@ use warnings;
 use lib 't/lib';
 use utf8;
 use Test::More;
+use Test::MockObject;
 use DateTime;
 use BusyBird::Main;
 use BusyBird::StatusStorage::Memory;
 use BusyBird::DateTime::Format;
 use BusyBird::Test::HTTP;
 use BusyBird::Test::StatusStorage qw(:status);
+use BusyBird::Log ();
 use Plack::Test;
 use Encode ();
+use Try::Tiny;
+
+$BusyBird::Log::LOGGER = undef;
 
 sub create_main {
     my $main = BusyBird::Main->new();
     $main->default_status_storage(BusyBird::StatusStorage::Memory->new);
     return $main;
+}
+
+sub create_dying_status_storage {
+    my $mock = Test::MockObject->new();
+    foreach my $method (map { "${_}_statuses" } qw(ack get put delete)) {
+        $mock->mock($method, sub {
+            die "$method dies.";
+        });
+    }
+    ## ** We cannot create a Timeline if get_unacked_counts throws an exception.
+    $mock->mock('get_unacked_counts', sub {
+        my ($self, %args) = @_;
+        $args{callback}->(undef, "get_unacked_counts reports error.");
+    });
+    return $mock;
+}
+
+sub create_erroneous_status_storage {
+    my $mock = Test::MockObject->new();
+    foreach my $method ('get_unacked_counts', map { "${_}_statuses" } qw(ack get put delete)) {
+        $mock->mock($method, sub {
+            my ($self, %args) = @_;
+            my $cb = $args{callback};
+            if($cb) {
+                $cb->(undef, "$method reports error.");
+            }
+        });
+    }
+    return $mock;
 }
 
 sub create_json_status {
@@ -47,7 +81,17 @@ sub test_get_statuses {
     test_status_id_list($res_obj->{statuses}, $exp_id_list, "$label: GET statuses ID list OK");
 }
 
+sub test_error_request {
+    my ($tester, $endpoint, $content, $label) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my ($method, $request_url) = split(/ +/, $endpoint);
+    $label ||= "";
+    my $msg = "$label: $endpoint returns error";
+    $tester->request_ok($method, $request_url, $content, qr/^[45]/, $msg);
+}
+
 {
+    note('--- normal functionalities');
     my $main = create_main();
     $main->timeline('test');
     $main->timeline('foobar');
@@ -131,6 +175,7 @@ sub test_get_statuses {
                 {label => "level 2, TL foobar right", param => '?level=2&tl_test=0&tl_foobar=5', exp => $exp_tl_test},
                 {label => "level 2, TL test right", param => '?level=2&tl_test=10&tl_foobar=12', exp => $exp_tl_foobar},
                 {label => "level 3, TL test right", param => '?level=3&tl_test=0&tl_foobar=1', exp => $exp_tl_foobar},
+                {label => "total, 1 TL 2 junk TLs", param => '?level=total&tl_junk=6&tl_hoge=0&tl_test=0', exp => $exp_tl_test},
             ) {
                 $res_obj = $tester->get_json_ok("/updates/unacked_counts.json$case->{param}",
                                                 qr/^200$/, "GET /updates/unacked_counts.json ($case->{label}) OK");
@@ -140,12 +185,73 @@ sub test_get_statuses {
     };
 }
 
+{
+    my $main = create_main();
+    $main->timeline('test');
+    note('--- GET /updates/unacked_counts.json with no valid TL');
+    test_psgi $main->to_app, sub {
+        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        foreach my $case (
+            {label => "no params", param => ""},
+            {label => "junk TLs and params", param => "?tl_hoge=10&tl_foo=1&bar=3&_=1020"}
+        ) {
+            my $res_obj = $tester->get_json_ok("/updates/unacked_counts.json$case->{param}",
+                                               qr/^[45]/,
+                                               "GET /updates/unacked_counts.json ($case->{label}) returns error");
+            is($res_obj->{is_success}, JSON::false, ".. $case->{label}: is_success is false");
+            ok(defined($res_obj->{error}), ".. $case->{label}: error is set");
+        }
+    };
+}
+
+{
+    my $main = create_main();
+    $main->timeline('test');
+    note('--- Not Found cases');
+    test_psgi $main->to_app, sub {
+        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        foreach my $case (
+            {endpoint => "GET /timelines/foobar/statuses.json"},
+            {endpoint => "GET /timelines/foobar/updates/unacked_counts.json"},
+            {endpoint => "POST /timelines/foobar/ack.json"},
+            {endpoint => "POST /timelines/foobar/statuses.json", content => create_json_status(1)},
+            {endpoint => "POST /timelines/test/statuses.json"},
+            {endpoint => "POST /timelines/test/updates/unacked_counts.json"},
+            {endpoint => "GET /timelines/test/ack.json"},
+            {endpoint => "POST /updates/unacked_counts.json?tl_test=10"},
+        ) {
+            test_error_request($tester, $case->{endpoint}, $case->{content});
+        }
+    };
+}
+
+{
+    foreach my $storage_case (
+        {label => "dying", storage => create_dying_status_storage()},
+        {label => "erroneous", storage => create_erroneous_status_storage()},
+    ) {
+        note("--- $storage_case->{label} status storage");
+        my $main = create_main();
+        $main->default_status_storage($storage_case->{storage});
+        $main->timeline('test');
+        test_psgi $main->to_app, sub {
+            my $tester = BusyBird::Test::HTTP->new(requester => shift);
+            foreach my $case (
+                {endpoint => "GET /timelines/test/statuses.json"},
+                ## {endpoint => "GET /timelines/test/updates/unacked_counts.json"},
+                {endpoint => "POST /timelines/test/ack.json"},
+                {endpoint => "POST /timelines/test/statuses.json", content => create_json_status(1)},
+                ## {endpoint => "GET /updates/unacked_counts.json?tl_test=3"}
+            ) {
+                test_error_request($tester, $case->{endpoint}, $case->{content}, $storage_case->{label});
+            }
+        }
+    }
+}
+
 fail('todo: GET statuses: max_id of URL-encoded ID');
 fail('todo: GET statuses: html format');
-fail('todo: GET /updates/unacked_counts.json with no TL');
-fail('todo: test with dying storage. test with storage returning errors.');
 fail('todo: examples');
-fail('todo: test 404');
 
 done_testing();
 
