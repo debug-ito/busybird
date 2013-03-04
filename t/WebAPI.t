@@ -12,6 +12,12 @@ use BusyBird::Test::StatusStorage qw(:status);
 use Plack::Test;
 use Encode ();
 
+sub create_main {
+    my $main = BusyBird::Main->new();
+    $main->default_status_storage(BusyBird::StatusStorage::Memory->new);
+    return $main;
+}
+
 sub create_json_status {
     my ($id, $level) = @_;
     my $created_at_str = BusyBird::DateTime::Format->format_datetime(
@@ -42,8 +48,7 @@ sub test_get_statuses {
 }
 
 {
-    my $main = BusyBird::Main->new();
-    $main->default_status_storage(BusyBird::StatusStorage::Memory->new);
+    my $main = create_main();
     $main->timeline('test');
     $main->timeline('foobar');
 
@@ -82,8 +87,20 @@ sub test_get_statuses {
         test_get_statuses($tester, 'test', 'max_id=60', [], 'unknown max_id');
         test_get_statuses($tester, 'test', 'max_id=23', [reverse 4..23], 'only max_id');
 
-        fail('todo: updates API (per timeline / multi timeline) around here');
-
+        {
+            my $exp_res = {is_success => JSON::true, unacked_counts => {total => 25, 0 => 5, 1 => 10, 2 => 10}};
+            foreach my $case (
+                {label => "no param", param => ""},
+                {label => "total", param => "?total=20"},
+                {label => "level 0", param => "?0=3"},
+                {label => "only level 1 differs", param => "?1=9&2=10&0=5&total=25"},
+            ) {
+                $res_obj = $tester->get_json_ok("/timelines/test/updates/unacked_counts.json$case->{param}",
+                                                qr/^200$/, "GET tl unacked_counts ($case->{label}) OK");
+                is_deeply($res_obj, $exp_res, "GET tl unacked_counts ($case->{label}) result OK");
+            }
+        }
+        
         $res_obj = $tester->post_json_ok('/timelines/test/ack.json', qq{{"max_id":"100"}}, qr/^200$/, 'POST ack (unknown max_id) OK');
         is_deeply($res_obj, {is_success => JSON::true, count => 0}, 'POST ack (unknown max_id) acks nothing');
         $res_obj = $tester->post_json_ok('/timelines/test/ack.json', qq{{"max_id":"4"}}, qr/^200$/, 'POST ack (acked max_id) OK');
@@ -93,10 +110,39 @@ sub test_get_statuses {
 
         test_get_statuses($tester, 'test', 'ack_state=unacked&count=100', [reverse 21..30], 'unacked');
         test_get_statuses($tester, 'test', 'ack_state=acked&count=100', [reverse 1..20], 'acked');
+
+        $res_obj = $tester->post_json_ok('/timelines/foobar/statuses.json',
+                                         json_array(map {create_json_status($_, $_ % 2 ? 2 : -2)} 1..10),
+                                         qr/^200$/, 'POST statuses to foobar OK');
+        is_deeply($res_obj, {is_success => JSON::true, count => 10}, 'POST statuses result OK');
+        
+        {
+            my $exp_tl_test = {is_success => JSON::true, unacked_counts => {
+                test => { total => 10, 2 => 10 }
+            }};
+            my $exp_tl_foobar = {is_success => JSON::true, unacked_counts => {
+                foobar => { total => 10,  -2 => 5, 2 => 5 }
+            }};
+            foreach my $case (
+                {label => "total, 1 TL", param => '?level=total&tl_test=0', exp => $exp_tl_test},
+                {label => "no level, TL test right", param => '?tl_test=10&tl_foobar=5', exp => $exp_tl_foobar},
+                {label => "level -2, TL foobar right", param => '?level=-2&tl_foobar=5&tl_test=5', exp => $exp_tl_test},
+                {label => "level -2, TL test right", param => '?level=-2&tl_foobar=3&tl_test=0', exp => $exp_tl_foobar},
+                {label => "level 2, TL foobar right", param => '?level=2&tl_test=0&tl_foobar=5', exp => $exp_tl_test},
+                {label => "level 2, TL test right", param => '?level=2&tl_test=10&tl_foobar=12', exp => $exp_tl_foobar},
+                {label => "level 3, TL test right", param => '?level=3&tl_test=0&tl_foobar=1', exp => $exp_tl_foobar},
+            ) {
+                $res_obj = $tester->get_json_ok("/updates/unacked_counts.json$case->{param}",
+                                                qr/^200$/, "GET /updates/unacked_counts.json ($case->{label}) OK");
+                is_deeply($res_obj, $case->{exp}, "GET /updates/unacked_counts.json ($case->{label}) results OK");
+            }
+        }
     };
 }
 
 fail('todo: GET statuses: max_id of URL-encoded ID');
+fail('todo: GET statuses: html format');
+fail('todo: GET /updates/unacked_counts.json with no TL');
 fail('todo: test with dying storage. test with storage returning errors.');
 fail('todo: examples');
 fail('todo: test 404');

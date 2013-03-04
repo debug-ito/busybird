@@ -62,6 +62,10 @@ sub _build_routes {
                         {method => '_handle_tl_post_statuses'}, {method => 'POST'});
     $tl_mapper->connect('/ack.json',
                         {method => '_handle_tl_ack'}, {method => 'POST'});
+    $tl_mapper->connect('/updates/unacked_counts.json',
+                        {method => '_handle_tl_get_unacked_counts'}, {method => 'GET'});
+    $self->{router}->connect('/updates/unacked_counts.json',
+                             {method => '_handle_get_unacked_counts'}, {method => 'GET'});
 }
 
 sub _get_timeline {
@@ -176,6 +180,71 @@ sub _handle_tl_ack {
                     $responder->(_json_response(200, 1, count => $acked_num + 0));
                 }
             );
+        }catch {
+            my $e = shift;
+            $responder->(_json_response(400, 0, error => "$e"));
+        };
+    };
+}
+
+sub _handle_tl_get_unacked_counts {
+    my ($self, $req, $dest) = @_;
+    return sub {
+        my $responder = shift;
+        try {
+            my $timeline = $self->_get_timeline($dest);
+            my $query_params = $req->query_parameters;
+            my %args = ();
+            if(defined $query_params->{total}) {
+                $args{total} = delete $query_params->{total};
+            }
+            foreach my $query_key (keys %$query_params) {
+                next if !looks_like_number($query_key);
+                next if int($query_key) != $query_key;
+                $args{$query_key} = $query_params->{$query_key};
+            }
+            $timeline->watch_unacked_counts(%args, sub {
+                my ($w, $unacked_counts, $error) = @_;
+                $w->cancel();
+                if(int(@_) >= 3) {
+                    $responder->(_json_response(500, 0, error => "$error"));
+                    return;
+                }
+                $responder->(_json_response(200, 1, unacked_counts => $unacked_counts));
+            });
+        }catch {
+            my $e = shift;
+            $responder->(_json_response(400, 0, error => "$e"));
+        };
+    };
+}
+
+sub _handle_get_unacked_counts {
+    my ($self, $req, $dest) = @_;
+    return sub {
+        my $responder = shift;
+        try {
+            my $query_params = $req->query_parameters;
+            my $level = $query_params->{level};
+            if(not defined($level)) {
+                $level = "total";
+            }elsif($level ne 'total' && (!looks_like_number($level) || int($level) != $level)) {
+                die "level parameter must be an integer";
+            }
+            my %args = ();
+            foreach my $query_key (keys %$query_params) {
+                next if substr($query_key, 0, 3) ne 'tl_';
+                $args{substr($query_key, 3)} = $query_params->{$query_key};
+            }
+            $self->{main_obj}->watch_unacked_counts($level, \%args, sub {
+                my ($w, $tl_unacked_counts, $error) = @_;
+                $w->cancel();
+                if(int(@_) >= 3) {
+                    $responder->(_json_response(500, 0, error => "$error"));
+                    return;
+                }
+                $responder->(_json_response(200, 1, unacked_counts => $tl_unacked_counts));
+            });
         }catch {
             my $e = shift;
             $responder->(_json_response(400, 0, error => "$e"));
