@@ -13,6 +13,7 @@ use BusyBird::Test::StatusStorage qw(:status);
 use BusyBird::Log ();
 use Plack::Test;
 use Encode ();
+use JSON qw(encode_json decode_json);
 use Try::Tiny;
 
 $BusyBird::Log::LOGGER = undef;
@@ -249,7 +250,39 @@ sub test_error_request {
     }
 }
 
-fail('todo: GET statuses: max_id of URL-encoded ID');
+{
+    my $main = create_main();
+    $main->timeline('test');
+    note('--- status with weird ID');
+    test_psgi $main->to_app, sub {
+        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $weird_id_status = {
+            id => q{!"#$%&'(){}=*+>< []\\|/-_;^~: 3},
+            created_at => "Thu Jan 01 00:00:03 +0000 1970",
+            text => q{変なIDのステータス。},
+        };
+        my $encoded_id = '%21%22%23%24%25%26%27%28%29%7B%7D%3D%2A%2B%3E%3C%20%5B%5D%5C%7C%2F-_%3B%5E~%3A%203';
+        my $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
+                                            json_array(map { create_json_status($_) } 1,2,4,5),
+                                            qr/^200$/, 'POST normal statuses OK');
+        is_deeply($res_obj, {is_success => JSON::true, count => 4}, "POST normal statuses results OK");
+        $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
+                                         encode_json($weird_id_status), qr/^200$/, 'POST weird status OK');
+        is_deeply($res_obj, {is_success => JSON::true, count => 1}, 'POST weird status OK');
+
+        test_get_statuses($tester, 'test', "max_id=$encoded_id&count=10",
+                          [$weird_id_status->{id}, 2, 1], 'max_id = weird ID');
+        
+        $res_obj = $tester->post_json_ok('/timelines/test/ack.json',
+                                         encode_json({max_id => $weird_id_status->{id}}),
+                                         qr/^200$/, 'POST ack max_id = weird ID OK');
+        is_deeply($res_obj, {is_success => JSON::true, count => 3}, "POST ack max_id = weird ID results OK");
+
+        test_get_statuses($tester, 'test', 'ack_state=unacked', [5,4], "GET unacked");
+        test_get_statuses($tester, 'test', 'ack_state=acked', [$weird_id_status->{id}, 2, 1], 'GET acked');
+    };
+}
+
 fail('todo: GET statuses: html format');
 fail('todo: examples');
 
