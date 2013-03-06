@@ -6,7 +6,7 @@ use Router::Simple;
 use Plack::Request;
 use Plack::Builder ();
 use Try::Tiny;
-use JSON qw(decode_json encode_json);
+use JSON qw(decode_json encode_json to_json);
 use Scalar::Util qw(looks_like_number);
 
 sub create_psgi_app {
@@ -86,7 +86,7 @@ sub _json_response {
     my ($res_code, $success, %other_params) = @_;
     my $obj = {is_success => _json_bool($success), %other_params};
     my $message = try {
-        encode_json($obj)
+        to_json($obj, {ascii => 1})
     }catch {
         undef
     };
