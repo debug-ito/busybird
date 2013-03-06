@@ -8,7 +8,7 @@ use BusyBird::Log;
 use Encode;
 use Time::HiRes;
 use Net::Twitter;
-use Net::Twitter::Lite;
+use Net::Twitter::Lite::WithAPIv1_1;
 use constant (CONFIG_FILEPATH => $ENV{HOME}.'/.bb_input_twitter_test_config.pl');
 use constant (SINCE_ID_FILEPATH => 'input_twitter_test_since_id_file.json');
 use constant (ACCESS_DELAY => 1.0);
@@ -150,8 +150,9 @@ test_backend(
 sleep ACCESS_DELAY;
 
 test_backend(
-    'Net::Twitter::Lite API v1.0', Net::Twitter::Lite->new(
-        legacy_lists_api => 0, ssl => 1,
+    'Net::Twitter::Lite API v1.1', Net::Twitter::Lite::WithAPIv1_1->new(
+        ## legacy_lists_api => 0,
+        ssl => 1,
         get_oauth_config($config)
     )
 );
