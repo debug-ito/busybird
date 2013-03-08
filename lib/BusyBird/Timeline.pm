@@ -335,13 +335,14 @@ Fields in C<%args> are as follows.
 Specifies an array-ref of status objects to be added.
 See L<BusyBird::Status> about what status objects look like.
 
-=item C<callback> => CODEREF($added_num, $error) (optional, default: C<undef>)
+=item C<callback> => CODEREF($error, $added_num) (optional, default: C<undef>)
 
 Specifies a subroutine reference that is called when the operation has completed.
-In success, C<callback> is called with one argument (C<$added_num>),
-which is the number of statuses actually added to the C<$timeline>.
-In failure, C<callback> is called with two arguments,
-and the second argument (C<$error>) describes the error.
+
+In success, C<callback> is called with two arguments (C<$error> and C<$added_num>).
+C<$error> is C<undef>, and C<$added_num> is the number of statuses actually added to the C<$timeline>.
+
+In failure, C<$error> is defined and it describes the error.
 
 =back
 
@@ -368,15 +369,14 @@ If there is no unacked status with ID C<max_id>, no status is acked.
 If this option is omitted or set to C<undef>, all unacked statuses are acked.
 
 
-=item C<callback> => CODEREF($acked_num, $error) (optional, default: C<undef>)
+=item C<callback> => CODEREF($error, $acked_num) (optional, default: C<undef>)
 
 Specifies a subroutine reference that is called when the operation completes.
 
-In success, the C<callback> is called with one argument
-(C<$acked_num>), which is the number of acked statuses.
+In success, the C<callback> is called with two arguments (C<$error> and C<$acked_num>).
+C<$error> is C<undef>, and C<$acked_num> is the number of acked statuses.
 
-In failure, the C<callback> is called with two arguments,
-and the second one (C<$error>) describes the error.
+In failure, C<$error> is defined and it describes the error.
 
 =back
 
@@ -391,17 +391,17 @@ Fields in C<%args> are as follows.
 
 =over
 
-=item C<callback> => CODEREF($arrayref_of_statuses, $error) (mandatory)
+=item C<callback> => CODEREF($error, $arrayref_of_statuses) (mandatory)
 
 Specifies a subroutine reference that is called upon completion of
 fetching statuses.
 
-In success, C<callback> is called with one argument
-(C<$arrayref_of_statuses>), which is an array-ref of fetched status
+In success, C<callback> is called with two arguments
+(C<$error> and C<$arrayref_of_statuses>).
+C<$error> is C<undef>, and C<$arrayref_of_statuses> is an array-ref of fetched status
 objects.  The array-ref can be empty.
 
-In failure, C<callback> is called with two arguments,
-and the second argument (C<$error>) describes the error.
+In failure, C<$error> is defined and it describes the error.
 
 
 =item C<ack_state> => {'any', 'unacked', 'acked'} (optional, default: 'any')
@@ -442,7 +442,6 @@ the C<$timeline> uses.
 =head2 $timeline->put_statuses(%args)
 
 Inserts statuses to the C<$timeline> or updates statuses in the C<$timeline>.
-This method is a super-set of C<add_statuses()> method.
 
 Usually you should use C<add_statuses()> method to add new statuses to the C<$timeline>,
 because statuses inserted by C<put_statuses()> bypasses the C<$timeline>'s filters.
@@ -475,15 +474,14 @@ or an array-ref of status objects.
 See L<BusyBird::Status> for specification of status objects.
 
 
-=item C<callback> => CODEREF($put_num, $error) (optional, default: C<undef>)
+=item C<callback> => CODEREF($error, $put_num) (optional, default: C<undef>)
 
 Specifies a subroutine reference that is called when the operation completes.
 
-In success, C<callback> is called with one argument (C<$put_num>),
-which is the number of statuses inserted or updated.
+In success, C<callback> is called with two arguments (C<$error> and C<$put_num>).
+C<$error> is C<undef>, and C<$put_num> is the number of statuses inserted or updated.
 
-In failure, C<callback> is called with two arguments,
-and the second argument (C<$error>) describes the error.
+In failure, C<$error> is defined and it describes the error.
 
 
 =back
@@ -507,15 +505,14 @@ deleted.  If it is an array-ref of IDs, the statuses with those IDs
 are deleted.  If it is C<undef>, all statuses in the C<$timeline> are deleted.
 
 
-=item C<callback> => CODEREF($deleted_num, $error) (optional, default: C<undef>)
+=item C<callback> => CODEREF($error, $deleted_num) (optional, default: C<undef>)
 
 Specifies a subroutine reference that is called when the operation completes.
 
-In success, the C<callback> is called with one argument (C<$deleted_num>),
-which is the number of deleted statuses.
+In success, the C<callback> is called with two arguments (C<$error> and C<$deleted_num>).
+C<$error> is C<undef>, and C<$deleted_num> is the number of deleted statuses.
 
-In failure, the C<callback> is called with two arguments,
-and the second argument (C<$error>) describes the error.
+In failure, C<$error> is defined and it describes the error.
 
 
 =back
@@ -529,15 +526,14 @@ Fields in C<%args> are as follows.
 
 =over
 
-=item C<callback> => CODEREF($unacked_counts, $error) (mandatory)
+=item C<callback> => CODEREF($error, $unacked_counts) (mandatory)
 
 Specifies a subroutine reference that is called when the operation completes.
 
-In success, the C<callback> is called with one argument (C<$unacked_counts>),
-which is a hash-ref describing numbers of unacked statuses in each level.
+In success, the C<callback> is called with two arguments (C<$error> and C<$unacked_counts>).
+C<$error> is C<undef>, and C<$unacked_counts> is a hash-ref describing numbers of unacked statuses in each level.
 
-In failure, the C<callback> is called with two arguments,
-and the second argument (C<$error>) describes the error.
+In failure, C<$error> is defined and it describes the error.
 
 =back
 
@@ -594,15 +590,16 @@ If it is an array-ref,
 elements in the array-ref are treated as status objects or IDs.
 Status objects and IDs can be mixed in a single array-ref.
 
-=item C<callback> => CODEREF($contained, $not_contained, $error) (mandatory)
+=item C<callback> => CODEREF($error, $contained, $not_contained) (mandatory)
 
 Specifies a subroutine reference that is called when the check has completed.
 
-In success, C<callback> is called with two arguments (C<$contained>, C<$not_contained>).
+In success, C<callback> is called with three arguments (C<$error>, C<$contained>, C<$not_contained>).
+C<$error> is C<undef>.
 C<$contained> is an array-ref of given statuses or IDs that are contained in the C<$timeline>.
 C<$not_contained> is an array-ref of given statuses or IDs that are NOT contained in the C<$timeline>.
 
-In failure, C<$callback> is called with three arguments, and the third argument (C<$error>) describes the error.
+In failure, C<$error> is defined and it describes the error.
 
 =back
 
@@ -633,34 +630,36 @@ The argument to the C<$done> callback (C<$result>) is an array-ref of statuses t
 Add an asynchronous status filter. This is equivalent to C<< $timeline->add_filter($filter, 1) >>.
 
 
-=head2 $watcher = $timeline->watch_unacked_counts(%watch_spec, $callback->($w, $unacked_counts, $error))
+=head2 $watcher = $timeline->watch_unacked_counts($watch_spec, $callback->($error, $w, $unacked_counts))
 
 Watch updates of unacked counts in the C<$timeline>.
 
-In C<%watch_spec>, caller must describe numbers of unacked statuses (i.e. unacked counts) for each status level and/or in total.
+C<$watch_spec> is a hash-ref.
+In C<%$watch_spec>, caller must describe numbers of unacked statuses (i.e. unacked counts) for each status level and/or in total.
 If the given unacked counts is different from the current unacked counts in C<$timeline>,
 C<$callback> subroutine reference is called with the current unacked counts (C<$unacked_counts>).
 If the given unacked counts is the same as the current unacked counts, execution of C<$callback> is delayed
 until there is some difference between them.
 
-Format of C<%watch_spec> and C<%$unacked_counts> is the same as C<%$unacked_counts> returned by C<get_unacked_counts()> method.
+Format of C<%$watch_spec> and C<%$unacked_counts> is the same as C<%$unacked_counts> returned by C<get_unacked_counts()> method.
 
-In success, the C<$callback> is called with two arguments (C<$w>, C<$unacked_counts>).
+In success, the C<$callback> is called with three arguments (C<$error>, C<$w>, C<$unacked_counts>).
+C<$error> is C<undef>.
 C<$w> is an L<BusyBird::Watcher> object representing this watch.
 C<$unacked_counts> is a hash-ref describing the current unacked counts of the C<$timeline>.
 
-In failure, the C<$callback> is called with three arguments, and the third argument (C<$error>) describes the error.
+In failure, C<$error> is defined and it describes the error.
 
 The return value of this method (C<$watcher>) is an L<BusyBird::Watcher> object.
 It is the same instance as C<$w>.
 You can call C<< $watcher->cancel() >> or C<< $w->cancel() >> to cancel the watcher.
 Otherwise, the C<$callback> can be called repeatedly.
 
-Caller does not have to specify the complete set of unacked counts in C<%watch_spec>.
-Updates are checked only for levels (or 'total') that are explicitly specified in C<%watch_spec>.
-Therefore, if some updates happen in levels that are not in C<%watch_spec>, C<$callback> is never called.
+Caller does not have to specify the complete set of unacked counts in C<%$watch_spec>.
+Updates are checked only for levels (or 'total') that are explicitly specified in C<%$watch_spec>.
+Therefore, if some updates happen in levels that are not in C<%$watch_spec>, C<$callback> is never called.
 
-If C<%watch_spec> is empty, C<$callback> is always called immediately.
+If C<%$watch_spec> is empty, C<$callback> is always called immediately.
 
 
 

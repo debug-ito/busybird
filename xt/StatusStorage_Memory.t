@@ -60,9 +60,9 @@ if(-r $filepath) {
         my $callbacked = 0;
         $another_storage->get_statuses(
             timeline => 'hoge_tl', count => 'all', callback => sub {
-                my ($statuses) = @_;
+                my ($error, $statuses) = @_;
                 $callbacked = 1;
-                is(int(@_), 1, "get_statuses succeed");
+                is($error, undef, "get_statuses succeed");
                 is_deeply($statuses, [map { status($_) } reverse 1..10], "status loaded");
             }
         );
@@ -78,8 +78,8 @@ if(-r $filepath) {
     my $callbacked = 0;
     $storage->get_statuses(
         timeline => 'hoge_tl', count => 'all', callback => sub {
-            my ($statuses) = @_;
-            is(int(@_), 1, "get_statuses succeed");
+            my ($error, $statuses) = @_;
+            is($error, undef, "get_statuses succeed");
             $callbacked = 1;
             is_deeply($statuses, [map { status($_)} reverse 1..15], "statuses loaded and they replaced the current content");
         }

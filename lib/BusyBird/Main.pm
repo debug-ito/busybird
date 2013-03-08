@@ -209,7 +209,7 @@ L<BusyBird::StatusStorage::Memory> - storage in the process memory
 See each module's documentation for details.
 
 
-=head2 $watcher = $main->watch_unacked_counts($level, $watch_spec, $callback->($w, $tl_unacked_counts, $error))
+=head2 $watcher = $main->watch_unacked_counts($level, $watch_spec, $callback->($error, $w, $tl_unacked_counts))
 
 Watch updates in numbers of unacked statuses (i.e. unacked counts) in timelines.
 
@@ -231,7 +231,8 @@ You can watch multiple timelines by a single call of this method.
 C<$callback> is a subroutine reference that is called when the current unacked counts
 are different from the given unacked counts in some way.
 
-In success, C<$callback> is called with two arguments (C<$w> and C<$tl_unacked_counts>).
+In success, C<$callback> is called with three arguments (C<$error>, C<$w> and C<$tl_unacked_counts>).
+C<$error> is C<undef>.
 C<$w> is an L<BusyBird::Watcher> object representing the watch.
 C<$tl_unacked_counts> is a hash-ref describing the current unacked counts for watched timelines.
 
@@ -260,7 +261,7 @@ one of which is in level 0 and the other is in level 2.
 Note that although you can specify multiple timelines in C<$watch_spec>,
 the returned C<$tl_unacked_counts> may not contain all the specified timelines.
 
-In failure, C<$callback> is called with three arguments, and the third argument (C<$error>) describes the error.
+In failure, the argument C<$error> is defined, and it describes the error.
 
 The return value of this method (C<$watcher>) is the same instance as C<$w>.
 You can use C<< $watcher->cancel() >> or C<< $w->cancel() >> method to cancel the watch.

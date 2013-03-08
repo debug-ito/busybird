@@ -80,7 +80,7 @@ the user is to blame.
 
 =item 2.
 
-Never throw an exception but call C<callback> with C<$error> if you
+Never throw an exception but call C<callback> with C<$error> defined if you
 fail to complete the request, i.e. if you is to blame.
 
 =item 3.

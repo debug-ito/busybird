@@ -108,8 +108,9 @@ sub sync_get {
     my $callbacked = 0;
     my $statuses;
     $storage->get_statuses(%query, callback => sub {
-        is(int(@_), 1, 'operation succeed');
-        $statuses = $_[0];
+        my $error = shift;
+        $statuses = shift;
+        is($error, undef, 'operation succeed');
         $callbacked = 1;
         $unloop->();
     });
@@ -125,8 +126,8 @@ sub sync_get_unacked_counts {
     my $result;
     $storage->get_unacked_counts(
         timeline => $timeline, callback => sub {
-            my ($unacked_counts, $error) = @_;
-            is(int(@_), 1, 'operation succeed');
+            my ($error, $unacked_counts) = @_;
+            is($error, undef, 'operation succeed');
             $result = $unacked_counts;
             $callbacked = 1;
             $unloop->();
@@ -149,8 +150,8 @@ sub change_and_check {
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     my $label = "change_and_check " . ($args{label} || "") . ":";
     my $callback_func = sub {
-        my ($result) = @_;
-        is(int(@_), 1, "$label $args{mode} succeed.");
+        my ($error, $result) = @_;
+        is($error, undef, "$label $args{mode} succeed.");
         is($result, $args{exp_change},
            "$label $args{mode} changed $args{exp_change}");
         $callbacked = 1;
@@ -267,8 +268,8 @@ sub test_storage_common {
         mode => 'insert',
         statuses => status(1),
         callback => sub {
-            my ($num, $error) = @_;
-            is(int(@_), 1, 'put_statuses succeed.');
+            my ($error, $num) = @_;
+            is($error, undef, 'put_statuses succeed.');
             is($num, 1, 'put 1 status');
             $callbacked = 1;
             $unloop->();
@@ -288,8 +289,8 @@ sub test_storage_common {
         mode => 'insert',
         statuses => [map { status($_) } 2..5],
         callback => sub {
-            my ($num, $error) = @_;
-            is(int(@_), 1, 'put_statuses succeed');
+            my ($error, $num) = @_;
+            is($error, undef, 'put_statuses succeed');
             is($num, 4, 'put 4 statuses');
             $callbacked = 1;
             $unloop->();
@@ -309,8 +310,8 @@ sub test_storage_common {
         timeline => '_test_tl1',
         count => 'all',
         callback => sub {
-            my ($statuses, $error) = @_;
-            is(int(@_), 1, "get_statuses succeed");
+            my ($error, $statuses) = @_;
+            is($error, undef, "get_statuses succeed");
             test_status_id_set($statuses, [1..5], "1..5 statuses");
             foreach my $s (@$statuses) {
                 no autovivification;
@@ -328,8 +329,8 @@ sub test_storage_common {
     $storage->ack_statuses(
         timeline => '_test_tl1',
         callback => sub {
-            my ($num, $error) = @_;
-            is(int(@_), 1, "ack_statuses succeed");
+            my ($error, $num) = @_;
+            is($error, undef, "ack_statuses succeed");
             is($num, 5, "5 statuses acked.");
             $callbacked = 1;
             $unloop->();
@@ -359,8 +360,8 @@ sub test_storage_common {
         timeline => '_test_tl1',
         ids => 3,
         callback => sub {
-            my ($num, $error) = @_;
-            is(int(@_), 1, "operation succeed.");
+            my ($error, $num) = @_;
+            is($error, undef, "operation succeed.");
             is($num, 1, "1 deletion");
             $callbacked = 1;
             $unloop->();
@@ -381,8 +382,8 @@ sub test_storage_common {
         timeline => '_test_tl1',
         ids => [1, 4],
         callback => sub {
-            my ($num, $error) = @_;
-            is(int(@_), 1, 'operation succeed');
+            my ($error, $num) = @_;
+            is($error, undef, 'operation succeed');
             is($num, 2, "2 statuses deleted");
             $callbacked = 1;
             $unloop->();
@@ -403,8 +404,8 @@ sub test_storage_common {
         timeline => '_test_tl1',
         ids => undef,
         callback => sub {
-            my ($num, $error) = @_;
-            is(int(@_), 1, 'operation succeed');
+            my ($error, $num) = @_;
+            is($error, undef, 'operation succeed');
             is($num, 2, "2 statuses deleted");
             $callbacked = 1;
             $unloop->();
@@ -430,8 +431,8 @@ sub test_storage_common {
     $callbacked = 0;
     $storage->ack_statuses(
         timeline => '_test_tl1', max_id => 3, callback => sub {
-            my ($ack_count, $error) = @_;
-            is(int(@_), 1, "ack_statuses succeed");
+            my ($error, $ack_count) = @_;
+            is($error, undef, "ack_statuses succeed");
             cmp_ok($ack_count, ">=", 1, "$ack_count (>= 1) acked.");
             $callbacked = 1;
             $unloop->();
@@ -442,7 +443,7 @@ sub test_storage_common {
     on_statuses $storage, $loop, $unloop, {
         timeline => '_test_tl1', max_id => 3, count => 1
     }, sub {
-        my ($statuses, $error) = @_;
+        my ($statuses) = @_;
         test_status_id_set $statuses, [3], 'get status ID = 3';
         ok(acked($statuses->[0]), 'at least status ID = 3 is acked.');
     };
@@ -450,8 +451,8 @@ sub test_storage_common {
     $callbacked = 0;
     $storage->ack_statuses(
         timeline => '_test_tl1', max_id => 3, callback => sub {
-            my ($ack_count, $error) = @_;
-            is(int(@_), 1, 'ack_statuses succeed');
+            my ($error, $ack_count) = @_;
+            is($error, undef, 'ack_statuses succeed');
             is($ack_count, 0, 'acks nothing.');
             $callbacked = 1;
             $unloop->();
@@ -463,8 +464,8 @@ sub test_storage_common {
     $callbacked = 0;
     $storage->ack_statuses(
         timeline => '_test_tl1', max_id => undef, callback => sub {
-            my ($ack_count, $error) = @_;
-            is(int(@_), 1, 'ack_statuses succeed');
+            my ($error, $ack_count) = @_;
+            is($error, undef, 'ack_statuses succeed');
             $callbacked = 1;
             $unloop->();
         }
@@ -675,7 +676,8 @@ sub test_storage_common {
     foreach my $tl ('_test_tl1', '_test  tl2') {
         $callbacked = 0;
         $storage->delete_statuses(timeline => $tl, ids => undef, callback => sub {
-            is(int(@_), 1, "operation succeed");
+            my $error= shift;
+            is($error, undef, "operation succeed");
             $callbacked = 1;
             $unloop->();
         });
@@ -694,7 +696,8 @@ sub test_storage_ordered {
     foreach my $tl (qw(_test_tl3 _test_tl4 _test_tl5)) {
         $callbacked = 0;
         $storage->delete_statuses(timeline => $tl, ids => undef, callback => sub {
-            is(int(@_), 1, "operation succeed");
+            my $error = shift;
+            is($error, undef, "operation succeed");
             $callbacked = 1;
             $unloop->();
         });
@@ -997,7 +1000,8 @@ sub test_storage_ordered {
     my %base4 = (timeline => '_test_tl4');
     $callbacked = 0;
     $storage->delete_statuses(%base4, ids => undef, callback => sub {
-        is(int(@_), 1, "delete succeed");
+        my $error = shift;
+        is($error, undef, "delete succeed");
         $callbacked = 1;
         $unloop->();
     });
@@ -1096,6 +1100,8 @@ sub test_storage_truncation {
     my $callbacked = 0;
     my %base = (timeline => '_test_tl4');
     $storage->delete_statuses(%base, ids => undef, callback => sub {
+        my $error = shift;
+        is($error, undef, "delete succeed");
         $callbacked = 1;
         $unloop->();
     });
@@ -1186,7 +1192,8 @@ sub test_storage_put_requires_ids {
     my %base = (timeline => '_test_tl_put_requires_ids');
     my $callbacked = 0;
     $storage->delete_statuses(%base, ids => undef, callback => sub {
-        is(int(@_), 1, 'delete succeed');
+        my $error = shift;
+        is($error, undef, 'delete succeed');
         $callbacked = 1;
         $unloop->();
     });
