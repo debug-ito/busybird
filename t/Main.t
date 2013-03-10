@@ -83,10 +83,11 @@ sub test_watcher_basic {
     my $tl2 = $main->timeline('2');
     sync($tl1, 'add_statuses', statuses => [status(10)]);
     sync($tl2, 'add_statuses', statuses => [status(20)]);
-    my ($s11) = sync($storage1, 'get_statuses', timeline => 1, count => 'all');
-    my ($s12) = sync($storage1, 'get_statuses', timeline => 2, count => 'all');
-    my ($s21) = sync($storage2, 'get_statuses', timeline => 1, count => 'all');
-    my ($s22) = sync($storage2, 'get_statuses', timeline => 2, count => 'all');
+    my $error;
+    ($error, my ($s11)) = sync($storage1, 'get_statuses', timeline => 1, count => 'all');
+    ($error, my ($s12)) = sync($storage1, 'get_statuses', timeline => 2, count => 'all');
+    ($error, my ($s21)) = sync($storage2, 'get_statuses', timeline => 1, count => 'all');
+    ($error, my ($s22)) = sync($storage2, 'get_statuses', timeline => 2, count => 'all');
     test_status_id_set($s11, [10], 'status 10 is saved to storage 1');
     test_status_id_set($s12, [],   'no status in timeline 2 is saved to storage 1');
     test_status_id_set($s21, [],   'no status in timeline 1 is saved to storage 2');
@@ -127,24 +128,26 @@ sub test_watcher_basic {
         c => {total => 3, 0 => 2, -3 => 1}
     );
     foreach my $case (
-        {label => "total a", watch => ['total', {a => 0}], exp_callback => 0},
-        {label => "total a,b,c", watch => ['total', {a => 0, b => 0, c => 0}], exp_callback => 1},
-        {label => "lv.0 correct", watch => [0, {b => 1, c => 2}], exp_callback => 0},
-        {label => "lv.0 wrong", watch => [0, {b => 1, c => 1}], exp_callback => 1, exp_tls => ['c']},
-        {label => "lv.2 correct", watch => [2, {a => 0, b => 1, c => 0}], exp_callback => 0},
-        {label => "lv.2 wrong", watch => [2, {a => 4, c => 0}], exp_callback => 1, exp_tls => ['a']},
-        {label => "lv.-1 correct", watch => [-1, {b => 0, c => 0}], exp_callback => 0},
-        {label => "lv.-3 correct", watch => [-3, {a => 0, c => 1}], exp_callback => 0},
-        {label => "lv.-3 wrong", watch => [-3, {b => 4, c => 0}], exp_callback => 1},
-        {label => "junk level", watch => ['junk', {a => 0, b => 0}], exp_callback => 1}
+        {label => "total a", watch => {level => 'total', assumed => {a => 0}}, exp_callback => 0},
+        {label => "total a,b,c", watch => {level => 'total', assumed => {a => 0, b => 0, c => 0}}, exp_callback => 1},
+        {label => "level omitted callbacked", watch => {assumed => {c => 2}}, exp_callback => 1, exp_tls => ['c']},
+        {label => "level omitted not callbacked", watch => {assumed => {c => 3}}, exp_callback => 0},
+        {label => "lv.0 correct", watch => {level => 0, assumed => {b => 1, c => 2}}, exp_callback => 0},
+        {label => "lv.0 wrong", watch => {level => 0, assumed => {b => 1, c => 1}}, exp_callback => 1, exp_tls => ['c']},
+        {label => "lv.2 correct", watch => {level => 2, assumed => {a => 0, b => 1, c => 0}}, exp_callback => 0},
+        {label => "lv.2 wrong", watch => {level => 2, assumed => {a => 4, c => 0}}, exp_callback => 1, exp_tls => ['a']},
+        {label => "lv.-1 correct", watch => {level => -1, assumed => {b => 0, c => 0}}, exp_callback => 0},
+        {label => "lv.-3 correct", watch => {level => -3, assumed => {a => 0, c => 1}}, exp_callback => 0},
+        {label => "lv.-3 wrong", watch => {level => -3, assumed => {b => 4, c => 0}}, exp_callback => 1},
+        {label => "junk level", watch => {level => 'junk', assumed => {a => 0, b => 0}}, exp_callback => 1}
     ) {
         my $label = defined($case->{label}) ? $case->{label} : "";
         my $callbacked = 0;
         my $inside_w;
-        my $watcher = $main->watch_unacked_counts(@{$case->{watch}}, sub {
-            my ($w, $got_counts) = @_;
+        my $watcher = $main->watch_unacked_counts(%{$case->{watch}}, callback => sub {
+            my ($error, $w, $got_counts) = @_;
             $callbacked = 1;
-            is(int(@_), 2, "$label: watch_unacked_counts succeed");
+            is($error, undef, "$label: watch_unacked_counts succeed");
             my @keys = keys %$got_counts;
             cmp_ok(int(@keys), ">=", 1, "$label: at least 1 key obtained.");
             if(defined($case->{exp_tls})) {
@@ -177,13 +180,15 @@ sub test_watcher_basic {
             $callbacked = 0;
         };
         my $callback_func = sub {
-            my ($w, $unacked_counts) = @_;
-            is(int(@_), 2, 'watch_unacked_counts succeed');
+            my ($error, $w, $unacked_counts) = @_;
+            is($error, undef, 'watch_unacked_counts succeed');
             push(@{$results{$_}}, $unacked_counts->{$_}) foreach keys %$unacked_counts;
             $callbacked++;
         };
         $reset->();
-        my $watcher = $main->watch_unacked_counts('total', {a => 0, b => 2, c => 3}, $callback_func);
+        my $watcher = $main->watch_unacked_counts(
+            level => 'total', assumed => {a => 0, b => 2, c => 3}, callback => $callback_func
+        );
         memory_cycle_ok($main, "no cyclic ref in main");
         memory_cycle_ok($watcher, 'no cyclic ref in watcher');
         sync($main->timeline('b'), 'ack_statuses');
@@ -213,11 +218,25 @@ sub test_watcher_basic {
     my $main = BusyBird::Main->new();
     $main->default_status_storage($CREATE_STORAGE->());
     $main->timeline('a');
-    dies_ok { $main->watch_unacked_counts('total', {}, sub {}) } 'empty watch_spec raises an exception';
-    dies_ok { $main->watch_unacked_counts(0, { a => 1 }) } 'no callback raises an expcetion.';
-    dies_ok { $main->watch_unacked_counts('total', {b => 1}, sub {}) } 'watching only unknown timeline raises an exception';
+    my %a = (assumed => {a => 1});
+    foreach my $case (
+        {label => 'empty assumed', args => {level => 'total', assumed => {}, callback => sub {}}},
+        {label => 'watching only unknown timeline', args => {level => 'total', assumed => {b => 1}, callback => sub {}}},
+        {label => 'assumed str', args => {assumed => 'hoge', callback => sub {}}},
+        {label => 'no assumed', args => {callback => sub {}}},
+        {label => 'assumed undef', args => {assumed => undef, callback => sub {}}},
+        {label => "assumed array-ref", args => {assumed => [], callback => sub {}}},
+        {label => "assumed code-ref", args => {assumed => sub {}, callback => sub {}}},
+        {label => 'no callback', args => {%a}},
+        {label => 'callback undef', args => {%a, callback => undef}},
+        {label => 'callback str', args => {%a, callback => 'foobar'}},
+        {label => 'callback array-ref', args => {%a, callback => []}},
+        {label => 'callback hash-ref', args => {%a, callback => {}}},
+    ) {
+        dies_ok { $main->watch_unacked_counts(%{$case->{args}}) } "watch_unacked_counts: $case->{label}: raises an exception";
+    }
     my $w;
-    lives_ok { $w = $main->watch_unacked_counts('total', {a => 0, b => 0}, sub {}) } 'unknown timeline is ignored.';
+    lives_ok { $w = $main->watch_unacked_counts(assumed => {a => 0, b => 0}, callback => sub {}) } 'unknown timeline is ignored.';
     ok($w->active, 'watcher is active.');
     $w->cancel();
 }
