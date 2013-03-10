@@ -144,7 +144,7 @@ sub put_statuses {
         }
     }
     if($args{callback}) {
-        @_ = ($put_count);
+        @_ = (undef, $put_count);
         goto $args{callback};
     }
 }
@@ -156,7 +156,7 @@ sub delete_statuses {
     my $timeline = $args{timeline};
     if(!$self->{timelines}{$timeline}) {
         if($args{callback}) {
-            @_ = (0);
+            @_ = (undef, 0);
             goto $args{callback};
         }
         return;
@@ -186,7 +186,7 @@ sub delete_statuses {
         }
     }
     if($args{callback}) {
-        @_ = ($delete_num);
+        @_ = (undef, $delete_num);
         goto $args{callback};
     }
 }
@@ -197,7 +197,7 @@ sub get_statuses {
     croak 'callback arg is mandatory' if not defined $args{callback};
     my $timeline = $args{timeline};
     if(!$self->{timelines}{$timeline}) {
-        @_ = ([]);
+        @_ = (undef, []);
         goto $args{callback};
     }
     my $ack_state = $args{ack_state} || 'any';
@@ -212,12 +212,12 @@ sub get_statuses {
     if(defined($max_id)) {
         my $tl_index = $self->_index($timeline, $max_id);
         if($tl_index < 0) {
-            @_ = ([]);
+            @_ = (undef, []);
             goto $args{callback};
         }
         my $s = $self->{timelines}{$timeline}[$tl_index];
         if(!$ack_test->($s)) {
-            @_ = ([]);
+            @_ = (undef, []);
             goto $args{callback};
         }
         $start_index = $tl_index;
@@ -237,7 +237,7 @@ sub get_statuses {
         dclone($self->{timelines}{$timeline}[$_])
     } @indice[0 .. ($count-1)] ];
 
-    @_ = ($result_statuses);
+    @_ = (undef, $result_statuses);
     goto $args{callback};
 }
 
@@ -247,7 +247,7 @@ sub ack_statuses {
     my $timeline = $args{timeline};
     my $callback = $args{callback} || sub {};
     if(!$self->{timelines}{$timeline}) {
-        @_ = (0);
+        @_ = (undef, 0);
         goto $callback;
     }
     my $ack_str = BusyBird::DateTime::Format->format_datetime(
@@ -258,25 +258,25 @@ sub ack_statuses {
         max_id => $args{max_id}, count => 'all',
         ack_state => 'unacked',
         callback => sub {
-            my ($statuses, $error) = @_;
-            if(int(@_) != 1) {
-                @_ = (undef, "get error: $error");
+            my ($error, $statuses) = @_;
+            if(defined($error)) {
+                @_ = ("get error: $error");
                 goto $callback;
             }
             if(@$statuses == 0) {
-                @_ = (0);
+                @_ = (undef, 0);
                 goto $callback;
             }
             $_->{busybird}{acked_at} = $ack_str foreach @$statuses;
             $self->put_statuses(
                 timeline => $args{timeline}, mode => 'update',
                 statuses => $statuses, callback => sub {
-                    my ($changed, $error) = @_;
-                    if(int(@_) != 1) {
-                        @_ = (undef, "put error: $error");
+                    my ($error, $changed) = @_;
+                    if(defined($error)) {
+                        @_ = ("put error: $error");
                         goto $callback;
                     }
-                    @_ = ($changed);
+                    @_ = (undef, $changed);
                     goto $callback;
                 }
             );
@@ -290,7 +290,7 @@ sub get_unacked_counts {
     croak 'callback arg is mandatory' if not defined $args{callback};
     my $timeline = $args{timeline};
     if(!$self->{timelines}{$timeline}) {
-        @_ = ({total => 0});
+        @_ = (undef, {total => 0});
         goto $args{callback};
     }
     my @statuses = grep {
@@ -304,7 +304,7 @@ sub get_unacked_counts {
         };
         $count{$level}++;
     }
-    @_ = (\%count);
+    @_ = (undef, \%count);
     goto $args{callback};
 }
 
