@@ -27,14 +27,16 @@ our $CREATE_STORAGE;
 sub test_content {
     my ($timeline, $args_ref, $exp, $msg) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
-    my ($statuses) = sync($timeline, 'get_statuses', %$args_ref);
+    my ($error, $statuses) = sync($timeline, 'get_statuses', %$args_ref);
+    is($error, undef, "get_statuses succeed");
     test_status_id_list($statuses, $exp, $msg);
 }
 
 sub test_unacked_counts {
     my ($timeline, $exp, $msg) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
-    my ($got) = sync($timeline, 'get_unacked_counts');
+    my ($error, $got) = sync($timeline, 'get_unacked_counts');
+    is($error, undef, "get_unacked_counts succeed");
     is_deeply($got, $exp, $msg);
 }
 
@@ -44,12 +46,12 @@ sub test_error_back {
     my $timeline = $args{timeline};
     my $method = $args{method};
     my $args = $args{args};
-    my $error_index = $args{error_index};
+    ## my $error_index = $args{error_index};
     my $exp_error = $args{exp_error};
     my $label = $args{label} || '';
-    my @result = sync($timeline, $method, %$args);
-    cmp_ok(int(@result), ">", $error_index, "$label: error expected.");
-    like($result[$error_index], $exp_error, "$label: error message is as expected.");
+    my ($got_error) = sync($timeline, $method, %$args);
+    ok(defined($got_error), "$label: error expected.");
+    like($got_error, $exp_error, "$label: error message is as expected.");
 }
 
 sub filter {
@@ -110,20 +112,22 @@ sub test_timeline {
         is($timeline->name(), 'test', 'name OK');
         test_content($timeline, {count => 'all'}, [], 'status is empty');
         test_unacked_counts($timeline, {total => 0});
-        my ($ret) = sync($timeline, 'add_statuses', statuses => [map {status($_)} (1..10)]);
+        my ($error, $ret) = sync($timeline, 'add_statuses', statuses => [map {status($_)} (1..10)]);
+        is($error, undef, 'add_statuses succeed');
         is($ret, 10, '10 added');
         test_content($timeline, {count => 'all', ack_state => 'unacked'},
                      [reverse 1..10], '10 unacked');
         test_content($timeline, {count => 'all', ack_state => 'acked'}, [], '0 acked');
         test_unacked_counts($timeline, {total => 10, 0 => 10});
-        ($ret) = sync($timeline, 'ack_statuses');
+        ($error, $ret) = sync($timeline, 'ack_statuses');
+        is($error, undef, 'ack_statuses succeed');
         is($ret, 10, '10 acked');
         test_content($timeline, {count => 'all', ack_state => 'unacked'}, [], '0 unacked');
         test_content($timeline, {count => 'all', ack_state => 'acked'}, [reverse 1..10], '10 acked');
         my $callbacked = 0;
         $timeline->add([map { status($_) } 11..20], sub {
-            my ($added_num, $error) = @_;
-            is(int(@_), 1, 'add succeed');
+            my ($error, $added_num) = @_;
+            is($error, undef, 'add succeed');
             is($added_num, 10, '10 added');
             $callbacked = 1;
             $UNLOOP->();
@@ -135,46 +139,56 @@ sub test_timeline {
         test_content($timeline, {count => 10, ack_state => 'any', max_id => 15}, [reverse 6..15], 'get: count and max_id query');
         test_content($timeline, {count => 20, ack_state => 'acked', max_id => 12}, [], 'get: conflicting ack_state and max_id');
         test_content($timeline, {count => 10, ack_state => 'unacked', max_id => 12}, [reverse 11,12], 'get: only unacked');
-        ($ret) = sync($timeline, 'ack_statuses', max_id => 15);
+        ($error, $ret) = sync($timeline, 'ack_statuses', max_id => 15);
+        is($error, undef, "ack_statuses succeed");
         is($ret, 5, '5 acked');
         test_content($timeline, {count => 'all', ack_state => 'unacked'}, [reverse 16..20], '5 unacked');
         test_unacked_counts($timeline, {total => 5, 0 => 5});
-        ($ret) = sync($timeline, 'delete_statuses', ids => 18);
+        ($error, $ret) = sync($timeline, 'delete_statuses', ids => 18);
+        is($error, undef, "delete_statuses succeed");
         is($ret, 1, '1 deleted');
         test_content($timeline, {count => 'all', ack_state => 'unacked'}, [reverse 16,17,19,20], '4 unacked');
         test_unacked_counts($timeline, {total => 4, 0 => 4});
-        ($ret) = sync($timeline, 'delete_statuses', ids => [15,16,17,18]);
+        ($error, $ret) = sync($timeline, 'delete_statuses', ids => [15,16,17,18]);
+        is($error, undef, "delete_statuses succeed");
         is($ret, 3, '3 deleted');
         test_content($timeline, {count => 'all'}, [reverse 1..14, 19..20], '14 acked, 2 unacked');
-        ($ret) = sync($timeline, 'put_statuses', mode => 'insert', statuses => [map {status($_)} 19..22]);
+        ($error, $ret) = sync($timeline, 'put_statuses', mode => 'insert', statuses => [map {status($_)} 19..22]);
+        is($error, undef, "put_statuses succeed");
         is($ret, 2, '2 inserted');
         test_content($timeline, {count => 'all'}, [reverse 1..14, 19..22], '14 acked, 4 unacked');
         test_unacked_counts($timeline, {total => 4, 0 => 4});
-        ($ret) = sync($timeline, 'put_statuses', mode => 'update', statuses => [map {status($_, 1)} 13..17]);
+        ($error, $ret) = sync($timeline, 'put_statuses', mode => 'update', statuses => [map {status($_, 1)} 13..17]);
+        is($error, undef, "put_statuses succeed");
         is($ret, 2, '2 updated');
         test_content($timeline, {count => 'all', ack_state => "unacked"}, [reverse 13,14,19..22], '6 unacked');
         test_content($timeline, {count => 'all', ack_state => "acked"}, [reverse 1..12], '12 acked');
         test_unacked_counts($timeline, {total => 6, 1 => 2, 0 => 4});
-        ($ret) = sync($timeline, 'put_statuses', mode => 'upsert', statuses => [map {status($_, 2)} 11..18]);
+        ($error, $ret) = sync($timeline, 'put_statuses', mode => 'upsert', statuses => [map {status($_, 2)} 11..18]);
+        is($error, undef, "put_statuses succeed");
         is($ret, 8, '8 upserted');
         test_content($timeline, {count => 'all', ack_state => "unacked"}, [reverse 11..22], '12 unacked');
         test_content($timeline, {count => 'all', ack_state => "acked"}, [reverse 1..10], '10 acked');
         test_unacked_counts($timeline, {total => 12, 2 => 8, 0 => 4});
-        my ($con, $ncon) = sync($timeline, 'contains', query => 5);
+        ($error, my ($con, $ncon)) = sync($timeline, 'contains', query => 5);
+        is($error, undef, "contains succeed");
         is_deeply($con, [5], '5 is contained');
         is_deeply($ncon, [], '5 is contained');
-        ($con, $ncon) = sync($timeline, 'contains', query => status(30));
+        ($error, $con, $ncon) = sync($timeline, 'contains', query => status(30));
+        is($error, undef, "contains succeed");
         is_deeply($con, [], '30 is not contained');
         is_deeply($ncon, [status(30)], '30 is not contained');
-        ($con, $ncon) = sync($timeline, 'contains', query => [
+        ($error, $con, $ncon) = sync($timeline, 'contains', query => [
             (-5 .. 5), (reverse map {status($_)} 20..25)
         ]);
+        is($error, undef, "contains succeed");
         is_deeply($con, [1..5, (reverse map {status($_)} 20..22)], 'contained IDs and statuses OK');
         is_deeply($ncon, [-5..0, (reverse map {status($_)} 23..25)], 'not contained IDs and statuses OK');
-        ($ret) = sync($timeline, 'delete_statuses', ids => undef);
+        ($error, $ret) = sync($timeline, 'delete_statuses', ids => undef);
+        is($error, undef, "delete_statuses succeed");
+        is($ret, 22, 'delete all');
         dies_ok { $timeline->contains(callback => sub {}) } 'contains: query is missing';
         dies_ok { $timeline->contains(query => 5) } 'contains: callback is missing';
-        is($ret, 22, 'delete all');
         test_content($timeline, {count => 'all'}, [], 'all deleted');
         test_unacked_counts($timeline, {total => 0});
     }
@@ -186,26 +200,25 @@ sub test_timeline {
             $mock->mock($method, sub {
                 my ($self, %args) = @_;
                 if(defined($args{callback})) {
-                    $args{callback}->(undef, "error: $method");
+                    $args{callback}->("error: $method");
                 }
             });
         }
         my $timeline = new_ok($CLASS, [name => 'test', storage => $mock]);
         my %t = (timeline => $timeline);
         test_error_back(%t, method => 'get_statuses', args => {count => 'all'}, label => "get",
-                        error_index => 1, exp_error => qr/get_statuses/);
+                        exp_error => qr/get_statuses/);
         test_error_back(%t, method => 'put_statuses',
                         args => {mode => 'insert', statuses => status(1)},
-                        label => "put",
-                        error_index => 1, exp_error => qr/put_statuses/);
+                        label => "put", exp_error => qr/put_statuses/);
         test_error_back(%t, method => 'ack_statuses', args => {}, label => "ack",
-                        error_index => 1, exp_error => qr/ack_statuses/);
+                        exp_error => qr/ack_statuses/);
         test_error_back(%t, method => 'delete_statuses', args => {ids => undef}, label => "delete",
-                        error_index => 1, exp_error => qr/delete_statuses/);
+                        exp_error => qr/delete_statuses/);
         test_error_back(%t, method => 'get_unacked_counts', args => {}, label => "get_unacked_counts",
-                        error_index => 1, exp_error => qr/get_unacked_counts/);
+                        exp_error => qr/get_unacked_counts/);
         test_error_back(%t, method => 'contains', args => {query => [10,11,12]}, label => "contains",
-                        error_index => 2, exp_error => qr/get_statuses/);
+                        exp_error => qr/get_statuses/);
     }
 
     {
@@ -244,7 +257,8 @@ sub test_timeline {
                 return $statuses;
             });
             sync($timeline, 'add_statuses', statuses => [status(1)]);
-            my ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+            my ($error, $statuses) = sync($timeline, 'get_statuses', count => 'all');
+            is($error, undef, "get_statuses succeed");
             test_status_id_list($statuses, [1], 'IDs OK');
             is_deeply($statuses->[0]{counter}, [1], "filtered.");
             filter($timeline, $mode, sub {
@@ -257,31 +271,39 @@ sub test_timeline {
             });
             my $callbacked = 0;
             $timeline->add([map {status($_)} (2,3)], sub {
+                my ($error) = @_;
+                is($error, undef, "add succeed");
                 $callbacked = 1;
                 $UNLOOP->();
             });
             $LOOP->();
             ok($callbacked, "callbacked");
             memory_cycle_ok($timeline, 'timeline does not have cycle-ref.');
-            ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+            ($error, $statuses) = sync($timeline, 'get_statuses', count => 'all');
+            is($error, undef, "get_statuses succeed");
             test_status_id_list($statuses, [3,2,1], "IDs OK");
             is_deeply($statuses->[0]{counter}, [1,2], "ID 3, filter OK");
             is_deeply($statuses->[1]{counter}, [1,2], 'ID 2, filter OK');
             is_deeply($statuses->[2]{counter}, [1], 'ID 1 is not changed.');
             filter($timeline, $mode, sub { [] }); ## null filter
-            my ($ret) = sync($timeline, 'add_statuses', statuses => [map {status($_)} 11..30]);
+            ($error, my ($ret)) = sync($timeline, 'add_statuses', statuses => [map {status($_)} 11..30]);
+            is($error, undef, "add_statuses succeed");
             is($ret, 0, 'nothing added because of the null filter');
-            ($ret) = sync($timeline, 'put_statuses', mode => 'insert', statuses => status(4));
+            ($error, $ret) = sync($timeline, 'put_statuses', mode => 'insert', statuses => status(4));
+            is($error, undef, "put_statuses succeed");
             is($ret, 1, 'put_statuses bypasses the filter');
-            ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+            ($error, $statuses) = sync($timeline, 'get_statuses', count => 'all');
+            is($error, undef, "get_statuses succeed");
             test_status_id_list($statuses, [reverse 1..4], "IDs OK");
             ok(!exists($statuses->[0]{counter}), 'ID 4 does not have counter');
             is_deeply($statuses->[1]{counter}, [1,2], "ID 3 is not changed");
             is_deeply($statuses->[2]{counter}, [1,2], 'ID 2 is not changed');
             is_deeply($statuses->[3]{counter}, [1],   'ID 1 is not changed');
-            ($ret) = sync($timeline, 'put_statuses', mode => 'update', statuses => [map {status($_)} (1..3)]);
+            ($error, $ret) = sync($timeline, 'put_statuses', mode => 'update', statuses => [map {status($_)} (1..3)]);
+            is($error, undef, "put_statuses succeed");
             is($ret, 3, '3 updated without interference from filters');
-            ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+            ($error, $statuses) = sync($timeline, 'get_statuses', count => 'all');
+            is($error, undef, "get_statuses succeed");
             test_status_id_list($statuses, [reverse 1..4], "IDs OK");
             ok(!exists($statuses->[0]{counter}), 'ID 4 does not have counter');
             ok(!exists($statuses->[1]{counter}), 'ID 3 is updated');
@@ -302,10 +324,12 @@ sub test_timeline {
                     storage => $CREATE_STORAGE->(),
                 ]);
                 filter($timeline, $mode, sub { return $case->{junk} });
-                ($ret) = sync($timeline, 'add_statuses', statuses => [status(1)]);
-                is($ret, 1, "add succeed");
+                ($error, $ret) = sync($timeline, 'add_statuses', statuses => [status(1)]);
+                is($error, undef, "add_statuses succeed");
+                is($ret, 1, "add 1 status");
                 cmp_ok(int(grep { $_->[0] =~ /warn/i } @log), '>=', 1, 'at least 1 warning is logged.');
-                ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+                ($error, $statuses) = sync($timeline, 'get_statuses', count => 'all');
+                is($error, undef, "get_statuses succeed");
                 test_status_id_list($statuses, [1], "status OK");
             }
         }
@@ -362,7 +386,8 @@ sub test_timeline {
         is_deeply($trigger_counts->(), [0, 0], 'no more status');
         is_deeply(\@done, [1, 2], "all complete");
         memory_cycle_ok($timeline, "there is no cyclic refs once it completes all addtions.");
-        my ($statuses) = sync($timeline, 'get_statuses', count => 'all');
+        my ($error, $statuses) = sync($timeline, 'get_statuses', count => 'all');
+        is($error, undef, "get_statuses succeed");
         test_status_id_list($statuses, [2, 1], "IDs OK");
         foreach my $s (@$statuses) {
             is_deeply($s->{counter}, [1,2,3,4], "ID $s->{id} counter OK");
@@ -381,7 +406,8 @@ sub test_timeline {
         $timeline->add([$s], sub { $UNLOOP->() });
         $LOOP->();
         ok(!defined($s->{added_field}), "original status does not have added_field.");
-        my ($results) = sync($timeline, 'get_statuses', count => 'all');
+        my ($error, $results) = sync($timeline, 'get_statuses', count => 'all');
+        is($error, undef, "get_statuses succeed");
         test_status_id_list($results, [1], "status ID ok");
         is($results->[0]{added_field}, 1, "added_field ok");
     }
@@ -397,9 +423,9 @@ sub test_timeline {
             my $callbacked = 0;
             my $label = $case->{label};
             my $inside_w;
-            my $watcher = $timeline->watch_unacked_counts(%{$case->{watch}}, sub {
-                my ($w, $unacked_counts) = @_;
-                is(int(@_), 2, "$label: succeed.");
+            my $watcher = $timeline->watch_unacked_counts(assumed => $case->{watch}, callback => sub {
+                my ($error, $w, $unacked_counts) = @_;
+                is($error, undef, "$label: succeed.");
                 $callbacked = 1;
                 is_deeply($unacked_counts, $exp_current_unacked_counts, "$label: unacked counts OK");
                 $w->cancel();
@@ -469,9 +495,9 @@ sub test_timeline {
         my $result;
         my $watch = sub {
             my (%watch_spec) = @_;
-            $timeline->watch_unacked_counts(%watch_spec, sub {
-                my ($w, $unacked_counts) = @_;
-                is(int(@_), 2, "watch_unacked_counts succeed.");
+            $timeline->watch_unacked_counts(assumed => \%watch_spec, callback => sub {
+                my ($error, $w, $unacked_counts) = @_;
+                is($error, undef, "watch_unacked_counts succeed.");
                 $result = $unacked_counts;
                 $callbacked = 1;
                 $w->cancel();
@@ -539,7 +565,7 @@ sub test_timeline {
         ok(!$callbacked, 'not callbacked yet');
         sync($timeline, "delete_statuses", ids => 3);
         sync($timeline, 'get_statuses', count => 1); ## go into event loop
-        ok($callbacked, "clalbacked");
+        ok($callbacked, "callbacked");
         is_deeply($result, {total => 2, 1 => 2}, "result OK");
 
     }
@@ -553,24 +579,27 @@ sub test_timeline {
         my $nowstring  = BusyBird::DateTime::Format->format_datetime(
             DateTime->now(time_zone => 'UTC')
         );
-        my $watcher = $timeline->watch_unacked_counts(total => 0, sub {
-            my ($w, $unacked_counts) = @_;
-            is(int(@_), 2, "watch_unacked_counts succeed");
+        my $watcher = $timeline->watch_unacked_counts(assumed => {total => 0}, callback => sub {
+            my ($error, $w, $unacked_counts) = @_;
+            is($error, undef, "watch_unacked_counts succeed");
             $callbacked = 1;
             $result = $unacked_counts;
             $w->cancel();
         });
         ok(!$callbacked, 'not callbacked yet');
         my @statuses = map { my $s = status($_); $s->{busybird}{acked_at} = $nowstring; $s } 1..3;
-        my ($put_result) = sync($timeline, 'put_statuses', mode => 'insert', statuses => \@statuses);
+        my ($error, $put_result) = sync($timeline, 'put_statuses', mode => 'insert', statuses => \@statuses);
+        is($error, undef, "put_statuses succeed");
         sync($timeline, 'get_statuses', count => 1); ## go into event loop
         is($put_result, 3, "3 statuses put");
         ok(!$callbacked, 'not callbacked because the inserted statuses are already acked.');
-        my ($add_result) = sync($timeline, 'add_statuses', statuses => [status(5)]);
+        ($error, my ($add_result)) = sync($timeline, 'add_statuses', statuses => [status(5)]);
+        is($error, undef, "add_statuses succeed");
         sync($timeline, 'get_statuses', count => 1); ## go into event loop
         is($add_result, 0, '0 status added, because of null filter');
         ok(!$callbacked, 'not callbacked because of null filter');
-        ($put_result) = sync($timeline, 'put_statuses', mode => 'update', statuses => status(2,5));
+        ($error, $put_result) = sync($timeline, 'put_statuses', mode => 'update', statuses => status(2,5));
+        is($error, undef, "put_statuses succeed");
         sync($timeline, 'get_statuses', count => 1); ## go into event loop
         is($put_result, 1, '1 status updated');
         ok($callbacked, 'callbacked');
@@ -584,24 +613,27 @@ sub test_timeline {
         my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
         sync($timeline, 'get_statuses', count => 1); ## go into event loop
         my $callbacked = 0;
-        my $watcher = $timeline->watch_unacked_counts(total => 1, sub {
-            my ($w, $unacked_counts) = @_;
-            is(int(@_), 2, "watch_unacked_counts succeed");
+        my $watcher = $timeline->watch_unacked_counts(assumed => {total => 1}, callback => sub {
+            my ($error, $w, $unacked_counts) = @_;
+            is($error, undef, "watch_unacked_counts succeed");
             $callbacked++;
         });
         is($callbacked, 1, '1 callbacked');
         ok($watcher->active, 'watcher still active');
-        my ($add_count) = sync($timeline, 'add_statuses', statuses => [status(1)]);
+        my ($error, $add_count) = sync($timeline, 'add_statuses', statuses => [status(1)]);
+        is($error, undef, "add_statuses succeed");
         sync($timeline, 'get_statuses', count => 1); ## go into event loop
         is($add_count, 1, '1 added');
         is($callbacked, 1, 'no callback at this addition');
-        ($add_count) = sync($timeline, 'add_statuses', statuses => [status(2)]);
+        ($error, $add_count) = sync($timeline, 'add_statuses', statuses => [status(2)]);
+        is($error, undef, "add_statuses succeed");
         sync($timeline, 'get_statuses', count => 1); ## go into event loop
         is($add_count, 1, '1 added');
         is($callbacked, 2, 'callbacked again');
         $watcher->cancel;
         memory_cycle_ok($timeline, 'no cyclic ref in timeline');
-        ($add_count) = sync($timeline, 'add_statuses', statuses => [status(3)]);
+        ($error, $add_count) = sync($timeline, 'add_statuses', statuses => [status(3)]);
+        is($error, undef, "add_statuses succeed");
         sync($timeline, 'get_statuses', count => 1); ## go into event loop
         is($add_count, 1, '1 added');
         is($callbacked, 2, 'not callbacked anymore');
@@ -617,14 +649,14 @@ sub test_timeline {
         my @watchers = ();
         my @results = ();
         foreach my $i (0..2) {
-            my $watcher = $timeline->watch_unacked_counts(total => 0, sub {
+            my $watcher = $timeline->watch_unacked_counts(assumed => {total => 0}, callback => sub {
                 push(@results, [$i, @_]);
             });
             ok($watcher->active, "watcher $i is active.");
             push(@watchers, $watcher);
         }
         {
-            my $new_watcher = $timeline->watch_unacked_counts(2 => 0, sub {
+            my $new_watcher = $timeline->watch_unacked_counts(assumed => {2 => 0}, callback => sub {
                 push(@results, [3, @_]);
             });
             ok($new_watcher->active, "watcher 3 is active");
@@ -633,7 +665,7 @@ sub test_timeline {
         ok(!$watchers[0]->active, 'now watcher 0 is inactive because it is cancelled by the quota');
         is(int(@results), 1, "got 1 result");
         is($results[0][0], 0, '... it is from watcher 0');
-        is(int(@{$results[0]}), 4, '... it indicates error');
+        ok(defined($results[0][1]), '... it indicates error');
     
         @results = ();
         sync($timeline, 'add_statuses', statuses => [status(0)]);
@@ -641,53 +673,53 @@ sub test_timeline {
         is(int(@results), 2, 'got 2 results');
         test_sets([$results[0][0], $results[1][0]], [1,2], "... they are from watchers 1,2");
         foreach my $r (@results) {
-            is(int(@$r), 3, "... callback succeed");
-            is_deeply($r->[2], {total => 1, 0 => 1}, "... unacked counts OK");
+            is($r->[1], undef, "... callback succeed");
+            is_deeply($r->[3], {total => 1, 0 => 1}, "... unacked counts OK");
         }
         $_->cancel foreach @watchers[1,2];
 
         @results = ();
         {
-            my $watcher = $timeline->watch_unacked_counts(2 => 0, sub { push(@results, [4, @_]) });
+            my $watcher = $timeline->watch_unacked_counts(assumed => {2 => 0}, callback => sub { push(@results, [4, @_]) });
             ok($watcher->active, 'watcher 4 is active');
             push(@watchers, $watcher);
         }
         is(int(@results), 0, 'no watcher fires yet');
         foreach my $lv0_count (1..4) {
             @results = ();
-            my $watcher = $timeline->watch_unacked_counts(0 => $lv0_count, sub { push(@results, [-1, @_]) });
+            my $watcher = $timeline->watch_unacked_counts(assumed => {0 => $lv0_count}, callback => sub { push(@results, [-1, @_]) });
             is(int(@results), 0, "lv0_count = $lv0_count: no watcher fired");
             sync($timeline, 'add_statuses', statuses => [status($lv0_count)]);
             sync($timeline, 'get_statuses', count => 1); ## go into event loop
             is(int(@results), 1, "lv0_count != $lv0_count: 1 watcher fired");
             is($results[0][0], -1, "... and it's the ephemeral watcher");
-            is(int(@{$results[0]}), 3, "... and it succeeded");
-            is_deeply($results[0][2], {total => $lv0_count + 1, 0 => $lv0_count + 1}, "... unacked counts OK");
+            is($results[0][1], undef, "... and it succeeded");
+            is_deeply($results[0][3], {total => $lv0_count + 1, 0 => $lv0_count + 1}, "... unacked counts OK");
             $watcher->cancel();
         }
 
         @results = ();
         {
-            my $watcher = $timeline->watch_unacked_counts(0 => 5, sub { push(@results, [5, @_]) });
+            my $watcher = $timeline->watch_unacked_counts(assumed => {0 => 5}, callback => sub { push(@results, [5, @_]) });
             push(@watchers, $watcher);
             is(int(@results), 0, "watcher 5 added. no watcher fired.");
 
-            $watcher = $timeline->watch_unacked_counts(total => 0, sub { push(@results, [-1, @_]); $_[0]->cancel() });
+            $watcher = $timeline->watch_unacked_counts(assumed => {total => 0}, callback => sub { push(@results, [-1, @_]); $_[0]->cancel() });
             ok(!$watcher->active, "the ephemeral watcher immediately fired and became inactive.");
             is(int(@results), 1, "... in this case, the quota does nothing to pending watchers.");
             is($results[0][0], -1, "... only the ephemeral watcher fired.");
-            is(int(@{$results[0]}), 3, "... and it's success");
-            is_deeply($results[0][2], {total => 5, 0 => 5}, "... unacked counts OK");
+            is($results[0][1], undef, "... and it's success");
+            is_deeply($results[0][3], {total => 5, 0 => 5}, "... unacked counts OK");
         }
 
         @results = ();
         {
-            my $watcher = $timeline->watch_unacked_counts(total => 5, sub { push(@results, [6, @_]); $_[0]->cancel() });
+            my $watcher = $timeline->watch_unacked_counts(assumed => {total => 5}, callback => sub { push(@results, [6, @_]); $_[0]->cancel() });
             ok($watcher->active, "watcher 6 is active.");
             push(@watchers, $watcher);
             is(int(@results), 1, "1 watcher is cancelled by the quota because it is too old.");
-            ok($results[0][0] == 3 || $results[0][0] == 4, "the canceled is watcher 3 or 4. They are both too old, but either one of them is canceled.");
-            is(int(@{$results[0]}), 4, "the result indicates error");
+            ok($results[0][0] == 3 || $results[0][0] == 4, "the canceled is watcher 3 or 4. They are both too old, so either one of them is canceled.");
+            ok(defined($results[0][1]), "the result indicates error");
             my $canceled = $results[0][0];
             my $not_canceled = $canceled == 3 ? 4 : 3;
             ok(!$watchers[$canceled]->active, "watcher $canceled is inactive");
@@ -714,9 +746,9 @@ sub test_timeline {
         test_content($timeline, {count => 'all', ack_state => 'unacked'}, [3,2], 'unacked statuses OK');
     
         my $callbacked = 0;
-        $timeline->watch_unacked_counts(total => 0, sub {
-            my ($w, $unacked_counts) = @_;
-            is(int(@_), 2, 'watch succeed');
+        $timeline->watch_unacked_counts(assumed => {total => 0}, callback => sub {
+            my ($error, $w, $unacked_counts) = @_;
+            is($error, undef, 'watch succeed');
             is_deeply($unacked_counts, { total => 2, 1 => 1, 2 => 1 }, 'unacked_counts OK');
             $callbacked = 1;
             $w->cancel();
@@ -724,6 +756,25 @@ sub test_timeline {
         ok($callbacked, 'callbacked');
 
         test_unacked_counts($timeline, { total => 2, 1 => 1, 2 => 1}, 'unacked_counts OK');
+    }
+    {
+        note('--- junk to watch_unacked_counts');
+        my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
+        foreach my $assumed_case (
+            {label => "omit"}, {label => "undef", arg => undef}, {label => "string", arg => "hoge"},
+            {label => "array-ref", arg => []}, {label => "code-ref", arg => sub {}}
+        ) {
+            foreach my $callback_case (
+                {label => "omit"}, {label => "undef", arg => undef}, {label => "string", arg => "foobar"},
+                {label => "array-ref", arg => []}, {label => "hash-ref", arg => {}}
+            ) {
+                my %args = ();
+                $args{assumed} = $assumed_case->{arg} if exists $assumed_case->{arg};
+                $args{callback} = $callback_case->{arg} if exists $callback_case->{arg};
+                my $label = "assumed: $assumed_case->{label}, callback: $callback_case->{label}";
+                dies_ok { $timeline->watch_unacked_counts(%args) } "$label: watch_unacked_counts throws an exception.";
+            }
+        }
     }
 }
 

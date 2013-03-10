@@ -630,20 +630,34 @@ The argument to the C<$done> callback (C<$result>) is an array-ref of statuses t
 Add an asynchronous status filter. This is equivalent to C<< $timeline->add_filter($filter, 1) >>.
 
 
-=head2 $watcher = $timeline->watch_unacked_counts($watch_spec, $callback->($error, $w, $unacked_counts))
+=head2 $watcher = $timeline->watch_unacked_counts(%args)
 
 Watch updates of unacked counts in the C<$timeline>.
 
-C<$watch_spec> is a hash-ref.
-In C<%$watch_spec>, caller must describe numbers of unacked statuses (i.e. unacked counts) for each status level and/or in total.
-If the given unacked counts is different from the current unacked counts in C<$timeline>,
-C<$callback> subroutine reference is called with the current unacked counts (C<$unacked_counts>).
-If the given unacked counts is the same as the current unacked counts, execution of C<$callback> is delayed
+Fields in C<%args> are as follows.
+
+=over
+
+=item C<assumed> => HASHREF (mandatory)
+
+Specifies the unacked counts that the caller assumes.
+
+=item C<callback> => CODEREF ($error, $w, $unacked_counts) (mandatory)
+
+Specifies the callback function that is called when the unacked counts given in C<assumed> argument
+are different from the current unacked counts.
+
+=back
+
+In C<assumed> argument, caller must describe numbers of unacked statuses (i.e. unacked counts) for each status level and/or in total.
+If the assumed unacked counts is different from the current unacked counts in C<$timeline>,
+C<callback> subroutine reference is called with the current unacked counts (C<$unacked_counts>).
+If the assumed unacked counts is the same as the current unacked counts, execution of C<callback> is delayed
 until there is some difference between them.
 
-Format of C<%$watch_spec> and C<%$unacked_counts> is the same as C<%$unacked_counts> returned by C<get_unacked_counts()> method.
+Format of C<assumed> argument and C<%$unacked_counts> is the same as C<%$unacked_counts> returned by C<get_unacked_counts()> method.
 
-In success, the C<$callback> is called with three arguments (C<$error>, C<$w>, C<$unacked_counts>).
+In success, the C<callback> is called with three arguments (C<$error>, C<$w>, C<$unacked_counts>).
 C<$error> is C<undef>.
 C<$w> is an L<BusyBird::Watcher> object representing this watch.
 C<$unacked_counts> is a hash-ref describing the current unacked counts of the C<$timeline>.
@@ -651,15 +665,15 @@ C<$unacked_counts> is a hash-ref describing the current unacked counts of the C<
 In failure, C<$error> is defined and it describes the error.
 
 The return value of this method (C<$watcher>) is an L<BusyBird::Watcher> object.
-It is the same instance as C<$w>.
+It is the same instance as C<$w> given in the C<callback> function.
 You can call C<< $watcher->cancel() >> or C<< $w->cancel() >> to cancel the watcher.
-Otherwise, the C<$callback> can be called repeatedly.
+Otherwise, the C<callback> function can be called repeatedly.
 
-Caller does not have to specify the complete set of unacked counts in C<%$watch_spec>.
-Updates are checked only for levels (or 'total') that are explicitly specified in C<%$watch_spec>.
-Therefore, if some updates happen in levels that are not in C<%$watch_spec>, C<$callback> is never called.
+Caller does not have to specify the complete set of unacked counts in C<assumed> argument.
+Updates are checked only for levels (or 'total') that are explicitly specified in C<assumed>.
+Therefore, if some updates happen in levels that are not in C<assumed>, C<callback> is never called.
 
-If C<%$watch_spec> is empty, C<$callback> is always called immediately.
+If C<assumed> is an empty hash-ref, C<callback> is always called immediately.
 
 
 
