@@ -46,7 +46,7 @@ sub create_erroneous_status_storage {
             my ($self, %args) = @_;
             my $cb = $args{callback};
             if($cb) {
-                $cb->(undef, "$method reports error.");
+                $cb->("$method reports error.");
             }
         });
     }

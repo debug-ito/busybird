@@ -115,8 +115,8 @@ sub _handle_tl_get_statuses {
             $timeline->get_statuses(
                 count => $count, ack_state => $ack_state, max_id => $max_id,
                 callback => sub {
-                    my ($statuses, $error) = @_;
-                    if(int(@_) >= 2) {
+                    my ($error, $statuses) = @_;
+                    if(defined $error) {
                         $responder->(_json_response(500, 0, error => "$error"));
                         return;
                     }
@@ -143,8 +143,8 @@ sub _handle_tl_post_statuses {
             $timeline->add_statuses(
                 statuses => $posted_obj,
                 callback => sub {
-                    my ($added_num, $error) = @_;
-                    if(int(@_) >= 2) {
+                    my ($error, $added_num) = @_;
+                    if(defined $error) {
                         $responder->(_json_response(500, 0, error => "$error"));
                         return;
                     }
@@ -172,8 +172,8 @@ sub _handle_tl_ack {
             $timeline->ack_statuses(
                 max_id => $max_id,
                 callback => sub {
-                    my ($acked_num, $error) = @_;
-                    if(int(@_) >= 2) {
+                    my ($error, $acked_num) = @_;
+                    if(defined $error) {
                         $responder->(_json_response(500, 0, error => "$error"));
                         return;
                     }
@@ -194,19 +194,19 @@ sub _handle_tl_get_unacked_counts {
         try {
             my $timeline = $self->_get_timeline($dest);
             my $query_params = $req->query_parameters;
-            my %args = ();
+            my %assumed = ();
             if(defined $query_params->{total}) {
-                $args{total} = delete $query_params->{total};
+                $assumed{total} = delete $query_params->{total};
             }
             foreach my $query_key (keys %$query_params) {
                 next if !looks_like_number($query_key);
                 next if int($query_key) != $query_key;
-                $args{$query_key} = $query_params->{$query_key};
+                $assumed{$query_key} = $query_params->{$query_key};
             }
-            $timeline->watch_unacked_counts(%args, sub {
-                my ($w, $unacked_counts, $error) = @_;
+            $timeline->watch_unacked_counts(assumed => \%assumed, callback => sub {
+                my ($error, $w, $unacked_counts) = @_;
                 $w->cancel();
-                if(int(@_) >= 3) {
+                if(defined $error) {
                     $responder->(_json_response(500, 0, error => "$error"));
                     return;
                 }
@@ -231,15 +231,15 @@ sub _handle_get_unacked_counts {
             }elsif($level ne 'total' && (!looks_like_number($level) || int($level) != $level)) {
                 die "level parameter must be an integer";
             }
-            my %args = ();
+            my %assumed = ();
             foreach my $query_key (keys %$query_params) {
                 next if substr($query_key, 0, 3) ne 'tl_';
-                $args{substr($query_key, 3)} = $query_params->{$query_key};
+                $assumed{substr($query_key, 3)} = $query_params->{$query_key};
             }
-            $self->{main_obj}->watch_unacked_counts($level, \%args, sub {
-                my ($w, $tl_unacked_counts, $error) = @_;
+            $self->{main_obj}->watch_unacked_counts(level => $level, assumed => \%assumed, callback => sub {
+                my ($error, $w, $tl_unacked_counts) = @_;
                 $w->cancel();
-                if(int(@_) >= 3) {
+                if(defined $error) {
                     $responder->(_json_response(500, 0, error => "$error"));
                     return;
                 }
