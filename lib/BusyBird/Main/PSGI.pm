@@ -8,6 +8,7 @@ use Plack::Builder ();
 use Try::Tiny;
 use JSON qw(decode_json encode_json to_json);
 use Scalar::Util qw(looks_like_number);
+use Carp;
 
 sub create_psgi_app {
     my ($class, $main_obj) = @_;
@@ -77,16 +78,13 @@ sub _get_timeline {
     return $timeline;
 }
 
-sub _json_bool {
-    my ($val) = @_;
-    return $val ? JSON::true : JSON::false;
-}
-
 sub _json_response {
-    my ($res_code, $success, %other_params) = @_;
-    my $obj = {is_success => _json_bool($success), %other_params};
+    my ($res_code, %response_object) = @_;
+    if($res_code eq '200' && !exists($response_object{error})) {
+        $response_object{error} = undef;
+    }
     my $message = try {
-        to_json($obj, {ascii => 1})
+        to_json(\%response_object, {ascii => 1})
     }catch {
         undef
     };
@@ -96,7 +94,7 @@ sub _json_response {
             [$message]
         ];
     }else {
-        return _json_response(500, 0, error => "error while encoding to JSON.");
+        return _json_response(500, error => "error while encoding to JSON.");
     }
 }
 
@@ -117,15 +115,15 @@ sub _handle_tl_get_statuses {
                 callback => sub {
                     my ($error, $statuses) = @_;
                     if(defined $error) {
-                        $responder->(_json_response(500, 0, error => "$error"));
+                        $responder->(_json_response(500, error => "$error"));
                         return;
                     }
-                    $responder->(_json_response(200, 1, statuses => $statuses));
+                    $responder->(_json_response(200, statuses => $statuses));
                 }
             );
         }catch {
             my $e = shift;
-            $responder->(_json_response(400, 0, error => "$e"));
+            $responder->(_json_response(400, error => "$e"));
         };
     };
 }
@@ -145,15 +143,15 @@ sub _handle_tl_post_statuses {
                 callback => sub {
                     my ($error, $added_num) = @_;
                     if(defined $error) {
-                        $responder->(_json_response(500, 0, error => "$error"));
+                        $responder->(_json_response(500, error => "$error"));
                         return;
                     }
-                    $responder->(_json_response(200, 1, count => $added_num + 0));
+                    $responder->(_json_response(200, count => $added_num + 0));
                 }
             );
         } catch {
             my $e = shift;
-            $responder->(_json_response(400, 0, error => "$e"));
+            $responder->(_json_response(400, error => "$e"));
         };
     };
 }
@@ -174,15 +172,15 @@ sub _handle_tl_ack {
                 callback => sub {
                     my ($error, $acked_num) = @_;
                     if(defined $error) {
-                        $responder->(_json_response(500, 0, error => "$error"));
+                        $responder->(_json_response(500, error => "$error"));
                         return;
                     }
-                    $responder->(_json_response(200, 1, count => $acked_num + 0));
+                    $responder->(_json_response(200, count => $acked_num + 0));
                 }
             );
         }catch {
             my $e = shift;
-            $responder->(_json_response(400, 0, error => "$e"));
+            $responder->(_json_response(400, error => "$e"));
         };
     };
 }
@@ -207,14 +205,14 @@ sub _handle_tl_get_unacked_counts {
                 my ($error, $w, $unacked_counts) = @_;
                 $w->cancel();
                 if(defined $error) {
-                    $responder->(_json_response(500, 0, error => "$error"));
+                    $responder->(_json_response(500, error => "$error"));
                     return;
                 }
-                $responder->(_json_response(200, 1, unacked_counts => $unacked_counts));
+                $responder->(_json_response(200, unacked_counts => $unacked_counts));
             });
         }catch {
             my $e = shift;
-            $responder->(_json_response(400, 0, error => "$e"));
+            $responder->(_json_response(400, error => "$e"));
         };
     };
 }
@@ -240,14 +238,14 @@ sub _handle_get_unacked_counts {
                 my ($error, $w, $tl_unacked_counts) = @_;
                 $w->cancel();
                 if(defined $error) {
-                    $responder->(_json_response(500, 0, error => "$error"));
+                    $responder->(_json_response(500, error => "$error"));
                     return;
                 }
-                $responder->(_json_response(200, 1, unacked_counts => $tl_unacked_counts));
+                $responder->(_json_response(200, unacked_counts => $tl_unacked_counts));
             });
         }catch {
             my $e = shift;
-            $responder->(_json_response(400, 0, error => "$e"));
+            $responder->(_json_response(400, error => "$e"));
         };
     };
 }

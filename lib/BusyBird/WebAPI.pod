@@ -75,15 +75,14 @@ B<Response>
 
 In success, the HTTP response code is 200.
 If C<format> is C<json>, the response is a JSON object.
-C<is_success> attribute of the object is C<true>, and C<statuses> attribute is the array of status objects fetched.
+C<error> attribute of the object is C<null>, and C<statuses> attribute is the array of status objects fetched.
 The array can be empty.
 If C<format> is C<html>, the response is a sequence of HTML C<< <li> >> elements,
 each of which represents a status object.
 
 In failure, the HTTP response code is 4** or 5**.
 If C<format> is C<json>, the response is a JSON object.
-C<is_success> attribute of the object is C<false> and C<error> attribute
-describes the error.
+C<error> attribute of the response object is non-null and it describes the error.
 If C<format> is C<html>, the response is an HTML element describing the error.
 
 B<Example>
@@ -92,10 +91,11 @@ Request URL:
 
     GET /timelines/home/statuses.json?count=1&ack_state=any&max_id=http://example.com/page/2013/0202
 
+
 Response Body:
 
     {
-      "is_success": true,
+      "error": null,
       "statuses": [
         {
           "id": "http://example.com/page/2013/0202",
@@ -104,6 +104,7 @@ Response Body:
         }
       ]
     }
+
 
 
 =head2 POST /timelines/{timeline}/ack.json
@@ -145,11 +146,11 @@ B<Response>
 The response is a JSON object.
 
 In success, the HTTP response code is 200.
-C<is_success> attribute of the response object is C<true>,
+C<error> attribute of the response object is C<null>,
 and C<count> attribute is the number of acked statuses.
 
 In failure, the HTTP response code is 4** or 5**.
-C<is_success> attribute of the response object is C<false>, and C<error> attribute describes the error.
+C<error> attribute of the response object is non-null and it describes the error.
 
 B<Example>
 
@@ -163,7 +164,7 @@ Request Body:
 
 Response Body:
 
-    {"is_success": true, "count": 1}
+    {"error": null, "count": 1}
 
 
 =head2 POST /timelines/{timeline}/statuses.json
@@ -191,10 +192,10 @@ B<Response>
 The response is a JSON object.
 
 In success, the HTTP response code is 200.
-C<is_success> attribute of the response object is C<true> and C<count> attribute is the number of statuses added.
+C<error> attribute of the response object is C<null> and C<count> attribute is the number of statuses added.
 
 In failure, the HTTP response code is 4** or 5**.
-C<is_success> attribute of the response object is C<false> and C<error> attribute describes the error.
+C<error> attribute of the response object is non-null and it describes the error.
 
 B<Example>
 
@@ -220,7 +221,7 @@ Request Body:
 
 Response Body:
 
-    {"is_success": true, "count": 2}
+    {"error": null, "count": 2}
 
 
 =head2 GET /timelines/{timeline}/updates/unacked_counts.json
@@ -268,11 +269,11 @@ B<Response>
 The response is a JSON object.
 
 In success, the HTTP response code is 200.
-C<is_success> attribute of the response object is C<true> and
+C<error> attribute of the response object is C<null> and
 C<unacked_counts> attribute is an object describing the current unacked counts (See Example).
 
 In failure, the HTTP response code is 4** or 5**.
-C<is_success> attribute of the response object is C<false> and C<error> attribute describes the error.
+C<error> attribute of the response object is non-null and it describes the error.
 
 B<Example>
 
@@ -289,13 +290,14 @@ The server sends back the following response because the current unacked count f
 is one instead of two.
 
     {
-      "is_success": true,
+      "error": null,
       "unacked_counts": {
         "total": 2,
         "0": 1,
         "3": 1
       }
     }
+
 
 =head2 GET /updates/unacked_counts.json
 
@@ -332,11 +334,11 @@ B<Response>
 The response is a JSON object.
 
 In success, the HTTP response code is 200.
-C<is_success> attribute of the response object is C<true> and
+C<error> attribute of the response object is C<null> and
 C<unacked_counts> attribute is an object describing the current unacked counts (See Example).
 
 In failure, the HTTP response code is 4** or 5**.
-C<is_success> attribute of the response object is C<false> and C<error> attribute describes the error.
+C<error> attribute of the response object is non-null and it describes the error.
 
 B<Example>
 
@@ -351,7 +353,7 @@ Response Body:
 The server sends back the following response because there are two unacked statuses in timeline 'home'.
 
     {
-      "is_success": true,
+      "error": null,
       "unacked_counts": {
         "home": {
           "total": 2,
@@ -360,5 +362,6 @@ The server sends back the following response because there are two unacked statu
         }
       }
     }
+
 
 =cut

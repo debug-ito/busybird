@@ -78,7 +78,7 @@ sub test_get_statuses {
         $request_url .= "?$query_str";
     }
     my $res_obj = $tester->get_json_ok($request_url, qr/^200$/, "$label: GET statuses OK");
-    is($res_obj->{is_success}, JSON::true, "$label: GET statuses is_success OK");
+    is($res_obj->{error}, undef, "$label: GET statuses error = null OK");
     test_status_id_list($res_obj->{statuses}, $exp_id_list, "$label: GET statuses ID list OK");
 }
 
@@ -102,18 +102,18 @@ sub test_error_request {
         test_get_statuses($tester, 'test', undef, [], 'No status');
         my $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
                                            create_json_status(1), qr/^200$/, 'POST statuses (single) OK');
-        is_deeply($res_obj, {is_success => JSON::true, count => 1}, "POST statuses (single) results OK");
+        is_deeply($res_obj, {error => undef, count => 1}, "POST statuses (single) results OK");
         $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
                                        json_array(map {create_json_status($_, $_)} 1..5),
                                        qr/^200$/, 'POST statuses (multi) OK');
-        is_deeply($res_obj, {is_success => JSON::true, count => 4}, "POST statuses (multi) results OK");
+        is_deeply($res_obj, {error => undef, count => 4}, "POST statuses (multi) results OK");
 
         test_get_statuses($tester, 'test', 'count=100', [reverse 1..5], "Get all");
         test_get_statuses($tester, 'test', 'ack_state=acked', [], 'only acked');
         test_get_statuses($tester, 'test', 'ack_state=unacked', [reverse 1..5], 'only unacked');
 
         $res_obj = $tester->post_json_ok('/timelines/test/ack.json', undef, qr/^200$/, 'POST ack (no param) OK');
-        is_deeply($res_obj, {is_success => JSON::true, count => 5}, 'POST ack (no param) results OK');
+        is_deeply($res_obj, {error => undef, count => 5}, 'POST ack (no param) results OK');
 
         $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
                                          json_array(map {
@@ -122,7 +122,7 @@ sub test_error_request {
                                                  : $id <= 20 ? 1 : 2;
                                              create_json_status($id, $level)
                                          } 6..30), qr/^200$/, 'POST statuses (25) OK');
-        is_deeply($res_obj, {is_success => JSON::true, count => 25}, 'POST statuses (25) OK');
+        is_deeply($res_obj, {error => undef, count => 25}, 'POST statuses (25) OK');
 
         test_get_statuses($tester, 'test', undef, [reverse 11..30], 'Get no count');
         test_get_statuses($tester, 'test', 'ack_state=acked', [reverse 1..5], 'Get only acked');
@@ -133,7 +133,7 @@ sub test_error_request {
         test_get_statuses($tester, 'test', 'max_id=23', [reverse 4..23], 'only max_id');
 
         {
-            my $exp_res = {is_success => JSON::true, unacked_counts => {total => 25, 0 => 5, 1 => 10, 2 => 10}};
+            my $exp_res = {error => undef, unacked_counts => {total => 25, 0 => 5, 1 => 10, 2 => 10}};
             foreach my $case (
                 {label => "no param", param => ""},
                 {label => "total", param => "?total=20"},
@@ -147,11 +147,11 @@ sub test_error_request {
         }
         
         $res_obj = $tester->post_json_ok('/timelines/test/ack.json', qq{{"max_id":"100"}}, qr/^200$/, 'POST ack (unknown max_id) OK');
-        is_deeply($res_obj, {is_success => JSON::true, count => 0}, 'POST ack (unknown max_id) acks nothing');
+        is_deeply($res_obj, {error => undef, count => 0}, 'POST ack (unknown max_id) acks nothing');
         $res_obj = $tester->post_json_ok('/timelines/test/ack.json', qq{{"max_id":"4"}}, qr/^200$/, 'POST ack (acked max_id) OK');
-        is_deeply($res_obj, {is_success => JSON::true, count => 0}, 'POST ack (acked max_id) acks nothing');
+        is_deeply($res_obj, {error => undef, count => 0}, 'POST ack (acked max_id) acks nothing');
         $res_obj = $tester->post_json_ok('/timelines/test/ack.json', qq{{"max_id":"20"}}, qr/^200$/, 'POST ack (unacked max_id) OK');
-        is_deeply($res_obj, {is_success => JSON::true, count => 15}, 'POST ack (unacked max_id) acks OK');
+        is_deeply($res_obj, {error => undef, count => 15}, 'POST ack (unacked max_id) acks OK');
 
         test_get_statuses($tester, 'test', 'ack_state=unacked&count=100', [reverse 21..30], 'unacked');
         test_get_statuses($tester, 'test', 'ack_state=acked&count=100', [reverse 1..20], 'acked');
@@ -159,13 +159,13 @@ sub test_error_request {
         $res_obj = $tester->post_json_ok('/timelines/foobar/statuses.json',
                                          json_array(map {create_json_status($_, $_ % 2 ? 2 : -2)} 1..10),
                                          qr/^200$/, 'POST statuses to foobar OK');
-        is_deeply($res_obj, {is_success => JSON::true, count => 10}, 'POST statuses result OK');
+        is_deeply($res_obj, {error => undef, count => 10}, 'POST statuses result OK');
         
         {
-            my $exp_tl_test = {is_success => JSON::true, unacked_counts => {
+            my $exp_tl_test = {error => undef, unacked_counts => {
                 test => { total => 10, 2 => 10 }
             }};
-            my $exp_tl_foobar = {is_success => JSON::true, unacked_counts => {
+            my $exp_tl_foobar = {error => undef, unacked_counts => {
                 foobar => { total => 10,  -2 => 5, 2 => 5 }
             }};
             foreach my $case (
@@ -199,7 +199,6 @@ sub test_error_request {
             my $res_obj = $tester->get_json_ok("/updates/unacked_counts.json$case->{param}",
                                                qr/^[45]/,
                                                "GET /updates/unacked_counts.json ($case->{label}) returns error");
-            is($res_obj->{is_success}, JSON::false, ".. $case->{label}: is_success is false");
             ok(defined($res_obj->{error}), ".. $case->{label}: error is set");
         }
     };
@@ -265,10 +264,10 @@ sub test_error_request {
         my $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
                                             json_array(map { create_json_status($_) } 1,2,4,5),
                                             qr/^200$/, 'POST normal statuses OK');
-        is_deeply($res_obj, {is_success => JSON::true, count => 4}, "POST normal statuses results OK");
+        is_deeply($res_obj, {error => undef, count => 4}, "POST normal statuses results OK");
         $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
                                          encode_json($weird_id_status), qr/^200$/, 'POST weird status OK');
-        is_deeply($res_obj, {is_success => JSON::true, count => 1}, 'POST weird status OK');
+        is_deeply($res_obj, {error => undef, count => 1}, 'POST weird status OK');
 
         test_get_statuses($tester, 'test', "max_id=$encoded_id&count=10",
                           [$weird_id_status->{id}, 2, 1], 'max_id = weird ID');
@@ -276,7 +275,7 @@ sub test_error_request {
         $res_obj = $tester->post_json_ok('/timelines/test/ack.json',
                                          encode_json({max_id => $weird_id_status->{id}}),
                                          qr/^200$/, 'POST ack max_id = weird ID OK');
-        is_deeply($res_obj, {is_success => JSON::true, count => 3}, "POST ack max_id = weird ID results OK");
+        is_deeply($res_obj, {error => undef, count => 3}, "POST ack max_id = weird ID results OK");
 
         test_get_statuses($tester, 'test', 'ack_state=unacked', [5,4], "GET unacked");
         test_get_statuses($tester, 'test', 'ack_state=acked', [$weird_id_status->{id}, 2, 1], 'GET acked');
@@ -303,11 +302,11 @@ sub test_error_request {
   }
 ]
 EOD
-         exp_response => q{{"is_success": true, "count": 2}}},
+         exp_response => q{{"error": null, "count": 2}}},
         {endpoint => 'GET /timelines/home/statuses.json?count=1&ack_state=any&max_id=http://example.com/page/2013/0202',
          exp_response => <<EOD},
 {
-  "is_success": true,
+  "error": null,
   "statuses": [
     {
       "id": "http://example.com/page/2013/0202",
@@ -320,7 +319,7 @@ EOD
         {endpoint => 'GET /timelines/home/updates/unacked_counts.json?total=2&0=2',
          exp_response => <<EOD},
 {
-  "is_success": true,
+  "error": null,
   "unacked_counts": {
     "total": 2,
     "0": 1,
@@ -331,7 +330,7 @@ EOD
         {endpoint => 'GET /updates/unacked_counts.json?level=total&tl_home=0&tl_foobar=0',
          exp_response => <<EOD},
 {
-  "is_success": true,
+  "error": null,
   "unacked_counts": {
     "home": {
       "total": 2,
@@ -343,7 +342,7 @@ EOD
 EOD
         {endpoint => 'POST /timelines/home/ack.json',
          content => q{{"max_id": "http://example.com/page/2013/0202"}},
-         exp_response => q{{"is_success": true, "count": 1}}}
+         exp_response => q{{"error": null, "count": 1}}}
     );
     test_psgi $main->to_app, sub {
         my $tester = BusyBird::Test::HTTP->new(requester => shift);
