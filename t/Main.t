@@ -201,7 +201,7 @@ sub test_watcher_basic {
         $watcher->cancel();
 
         $reset->();
-        $watcher = $main->watch_unacked_counts(1, {a => 1, b => 0, c => 1}, $callback_func);
+        $watcher = $main->watch_unacked_counts(level => 1, assumed => {a => 1, b => 0, c => 1}, callback => $callback_func);
         sync($main->timeline('b'), 'put_statuses', mode => 'insert', statuses => [status(7, 1)]);
         sync($main->timeline('c'), 'put_statuses', mode => 'update', statuses => [status(3, 1)]);
         sync($main->timeline('a'), 'put_statuses', mode => 'update', statuses => [status(6)]);

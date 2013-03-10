@@ -73,30 +73,39 @@ sub uninstall_timeline {
 }
 
 sub watch_unacked_counts {
-    my ($self, $level, $watch_spec, $callback) = @_;
+    ## my ($self, $level, $watch_spec, $callback) = @_;
+    my ($self, %watch_args) = @_;
+    my $level = $watch_args{level};
+    $level = 'total' if not defined $level;
+    my $assumed = $watch_args{assumed};
+    my $callback = $watch_args{callback};
     ## if(looks_like_number($level)) {
     ##     croak "level must be an integer or 'total'" if int($level) != $level;
     ## }else {
     ##     croak "level must be an integer or 'total'" if $level ne 'total';
     ## }
-    if(!defined(ref($watch_spec)) || ref($watch_spec) ne 'HASH') {
-        croak 'watch_spec must be a hash-ref';
+    if(!defined($assumed) || ref($assumed) ne 'HASH') {
+        croak 'assumed must be a hash-ref';
     }
-    if(!defined(ref($callback)) || ref($callback) ne 'CODE') {
+    if(!defined($callback) || ref($callback) ne 'CODE') {
         croak "callback must be a code-ref";
     }
     my $watcher = BusyBird::Watcher::Aggregator->new;
-    foreach my $tl_name (keys %$watch_spec) {
+    foreach my $tl_name (keys %$assumed) {
         my $timeline = $self->get_timeline($tl_name);
         next if not defined $timeline;
-        my $tl_watcher = $timeline->watch_unacked_counts($level => $watch_spec->{$tl_name}, sub {
-            my ($w, $unacked_counts, $error) = @_;
-            if(@_ == 2) {
-                $callback->($watcher, { $tl_name => $unacked_counts });
-            }else {
-                $callback->($watcher, undef, "Error from timeline $tl_name: $error");
+        my $tl_watcher = $timeline->watch_unacked_counts(
+            assumed => {$level => $assumed->{$tl_name}},
+            callback => sub {
+                my ($error, $w, $unacked_counts) = @_;
+                if(defined $error) {
+                    $watcher->cancel();
+                    $callback->("Error from timeline $tl_name: $error", $watcher);
+                }else {
+                    $callback->(undef, $watcher, { $tl_name => $unacked_counts });
+                }
             }
-        });
+        );
         if(!$tl_watcher->isa('Async::Selector::Aggregator')) {
             confess '$tl_watcher is not a Async::Selector::Aggregator. Something is terribly wrong.';
         }
@@ -104,7 +113,7 @@ sub watch_unacked_counts {
         last if !$watcher->active;
     }
     if(!$watcher->watchers) {
-        croak "watch_spec does not contain any installed timeline.";
+        croak "assumed argument does not contain any installed timeline.";
     }
     return $watcher;
 }
@@ -277,7 +286,7 @@ one of which is in level 0 and the other is in level 2.
 Note that although you can specify multiple timelines in C<assumed>,
 the returned C<$tl_unacked_counts> may not contain all the specified timelines.
 
-In failure, the argument C<$error> is defined, and it describes the error.
+In failure, the argument C<$error> is defined, and it describes the error. C<$w> is an inactive L<BusyBird:Watcher>.
 
 The return value of this method (C<$watcher>) is the same instance as C<$w>.
 You can use C<< $watcher->cancel() >> or C<< $w->cancel() >> method to cancel the watch.
