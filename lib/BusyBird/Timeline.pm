@@ -38,8 +38,8 @@ sub _log {
 sub _update_unacked_counts {
     my ($self) = @_;
     $self->get_unacked_counts(callback => sub {
-        my ($unacked_counts, $error) = @_;
-        if(@_ >= 2) {
+        my ($error, $unacked_counts) = @_;
+        if(defined($error)) {
             $self->_log('error', "error while updating unacked count: $error");
             return;
         }
@@ -159,13 +159,13 @@ sub contains {
         my ($query_elem, $knext, $klast) = @_;
         my $id = ref($query_elem) ? $query_elem->{id} : $query_elem;
         $self->get_statuses(count => 1, max_id => $id, callback => sub {
-            if(@_ >= 2) {
+            $error = shift;
+            my $statuses = shift;
+            if(defined($error)) {
                 $error_occurred = 1;
-                $error = $_[1];
                 $klast->();
                 return;
             }
-            my $statuses = shift;
             if(@$statuses) {
                 push(@contained, $query_elem);
             }else {
@@ -175,10 +175,10 @@ sub contains {
         });
     }, sub {
         if($error_occurred) {
-            $callback->(undef, undef, "get_statuses error: $error");
+            $callback->("get_statuses error: $error");
             return;
         }
-        $callback->(\@contained, \@not_contained);
+        $callback->(undef, \@contained, \@not_contained);
     };
 }
 
@@ -201,27 +201,31 @@ sub add_filter_async {
 }
 
 sub watch_unacked_counts {
-    my $self = shift;
-    my $callback = pop;
-    my %watch_spec = @_;
+    my ($self, %watch_args) = @_;
+    my $callback = $watch_args{callback};
+    my $assumed = $watch_args{assumed};
     if(!defined($callback) || ref($callback) ne 'CODE') {
         croak "watch_unacked_counts: callback must be a code-ref";
     }
-    foreach my $key (keys %watch_spec) {
+    if(!defined($assumed) || ref($assumed) ne 'HASH') {
+        croak "watch_unacked_counts: assumed must be a hash-ref";
+    }
+    $assumed = +{ %$assumed };
+    foreach my $key (keys %$assumed) {
         next if $key eq 'total' || (looks_like_number($key) && int($key) == $key);
-        delete $watch_spec{$key};
+        delete $assumed->{$key};
     }
     my $watcher = BusyBird::Watcher::Aggregator->new();
     my $orig_watcher = $self->{selector}->watch(
-        unacked_counts => \%watch_spec, watcher_quota => { age => 0 }, sub {
+        unacked_counts => $assumed, watcher_quota => { age => 0 }, sub {
             my ($orig_w, %res) = @_;
             if($res{watcher_quota}) {
                 $watcher->cancel();
-                $callback->($watcher, undef, "watcher cancelled because it is too old");
+                $callback->("watcher cancelled because it is too old", $watcher);
                 return;
             }
             if($res{unacked_counts}) {
-                $callback->($watcher, $res{unacked_counts});
+                $callback->(undef, $watcher, $res{unacked_counts});
                 return;
             }
             confess("Something terrible happened.");
@@ -662,7 +666,7 @@ C<$error> is C<undef>.
 C<$w> is an L<BusyBird::Watcher> object representing this watch.
 C<$unacked_counts> is a hash-ref describing the current unacked counts of the C<$timeline>.
 
-In failure, C<$error> is defined and it describes the error.
+In failure, C<$error> is defined and it describes the error. C<$w> is an inactive L<BusyBird::Watcher>.
 
 The return value of this method (C<$watcher>) is an L<BusyBird::Watcher> object.
 It is the same instance as C<$w> given in the C<callback> function.

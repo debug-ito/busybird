@@ -666,6 +666,8 @@ sub test_timeline {
         is(int(@results), 1, "got 1 result");
         is($results[0][0], 0, '... it is from watcher 0');
         ok(defined($results[0][1]), '... it indicates error');
+        isa_ok($results[0][2], 'BusyBird::Watcher', '... it has a Watcher');
+        ok(!$results[0][2]->active, '... the watcher is canceled.');
     
         @results = ();
         sync($timeline, 'add_statuses', statuses => [status(0)]);
@@ -674,6 +676,7 @@ sub test_timeline {
         test_sets([$results[0][0], $results[1][0]], [1,2], "... they are from watchers 1,2");
         foreach my $r (@results) {
             is($r->[1], undef, "... callback succeed");
+            isa_ok($r->[2], 'BusyBird::Watcher', '... with a Watcher');
             is_deeply($r->[3], {total => 1, 0 => 1}, "... unacked counts OK");
         }
         $_->cancel foreach @watchers[1,2];
@@ -694,6 +697,7 @@ sub test_timeline {
             is(int(@results), 1, "lv0_count != $lv0_count: 1 watcher fired");
             is($results[0][0], -1, "... and it's the ephemeral watcher");
             is($results[0][1], undef, "... and it succeeded");
+            isa_ok($results[0][2], 'BusyBird::Watcher', '... with a Watcher');
             is_deeply($results[0][3], {total => $lv0_count + 1, 0 => $lv0_count + 1}, "... unacked counts OK");
             $watcher->cancel();
         }
@@ -704,22 +708,25 @@ sub test_timeline {
             push(@watchers, $watcher);
             is(int(@results), 0, "watcher 5 added. no watcher fired.");
 
-            $watcher = $timeline->watch_unacked_counts(assumed => {total => 0}, callback => sub { push(@results, [-1, @_]); $_[0]->cancel() });
+            $watcher = $timeline->watch_unacked_counts(assumed => {total => 0}, callback => sub { push(@results, [-1, @_]); $_[1]->cancel() });
             ok(!$watcher->active, "the ephemeral watcher immediately fired and became inactive.");
             is(int(@results), 1, "... in this case, the quota does nothing to pending watchers.");
             is($results[0][0], -1, "... only the ephemeral watcher fired.");
             is($results[0][1], undef, "... and it's success");
+            isa_ok($results[0][2], 'BusyBird::Watcher', '... with a Watcher');
             is_deeply($results[0][3], {total => 5, 0 => 5}, "... unacked counts OK");
         }
 
         @results = ();
         {
-            my $watcher = $timeline->watch_unacked_counts(assumed => {total => 5}, callback => sub { push(@results, [6, @_]); $_[0]->cancel() });
+            my $watcher = $timeline->watch_unacked_counts(assumed => {total => 5}, callback => sub { push(@results, [6, @_]); $_[1]->cancel() });
             ok($watcher->active, "watcher 6 is active.");
             push(@watchers, $watcher);
             is(int(@results), 1, "1 watcher is cancelled by the quota because it is too old.");
             ok($results[0][0] == 3 || $results[0][0] == 4, "the canceled is watcher 3 or 4. They are both too old, so either one of them is canceled.");
             ok(defined($results[0][1]), "the result indicates error");
+            isa_ok($results[0][2], 'BusyBird::Watcher', '... with a BusyBird::Watcher');
+            ok(!$results[0][2]->active, '... the watcher is canceled.');
             my $canceled = $results[0][0];
             my $not_canceled = $canceled == 3 ? 4 : 3;
             ok(!$watchers[$canceled]->active, "watcher $canceled is inactive");
