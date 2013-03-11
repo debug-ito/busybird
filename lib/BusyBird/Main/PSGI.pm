@@ -12,7 +12,8 @@ use Scalar::Util qw(looks_like_number);
 use Carp;
 use Text::Xslate;
 use File::Spec;
-use File::ShareDir qw(dist_file);
+use File::ShareDir qw(dist_dir);
+use Encode ();
 ## use File::Share qw(dist_file);
 
 
@@ -27,7 +28,7 @@ sub _new {
     my $self = bless {
         router => Router::Simple->new,
         renderer => Text::Xslate->new(
-            path => [_shared_file('templates')],
+            path => [ File::Spec->catdir(dist_dir($BusyBird::DIST_NAME), 'templates') ],
             cache_dir => File::Spec->tmpdir,
             syntax => 'TTerse',
             ## warn_handler => sub { ... },
@@ -82,14 +83,9 @@ sub _build_routes {
                              {method => '_handle_get_unacked_counts'}, {method => 'GET'});
     $self->{router}->connect('/hoge.index', {code => sub {
         my ($self, $req, $dest) = @_;
-        my $ret = $self->{renderer}->render('sample.tt', {title => "HOGE"});
+        my $ret = Encode::encode('utf8', $self->{renderer}->render('sample.tt', {title => "HOGE"}));
         return [200, ['Content-Type', 'text/html; charset=utf8'], [$ret]];
     }});
-}
-
-sub _shared_file {
-    my (@paths) = @_;
-    return dist_file($BusyBird::DIST_NAME, File::Spec->catfile(@paths));
 }
 
 sub _get_timeline {
