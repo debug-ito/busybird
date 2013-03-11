@@ -1,6 +1,7 @@
 package BusyBird::Main::PSGI;
 use strict;
 use warnings;
+use BusyBird ();
 use BusyBird::Util qw(set_param);
 use Router::Simple;
 use Plack::Request;
@@ -9,6 +10,11 @@ use Try::Tiny;
 use JSON qw(decode_json encode_json to_json);
 use Scalar::Util qw(looks_like_number);
 use Carp;
+use Text::Xslate;
+use File::Spec;
+use File::ShareDir qw(dist_file);
+## use File::Share qw(dist_file);
+
 
 sub create_psgi_app {
     my ($class, $main_obj) = @_;
@@ -20,6 +26,12 @@ sub _new {
     my ($class, %params) = @_;
     my $self = bless {
         router => Router::Simple->new,
+        renderer => Text::Xslate->new(
+            path => [_shared_file('templates')],
+            cache_dir => File::Spec->tmpdir,
+            syntax => 'TTerse',
+            ## warn_handler => sub { ... },
+        )
     }, $class;
     $self->set_param(\%params, "main_obj", undef, 1);
     $self->_build_routes();
@@ -39,9 +51,10 @@ sub _my_app {
     return sub {
         my ($env) = @_;
         if(my $dest = $self->{router}->match($env)) {
-            my $method = $dest->{method};
             my $req = Plack::Request->new($env);
-            return $self->$method($req, $dest);
+            my $code = $dest->{code};
+            my $method = $dest->{method};
+            return defined($code) ? $code->($self, $req, $dest) : $self->$method($req, $dest);
         }else {
             my $message = 'Not Found';
             return ['404',
@@ -67,6 +80,16 @@ sub _build_routes {
                         {method => '_handle_tl_get_unacked_counts'}, {method => 'GET'});
     $self->{router}->connect('/updates/unacked_counts.json',
                              {method => '_handle_get_unacked_counts'}, {method => 'GET'});
+    $self->{router}->connect('/hoge.index', {code => sub {
+        my ($self, $req, $dest) = @_;
+        my $ret = $self->{renderer}->render('sample.tt', {title => "HOGE"});
+        return [200, ['Content-Type', 'text/html; charset=utf8'], [$ret]];
+    }});
+}
+
+sub _shared_file {
+    my (@paths) = @_;
+    return dist_file($BusyBird::DIST_NAME, File::Spec->catfile(@paths));
 }
 
 sub _get_timeline {
