@@ -181,6 +181,8 @@ sub change_and_check {
             callback => $callback_func,
         );
         $method_args{max_id} = $args{target} if exists($args{target});
+        $method_args{max_id} = $args{target_max_id} if exists($args{target_max_id});
+        $method_args{ids} = $args{target_ids} if exists($args{target_ids});
         $storage->$method(%method_args);
     }else {
         croak "Invalid mode";
@@ -615,7 +617,10 @@ sub test_storage_common {
     foreach my $test_set (
         {mode => 'update', target => [map { status($_) } (11..15) ]},
         {mode => 'delete', target => [11..15]},
-        {mode => 'ack', target => 11}
+        {mode => 'ack', target => 11},
+        {mode => 'ack', target_ids => 14},
+        {mode => 'ack', target_ids => [11..15]},
+        {mode => 'ack', target_max_id => 13, target_ids => 14},
     ) {
         change_and_check(
             $storage, $loop, $unloop, timeline => '_test_tl2',
@@ -670,6 +675,68 @@ sub test_storage_common {
             my $statuses = shift;
             test_status_id_set($statuses, [1..20], 'ID set in storage is not changed');
         };
+    }
+
+    {
+        note('--- --- test various acks');
+        $callbacked = 0;
+        $storage->delete_statuses(timeline => '_test_acks', ids => undef, callback => sub {
+            $callbacked = 1;
+            $unloop->();
+        });
+        $loop->();
+        ok($callbacked, 'callbacked');
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_acks',
+            mode => 'insert', target => [map {status($_)} 1..30], exp_change => 30,
+            exp_acked => [], exp_unacked => [1..30]
+        );
+        note('--- ack: ids (single)');
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_acks',
+            mode => 'ack', target_ids => 20, exp_change => 1,
+            exp_acked => [20], exp_unacked => [1..19, 21..30]
+        );
+        note('--- ack: ids (multi) with already acked');
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_acks',
+            mode => "ack", target_ids => [17..21], exp_change => 4,
+            exp_acked => [17..21], exp_unacked => [1..16, 22..30]
+        );
+        note('--- ack: ids and max_id (max_id < ids)');
+        $callbacked = 0;
+        $storage->ack_statuses(timeline => '_test_acks', ids => [25..28], max_id => 4, callback => sub {
+            my ($error, $count) = @_;
+            $callbacked = 1;
+            is($error, undef, "ack_statuses succeed");
+            cmp_ok($count, ">=", 5, 'at least 5 statuses acked.');
+            $unloop->();
+        });
+        $loop->();
+        ok($callbacked, "callbacked");
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_acks',
+            mode => 'delete', target => undef, exp_change => 30, exp_acked => [], exp_unacked => []
+        );
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_acks',
+            mode => 'insert', target => [map {status($_)} 31..40], exp_change => 10, exp_acked => [], exp_unacked => [31..40]
+        );
+        note('--- ack: ids and max_id (max_id > ids)');
+        $callbacked = 0;
+        $storage->ack_statuses(timeline => '_test_acks', ids => 32, max_id => 39, callback => sub {
+            my ($error, $count) = @_;
+            $callbacked = 1;
+            is($error, undef, 'ack_statuses succeed');
+            cmp_ok($count, ">=", 2, "at least 2 statuses acked");
+            $unloop->();
+        });
+        $loop->();
+        ok($callbacked, "callbacked");
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_acks',
+            mode => 'delete', target => undef, exp_change => 30, exp_acked => [], exp_unacked => []
+        );
     }
 
     note('--- clean up');
@@ -1086,6 +1153,45 @@ sub test_storage_ordered {
                 "start_index = $start_index, max_id = $max_id: order is the same as the whole_timeline"
             );
         }
+    }
+    {
+        note('--- ack: mixed max_id and ids');
+        my %base_ack = (timeline => '_test_order_acks');
+        $callbacked = 0;
+        $storage->delete_statuses(%base_ack, ids => undef, callback => sub {
+            $callbacked = 1;
+            $unloop->();
+        });
+        $loop->();
+        ok($callbacked, "callbacked");
+        change_and_check(
+            $storage, $loop, $unloop, %base_ack, mode => 'insert', target => [map {status($_)} 1..40],
+            exp_change => 40, exp_unacked => [1..40], exp_acked => []
+        );
+        change_and_check(
+            $storage, $loop, $unloop, %base_ack, mode => 'ack', target_ids => [5, 7, 9, 0, -10],
+            exp_change => 3, exp_unacked => [1..4,6,8,10..40], exp_acked => [5,7,9]
+        );
+        change_and_check(
+            $storage, $loop, $unloop, %base_ack, mode => 'ack', target_max_id => 7, target_ids => 20,
+            exp_change => 6, exp_unacked => [8,10..19, 21..40], exp_acked => [1..7,20]
+        );
+        change_and_check(
+            $storage, $loop, $unloop, %base_ack, mode => 'ack', target_ids => [11,12], target_max_id => 14,
+            exp_change => 6, exp_unacked => [15..19, 21..40], exp_acked => [1..14, 20]
+        );
+        change_and_check(
+            $storage, $loop, $unloop, %base_ack, mode => 'ack', target_ids => 30, target_max_id => 30,
+            exp_change => 15, exp_unacked => [31..40], exp_acked => [1..30]
+        );
+        change_and_check(
+            $storage, $loop, $unloop, %base_ack, mode => 'ack', exp_change => 10,
+            exp_unacked => [], exp_acked => [1..40]
+        );
+        change_and_check(
+            $storage, $loop, $unloop, %base_ack, mode => 'delete', target => undef,
+            exp_change => 40, exp_unacked => [], exp_acked => []
+        );
     }
 }
 

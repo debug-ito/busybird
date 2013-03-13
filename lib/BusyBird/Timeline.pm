@@ -363,6 +363,18 @@ Fields in C<%args> are as follows.
 
 =over
 
+=item C<ids> => {ID, ARRAYREF_OF_IDS} (optional, default: C<undef>)
+
+Specifies the IDs of the statuses to be acked.
+
+If it is a defined scalar, the status with the specified ID is acked.
+If it is an array-ref of IDs, the statuses with those IDs are acked.
+
+If both C<max_id> and C<ids> are omitted or set to C<undef>, all unacked statuses are acked.
+If both C<max_id> and C<ids> are specified, both statuses older than or equal to C<max_id>
+and statuses specifed by C<ids> are acked.
+
+
 =item C<max_id> => ID (optional, default: C<undef>)
 
 Specifies the latest ID of the statuses to be acked.
@@ -370,7 +382,9 @@ Specifies the latest ID of the statuses to be acked.
 If specified, unacked statuses with IDs older than or equal to the specified C<max_id> are acked.
 If there is no unacked status with ID C<max_id>, no status is acked.
 
-If this option is omitted or set to C<undef>, all unacked statuses are acked.
+If both C<max_id> and C<ids> are omitted or set to C<undef>, all unacked statuses are acked.
+If both C<max_id> and C<ids> are specified, both statuses older than or equal to C<max_id>
+and statuses specifed by C<ids> are acked.
 
 
 =item C<callback> => CODEREF($error, $acked_num) (optional, default: C<undef>)
