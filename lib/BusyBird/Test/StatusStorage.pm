@@ -242,7 +242,7 @@ sub test_storage_common {
     isa_ok($storage, 'BusyBird::StatusStorage');
     can_ok($storage, 'get_unacked_counts', map { "${_}_statuses" } qw(ack get put delete));
     note("--- clear the timelines");
-    foreach my $tl ('_test_tl1', "_test  tl2") {
+    foreach my $tl ('_test_tl1', "_test_tl2") {
         $callbacked = 0;
         $storage->delete_statuses(
             timeline => $tl,
@@ -545,28 +545,28 @@ sub test_storage_common {
 
     note('--- put(insert): to another timeline');
     change_and_check(
-        $storage, $loop, $unloop, timeline => '_test  tl2',
+        $storage, $loop, $unloop, timeline => '_test_tl2',
         mode => 'insert', target => [map { status($_) } (1..10)],
         exp_change => 10, exp_unacked => [1..10], exp_acked => []
     );
     is_deeply(
-        {sync_get_unacked_counts($storage, $loop, $unloop, '_test  tl2')},
+        {sync_get_unacked_counts($storage, $loop, $unloop, '_test_tl2')},
         {total => 10, 0 => 10}, '10 unacked statuses'
     );
     ## change_and_check(
-    ##     $storage, $loop, $unloop, timeline => '_test  tl2',
+    ##     $storage, $loop, $unloop, timeline => '_test_tl2',
     ##     mode => 'ack', target => [1..5],
     ##     exp_change => 5, exp_unacked => [6..10], exp_acked => [1..5]
     ## );
     change_and_check(
-        $storage, $loop, $unloop, timeline => '_test  tl2',
+        $storage, $loop, $unloop, timeline => '_test_tl2',
         mode => 'update', target => [map {status($_, undef, nowstring())} (1..5)],
         exp_change => 5, exp_unacked => [6..10], exp_acked => [1..5]
     );
     note('--- get: single, any state');
     foreach my $id (1..10) {
         on_statuses $storage, $loop, $unloop, {
-            timeline => '_test  tl2', count => 1, max_id => $id
+            timeline => '_test_tl2', count => 1, max_id => $id
         }, sub {
             my $statuses = shift;
             is(int(@$statuses), 1, "get 1 status");
@@ -578,7 +578,7 @@ sub test_storage_common {
         my $correct_state = ($id <= 5) ? 'acked' : 'unacked';
         my $wrong_state = $correct_state eq 'acked' ? 'unacked' : 'acked';
         on_statuses $storage, $loop, $unloop, {
-            timeline => '_test  tl2', count => 1, max_id => $id,
+            timeline => '_test_tl2', count => 1, max_id => $id,
             ack_state => $correct_state,
         }, sub {
             my $statuses = shift;
@@ -587,7 +587,7 @@ sub test_storage_common {
         };
         foreach my $count ('all', 1, 10) {
             on_statuses $storage, $loop, $unloop, {
-                timeline => '_test  tl2', count => $count, max_id => $id,
+                timeline => '_test_tl2', count => $count, max_id => $id,
                 ack_state => $wrong_state
             }, sub {
                 my $statuses = shift;
@@ -606,10 +606,10 @@ sub test_storage_common {
         test_status_id_set($statuses, [1..7], "7 statuses in _test_tl1");
     };
     on_statuses $storage, $loop, $unloop, {
-        timeline => '_test  tl2', count => "all",
+        timeline => '_test_tl2', count => "all",
     }, sub {
         my $statuses = shift;
-        test_status_id_set($statuses, [1..10], "10 statuses in _test  tl2");
+        test_status_id_set($statuses, [1..10], "10 statuses in _test_tl2");
     };
     note('--- access to non-existent statuses');
     foreach my $test_set (
@@ -618,14 +618,14 @@ sub test_storage_common {
         {mode => 'ack', target => 11}
     ) {
         change_and_check(
-            $storage, $loop, $unloop, timeline => '_test  tl2',
+            $storage, $loop, $unloop, timeline => '_test_tl2',
             mode => $test_set->{mode}, target => $test_set->{target}, label => "mode $test_set->{mode}",
             exp_change => 0, exp_unacked => [6..10],
             exp_acked => [1..5]
         );
     }
     on_statuses $storage, $loop, $unloop, {
-        timeline => '_test  tl2', count => 'all', max_id => 15,
+        timeline => '_test_tl2', count => 'all', max_id => 15,
     }, sub {
         my $statuses = shift;
         is(int(@$statuses), 0, "get max_id=15 returns empty");
@@ -643,14 +643,14 @@ sub test_storage_common {
     }
     note('--- changes done to obtained statuses do not affect storage.');
     on_statuses $storage, $loop, $unloop, {
-        timeline => '_test  tl2', count => 'all'
+        timeline => '_test_tl2', count => 'all'
     }, sub {
         my $statuses = shift;
         is(int(@$statuses), 10, "10 statuses");
         $_->{id} = 100 foreach @$statuses;
     };
     on_statuses $storage, $loop, $unloop, {
-        timeline => '_test  tl2', count => 'all'
+        timeline => '_test_tl2', count => 'all'
     }, sub {
         my $statuses = shift;
         test_status_id_set($statuses, [1..10], "ID set in storage is not changed.");
@@ -659,13 +659,13 @@ sub test_storage_common {
         note('--- changes done to inserted/updated statuses do not affect storage.');
         my @upserted = map { status $_ } 1..20;
         change_and_check(
-            $storage, $loop, $unloop, timeline => '_test  tl2',
+            $storage, $loop, $unloop, timeline => '_test_tl2',
             mode => 'upsert', target => \@upserted, exp_change => 20,
             exp_acked => [], exp_unacked => [1..20]
         );
         $_->{id} = 100 foreach @upserted;
         on_statuses $storage, $loop, $unloop, {
-            timeline => '_test  tl2', count => 'all'
+            timeline => '_test_tl2', count => 'all'
         }, sub {
             my $statuses = shift;
             test_status_id_set($statuses, [1..20], 'ID set in storage is not changed');
@@ -673,7 +673,7 @@ sub test_storage_common {
     }
 
     note('--- clean up');
-    foreach my $tl ('_test_tl1', '_test  tl2') {
+    foreach my $tl ('_test_tl1', '_test_tl2') {
         $callbacked = 0;
         $storage->delete_statuses(timeline => $tl, ids => undef, callback => sub {
             my $error= shift;
