@@ -194,6 +194,29 @@ sub test_timeline {
     }
 
     {
+        note('--- various ack arguments');
+        my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
+        my $ack_check = sub {
+            my ($args, $exp_count, $exp_acked, $exp_unacked) = @_;
+            local $Test::Builder::Level = $Test::Builder::Level + 1;
+            my ($error, $count) = sync($timeline, 'ack_statuses', %$args);
+            is($error, undef, "ack succeed");
+            is($count, $exp_count, "$exp_count acked.");
+            test_content($timeline, {count => 'all', ack_state => 'acked'}, $exp_acked, "acked OK");
+            test_content($timeline, {count => 'all', ack_state => 'unacked'}, $exp_unacked, 'unacked OK');
+        };
+        my ($error, $count) = sync($timeline, 'add_statuses', statuses => [map {status($_)} 1..20]);
+        is($error, undef, "add_statuses succeed");
+        is($count, 20, "20 added");
+        $ack_check->({ids => 10}, 1, [10], [reverse (1..9, 11..20)]);
+        $ack_check->({max_id => 3, ids => [5,8]}, 5, [reverse(1..3,5,8,10)], [reverse(4,6,7,9,11..20)]);
+        $ack_check->({max_id => 9, ids => [4,5,7]}, 4, [reverse(1..10)], [reverse(11..20)]);
+        $ack_check->({max_id => 12, ids => 12}, 2, [reverse(1..12)], [reverse(13..20)]);
+        $ack_check->({max_id => 16, ids => [14,16,18]}, 5, [reverse(1..16,18)], [reverse(17,19,20)]);
+        $ack_check->({max_id => undef, ids => undef}, 3, [reverse(1..20)], []);
+    }
+
+    {
         note('--- in case status storage returns errors.');
         my $mock = Test::MockObject->new();
         foreach my $method ('get_unacked_counts', map {"${_}_statuses"} qw(get put ack delete)) {
