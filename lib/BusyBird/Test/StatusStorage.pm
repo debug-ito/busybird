@@ -618,13 +618,16 @@ sub test_storage_common {
         {mode => 'update', target => [map { status($_) } (11..15) ]},
         {mode => 'delete', target => [11..15]},
         {mode => 'ack', target => 11},
-        {mode => 'ack', target_ids => 14},
-        {mode => 'ack', target_ids => [11..15]},
-        {mode => 'ack', target_max_id => 13, target_ids => 14},
+        {mode => 'ack', label => 'single ids', target_ids => 14},
+        {mode => 'ack', label => 'multi ids', target_ids => [11..15]},
+        {mode => 'ack', label => 'ids and max_id', target_max_id => 13, target_ids => 14},
     ) {
+        my $label = "mode $test_set->{mode} " . ($test_set->{label} || "");
+        my %target_args = %$test_set;
+        delete @target_args{"mode", "label"};
         change_and_check(
             $storage, $loop, $unloop, timeline => '_test_tl2',
-            mode => $test_set->{mode}, target => $test_set->{target}, label => "mode $test_set->{mode}",
+            mode => $test_set->{mode}, label => $label, %target_args,
             exp_change => 0, exp_unacked => [6..10],
             exp_acked => [1..5]
         );
@@ -735,7 +738,7 @@ sub test_storage_common {
         ok($callbacked, "callbacked");
         change_and_check(
             $storage, $loop, $unloop, timeline => '_test_acks',
-            mode => 'delete', target => undef, exp_change => 30, exp_acked => [], exp_unacked => []
+            mode => 'delete', target => undef, exp_change => 10, exp_acked => [], exp_unacked => []
         );
     }
 
@@ -1174,15 +1177,19 @@ sub test_storage_ordered {
         );
         change_and_check(
             $storage, $loop, $unloop, %base_ack, mode => 'ack', target_max_id => 7, target_ids => 20,
-            exp_change => 6, exp_unacked => [8,10..19, 21..40], exp_acked => [1..7,20]
+            exp_change => 1, exp_unacked => [1..4,6,8,10..19, 21..40], exp_acked => [5,7,9,20]
+        );
+        change_and_check(
+            $storage, $loop, $unloop, %base_ack, mode => 'ack', target_max_id => 8, target_ids => 19,
+            exp_change => 7, exp_unacked => [10..18, 21..40], exp_acked => [1..9,19,20]
         );
         change_and_check(
             $storage, $loop, $unloop, %base_ack, mode => 'ack', target_ids => [11,12], target_max_id => 14,
-            exp_change => 6, exp_unacked => [15..19, 21..40], exp_acked => [1..14, 20]
+            exp_change => 5, exp_unacked => [15..18, 21..40], exp_acked => [1..14, 19, 20]
         );
         change_and_check(
             $storage, $loop, $unloop, %base_ack, mode => 'ack', target_ids => 30, target_max_id => 30,
-            exp_change => 15, exp_unacked => [31..40], exp_acked => [1..30]
+            exp_change => 14, exp_unacked => [31..40], exp_acked => [1..30]
         );
         change_and_check(
             $storage, $loop, $unloop, %base_ack, mode => 'ack', exp_change => 10,
