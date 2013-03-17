@@ -6,6 +6,8 @@ use BusyBird::Util qw(set_param);
 use Router::Simple;
 use Plack::Request;
 use Plack::Builder ();
+use Plack::App::File;
+use Plack::Util ();
 use Try::Tiny;
 use JSON qw(decode_json encode_json to_json);
 use Scalar::Util qw(looks_like_number);
@@ -41,7 +43,10 @@ sub _to_app {
     my $self = shift;
     return Plack::Builder::builder {
         Plack::Builder::enable 'ContentLength';
-        $self->_my_app;
+        Plack::Builder::mount '/static' => Plack::App::File->new(
+            root => File::Spec->catdir(BusyBird->sharedir, 'www', 'static')
+        );
+        Plack::Builder::mount '/' => $self->_my_app;
     };
 }
 
@@ -77,13 +82,9 @@ sub _build_routes {
                         {method => '_handle_tl_ack'}, {method => 'POST'});
     $tl_mapper->connect('/updates/unacked_counts.json',
                         {method => '_handle_tl_get_unacked_counts'}, {method => 'GET'});
+    $tl_mapper->connect($_, {method => '_handle_tl_index'}) foreach qw(/ /index.html);
     $self->{router}->connect('/updates/unacked_counts.json',
                              {method => '_handle_get_unacked_counts'}, {method => 'GET'});
-    $self->{router}->connect('/hoge.index', {code => sub {
-        my ($self, $req, $dest) = @_;
-        my $ret = Encode::encode('utf8', $self->{renderer}->render('sample.tt', {title => "HOGE"}));
-        return [200, ['Content-Type', 'text/html; charset=utf8'], [$ret]];
-    }});
 }
 
 sub _get_timeline {
@@ -93,6 +94,20 @@ sub _get_timeline {
         die qq{No timeline named $dest->{timeline}};
     }
     return $timeline;
+}
+
+sub _render_template {
+    my ($self, %args) = @_;
+    my $template_name = delete $args{template};
+    croak 'template arg is mandatory' if not defined $template_name;
+    my $args = delete $args{args};
+    my $code = delete $args{code} || 200;
+    my $headers = delete $args{headers} || [];
+    if(Plack::Util::header_exists($headers, 'Content-Type')) {
+        push(@$headers, 'Content-Type', 'text/html; charset=utf8');
+    }
+    my $ret = Encode::encode('utf8', $self->{renderer}->render($template_name, $args));
+    return [$code, $headers, [$ret]];
 }
 
 sub _json_response {
@@ -272,5 +287,10 @@ sub _handle_get_unacked_counts {
     };
 }
 
-1;
+sub _handle_tl_index {
+    my ($self, $req, $dest) = @_;
+    my $timeline = $self->_get_timeline($dest);
+    return $self->_render_template(template => "timeline.tt", args => {timeline_name => $timeline->name});
+}
 
+1;
