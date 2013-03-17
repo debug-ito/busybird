@@ -78,7 +78,7 @@ sub _build_routes {
                         {method => '_handle_tl_ack'}, {method => 'POST'});
     $tl_mapper->connect('/updates/unacked_counts.json',
                         {method => '_handle_tl_get_unacked_counts'}, {method => 'GET'});
-    $tl_mapper->connect($_, {method => '_handle_tl_index'}) foreach qw(/ /index.html);
+    $tl_mapper->connect($_, {method => '_handle_tl_index'}) foreach "", qw(/ /index.html /index.htm);
     $self->{router}->connect('/updates/unacked_counts.json',
                              {method => '_handle_get_unacked_counts'}, {method => 'GET'});
 }
