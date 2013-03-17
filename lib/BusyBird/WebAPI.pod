@@ -130,14 +130,29 @@ B<Request Body Parameters>
 
 =over
 
-=item C<max_id> = STATUS_ID (optional, default: none)
+=item C<ids> = {STATUS_ID, ARRAY_OF_STATUS_IDS} (optional, default: C<null>)
+
+Specifies the IDs of the statuses to be acked.
+
+If it is a string, the status with the specified ID is acked.
+If it is an array of IDs, the statuses with those IDs are acked.
+
+If both C<max_id> and C<ids> are omitted or set to C<null>, all unacked statuses are acked.
+If both C<max_id> and C<ids> are specified, both statuses older than or equal to C<max_id>
+and statuses specifed by C<ids> are acked.
+
+
+=item C<max_id> = STATUS_ID (optional, default: C<null>)
 
 Specifies the latest ID of the statuses to be acked.
 
 If specified, unacked statuses with IDs older than or equal to the specified C<max_id> are acked.
 If there is no unacked status with ID C<max_id>, no status is acked.
 
-If this option is omitted, all unacked statuses are acked.
+If both C<max_id> and C<ids> are omitted or set to C<null>, all unacked statuses are acked.
+If both C<max_id> and C<ids> are specified, both statuses older than or equal to C<max_id>
+and statuses specifed by C<ids> are acked.
+
 
 =back
 
@@ -160,11 +175,16 @@ Request URL:
 
 Request Body:
 
-    {"max_id": "http://example.com/page/2013/0202"}
+    {
+      "max_id": "http://example.com/page/2013/0202",
+      "ids": [
+        "http://example.com/page/2013/0204",
+       ]
+    }
 
 Response Body:
 
-    {"error": null, "count": 1}
+    {"error": null, "count": 2}
 
 
 =head2 POST /timelines/{timeline}/statuses.json

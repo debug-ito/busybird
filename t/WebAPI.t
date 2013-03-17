@@ -5,11 +5,13 @@ use utf8;
 use Test::More;
 use Test::MockObject;
 use DateTime;
+use DateTime::Duration;
 use BusyBird::Main;
 use BusyBird::StatusStorage::Memory;
 use BusyBird::DateTime::Format;
 use BusyBird::Test::HTTP;
-use BusyBird::Test::StatusStorage qw(:status);
+use BusyBird::Test::StatusStorage qw(:status test_cases_for_ack);
+use BusyBird::Test::Timeline_Util qw(status);
 use BusyBird::Log ();
 use Plack::Test;
 use Encode ();
@@ -187,6 +189,34 @@ sub test_error_request {
 }
 
 {
+    note('--- -- various POST ack argument patterns');
+    my $f = 'BusyBird::DateTime::Format';
+    foreach my $case (test_cases_for_ack(is_ordered => 0), test_cases_for_ack(is_ordered => 1)) {
+        note("--- POST ack case: $case->{label}");
+        my $main = create_main();
+        $main->timeline('test');
+        test_psgi $main->to_app, sub {
+            my $tester = BusyBird::Test::HTTP->new(requester => shift);
+            my $already_acked_at = $f->format_datetime(
+                DateTime->now(time_zone => 'UTC') - DateTime::Duration->new(days => 1)
+            );
+            my $input_statuses = [
+                (map {status($_,0,$already_acked_at)} 1..10),
+                (map {status($_)} 11..20)
+            ];
+            my $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
+                                                encode_json($input_statuses), qr/^200$/, 'POST statuses OK');
+            is_deeply($res_obj, {error => undef, count => 20}, "POST count OK");
+            my $request_message = defined($case->{req}) ? encode_json($case->{req}) : undef;
+            $res_obj = $tester->post_json_ok('/timelines/test/ack.json', $request_message, qr/^200$/, 'POST ack OK');
+            is_deeply($res_obj, {error => undef, count => $case->{exp_count}}, "ack count is $case->{exp_count}");
+            test_get_statuses($tester, 'test', 'ack_state=unacked&count=100', $case->{exp_unacked}, 'unacked statuses OK');
+            test_get_statuses($tester, 'test', 'ack_state=acked&count=100', $case->{exp_acked}, 'acked statuses OK');
+        };
+    }
+}
+
+{
     my $main = create_main();
     $main->timeline('test');
     note('--- GET /updates/unacked_counts.json with no valid TL');
@@ -341,8 +371,15 @@ EOD
 }
 EOD
         {endpoint => 'POST /timelines/home/ack.json',
-         content => q{{"max_id": "http://example.com/page/2013/0202"}},
-         exp_response => q{{"error": null, "count": 1}}}
+         content => <<EOD,
+{
+  "max_id": "http://example.com/page/2013/0202",
+  "ids": [
+    "http://example.com/page/2013/0204",
+   ]
+}
+EOD
+         exp_response => q{{"error": null, "count": 2}}}
     );
     test_psgi $main->to_app, sub {
         my $tester = BusyBird::Test::HTTP->new(requester => shift);
