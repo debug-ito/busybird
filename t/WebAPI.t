@@ -375,7 +375,7 @@ EOD
 {
   "max_id": "http://example.com/page/2013/0202",
   "ids": [
-    "http://example.com/page/2013/0204",
+    "http://example.com/page/2013/0204"
    ]
 }
 EOD
