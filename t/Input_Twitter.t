@@ -145,6 +145,39 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
 }
 
 {
+    note('--- transform_permalink with various apiurl');
+    foreach my $case (
+        {apiurl => 'http://api.twitter.com/1.1', exp_base => 'http://twitter.com'},
+        {apiurl => 'https://api.twitter.com/1.1', exp_base => 'https://twitter.com'},
+        {apiurl => 'https://api.twitter.com/1', exp_base => 'https://twitter.com'},
+        {apiurl => 'https://api.twitter.com/1.1/', exp_base => 'https://twitter.com'},
+        {apiurl => 'http://www.example.com/api/', exp_base => 'http://www.example.com'},
+        {apiurl => 'https://hoge.co.jp/foo/bar', exp_base => 'https://hoge.co.jp'},
+    ) {
+        my $bbin = BusyBird::Input::Twitter->new(
+            apiurl => $case->{apiurl}
+        );
+        my $status = {
+            id => 1129, user => {
+                screen_name => "toshio"
+            }
+        };
+        is_deeply(
+            $bbin->transform_permalink($status),
+            {
+                id => 1129, user => {
+                    screen_name => "toshio"
+                },
+                busybird => {
+                    status_permalink => "$case->{exp_base}/toshio/status/1129"
+                }
+            },
+            "trasform_permalink with apiurl '$case->{apiurl}' OK"
+        );
+    }
+}
+
+{
     note('--- apiurl option');
     my $apiurl = 'https://foobar.co.jp';
     my $apiurlmock = Test::MockObject->new;

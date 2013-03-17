@@ -104,7 +104,10 @@ sub transform_permalink {
         return $status if not defined($id);
         return $status if not defined($status->{user}{screen_name});
     }
-    $apiurl =~ s|/+$||;
+    if($apiurl =~ m|^(https?)://([^/]+)|i) {
+        $apiurl = "$1://$2";
+    }
+    $apiurl =~ s|api\.twitter\.|twitter\.|;
     my $new_status = dclone($status);
     $new_status->{busybird}{status_permalink} = sprintf(
         "%s/%s/status/%s", $apiurl, $status->{user}{screen_name}, $id
