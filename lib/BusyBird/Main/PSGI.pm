@@ -60,11 +60,7 @@ sub _my_app {
             my $method = $dest->{method};
             return defined($code) ? $code->($self, $req, $dest) : $self->$method($req, $dest);
         }else {
-            my $message = 'Not Found';
-            return ['404',
-                    ['Content-Type' => 'text/plain',
-                     'Content-Length' => length($message)],
-                    [$message]];
+            return _notfound_response();
         }
     };
 }
@@ -108,6 +104,15 @@ sub _render_template {
     }
     my $ret = Encode::encode('utf8', $self->{renderer}->render($template_name, $args));
     return [$code, $headers, [$ret]];
+}
+
+sub _notfound_response {
+    my ($message) = @_;
+    $message ||= 'Not Found';
+    return ['404',
+            ['Content-Type' => 'text/plain',
+             'Content-Length' => length($message)],
+            [$message]];
 }
 
 sub _json_response {
@@ -289,7 +294,12 @@ sub _handle_get_unacked_counts {
 
 sub _handle_tl_index {
     my ($self, $req, $dest) = @_;
-    my $timeline = $self->_get_timeline($dest);
+    my $timeline = try {
+        $self->_get_timeline($dest);
+    }catch {
+        undef
+    };
+    return _notfound_response if not defined $timeline;
     return $self->_render_template(template => "timeline.tt", args => {timeline_name => $timeline->name});
 }
 
