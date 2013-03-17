@@ -44,3 +44,26 @@ bb.Spinner.prototype = {
         this.set(this.spin_count - 1);
     }
 };
+
+bb.MessageBanner = function(sel_target) {
+    this.sel_target = sel_target;
+    this.timeout_obj = null;
+};
+bb.MessageBanner.prototype = {
+    show: function(msg, type, timeout) {
+        var $msg = $(this.sel_target);
+        var self = this;
+        if(!defined(type)) type = "normal";
+        msg = '<span class="bb-msg-'+type+'">'+msg+'</span>';
+        $msg.html(msg).show();
+        if(!defined(timeout) || timeout <= 0) timeout = 5000;
+        if(defined(self.timeout_obj)) {
+            clearTimeout(self.timeout_obj);
+            self.timeout_obj = null;
+        }
+        self.timeout_obj = setTimeout(function() {
+            self.timeout_obj = null;
+            $msg.fadeOut('fast');
+        }, timeout);
+    },
+};
