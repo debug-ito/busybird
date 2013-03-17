@@ -15,11 +15,10 @@ our %EXPORT_TAGS = (
     storage => [
         qw(test_storage_common test_storage_ordered test_storage_truncation test_storage_missing_arguments),
         qw(test_storage_put_requires_ids),
-        qw(test_cases_for_ack),
     ],
     status => [qw(test_status_id_set test_status_id_list)],
 );
-our @EXPORT_OK = ();
+our @EXPORT_OK = qw(test_cases_for_ack);
 {
     my @all = ();
     foreach my $tag (keys %EXPORT_TAGS) {
