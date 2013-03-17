@@ -210,6 +210,8 @@ sub test_timeline {
         my ($error, $count) = sync($timeline, 'add_statuses', statuses => [map {status($_)} 1..20]);
         is($error, undef, "add_statuses succeed");
         is($count, 20, "20 added");
+        $ack_check->({ids => []}, 0, [], [reverse (1..20)]);
+        $ack_check->({ids => [], max_id => undef}, 0, [], [reverse (1..20)]);
         $ack_check->({ids => 10}, 1, [10], [reverse (1..9, 11..20)]);
         $ack_check->({max_id => 3, ids => [5,8]}, 5, [reverse(1..3,5,8,10)], [reverse(4,6,7,9,11..20)]);
         $ack_check->({max_id => 9, ids => [4,5,7]}, 4, [reverse(1..10)], [reverse(11..20)]);

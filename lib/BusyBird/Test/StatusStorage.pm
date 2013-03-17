@@ -694,6 +694,18 @@ sub test_storage_common {
             mode => 'insert', target => [map {status($_)} 1..30], exp_change => 30,
             exp_acked => [], exp_unacked => [1..30]
         );
+        note('--- ack: ids (empty array)');
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_acks',
+            mode => 'ack', target_ids => [], exp_change => 0,
+            exp_acked => [], exp_unacked => [1..30]
+        );
+        note('--- ack: ids (empty array) with undef max_id');
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_acks',
+            mode => 'ack', target_ids => [], target_max_id => undef, exp_change => 0,
+            exp_acked => [], exp_unacked => [1..30]
+        );
         note('--- ack: ids (single)');
         change_and_check(
             $storage, $loop, $unloop, timeline => '_test_acks',
