@@ -6,12 +6,13 @@ use Test::More;
 use Test::Builder;
 use Test::Exception;
 use Test::MockObject;
-use BusyBird::Test::StatusStorage qw(:status);
+use BusyBird::Test::StatusStorage qw(:status test_cases_for_ack);
 use BusyBird::Test::Timeline_Util qw(sync status *LOOP *UNLOOP);
 use Test::Memory::Cycle;
 use BusyBird::DateTime::Format;
 use BusyBird::Log;
 use DateTime;
+use DateTime::Duration;
 use Storable qw(dclone);
 
 BEGIN {
@@ -194,30 +195,27 @@ sub test_timeline {
     }
 
     {
-        note('--- various ack arguments');
-        my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
-        my $ack_check = sub {
-            my ($args, $exp_count, $exp_acked, $exp_unacked) = @_;
-            local $Test::Builder::Level = $Test::Builder::Level + 1;
-            my ($error, $count) = sync($timeline, 'ack_statuses', %$args);
+        note('--- -- various ack arguments');
+        foreach my $case (test_cases_for_ack(is_ordered => 0), test_cases_for_ack(is_orderd => 1)) {
+            next if not defined $case->{req};
+            note("--- case: $case->{label}");
+            my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
+            my $f = 'BusyBird::DateTime::Format';
+            my $already_acked_at = $f->format_datetime(
+                DateTime->now(time_zone => 'UTC') - DateTime::Duration->new(days => 1)
+            );
+            my ($error, $count) = sync(
+                $timeline, 'add_statuses',
+                statuses => [(map {status($_, 0, $already_acked_at)} 1..10), (map {status($_)} 11..20)]
+            );
+            is($error, undef, "add succeed");
+            is($count, 20, "add count = 20");
+            ($error, $count) = sync($timeline, 'ack_statuses', %{$case->{req}});
             is($error, undef, "ack succeed");
-            is($count, $exp_count, "$exp_count acked.");
-            test_content($timeline, {count => 'all', ack_state => 'unacked'}, $exp_unacked, 'unacked OK');
-            ($error, my $statuses) = sync($timeline, 'get_statuses', count => "all", ack_state => 'acked');
-            is($error, undef, "get succeed");
-            test_status_id_set($statuses, $exp_acked, 'acked set OK');
-        };
-        my ($error, $count) = sync($timeline, 'add_statuses', statuses => [map {status($_)} 1..20]);
-        is($error, undef, "add_statuses succeed");
-        is($count, 20, "20 added");
-        $ack_check->({ids => []}, 0, [], [reverse (1..20)]);
-        $ack_check->({ids => [], max_id => undef}, 0, [], [reverse (1..20)]);
-        $ack_check->({ids => 10}, 1, [10], [reverse (1..9, 11..20)]);
-        $ack_check->({max_id => 3, ids => [5,8]}, 5, [reverse(1..3,5,8,10)], [reverse(4,6,7,9,11..20)]);
-        $ack_check->({max_id => 9, ids => [4,5,7]}, 4, [reverse(1..10)], [reverse(11..20)]);
-        $ack_check->({max_id => 12, ids => 12}, 2, [reverse(1..12)], [reverse(13..20)]);
-        $ack_check->({max_id => 16, ids => [14,16,18]}, 5, [reverse(1..16,18)], [reverse(17,19,20)]);
-        $ack_check->({max_id => undef, ids => undef}, 3, [reverse(1..20)], []);
+            is($count, $case->{exp_count}, "ack count = $case->{exp_count}");
+            test_content($timeline, {count => 'all', ack_state => 'unacked'}, $case->{exp_unacked}, "unacked statuses OK");
+            test_content($timeline, {count => 'all', ack_state => 'acked'}, $case->{exp_acked}, "acked statuses OK");
+        }
     }
 
     {

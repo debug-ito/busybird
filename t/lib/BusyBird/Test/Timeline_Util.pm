@@ -29,14 +29,16 @@ sub sync {
 }
 
 sub status {
-    my ($id, $level) = @_;
-    my %level_elem = defined($level) ? (busybird => { level => $level }) : ();
+    my ($id, $level, $acked_at) = @_;
+    my %busybird_elem = ();
+    $busybird_elem{busybird}{level} = $level if defined $level;
+    $busybird_elem{busybird}{acked_at} = $acked_at if defined $acked_at;
     return {
         id => $id,
         created_at => BusyBird::DateTime::Format->format_datetime(
             DateTime->from_epoch(epoch => $id, time_zone => 'UTC')
         ),
-        %level_elem
+        %busybird_elem
     };
 }
 
