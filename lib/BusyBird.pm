@@ -1,9 +1,12 @@
 package BusyBird;
 use strict;
 use warnings;
+use File::ShareDir qw(dist_dir);
 
-our $DIST_NAME = __PACKAGE__;
-$DIST_NAME =~ s/::/-/g;
+
+sub sharedir {
+    return dist_dir(__PACKAGE__);
+}
 
 our $VERSION = '0.01';
 

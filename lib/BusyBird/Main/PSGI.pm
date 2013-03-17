@@ -12,9 +12,7 @@ use Scalar::Util qw(looks_like_number);
 use Carp;
 use Text::Xslate;
 use File::Spec;
-use File::ShareDir qw(dist_dir);
 use Encode ();
-## use File::Share qw(dist_file);
 
 
 sub create_psgi_app {
@@ -28,7 +26,7 @@ sub _new {
     my $self = bless {
         router => Router::Simple->new,
         renderer => Text::Xslate->new(
-            path => [ File::Spec->catdir(dist_dir($BusyBird::DIST_NAME), 'templates') ],
+            path => [ File::Spec->catdir(BusyBird->sharedir, 'www', 'templates') ],
             cache_dir => File::Spec->tmpdir,
             syntax => 'TTerse',
             ## warn_handler => sub { ... },
