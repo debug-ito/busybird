@@ -202,8 +202,10 @@ sub test_timeline {
             my ($error, $count) = sync($timeline, 'ack_statuses', %$args);
             is($error, undef, "ack succeed");
             is($count, $exp_count, "$exp_count acked.");
-            test_content($timeline, {count => 'all', ack_state => 'acked'}, $exp_acked, "acked OK");
             test_content($timeline, {count => 'all', ack_state => 'unacked'}, $exp_unacked, 'unacked OK');
+            ($error, my $statuses) = sync($timeline, 'get_statuses', count => "all", ack_state => 'acked');
+            is($error, undef, "get succeed");
+            test_status_id_set($statuses, $exp_acked, 'acked set OK');
         };
         my ($error, $count) = sync($timeline, 'add_statuses', statuses => [map {status($_)} 1..20]);
         is($error, undef, "add_statuses succeed");

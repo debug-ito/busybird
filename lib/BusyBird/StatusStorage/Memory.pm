@@ -374,38 +374,6 @@ sub ack_statuses {
             }
         );
     };
-        
-    ######
-    ## 
-    ## $self->get_statuses(
-    ##     timeline => $args{timeline},
-    ##     max_id => $args{max_id}, count => 'all',
-    ##     ack_state => 'unacked',
-    ##     callback => sub {
-    ##         my ($error, $statuses) = @_;
-    ##         if(defined($error)) {
-    ##             @_ = ("get error: $error");
-    ##             goto $callback;
-    ##         }
-    ##         if(@$statuses == 0) {
-    ##             @_ = (undef, 0);
-    ##             goto $callback;
-    ##         }
-    ##         $_->{busybird}{acked_at} = $ack_str foreach @$statuses;
-    ##         $self->put_statuses(
-    ##             timeline => $args{timeline}, mode => 'update',
-    ##             statuses => $statuses, callback => sub {
-    ##                 my ($error, $changed) = @_;
-    ##                 if(defined($error)) {
-    ##                     @_ = ("put error: $error");
-    ##                     goto $callback;
-    ##                 }
-    ##                 @_ = (undef, $changed);
-    ##                 goto $callback;
-    ##             }
-    ##         );
-    ##     }
-    ## );
 }
 
 sub get_unacked_counts {
