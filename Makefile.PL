@@ -44,6 +44,9 @@ test_requires 'Test::Memory::Cycle', '1.04';
 test_requires 'Test::MockObject', '1.09';
 test_requires 'Test::More', '0.98';
 test_requires 'Test::Warn', '0.24';
+test_requires 'HTML::TreeBuilder', '5';
+test_requires 'HTML::TreeBuilder::XPath', '0.12';
+
 
 ## auto_install;
 
