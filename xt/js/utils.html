@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Utility functions tests</title>
+    <link rel="stylesheet" href="qunit.css">
+  </head>
+  <body>
+    <div id="mb"></div>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <script src="qunit.js"></script>
+    <script src="sinon.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
+    <script src="../../share/www/static/jsdeferred.js"></script>
+    <script src="../../share/www/static/busybird.js"></script>
+    <script type="text/javascript">
+
+var faketimer;
+
+function fakeTimer() {
+    if(defined(faketimer)) {
+        faketimer.restore();
+    }
+    faketimer = sinon.useFakeTimers();
+}
+
+var fakeserver;
+
+var SlowStartServer = function(fail_num) {
+    var self = this;
+    self.fail_num = fail_num;
+    self.count = 0;
+    self.reqs = [];
+    self.xhr = sinon.useFakeXMLHttpRequest();
+    self.xhr.onCreate = function(req) {
+        self.reqs.push(req);
+    };
+};
+SlowStartServer.prototype = {
+    pendingNum: function() { return this.reqs.length },
+    respond: function() {
+        var self = this;
+        var i, request;
+        for(i = 0 ; i < self.reqs.length ; i++) {
+            request = self.reqs[i];
+            if(self.count < self.fail_num) {
+                request.respond(404, {"Content-Type": "text/plain"}, "" + self.count);
+            }else {
+                request.respond(200, {"Content-Type": "text/plain"}, "" + self.count);
+            }
+            self.count++;
+        }
+        self.reqs = [];
+    },
+    restore: function() { this.xhr.restore() },
+};
+
+// function serverSlowStart(fail_num) {
+//     var response_count = 0;
+//     if(defined(fakeserver)) {
+//         fakeserver.restore();
+//     }
+//     fakeserver = sinon.fakeServer.create();
+//     fakeserver.respondWith(function(request) {
+//         if(response_count < fail_num) {
+//             request.respond(404, {"Content-Type": "text/plain"}, "" + response_count);
+//         }else {
+//             request.respond(200, {"Content-Type": "text/plain"}, "" + response_count);
+//         }
+//         response_count++;
+//     });
+// }
+
+test("ajaxRetry (succeed at first request)", function() {
+    var res;
+    // serverSlowStart(0);
+    fakeserver = new SlowStartServer(0);
+    bb.ajaxRetry({url: "/"}).next(function(data) {
+        res = data;
+    });
+    ok(!defined(res), "response is not returned yet");
+    strictEqual(fakeserver.pendingNum(), 1, "1 request pending");
+    fakeserver.respond();
+    strictEqual(res, "0", "response received at count = 0");
+    fakeserver.restore();
+});
+
+test("ajaxRetry (fail several times)", function() {
+    var res;
+    // serverSlowStart(5);
+    fakeserver = new SlowStartServer(5);
+    fakeTimer();
+    bb.ajaxRetry({url: "/"}).next(function(data) { res = data });
+    ok(!defined(res), "response is not returned yet");
+    strictEqual(fakeserver.pendingNum(), 1, "1 request pending");
+    fakeserver.respond();
+    strictEqual(fakeserver.pendingNum(), 0, "0 request pending");
+    faketimer.tick(200);
+    strictEqual(fakeserver.pendingNum(), 0, "0 request pending (not yet requested)");
+    faketimer.tick(200000);
+    strictEqual(fakeserver.pendingNum(), 1, "1 request pending");
+    fakeserver.respond();
+    faketimer.tick(1000);
+    strictEqual(fakeserver.pendingNum(), 0, "0 request pending (retry backoff)");
+    faketimer.tick(200000);
+    strictEqual(fakeserver.pendingNum(), 1, "1 request pending");
+    fakeserver.respond();
+    faketimer.tick(200000);
+    fakeserver.respond();
+    faketimer.tick(200000);
+    fakeserver.respond();
+    ok(!defined(res), "response is not returned yet");
+    faketimer.tick(200000);
+    fakeserver.respond();
+    strictEqual(res, "5", "response received at count = 5");
+    fakeserver.restore();
+});
+
+test("todo: ajaxRetry", function() {
+    ok(false, "cancel deferred.");
+    ok(false, "tryMax param.");
+});
+
+    </script>
+  </body>
+</html>
+
