@@ -10,6 +10,7 @@
     <div id="qunit"></div>
     <div id="qunit-fixture"></div>
     <script src="qunit.js"></script>
+    <script src="sinon.js"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
     <script src="../../share/www/static/busybird.js"></script>
     <script type="text/javascript">
@@ -29,29 +30,27 @@ function testNoMessage() {
 }
 
 test("MessageBanner", function() {
+    var faketimer = sinon.useFakeTimers();
     var mb = new bb.MessageBanner("#mb");
+    
     ok(defined(mb), "MessageBanner created");
     mb.show("normal message");
     testMessage("normal", "normal message");
     mb.show("error message", "error");
     testMessage("error", "error message");
-    asyncTest("automatically hide message", function() {
-        setTimeout(function() {
-            testNoMessage();
-            start();
-        }, 7000);
-    });
-    asyncTest("set timeout param", function() {
-        mb.show("message", null, 500);
-        testMessage("normal", "message");
-        start();
-    });
-    asyncTest("automatically hide message in shorter timeout", function() {
-        setTimeout(function() {
-            testNoMessage();
-            start();
-        }, 2000)
-    });
+    faketimer.tick(3000);
+    testMessage("error", "error message");
+    
+    faketimer.tick(4000);
+    testNoMessage();
+
+    mb.show("message", null, 500);
+    testMessage("normal", "message");
+
+    faketimer.tick(2000);
+    testNoMessage();
+
+    faketimer.restore();
 });
 
     </script>
