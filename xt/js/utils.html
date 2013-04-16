@@ -16,6 +16,7 @@
     <script src="../../share/www/static/busybird.js"></script>
     <script type="text/javascript">
 
+var is = strictEqual;
 var faketimer;
 
 function fakeTimer() {
@@ -80,9 +81,9 @@ test("ajaxRetry (succeed at first request)", function() {
         res = data;
     });
     ok(!defined(res), "response is not returned yet");
-    strictEqual(fakeserver.pendingNum(), 1, "1 request pending");
+    is(fakeserver.pendingNum(), 1, "1 request pending");
     fakeserver.respond();
-    strictEqual(res, "0", "response received at count = 0");
+    is(res, "0", "response received at count = 0");
     fakeserver.restore();
 });
 
@@ -93,18 +94,18 @@ test("ajaxRetry (fail several times)", function() {
     fakeTimer();
     bb.ajaxRetry({url: "/"}).next(function(data) { res = data });
     ok(!defined(res), "response is not returned yet");
-    strictEqual(fakeserver.pendingNum(), 1, "1 request pending");
+    is(fakeserver.pendingNum(), 1, "1 request pending");
     fakeserver.respond();
-    strictEqual(fakeserver.pendingNum(), 0, "0 request pending");
+    is(fakeserver.pendingNum(), 0, "0 request pending");
     faketimer.tick(200);
-    strictEqual(fakeserver.pendingNum(), 0, "0 request pending (not yet requested)");
+    is(fakeserver.pendingNum(), 0, "0 request pending (not yet requested)");
     faketimer.tick(200000);
-    strictEqual(fakeserver.pendingNum(), 1, "1 request pending");
+    is(fakeserver.pendingNum(), 1, "1 request pending");
     fakeserver.respond();
     faketimer.tick(1000);
-    strictEqual(fakeserver.pendingNum(), 0, "0 request pending (retry backoff)");
+    is(fakeserver.pendingNum(), 0, "0 request pending (retry backoff)");
     faketimer.tick(200000);
-    strictEqual(fakeserver.pendingNum(), 1, "1 request pending");
+    is(fakeserver.pendingNum(), 1, "1 request pending");
     fakeserver.respond();
     faketimer.tick(200000);
     fakeserver.respond();
@@ -113,12 +114,27 @@ test("ajaxRetry (fail several times)", function() {
     ok(!defined(res), "response is not returned yet");
     faketimer.tick(200000);
     fakeserver.respond();
-    strictEqual(res, "5", "response received at count = 5");
+    is(res, "5", "response received at count = 5");
+    fakeserver.restore();
+});
+
+test("ajaxRetry (cancel)", function() {
+    var req_deferred;
+    var ajax_xhr;
+    var ajax_spy = sinon.spy(jQuery, "ajax");
+    var ajax_abort_spy;
+    fakeserver = new SlowStartServer(0)
+    req_deferred = bb.ajaxRetry({url: "/"});
+    is(fakeserver.pendingNum(), 1, "1 pending request");
+    is(ajax_spy.callCount, 1, "$.ajax() called once");
+    ajax_xhr = ajax_spy.getCall(0).returnValue;
+    ajax_abort_spy = sinon.spy(ajax_xhr, "abort");
+    req_deferred.cancel();
+    is(ajax_abort_spy.callCount, 1, "ajaxXHR.abort() called once");
     fakeserver.restore();
 });
 
 test("todo: ajaxRetry", function() {
-    ok(false, "cancel deferred.");
     ok(false, "tryMax param.");
 });
 
