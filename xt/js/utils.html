@@ -28,6 +28,9 @@ function fakeTimer() {
 
 var fakeserver;
 
+// SlowStartServer starts slowly.
+// At first it responds with 404 for fail_num times.
+// After that it starts responding with 200.
 var SlowStartServer = function(fail_num) {
     var self = this;
     self.fail_num = fail_num;
@@ -56,22 +59,6 @@ SlowStartServer.prototype = {
     },
     restore: function() { this.xhr.restore() },
 };
-
-// function serverSlowStart(fail_num) {
-//     var response_count = 0;
-//     if(defined(fakeserver)) {
-//         fakeserver.restore();
-//     }
-//     fakeserver = sinon.fakeServer.create();
-//     fakeserver.respondWith(function(request) {
-//         if(response_count < fail_num) {
-//             request.respond(404, {"Content-Type": "text/plain"}, "" + response_count);
-//         }else {
-//             request.respond(200, {"Content-Type": "text/plain"}, "" + response_count);
-//         }
-//         response_count++;
-//     });
-// }
 
 test("ajaxRetry (succeed at first request)", function() {
     var res;
@@ -123,20 +110,41 @@ test("ajaxRetry (cancel)", function() {
     var ajax_xhr;
     var ajax_spy = sinon.spy(jQuery, "ajax");
     var ajax_abort_spy;
+    var next_executed = false;
+    var error_executed = false;
     fakeserver = new SlowStartServer(0)
     req_deferred = bb.ajaxRetry({url: "/"});
+    req_deferred.next(function() { next_executed = true })
+        .error(function() { error_executed = true });
     is(fakeserver.pendingNum(), 1, "1 pending request");
     is(ajax_spy.callCount, 1, "$.ajax() called once");
     ajax_xhr = ajax_spy.getCall(0).returnValue;
     ajax_abort_spy = sinon.spy(ajax_xhr, "abort");
     req_deferred.cancel();
     is(ajax_abort_spy.callCount, 1, "ajaxXHR.abort() called once");
+    ok(!next_executed, "next callback is not executed");
+    ok(!error_executed, "error callback is not executed");
     fakeserver.restore();
 });
 
-test("todo: ajaxRetry", function() {
-    ok(false, "tryMax param.");
+test("ajaxRetry (tryMax)", function() {
+    var next_executed = false;
+    var error_executed = false;
+    fakeserver = new SlowStartServer(1);
+    bb.ajaxRetry({url: "/", tryMax: 1}).next(function() {
+        next_executed = true;
+    }).error(function() {
+        error_executed = true;
+    });
+    is(fakeserver.pendingNum(), 1, "1 pending request");
+    ok(!next_executed, "next callback is not executed");
+    ok(!error_executed, "error callback is not executed");
+    fakeserver.respond();
+    ok(!next_executed, "next callback is not executed");
+    ok(error_executed, "error callback is executed");
+    fakeserver.restore();
 });
+
 
     </script>
   </body>
