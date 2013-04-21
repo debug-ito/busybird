@@ -17,7 +17,7 @@ bb.ajaxRetry = (function() {
         var ajax_xhr = null;
         var ajax_retry_ok = true;
         var ajax_retry_backoff = backoff_init_ms;
-        var deferred = new Deferred();
+        var deferred = Q.defer();
         var try_max = 0;
         var try_count = 0;
         var ajax_done_handler, ajax_fail_handler;
@@ -26,13 +26,15 @@ bb.ajaxRetry = (function() {
             delete ajax_param.tryMax;
         }
         ajax_done_handler = function(data, textStatus, jqXHR) {
-            deferred.call(data, textStatus, jqXHR);
+            // deferred.call(data, textStatus, jqXHR);
+            deferred.resolve(data);
         };
         ajax_fail_handler = function(jqXHR, textStatus, errorThrown) {
             ajax_xhr = null;
             try_count++;
             if(try_max > 0 && try_count >= try_max) {
-                deferred.fail(jqXHR, textStatus, errorThrown);
+                // deferred.fail(jqXHR, textStatus, errorThrown);
+                deferred.reject({textStatus: textStatus, errorThrown: errorThrown});
                 return;
             }
             ajax_retry_backoff *= backoff_factor;
@@ -48,25 +50,29 @@ bb.ajaxRetry = (function() {
         };
         ajax_xhr = $.ajax(ajax_param);
         ajax_xhr.then(ajax_done_handler, ajax_fail_handler);
-        deferred.canceller = function () {
-            ajax_retry_ok = false;
-            console.log("ajaxRetry: canceller called");
-            if(defined(ajax_xhr)) {
-                console.log("ajaxRetry: xhr aborted.");
-                ajax_xhr.abort();
+        return {
+            promise: deferred.promise,
+            cancel: function() {
+                ajax_retry_ok = false;
+                deferred.reject({textStatus: "cancelled", errorThrown: ""});
+                console.log("ajaxRetry: canceller called");
+                if(defined(ajax_xhr)) {
+                    console.log("ajaxRetry: xhr aborted.");
+                    ajax_xhr.abort();
+                }
             }
         };
-        return deferred;
     };
 })();
 
-bb.blockRepeat = function(orig_array, block_size, each_func) {
-    var block_num = Math.ceil(orig_array.length / block_size);
-    return Deferred.repeat(block_num, function(block_index) {
-        var start_global_index = block_size * block_index;
-        each_func(orig_array.slice(start_global_index, start_global_index + block_size), start_global_index);
-    });
-};
+// ** TODO: re-implement without jsDeferred
+// bb.blockRepeat = function(orig_array, block_size, each_func) {
+//     var block_num = Math.ceil(orig_array.length / block_size);
+//     return Deferred.repeat(block_num, function(block_index) {
+//         var start_global_index = block_size * block_index;
+//         each_func(orig_array.slice(start_global_index, start_global_index + block_size), start_global_index);
+//     });
+// };
 
 bb.Spinner = function(sel_target) {
     this.sel_target = sel_target;
@@ -132,7 +138,7 @@ bb.StatusContainer = function() {
     
 };
 bb.StatusContainer.prototype = {
-    formatHiddenStatus : function (invisible_num) {
+    _formatHiddenStatus : function (invisible_num) {
         return '<li class="hidden-status-header">'+ invisible_num +' statuses hidden here.</li>';
     },
 };
