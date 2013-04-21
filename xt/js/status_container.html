@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>StatusContainer tests</title>
+    <link rel="stylesheet" href="qunit.css">
+  </head>
+  <body>
+    <div id="spinner"></div>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <script src="qunit.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
+    <script src="../../share/www/static/q.js"></script>
+    <script src="../../share/www/static/busybird.js"></script>
+    <script type="text/javascript">
+
+var createStatus = function(id, level) {
+    if(!level) level = 0;
+    return $('<li class="bb-status"></li>')
+        .attr("data-bb-status-level", level)
+        .append($('<span class="bb-status-id"></span>').text(id));
+};
+
+var createStatusDOM = function(id, level) {
+    return createStatus(id, level).get(0);
+};
+
+var setupContainer = function() {
+    $('<ul id="bb-status-container"></ul>').appendTo("#qunit-fixture");
+    return new bb.StatusContainer("#bb-status-container");
+};
+
+var getStatuses = function() {
+    return $("#bb-status-container").children();
+};
+
+var getContent = function($statuses) {
+    return getStatuses().map(function() {
+        var $this = $(this);
+        if($this.hasClass("bb-status")) {
+            return $this.find(".bb-status-id").text();
+        }else if($this.hasClass("bb-hidden-statuses-header")) {
+            return {hidden: parseInt($this.find(".bb-hidden-statuses-num").text(), 10)};
+        }else {
+            throw "Unknown DOM element in container";
+        }
+    }).get();
+};
+
+test("append and prepend", function() {
+    var container = setupContainer();
+    container.appendStatuses(createStatus(0));
+    container.appendStatuses(createStatus(1));
+    container.prependStatuses(createStatus(2));
+    deepEqual(getContent(), ["2","0","1"], "status IDs OK");
+    container.appendStatuses($([createStatusDOM(3), createStatusDOM(4)]));
+    deepEqual(getContent(), ["2", "0", "1", "3", "4"], "status IDs OK");
+    container.prependStatuses($([createStatusDOM(5), createStatusDOM(6)]));
+    deepEqual(getContent(), ["5", "6", "2", "0", "1", "3", "4"], "status IDs OK");
+});
+
+asyncTest("setDisplayByThreshold", function() {
+    var con = setupContainer();
+    var status_list = [
+        {id: 0, level: 0},
+        {id: 1, level: 1},
+        {id: 2, level: 2},
+        {id: 3, level: -1},
+        {id: 4, level: 1},
+        {id: 5, level: -1},
+        {id: 6, level: 0},
+        {id: 7, level: 0}
+    ];
+    Q.fcall(function() {
+        con.appendStatuses($($.map(status_list, function(elem) {
+            return createStatusDOM(elem.id, elem.level);
+        })));
+        deepEqual(getContent(), ["0", "1", "2", "3", "4", "5", "6", "7"], "all displayed OK");
+    }).then(function() {
+        return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: 0});
+    }).then(function() {
+        deepEqual(getContent(), ["0", "1", "2", {hidden: 1}, "1", {hidden: 1}, "0", "0"], "threshold 0 OK");
+        return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: 1});
+    }).then(function() {
+        deepEqual(getContent(), [{hidden: 1}, "1", "2", {hidden: 1}, "1", {hidden: 3}], "threshold 1 OK");
+        return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: 2});
+    }).then(function() {
+        deepEqual(getContent(), [{hidden: 2}, "2", {hidden: 5}], "threshold 2 OK");
+        return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: 3});
+    }).then(function() {
+        deepEqual(getContent(), [{hidden: 8}], "threshold 3 OK");
+        return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: -1});
+    }).then(function() {
+        deepEqual(getContent(), ["0", "1", "2", "3", "4", "5", "6", "7"], "threshold -1 OK");
+        return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses().slice(4,7), threshold: 10});
+    }).then(function() {
+        deepEqual(getContent(), ["0", "1", "2", "3", {hidden: 3}, "7"], "partial threshold 10 OK");
+        return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses().slice(1,4), threshold: 2});    
+    }).then(function() {
+        deepEqual(getContent(), ["0", {hidden: 1}, "2", {hidden: 1}, {hidden: 3}, "7"], "partial threshold 2 OK");
+        return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: 2});
+    }).then(function() {
+        deepEqual(getContent(), [{hidden: 2}, "2", {hidden: 5}], "global threshold reduces successive hidden headers");
+    }).fail(function() {
+        ok(false, "should not fail");
+    }).then(function() {
+        start();
+    });
+});
+
+    </script>
+  </body>
+</html>

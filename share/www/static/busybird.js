@@ -143,12 +143,45 @@ bb.MessageBanner.prototype = {
 };
 
 
-bb.StatusContainer = function() {
-    
-};
+bb.StatusContainer = $.extend(function(sel_container) {
+    this.sel_container = sel_container;
+}, {
+    setDisplayByThreshold: function(args) {
+        // args.$statuses, args.threshold, args.enable_animation, args.enable_window_adjust
+        // @returns: promise for completion event.
+        return Q.fcall(function() {
+            var $statuses, threshold;
+            if(!defined(args.$statuses)) {
+                throw "$statuses param is mandatory";
+            }
+            if(!defined(args.threshold)) {
+                throw "threshold param is mandatory";
+            }
+            $statuses = args.$statuses;
+            threshold = args.threshold;
+            
+        });
+    },
+    loadStatuses: function(args) {
+        // args.apiurl, args.ack_state, args.start_max_id, args.max_page_num
+    }
+});
 bb.StatusContainer.prototype = {
     _formatHiddenStatus : function (invisible_num) {
-        return '<li class="hidden-status-header">'+ invisible_num +' statuses hidden here.</li>';
+        var plural = invisible_num > 1 ? "es" : "";
+        return '<li class="bb-hidden-statuses-header"><span class="bb-hidden-statuses-num">'+ invisible_num +'</span> status'+plural+' hidden here.</li>';
+    },
+    appendStatuses: function($added_statuses) {
+        $(this.sel_container).append($added_statuses);
+    },
+    prependStatuses: function($added_statuses) {
+        $(this.sel_container).prepend($added_statuses);
+    },
+    setThresholdLevel: function(new_threshold) {
+        
+    },
+    getThresholdLevel: function() {
+        
     },
 };
 
