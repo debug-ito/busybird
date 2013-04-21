@@ -65,14 +65,23 @@ bb.ajaxRetry = (function() {
     };
 })();
 
-// ** TODO: re-implement without jsDeferred
-// bb.blockRepeat = function(orig_array, block_size, each_func) {
-//     var block_num = Math.ceil(orig_array.length / block_size);
-//     return Deferred.repeat(block_num, function(block_index) {
-//         var start_global_index = block_size * block_index;
-//         each_func(orig_array.slice(start_global_index, start_global_index + block_size), start_global_index);
-//     });
-// };
+bb.blockEach = function(orig_array, block_size, each_func) {
+    var block_num = Math.ceil(orig_array.length / block_size);
+    var i;
+    var start_defer = Q.defer();
+    var end_promise = start_defer.promise;
+    var generate_callback_for = function(block_index) {
+        return function() {
+            var start_global_index = block_size * block_index;
+            return each_func(orig_array.slice(start_global_index, start_global_index + block_size), start_global_index);
+        };
+    };
+    start_defer.resolve();
+    for(i = 0 ; i < block_num ; i++) {
+        end_promise = end_promise.then(generate_callback_for(i));
+    }
+    return end_promise;
+};
 
 bb.Spinner = function(sel_target) {
     this.sel_target = sel_target;
