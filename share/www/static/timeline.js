@@ -136,7 +136,7 @@ bb.StatusContainer = $.extend(function(sel_container) {
             }
             if(action_description.doms_animate_toggle.length > 0) {
                 promise_animation = bb.slideToggleElements(
-                    $(action_descritption.doms_animate_toggle), selfclass.ANIMATE_STATUS_DURATION,
+                    $(action_description.doms_animate_toggle), selfclass.ANIMATE_STATUS_DURATION,
                     function(now, fx) {
                         if(fx.prop !== "height") return;
                         window_adjuster();
