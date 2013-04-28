@@ -193,7 +193,6 @@ bb.StatusContainer = $.extend(function(sel_container) {
         return bb.blockEach(hidden_header_list, 40, function(header_block) {
             $.each(header_block, function(i, header_entry) {
                 if(defined(header_entry.$followed_by)) {
-                    console.log("intermediate: " + header_entry.entries.length);
                     header_entry.$followed_by.before(selfclass._formatHiddenStatusesHeader(header_entry.entries.length));
                 }else {
                     $statuses.filter('.bb-status').last().after(selfclass._formatHiddenStatusesHeader(header_entry.entries.length));
