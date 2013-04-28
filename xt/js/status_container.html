@@ -156,7 +156,9 @@ asyncTest("set/getThresholdLevel", function() {
         {id: 11, level: -1},
     ];
     var old_duration = bb.StatusContainer.ANIMATE_STATUS_DURATION;
+    var old_animate_max = bb.StatusContainer.ANIMATE_STATUS_MAX_NUM;
     bb.StatusContainer.ANIMATE_STATUS_DURATION = 5;
+    bb.StatusContainer.ANIMATE_STATUS_MAX_NUM = 5;
     Q.fcall(function() {
         return appendStatusesFromMeta(con, status_list);
     }).then(function() {
@@ -222,6 +224,7 @@ asyncTest("set/getThresholdLevel", function() {
         ok(true, "failure reason: " + reason);
     }).then(function() {
         bb.StatusContainer.ANIMATE_STATUS_DURATION = old_duration;
+        bb.StatusContainer.ANIMATE_STATUS_MAX_NUM = old_animate_max;
         start();
     });
 });
