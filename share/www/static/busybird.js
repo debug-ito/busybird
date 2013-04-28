@@ -178,6 +178,7 @@ bb.MessageBanner.prototype = {
 
 bb.StatusContainer = $.extend(function(sel_container) {
     this.sel_container = sel_container;
+    this.threshold_level = 0;
 }, {
     ANIMATE_STATUS_MAX_NUM: 15,
     ANIMATE_STATUS_DURATION: 400,
@@ -341,10 +342,19 @@ bb.StatusContainer.prototype = {
         $(this.sel_container).prepend($added_statuses);
     },
     setThresholdLevel: function(new_threshold) {
-        
+        var self = this;
+        var myclass = self.constructor;
+        self.threshold_level = new_threshold;
+        return myclass.setDisplayByThreshold({
+            $statuses: $(self.sel_container).children(),
+            threshold: self.threshold_level,
+            enable_animation: true,
+            enable_window_adjust: true,
+            cursor_index: null // TODO: set cursor index properly
+        });
     },
     getThresholdLevel: function() {
-        
+        return this.threshold_level;
     },
 };
 
