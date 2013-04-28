@@ -15,6 +15,8 @@
     <script src="../../share/www/static/busybird.js"></script>
     <script type="text/javascript">
 
+var is = strictEqual;
+
 var createStatus = function(id, level) {
     if(!level) level = 0;
     return $('<li class="bb-status"></li>')
@@ -52,6 +54,12 @@ var getContent = function($statuses) {
     }).get();
 };
 
+var appendStatusesFromMeta = function(container, status_list) {
+    return container.appendStatuses($($.map(status_list, function(elem) {
+        return createStatusDOM(elem.id, elem.level);
+    })));
+};
+
 test("append and prepend", function() {
     var container = setupContainer();
     container.appendStatuses(createStatus(0));
@@ -77,9 +85,10 @@ asyncTest("setDisplayByThreshold", function() {
         {id: 7, level: 0}
     ];
     Q.fcall(function() {
-        con.appendStatuses($($.map(status_list, function(elem) {
-            return createStatusDOM(elem.id, elem.level);
-        })));
+        return con.setThresholdLevel(-10);
+    }).then(function() {
+        return appendStatusesFromMeta(con, status_list);
+    }).then(function() {
         deepEqual(getContent(), ["0", "1", "2", "3", "4", "5", "6", "7"], "all displayed OK");
     }).then(function() {
         return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: 0});
@@ -121,6 +130,36 @@ asyncTest("setDisplayByThreshold", function() {
         return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: -1});
     }).then(function() {
         deepEqual(getContent(), ["0", "1", "2", "3", "4", "5", "6", "7"], "threshold 0 -> -1 OK");
+    }).fail(function(reason) {
+        ok(false, "should not fail");
+        ok(true, "failure reason: " + reason);
+    }).then(function() {
+        start();
+    });
+});
+
+asyncTest("set/getThresholdLevel", function() {
+    var con = setupContainer();
+    var status_list = [
+        {id:  0, level: 0},
+        {id:  1, level: 0},
+        {id:  2, level: -1},
+        {id:  3, level: 3},
+        {id:  4, level: 2},
+        {id:  5, level: 0},
+        {id:  6, level: 1},
+        {id:  7, level: 1},
+        {id:  8, level: 3},
+        {id:  9, level: 3},
+        {id: 10, level: 2},
+        {id: 11, level: -1},
+    ];
+    Q.fcall(function() {
+        return appendStatusesFromMeta(con, status_list);
+    }).then(function() {
+        is(con.getThresholdLevel(), 0, "threshold level is 0 at first");
+        deepEqual(getContent(), ["0", "1", {hidden: 1}, "3", "4", "5", "6", "7", "8", "9", "10", {hidden: 1}], "threshold 0 display OK");
+        // TODO: change threshold level by setThresholdLevel. Make sure to set animation duration so that test runs fast.
     }).fail(function(reason) {
         ok(false, "should not fail");
         ok(true, "failure reason: " + reason);

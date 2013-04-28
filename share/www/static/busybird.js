@@ -335,17 +335,28 @@ bb.StatusContainer = $.extend(function(sel_container) {
     }
 });
 bb.StatusContainer.prototype = {
+    _setDisplayImmediately: function($target_statuses) {
+        var self = this;
+        var selfclass = bb.StatusContainer;
+        return selfclass.setDisplayByThreshold({
+            $statuses: $target_statuses,
+            threshold: self.threshold_level,
+            cursor_index: null // TODO: set cursor index properly
+        });
+    },
     appendStatuses: function($added_statuses) {
         $(this.sel_container).append($added_statuses);
+        return this._setDisplayImmediately($added_statuses);
     },
     prependStatuses: function($added_statuses) {
         $(this.sel_container).prepend($added_statuses);
+        return this._setDisplayImmediately($added_statuses);
     },
     setThresholdLevel: function(new_threshold) {
         var self = this;
-        var myclass = self.constructor;
+        var selfclass = bb.StatusContainer;
         self.threshold_level = new_threshold;
-        return myclass.setDisplayByThreshold({
+        return selfclass.setDisplayByThreshold({
             $statuses: $(self.sel_container).children(),
             threshold: self.threshold_level,
             enable_animation: true,
