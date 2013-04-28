@@ -35,11 +35,15 @@ var getStatuses = function() {
     return $("#bb-status-container").children();
 };
 
+var isVisible = function($elem) {
+    return ($elem.css("display") !== "none");
+};
+
 var getContent = function($statuses) {
     return getStatuses().map(function() {
         var $this = $(this);
         if($this.hasClass("bb-status")) {
-            return $this.find(".bb-status-id").text();
+            return isVisible($this) ? $this.find(".bb-status-id").text() : null;
         }else if($this.hasClass("bb-hidden-statuses-header")) {
             return {hidden: parseInt($this.find(".bb-hidden-statuses-num").text(), 10)};
         }else {
@@ -80,10 +84,10 @@ asyncTest("setDisplayByThreshold", function() {
     }).then(function() {
         return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: 0});
     }).then(function() {
-        deepEqual(getContent(), ["0", "1", "2", {hidden: 1}, "1", {hidden: 1}, "0", "0"], "threshold 0 OK");
+        deepEqual(getContent(), ["0", "1", "2", {hidden: 1}, "4", {hidden: 1}, "6", "7"], "threshold 0 OK");
         return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: 1});
     }).then(function() {
-        deepEqual(getContent(), [{hidden: 1}, "1", "2", {hidden: 1}, "1", {hidden: 3}], "threshold 1 OK");
+        deepEqual(getContent(), [{hidden: 1}, "1", "2", {hidden: 1}, "4", {hidden: 3}], "threshold 1 OK");
         return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: 2});
     }).then(function() {
         deepEqual(getContent(), [{hidden: 2}, "2", {hidden: 5}], "threshold 2 OK");
@@ -102,8 +106,9 @@ asyncTest("setDisplayByThreshold", function() {
         return bb.StatusContainer.setDisplayByThreshold({$statuses: getStatuses(), threshold: 2});
     }).then(function() {
         deepEqual(getContent(), [{hidden: 2}, "2", {hidden: 5}], "global threshold reduces successive hidden headers");
-    }).fail(function() {
+    }).fail(function(reason) {
         ok(false, "should not fail");
+        ok(true, "failure reason: " + reason);
     }).then(function() {
         start();
     });
