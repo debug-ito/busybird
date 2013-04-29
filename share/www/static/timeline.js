@@ -239,11 +239,13 @@ bb.StatusContainer.prototype = {
             cursorIndex: null // TODO: set cursor index properly
         });
     },
-    appendStatuses: function($added_statuses) {
+    appendStatuses: function(added_statuses_dom) {
+        var $added_statuses = $(added_statuses_dom);
         $(this.sel_container).append($added_statuses);
         return this._setDisplayImmediately($added_statuses);
     },
-    prependStatuses: function($added_statuses) {
+    prependStatuses: function(added_statuses_dom) {
+        var $added_statuses = $(added_statuses_dom);
         $(this.sel_container).prepend($added_statuses);
         return this._setDisplayImmediately($added_statuses);
     },
