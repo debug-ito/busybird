@@ -22,6 +22,8 @@ bb.StatusContainer = $.extend(function(args) {
     LOAD_STATUS_DEFAULT_COUNT_PER_PAGE: 100,
     LOAD_STATUS_DEFAULT_MAX_PAGE_NUM: 6,
     LOAD_STATUS_TRY_MAX: 3,
+    ACK_TRY_MAX: 3,
+    LOAD_MORE_STATUSES_COUNT: 20,
     _getStatusID: function($status) {
         return $status.find(".bb-status-id").text();
     },
@@ -249,6 +251,25 @@ bb.StatusContainer.prototype = {
             cursorIndex: null // TODO: set cursor index properly
         });
     },
+    _getLoadStatusesURL: function() {
+        return this.api_base + "/timelines/" + this.timeline + "/statuses.html";
+    },
+    _ackStatuses: function(acked_statuses_dom) {
+        var self = this;
+        var selfclass = bb.StatusContainer;
+        if(acked_statuses_dom.length <= 0) {
+            return Q.fcall(function() {});
+        }
+        var ack_ids = $.map(acked_statuses_dom, function(status_dom) {
+            return selfclass._getStatusID($(status_dom));
+        });
+        var ack_max_id = selfclass._getStatusID($(acked_statuses_dom[acked_statuses_dom.length-1]));
+        return bb.ajaxRetry({
+            type: "POST", url: self.api_base + "/timelines/" + self.timeline + "/ack.json",
+            data: JSON.stringify({ "ids": ack_ids, "max_id": ack_max_id }), contentType: "application/json",
+            cache: false, timeout: 3000, dataType: "json", tryMax: selfclass.ACK_TRY_MAX
+        }).promise;
+    },
     _addStatuses: function(added_statuses_dom, is_prepend) {
         var self = this;
         var selfclass = bb.StatusContainer;
@@ -272,12 +293,15 @@ bb.StatusContainer.prototype = {
         });
     },
     appendStatuses: function(added_statuses_dom) {
+        // @returns: promise resolved when done.
         return this._addStatuses(added_statuses_dom, false);
     },
     prependStatuses: function(added_statuses_dom) {
+        // @returns: promise resolved when done.
         return this._addStatuses(added_statuses_dom, true);
     },
     setThresholdLevel: function(new_threshold) {
+        // @returns: promise resolved when done.
         var self = this;
         var selfclass = bb.StatusContainer;
         self.threshold_level = new_threshold;
@@ -293,7 +317,60 @@ bb.StatusContainer.prototype = {
         return this.threshold_level;
     },
     loadUnackedStatuses: function() {
-        
+        // @returns: promise with the following object
+        //           { maxReached: (boolean), statuses: (array of status DOM elements loaded) }
+        var self = this;
+        var selfclass = bb.StatusContainer;
+        var load_result;
+        return selfclass.loadStatuses({
+            apiURL: self._getLoadStatusesURL(),
+            ackState: "unacked",
+        }).then(function(result) {
+            load_result = result;
+            return self._ackStatuses(result.statuses);
+        }).then(function() {
+            return self.prependStatuses(result.statuses);
+        }).then(function() {
+            return {maxReached: load_result.maxReached, statuses: load_result.statuses};
+        });
+    },
+    loadMoreStatuses: function() {
+        // @returns: promise resolved when done
+        var self = this;
+        var selfclass = bb.StatusContainer;
+        var start_id = null;
+        return Q.fcall(function() {
+            var $statuses = $(self.sel_container).children(".bb-status");
+            if($statuses.size() > 0) {
+                start_id = selfclass._getStatusID($statuses.last());
+            }
+            return selfclass.loadStatuses({
+                apiURL: self._getLoadStatusesURL(),
+                ackState: "any", countPerPage: selfclass.LOAD_MORE_STATUSES_COUNT,
+                startMaxID: start_id, maxPageNum: 1
+            });
+        }).then(function(result) {
+            var added_statuses = result.statuses;
+            if(defined(start_id) && added_statuses.length > 0
+               && selfclass._getStatusID($(added_statuses[0])) === start_id) {
+                added_statuses.shift();
+            }
+            return self.appendStatuses(result.statuses);
+        });
+    },
+    loadInit: function() {
+        // @returns: promise with the following object
+        //           { maxReached: (boolean), statuses: (array of unacked status DOM elements loaded) }
+        var self = this;
+        var unacked_load_result;
+        return self.loadUnackedStatuses().then(function(result) {
+            unacked_load_result = result;
+            if(!result.maxReached) {
+                return self.loadMoreStatuses();
+            }
+        }).then(function() {
+            return unacked_load_result;
+        });
     },
 };
 
