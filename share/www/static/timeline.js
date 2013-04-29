@@ -52,10 +52,10 @@ bb.StatusContainer = $.extend(function(sel_container) {
         var ACTION_BECOME_VISIBLE = 2;
         var ACTION_BECOME_INVISIBLE = 3;
         var final_result = { // ** return this struct from the promise
-            hidden_header_list: [],
-            doms_animate_toggle: [],
-            doms_immediate_toggle: [],
-            dom_anchor_elem: null,
+            hiddenHeaderList: [],
+            domsAnimateToggle: [],
+            domsImmediateToggle: [],
+            domAnchorElem: null,
         };
         var metrics_list = [];
         var next_seq_invisible_entries = [];
@@ -78,7 +78,7 @@ bb.StatusContainer = $.extend(function(sel_container) {
                 if(entry_level >= threshold_level) {
                     metric.action = (cur_is_visible ? ACTION_STAY_VISIBLE : ACTION_BECOME_VISIBLE);
                     if(next_seq_invisible_entries.length > 0) {
-                        final_result.hidden_header_list.push({'$followed_by': $cur_entry, 'entries': next_seq_invisible_entries});
+                        final_result.hiddenHeaderList.push({'$followed_by': $cur_entry, 'entries': next_seq_invisible_entries});
                         next_seq_invisible_entries = [];
                     }
                 }else {
@@ -94,7 +94,7 @@ bb.StatusContainer = $.extend(function(sel_container) {
             var animate_count_max = enable_animation ? selfclass.ANIMATE_STATUS_MAX_NUM : 0;
             var animate_count = 0;
             if(next_seq_invisible_entries.length > 0) {
-                final_result.hidden_header_list.push({'$followed_by': null, 'entries': next_seq_invisible_entries});
+                final_result.hiddenHeaderList.push({'$followed_by': null, 'entries': next_seq_invisible_entries});
             }
             metrics_list = metrics_list.sort(function (a, b) {
                 if(a.win_dist !== b.win_dist) {
@@ -104,17 +104,17 @@ bb.StatusContainer = $.extend(function(sel_container) {
             });
             $.each(metrics_list, function(metrics_index, metric) {
                 var target_container;
-                if(final_result.dom_anchor_elem === null && metric.action === ACTION_STAY_VISIBLE) {
-                    final_result.dom_anchor_elem = metric.status_entry;
+                if(final_result.domAnchorElem === null && metric.action === ACTION_STAY_VISIBLE) {
+                    final_result.domAnchorElem = metric.status_entry;
                 }
                 if(metric.action === ACTION_STAY_VISIBLE || metric.action === ACTION_STAY_INVISIBLE) {
                     return true;
                 }
                 if(animate_count < animate_count_max) {
                     animate_count++;
-                    target_container = final_result.doms_animate_toggle;
+                    target_container = final_result.domsAnimateToggle;
                 }else {
-                    target_container = final_result.doms_immediate_toggle;
+                    target_container = final_result.domsImmediateToggle;
                 }
                 target_container.push(metric.status_entry);
             });
@@ -122,7 +122,7 @@ bb.StatusContainer = $.extend(function(sel_container) {
         });
     },
     setDisplayByThreshold: function(args) {
-        // @params: args.$statuses, args.threshold, args.enable_animation, args.enable_window_adjust, args.cursor_index
+        // @params: args.$statuses, args.threshold, args.enableAnimation, args.enableWindowAdjust, args.cursorIndex
         // @returns: promise for completion event.
         var selfclass = this;
         return Q.fcall(function() {
@@ -132,17 +132,17 @@ bb.StatusContainer = $.extend(function(sel_container) {
             if(!defined(args.threshold)) {
                 throw "threshold param is mandatory";
             }
-            return selfclass._scanStatusesForDisplayActions(args.$statuses, args.threshold, args.enable_animation, args.cursor_index);
+            return selfclass._scanStatusesForDisplayActions(args.$statuses, args.threshold, args.enableAnimation, args.cursorIndex);
         }).then(function(action_description) {
-            var window_adjuster, promise_hidden_statuses, promise_animation, promise_immeidate;
-            if(args.enable_window_adjust) {
-                window_adjuster = selfclass._createWindowAdjuster(action_description.dom_anchor_elem);
+            var window_adjuster, promise_hidden_statuses, promise_animation, promise_immediate;
+            if(args.enableWindowAdjust) {
+                window_adjuster = selfclass._createWindowAdjuster(action_description.domAnchorElem);
             }else {
                 window_adjuster = function() {};
             }
-            if(action_description.doms_animate_toggle.length > 0) {
+            if(action_description.domsAnimateToggle.length > 0) {
                 promise_animation = bb.slideToggleElements(
-                    $(action_description.doms_animate_toggle), selfclass.ANIMATE_STATUS_DURATION,
+                    $(action_description.domsAnimateToggle), selfclass.ANIMATE_STATUS_DURATION,
                     function(now, fx) {
                         if(fx.prop !== "height") return;
                         window_adjuster();
@@ -152,9 +152,9 @@ bb.StatusContainer = $.extend(function(sel_container) {
                 promise_animation = Q.fcall(function() { });
             }
             promise_hidden_statuses = selfclass._updateHiddenStatusesHeaders(args.$statuses,
-                                                                             action_description.hidden_header_list,
+                                                                             action_description.hiddenHeaderList,
                                                                              window_adjuster);
-            promise_immediate = bb.blockEach(action_description.doms_immediate_toggle, 100, function(status_block) {
+            promise_immediate = bb.blockEach(action_description.domsImmediateToggle, 100, function(status_block) {
                 $(status_block).toggle();
                 window_adjuster();
             });
@@ -234,7 +234,7 @@ bb.StatusContainer.prototype = {
         return selfclass.setDisplayByThreshold({
             $statuses: $target_statuses,
             threshold: self.threshold_level,
-            cursor_index: null // TODO: set cursor index properly
+            cursorIndex: null // TODO: set cursor index properly
         });
     },
     appendStatuses: function($added_statuses) {
@@ -252,9 +252,9 @@ bb.StatusContainer.prototype = {
         return selfclass.setDisplayByThreshold({
             $statuses: $(self.sel_container).children(),
             threshold: self.threshold_level,
-            enable_animation: true,
-            enable_window_adjust: true,
-            cursor_index: null // TODO: set cursor index properly
+            enableAnimation: true,
+            enableWindowAdjust: true,
+            cursorIndex: null // TODO: set cursor index properly
         });
     },
     getThresholdLevel: function() {
