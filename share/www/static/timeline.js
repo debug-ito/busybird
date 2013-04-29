@@ -3,8 +3,17 @@
 // Javascript library specific to timeline view
 
 
-bb.StatusContainer = $.extend(function(sel_container) {
-    this.sel_container = sel_container;
+bb.StatusContainer = $.extend(function(args) {
+    // @params: args.selectorContainer, args.timeline, args.apiBase = ""
+    if(!defined(args.selectorContainer)) {
+        throw "selectorContainer param is mandatory";
+    }
+    if(!defined(args.timeline)) {
+        throw "timeline param is mandatory";
+    }
+    this.sel_container = args.selectorContainer;
+    this.timeline = args.timeline;
+    this.api_base = defined(args.apiBase) ? args.apiBase : "";
     this.threshold_level = 0;
 }, {
     ADD_STATUSES_BLOCK_SIZE: 100,
@@ -282,6 +291,9 @@ bb.StatusContainer.prototype = {
     },
     getThresholdLevel: function() {
         return this.threshold_level;
-    }
+    },
+    loadUnackedStatuses: function() {
+        
+    },
 };
 

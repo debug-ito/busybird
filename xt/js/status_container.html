@@ -37,7 +37,7 @@ var createStatusDOM = function(id, level) {
 
 var setupContainer = function() {
     $('<ul id="bb-status-container"></ul>').appendTo("#qunit-fixture");
-    return new bb.StatusContainer("#bb-status-container");
+    return new bb.StatusContainer({selectorContainer: "#bb-status-container", timeline: "test"});
 };
 
 var getStatuses = function() {
