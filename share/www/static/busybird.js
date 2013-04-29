@@ -177,4 +177,31 @@ bb.MessageBanner.prototype = {
     },
 };
 
+bb.EventPoller = function(args) {
+    // @params: args.url, args.initialQuery,
+    //          args.onResponse (function(response_data) returning next_query or promise(next_query))
+    this.url = args.url;
+    this.initial_query = args.initialQuery;
+    this.on_response = args.onResponse;
+};
+bb.EventPoller.prototype = {
+    start: function() {
+        // @returns: nothing
+        var self = this;
+        var query_object = self.initial_query;
+        var makeRequest = function() {
+            return bb.ajaxRetry({
+                type: "GET", url: self.url, data: query_object, contentType: "application/json; charset=utf8",
+                dataType: "json", cache: false, timeout: 0,
+            }).promise.then(function(response_data) {
+                return self.on_response(response_data);
+            }).then(function(next_query) {
+                query_object = next_query;
+                return makeRequest();
+            });
+        };
+        makeRequest();
+    },
+};
+
 

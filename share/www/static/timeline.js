@@ -429,3 +429,18 @@ bb.StatusContainer.prototype = {
     },
 };
 
+bb.TimelineUnackedCountsPoller = $.extend(function(args) {
+    // @params: args.statusContainer
+    // TODO: set url, initial_query from statusContainer
+}, {
+    LEVEL_MARGIN: 2
+});
+bb.TimelineUnackedCountsPoller.prototype = $.extend(
+    new bb.EventPoller(/* TODO: set onResponse  */),
+    {
+        listenOnChange: function(callback) {
+            // @params: callback (function(unacked_counts))
+        }
+    }
+);
+
