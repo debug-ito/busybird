@@ -7,6 +7,8 @@ bb.StatusContainer = $.extend(function(sel_container) {
 }, {
     ANIMATE_STATUS_MAX_NUM: 15,
     ANIMATE_STATUS_DURATION: 400,
+    LOAD_STATUS_DEFAULT_COUNT_PER_PAGE: 100,
+    LOAD_STATUS_DEFAULT_MAX_PAGE_NUM: 6,
     _formatHiddenStatusesHeader : function (invisible_num) {
         var plural = invisible_num > 1 ? "es" : "";
         return '<li class="bb-hidden-statuses-header"><span class="bb-hidden-statuses-num">'+ invisible_num +'</span> status'+plural+' hidden here.</li>';
@@ -156,8 +158,11 @@ bb.StatusContainer = $.extend(function(sel_container) {
         });
     },
     loadStatuses: function(args) {
-        // @params: args.apiurl, args.ack_state = "any", args.start_max_id = null, args.max_page_num = 1
-        // @returns: a promise with an array of DOM elements of statuses
+        // @params: args.apiURL, args.ackState = "any",
+        //          args.countPerPage = LOAD_STATUS_DEFAULT_COUNT_PER_PAGE,
+        //          args.startMaxID = null, args.maxPageNum = LOAD_STATUS_DEFAULT_MAX_PAGE_NUM
+        // @returns: a promise holding the following object in success
+        //           { maxReached: (boolean), numRequests: (number of requests sent), statuses: (array of status DOM elements) }
     }
 });
 bb.StatusContainer.prototype = {

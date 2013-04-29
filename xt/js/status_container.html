@@ -48,7 +48,8 @@ var isVisible = function($elem) {
 };
 
 var getContent = function($statuses) {
-    return getStatuses().map(function() {
+    if(!defined($statuses)) $statuses = getStatuses();
+    return $statuses.map(function() {
         var $this = $(this);
         if($this.hasClass("bb-status")) {
             return isVisible($this) ? $this.find(".bb-status-id").text() : null;
@@ -298,6 +299,58 @@ asyncTest("set/getThresholdLevel", function() {
     }).then(function() {
         bb.StatusContainer.ANIMATE_STATUS_DURATION = old_duration;
         bb.StatusContainer.ANIMATE_STATUS_MAX_NUM = old_animate_max;
+        start();
+    });
+});
+
+asyncTest("loadStatuses", function() {
+    var server = new FakeStatusServer(10, 50);
+    Q.fcall(function() {
+        return bb.StatusContainer.loadStatuses({
+            apiURL: "/timelines/test/statuses.html", ackState: "unacked",
+            countPerPage: 3, maxPageNum: 100
+        });
+    }).then(function(result) {
+        is(result.maxReached, false, "load unacked: maxReached false");
+        is(result.numRequests, 5, "load unacked: 5 requests");
+        deepEqual(getContent($(result.statuses)), ["0","1","2","3","4","5","6","7","8","9"], "statuses OK");
+        return bb.StatusContainer.loadStatuses({
+            apiURL: "/timelines/test/statuses.html", ackState: "unacked",
+            countPerPage: 10, maxPageNum: 100
+        });
+    }).then(function(result) {
+        is(result.maxReached, false, "load unacked: maxReached false");
+        is(result.numRequests, 2, "load unacked: 2 requests needed to determine if all unacked statuses are loaded");
+        deepEqual(getContent($(result.statuses)), ["0","1","2","3","4","5","6","7","8","9"], "statuses OK");
+        return bb.StatusContainer.loadStatuses({
+            apiURL: "/timelines/test/statuses.html", ackState: "unacked",
+            countPerPage: 3, maxPageNum: 2
+        });
+    }).then(function(result) {
+        is(result.maxReached, true, "load unacked: maxReached true");
+        is(result.numRequests, 2, "load unacked: only 2 requests are allowed.");
+        deepEqual(getContent($(result.statuses)), ["0", "1", "2", "3", "4"], "statuses OK");
+        return bb.StatusContainer.loadStatuses({
+            apiURL: "/timelines/test/statuses.html", ackState: "acked",
+            countPerPage: 5, maxPageNum: 1
+        });
+    }).then(function(result) {
+        is(result.maxReached, true, "load acked: maxReached true");
+        is(result.numRequests, 1, "load acked: load 1 page");
+        deepEqual(getContent($(result.statuses)), ["10", "11", "12", "13", "14"], "statuses OK");
+        return bb.StatusContainer.loadStatuses({
+            apiURL: "/timelines/test/statuses.html", ackState: "any",
+            startMaxID: "51", countPerPage: 20, maxPageNum: 1
+        });
+    }).then(function(result) {
+        is(result.maxReached, false, "load acked: max not reached because loaded count is lower than the requested count");
+        is(result.numRequests, 1, "load acked: load 1 page");
+        deepEqual(getContent($(result.statuses)), ["51", "52", "53", "54", "55", "56", "57", "58", "59"], "statuses OK");
+    }).fail(function(reason) {
+        ok(false, "should not fail");
+        ok(true, "reason: " + reason);
+    }).then(function() {
+        server.restore();
         start();
     });
 });
