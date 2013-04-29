@@ -1,3 +1,5 @@
+"use strict";
+
 // Javascript library specific to timeline view
 
 

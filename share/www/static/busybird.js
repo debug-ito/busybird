@@ -1,3 +1,5 @@
+"use strict";
+
 //// BusyBird main library
 //// Copyright (c) 2013 Toshio ITO
 
