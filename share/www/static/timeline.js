@@ -9,6 +9,10 @@ bb.StatusContainer = $.extend(function(sel_container) {
     ANIMATE_STATUS_DURATION: 400,
     LOAD_STATUS_DEFAULT_COUNT_PER_PAGE: 100,
     LOAD_STATUS_DEFAULT_MAX_PAGE_NUM: 6,
+    LOAD_STATUS_TRY_MAX: 3,
+    _getStatusID: function($status) {
+        return $status.find(".bb-status-id").text();
+    },
     _formatHiddenStatusesHeader : function (invisible_num) {
         var plural = invisible_num > 1 ? "es" : "";
         return '<li class="bb-hidden-statuses-header"><span class="bb-hidden-statuses-num">'+ invisible_num +'</span> status'+plural+' hidden here.</li>';
@@ -163,6 +167,64 @@ bb.StatusContainer = $.extend(function(sel_container) {
         //          args.startMaxID = null, args.maxPageNum = LOAD_STATUS_DEFAULT_MAX_PAGE_NUM
         // @returns: a promise holding the following object in success
         //           { maxReached: (boolean), numRequests: (number of requests sent), statuses: (array of status DOM elements) }
+        var selfclass = this;
+        return Q.fcall(function() {
+            if(!defined(args.apiURL)) {
+                throw "apiURL param is mandatory";
+            }
+            var api_url = args.apiURL;
+            var max_page_num = defined(args.maxPageNum) ? args.maxPageNum : selfclass.LOAD_STATUS_DEFAULT_MAX_PAGE_NUM;
+            if(max_page_num <= 0) {
+                throw "maxPageNum param must be greater than 0";
+            }
+            var query_params = {
+                "ack_state": defined(args.ackState) ? args.ackState : "any",
+                "count": defined(args.countPerPage) ? args.countPerPage : selfclass.LOAD_STATUS_DEFAULT_COUNT_PER_PAGE,
+            };
+            if(query_params.count <= 0) {
+                throw "countPerPage param must be greater than 0";
+            }
+            if(defined(args.startMaxID)) {
+                query_params.max_id = args.startMaxID;
+            }
+            var request_num = 0;
+            var loaded_statuses = [];
+            var last_status_id = null;
+            var fulfill_handler;
+            var makeRequest = function() {
+                return bb.ajaxRetry({
+                    type: "GET", url: api_url, data: query_params, cache: false, timeout: 3000,
+                    tryMax: selfclass.LOAD_STATUS_TRY_MAX, dataType: "html",
+                }).promise.then(fulfill_handler);
+            };
+            fulfill_handler = function(statuses_str) {
+                var $statuses = $(statuses_str);
+                var fully_loaded = ($statuses.size() < query_params.count);
+                var is_completed;
+                request_num++;
+                is_completed = (fully_loaded || request_num >= max_page_num);
+                if(defined(last_status_id) && last_status_id === selfclass._getStatusID($statuses.first())) {
+                    $statuses = $statuses.slice(1);
+                }
+                $.merge(loaded_statuses, $statuses.get());
+                if(is_completed) {
+                    return {
+                        maxReached: !fully_loaded,
+                        numRequests: request_num,
+                        statuses: loaded_statuses
+                    };
+                }else {
+                    if($statuses.size() > 0) {
+                        last_status_id = selfclass._getStatusID($statuses.last());
+                    }
+                    if(defined(last_status_id)) {
+                        query_params.max_id = last_status_id;
+                    }
+                    return makeRequest();
+                }
+            };
+            return makeRequest();
+        });
     }
 });
 bb.StatusContainer.prototype = {
