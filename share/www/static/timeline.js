@@ -7,6 +7,7 @@ bb.StatusContainer = $.extend(function(sel_container) {
     this.sel_container = sel_container;
     this.threshold_level = 0;
 }, {
+    ADD_STATUSES_BLOCK_SIZE: 100,
     ANIMATE_STATUS_MAX_NUM: 15,
     ANIMATE_STATUS_DURATION: 400,
     LOAD_STATUS_DEFAULT_COUNT_PER_PAGE: 100,
@@ -239,15 +240,33 @@ bb.StatusContainer.prototype = {
             cursorIndex: null // TODO: set cursor index properly
         });
     },
+    _addStatuses: function(added_statuses_dom, is_prepend) {
+        var self = this;
+        var selfclass = bb.StatusContainer;
+        var $container = $(self.sel_container);
+        var $next_top = null;
+        return bb.blockEach(added_statuses_dom, selfclass.ADD_STATUSES_BLOCK_SIZE, function(statuses_block) {
+            var $statuses = $(statuses_block);
+            $statuses.css("display", "none");
+            if(defined($next_top)) {
+                $next_top.after($statuses);
+            }else {
+                if(is_prepend) {
+                    $container.prepend($statuses);
+                }else {
+                    $container.append($statuses);
+                }
+            }
+            $next_top = $statuses.last();
+        }).then(function() {
+            return self._setDisplayImmediately($(added_statuses_dom));
+        });
+    },
     appendStatuses: function(added_statuses_dom) {
-        var $added_statuses = $(added_statuses_dom);
-        $(this.sel_container).append($added_statuses);
-        return this._setDisplayImmediately($added_statuses);
+        return this._addStatuses(added_statuses_dom, false);
     },
     prependStatuses: function(added_statuses_dom) {
-        var $added_statuses = $(added_statuses_dom);
-        $(this.sel_container).prepend($added_statuses);
-        return this._setDisplayImmediately($added_statuses);
+        return this._addStatuses(added_statuses_dom, true);
     },
     setThresholdLevel: function(new_threshold) {
         var self = this;
