@@ -15,6 +15,7 @@ bb.StatusContainer = $.extend(function(args) {
     this.timeline = args.timeline;
     this.api_base = defined(args.apiBase) ? args.apiBase : "";
     this.threshold_level = 0;
+    this.$cursor = null;
 }, {
     ADD_STATUSES_BLOCK_SIZE: 100,
     ANIMATE_STATUS_MAX_NUM: 15,
@@ -248,11 +249,14 @@ bb.StatusContainer.prototype = {
         return selfclass.setDisplayByThreshold({
             $statuses: $target_statuses,
             threshold: self.threshold_level,
-            cursorIndex: null // TODO: set cursor index properly
+            cursorIndex: self._getCursorIndex()
         });
     },
     _getLoadStatusesURL: function() {
         return this.api_base + "/timelines/" + this.timeline + "/statuses.html";
+    },
+    _getStatuses: function() {
+        return $(this.sel_container).children(".bb-status");
     },
     _ackStatuses: function(acked_statuses_dom) {
         var self = this;
@@ -292,6 +296,47 @@ bb.StatusContainer.prototype = {
             return self._setDisplayImmediately($(added_statuses_dom));
         });
     },
+    _isValidForCursor: function($status) {
+        var self = this;
+        return ($status.data("bb-status-level") >= self.threshold_level);
+    },
+    _adjustCursor: function() {
+        var self = this;
+        var $statuses;
+        var $next_candidate, $prev_candidate;
+        if(!defined(self.$cursor)) {
+            $statuses = self._getStatuses();
+            if($statuses.size() === 0) return;
+            self.$cursor = $statuses.first();
+        }
+        if(self._isValidForCursor(self.$cursor)) {
+            return;
+        }
+        $next_candidate = self.$cursor;
+        $prev_candidate = self.$cursor;
+        while(true) {
+            $next_candidate = $next_candidate.next(".bb-status");
+            $prev_candidate = $prev_candidate.prev(".bb-status");
+            if($next_candidate.size() === 0 && $prev_candidate.size() === 0) {
+                return;
+            }
+            if($next_candidate.size() === 1 && self._isValidForCursor($next_candidate)) {
+                self.setCursor($next_candidate.get(0));
+                return
+            }
+            if($prev_candidate.size() === 1 && self._isValidForCursor($prev_candidate)) {
+                self.setCursor($prev_candidate.get(0));
+                return;
+            }
+        }
+    },
+    _getCursorIndex: function() {
+        var self = this;
+        if(!defined(self.$cursor)) return -1;
+        var $statuses = self._getStatuses();
+        if($statuses.size() === 0) return -1;
+        return $statuses.index(self.$cursor);
+    },
     appendStatuses: function(added_statuses_dom) {
         // @returns: promise resolved when done.
         return this._addStatuses(added_statuses_dom, false);
@@ -305,12 +350,13 @@ bb.StatusContainer.prototype = {
         var self = this;
         var selfclass = bb.StatusContainer;
         self.threshold_level = new_threshold;
+        self._adjustCursor();
         return selfclass.setDisplayByThreshold({
             $statuses: $(self.sel_container).children(),
             threshold: self.threshold_level,
             enableAnimation: true,
             enableWindowAdjust: true,
-            cursorIndex: null // TODO: set cursor index properly
+            cursorIndex: self._getCursorIndex()
         });
     },
     getThresholdLevel: function() {
@@ -340,7 +386,7 @@ bb.StatusContainer.prototype = {
         var selfclass = bb.StatusContainer;
         var start_id = null;
         return Q.fcall(function() {
-            var $statuses = $(self.sel_container).children(".bb-status");
+            var $statuses = self._getStatuses();
             if($statuses.size() > 0) {
                 start_id = selfclass._getStatusID($statuses.last());
             }
@@ -364,6 +410,7 @@ bb.StatusContainer.prototype = {
         var self = this;
         var unacked_load_result;
         return self.loadUnackedStatuses().then(function(result) {
+            self._adjustCursor();
             unacked_load_result = result;
             if(!result.maxReached) {
                 return self.loadMoreStatuses();
@@ -371,6 +418,14 @@ bb.StatusContainer.prototype = {
         }).then(function() {
             return unacked_load_result;
         });
+    },
+    setCursor: function(cursor_dom) {
+        var self = this;
+        if(defined(self.$cursor)) {
+            self.$cursor.removeClass("bb-status-cursor");
+        }
+        self.$cursor = $(cursor_dom);
+        self.$cursor.addClass("bb-status-cursor");
     },
 };
 
