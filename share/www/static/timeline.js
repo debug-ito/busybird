@@ -156,7 +156,8 @@ bb.StatusContainer = $.extend(function(sel_container) {
         });
     },
     loadStatuses: function(args) {
-        // @params: args.apiurl, args.ack_state, args.start_max_id, args.max_page_num
+        // @params: args.apiurl, args.ack_state = "any", args.start_max_id = null, args.max_page_num = 1
+        // @returns: a promise with an array of DOM elements of statuses
     }
 });
 bb.StatusContainer.prototype = {

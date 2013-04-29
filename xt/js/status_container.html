@@ -11,6 +11,8 @@
     <div id="qunit-fixture"></div>
     <script src="qunit.js"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="./sinon.js"></script>
+    <script src="./uri.js"></script>
     <script src="../../share/www/static/q.js"></script>
     <script src="../../share/www/static/busybird.js"></script>
     <script src="../../share/www/static/timeline.js"></script>
@@ -18,11 +20,14 @@
 
 var is = strictEqual;
 
-var createStatus = function(id, level) {
+var createStatusHTML = function(id, level) {
     if(!level) level = 0;
-    return $('<li class="bb-status"></li>')
-        .attr("data-bb-status-level", level)
-        .append($('<span class="bb-status-id"></span>').text(id));
+    return '<li class="bb-status" data-bb-status-level="'+level+'">' +
+           '<span class="bb-status-id">'+id+'</span></li>';
+};
+
+var createStatus = function(id, level) {
+    return $(createStatusHTML(id, level));
 };
 
 var createStatusDOM = function(id, level) {
@@ -60,6 +65,74 @@ var appendStatusesFromMeta = function(container, status_list) {
         return createStatusDOM(elem.id, elem.level);
     })));
 };
+
+var FakeStatusServer = function(unacked_num, acked_num) {
+    var self = this;
+    self.status_top = 0;
+    self.status_acked_top = self.status_top + unacked_num;
+    self.status_bottom = self.status_acked_top + acked_num;
+    self.fakeserver = sinon.fakeServer.create();
+    self.fakeserver.respondWith(function(req) { self.respondTo(req) });
+    self.fakeserver.autoRespond = true;
+};
+FakeStatusServer.prototype = {
+    restore: function() { this.fakeserver.restore() },
+    _respondWithStatuses: function(request, start_id, end_id) {
+        var id;
+        var response_string = "";
+        for(id = start_id ; id < end_id ; id++) {
+            response_string += createStatusHTML(id, 0);
+        }
+        request.respond(200, {"Content-Type": "text/html; charset=utf8"}, response_string);
+    },
+    _respondWithNoStatus: function(request) {
+        this._respondWithStatuses(request, 0, 0);
+    },
+    respondTo: function(request) {
+        var self = this;
+        var request_url = URI.parse(request.url);
+        var query = URI.parseQuery(request_url.query || "");
+        var ack_state = defined(query.ack_state) ? query.ack_state : "any";
+        var count = defined(query.count) ? parseInt(query.count, 10) : 20;
+        var max_id = defined(query.max_id) ? parseInt(query.max_id, 10) :
+                     ack_state === "acked" ? self.status_acked_top :
+                                             self.status_top;
+        var boundary = (ack_state === "unacked") ? {begin: self.status_top, end: self.status_acked_top} :
+                       (ack_state === "acked")   ? {begin: self.status_acked_top, end: self.status_bottom} :
+                                                   {begin: self.status_top, end: self.status_bottom};
+        var request_bottom_id = max_id + count;
+        if(max_id < boundary.begin || boundary.end <= max_id) {
+            self._respondWithNoStatus(request);
+            return;
+        }
+        self._respondWithStatuses(request, max_id,
+                                  request_bottom_id <= boundary.end ? request_bottom_id : boundary.end);
+    }
+};
+
+asyncTest("FakeStatusServer", function() {
+    var server = new FakeStatusServer(10, 10);
+    var baseurl = "/timelines/test/statuses.html";
+    bb.ajaxRetry({cache: false, tryMax: 2,url: baseurl+"?ack_state=any&max_id=5&count=100"}).promise.then(function(data) {
+        var $statuses = $(data);
+        is($statuses.filter("li").size(), 15, "any, max_id=5, count=100 OK");
+        return bb.ajaxRetry({cache: false, url: baseurl+"?ack_state=unacked&count=20"}).promise;
+    }).then(function(data) {
+        var $statuses = $(data);
+        is($statuses.filter("li").size(), 10, "unacked, count=20 OK");
+        return bb.ajaxRetry({cache: false, url: baseurl+"?ack_state=acked&count=3&max_id=13"}).promise;
+    }).then(function(data) {
+        is($(data).filter("li").size(), 3, "acked, max_id=13, count=3 OK");
+        return bb.ajaxRetry({cache: false, url: baseurl+"?ack_state=unacked&max_id=14&count=100"}).promise;
+    }).then(function(data) {
+        is($(data).filter("li").size(), 0, "unacked, max_id in acked OK");
+    }).fail(function(reason) {
+        ok(false, "should not fail");
+    }).then(function() {
+        server.restore();
+        start();
+    });
+});
 
 test("append and prepend", function() {
     var container = setupContainer();
