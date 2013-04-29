@@ -261,6 +261,6 @@ bb.StatusContainer.prototype = {
     },
     getThresholdLevel: function() {
         return this.threshold_level;
-    },
+    }
 };
 

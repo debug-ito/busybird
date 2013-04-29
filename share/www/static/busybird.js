@@ -88,7 +88,7 @@ bb.blockEach = function(orig_array, block_size, each_func) {
 bb.distanceRanges = function (a_top, a_range, b_top, b_range) {
     var a_btm = a_top + a_range;
     var b_btm = b_top + b_range;
-    var dist_top = a_top  - b_top
+    var dist_top = a_top  - b_top;
     var dist_btm = b_btm - a_btm;
     var signed_dist = (dist_top > dist_btm ? dist_top : dist_btm);
     return (signed_dist > 0 ? signed_dist : 0);
