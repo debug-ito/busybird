@@ -36,7 +36,7 @@ bb.ajaxRetry = (function() {
             try_count++;
             if(try_max > 0 && try_count >= try_max) {
                 // deferred.fail(jqXHR, textStatus, errorThrown);
-                deferred.reject({textStatus: textStatus, errorThrown: errorThrown});
+                deferred.reject("Network error");
                 return;
             }
             ajax_retry_backoff *= backoff_factor;
@@ -56,7 +56,7 @@ bb.ajaxRetry = (function() {
             promise: deferred.promise,
             cancel: function() {
                 ajax_retry_ok = false;
-                deferred.reject({textStatus: "cancelled", errorThrown: ""});
+                deferred.reject("Ajax cancelled.");
                 console.log("ajaxRetry: canceller called");
                 if(defined(ajax_xhr)) {
                     console.log("ajaxRetry: xhr aborted.");
