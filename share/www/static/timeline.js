@@ -258,7 +258,7 @@ bb.StatusContainer.prototype = {
     _getStatuses: function() {
         return $(this.sel_container).children(".bb-status");
     },
-    _ackStatuses: function(acked_statuses_dom) {
+    _ackStatuses: function(acked_statuses_dom, set_max_id) {
         var self = this;
         var selfclass = bb.StatusContainer;
         if(acked_statuses_dom.length <= 0) {
@@ -267,10 +267,13 @@ bb.StatusContainer.prototype = {
         var ack_ids = $.map(acked_statuses_dom, function(status_dom) {
             return selfclass._getStatusID($(status_dom));
         });
-        var ack_max_id = selfclass._getStatusID($(acked_statuses_dom[acked_statuses_dom.length-1]));
+        var query_object = {"ids": ack_ids};
+        if(set_max_id) {
+            query_object["max_id"] = selfclass._getStatusID($(acked_statuses_dom[acked_statuses_dom.length-1]));
+        }
         return bb.ajaxRetry({
             type: "POST", url: self.api_base + "/timelines/" + self.timeline + "/ack.json",
-            data: JSON.stringify({ "ids": ack_ids, "max_id": ack_max_id }), contentType: "application/json",
+            data: JSON.stringify(query_object), contentType: "application/json",
             cache: false, timeout: 3000, dataType: "json", tryMax: selfclass.ACK_TRY_MAX
         }).promise;
     },
@@ -375,7 +378,7 @@ bb.StatusContainer.prototype = {
             ackState: "unacked",
         }).then(function(result) {
             load_result = result;
-            return self._ackStatuses(load_result.statuses);
+            return self._ackStatuses(load_result.statuses, load_result.maxReached);
         }).then(function() {
             return self.prependStatuses(load_result.statuses);
         }).then(function() {

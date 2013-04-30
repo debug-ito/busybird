@@ -418,7 +418,7 @@ asyncTest("_ackStatuses", function() {
         for(i = 0 ; i < 5 ; i++) {
             statuses.push(createStatusDOM(i,0));
         }
-        ack_response_promise = con._ackStatuses(statuses);
+        ack_response_promise = con._ackStatuses(statuses, true);
         return query_deferred.promise;
     }).then(function(req) {
         var request_object = JSON.parse(req.requestBody);
