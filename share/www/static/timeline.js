@@ -213,7 +213,7 @@ bb.StatusContainer = $.extend(function(args) {
                 }).promise.then(fulfill_handler);
             };
             fulfill_handler = function(statuses_str) {
-                var $statuses = $(statuses_str);
+                var $statuses = $(statuses_str).filter(".bb-status");
                 var fully_loaded = ($statuses.size() < query_params.count);
                 var is_completed;
                 request_num++;
