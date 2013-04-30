@@ -74,3 +74,38 @@ sub sort_statuses {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+BusyBird::Util - utility functions for BusyBird
+
+=head1 SYNOPSIS
+
+    use BusyBird::Util qw(sort_statuses);
+    
+    my @sorted_statuses = sort_statuses(@statuses);
+
+=head1 DESCRIPTION
+
+This module provides some utility functions useful in L<BusyBird>.
+
+By default, this module exports nothing.
+
+=head1 EXPORTABLE FUNCTIONS
+
+=head2 @sorted = sort_statuses(@statuses)
+
+Sorts an array of status object appropriately.
+
+The sort refers to C<< $status->{created_at} >> and C<< $status->{busybird}{acked_at} >> fields.
+See L<BusyBird::StatusStorage/Order_of_Statuses> section.
+
+=head1 AUTHOR
+
+Toshio Ito C<< <toshioito [at] cpan.org> >>
+
+=cut
