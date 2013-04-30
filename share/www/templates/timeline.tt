@@ -37,16 +37,8 @@
                 <i class="icon-zoom-out icon-white"></i>
               </a>
             </div>
-            <div class="btn-group pull-right">
-              <a id="bb-button-stop-mode" class="btn btn-inverse active" href="#">
-                <i class="icon-pause icon-white"></i>
-              </a>
-              <a id="bb-button-run-mode" class="btn btn-inverse" href="#">
-                <i class="icon-play icon-white"></i>
-              </a>
-            </div>
             <div class="btn-group pull-left">
-              <a class="btn btn-small btn-inverse disabled bb-new-status-loader-button">
+              <a id="bb-new-statuses-button" class="btn btn-small btn-inverse disabled">
                 New <span class="bb-new-status-num badge">0</span>
               </a>
             </div>
@@ -90,8 +82,31 @@ $(function() {
         selectorContainer: "#statuses", timeline: '[% timeline_name | js %]',
         apiBase: '[% script_name | js %]'
     });
-    status_container.loadInit().fail(function(reason) {
+    var new_statuses_button = {
+        button_selector: "#bb-new-statuses-button",
+        trigger: function() {
+            spinner.begin();
+            status_container.loadUnackedStatuses().then(function(result) {
+                // TODO: render messages according to maxReached and statuses.
+            }).fail(function(error) {
+                console.error(error);
+                message_banner.show(error, "error");
+            }).then(function() {
+                spinner.end();
+            });
+        }
+    };
+
+    $(new_statuses_button.button_selector).on("click", function() { new_statuses_button.trigger() });
+
+    spinner.begin();
+    status_container.loadInit().then(function() {
+        message_banner.show("Initialized");
+    }, function(reason) {
+        message_banner.show(reason, "error");
         console.error(reason);
+    }).then(function() {
+        spinner.end();
     });
 });
     </script>
