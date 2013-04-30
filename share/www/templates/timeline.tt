@@ -17,8 +17,8 @@
             <li class="divider-vertical"></li>
           </ul>
           <div id="bb-indicator" class="navbar-text pull-left">
-            <div class="bb-indicator-placeholder"></div>
-            <span class="bb-msg"></span>
+            <div id="bb-spinner-placeholder"></div>
+            <span id="bb-msg"></span>
           </div>
           <div class="navbar-form pull-right">
             <div class="btn-group pull-right">
@@ -30,18 +30,18 @@
           </div>
           <div class="navbar-form pull-right">
             <div class="btn-group pull-right">
-              <a id="bb-button-incriment-display-level" class="btn btn-inverse" href="javascript: bbcom.incriment_display_level.trigger();">
+              <a id="bb-button-incriment-display-level" class="btn btn-inverse" href="#">
                 <i class="icon-zoom-in icon-white"></i>
               </a>
-              <a id="bb-button-decriment-display-level" class="btn btn-inverse" href="javascript: bbcom.decriment_display_level.trigger();">
+              <a id="bb-button-decriment-display-level" class="btn btn-inverse" href="#">
                 <i class="icon-zoom-out icon-white"></i>
               </a>
             </div>
             <div class="btn-group pull-right">
-              <a id="bb-button-stop-mode" class="btn btn-inverse active" href="javascript: bbcom.toggle_run_mode.trigger();">
+              <a id="bb-button-stop-mode" class="btn btn-inverse active" href="#">
                 <i class="icon-pause icon-white"></i>
               </a>
-              <a id="bb-button-run-mode" class="btn btn-inverse" href="javascript: bbcom.toggle_run_mode.trigger();">
+              <a id="bb-button-run-mode" class="btn btn-inverse" href="#">
                 <i class="icon-play icon-white"></i>
               </a>
             </div>
@@ -65,7 +65,7 @@
           <ul id="statuses" class="unstyled">
           </ul>
           <div id="main-footer">
-            <a class="btn btn-primary" id="more-button" data-loading-text="Loading..." href="javascript: bbcom.load_more_statuses.trigger();">More...</a>
+            <a class="btn btn-primary" id="more-button" data-loading-text="Loading..." href="#">More...</a>
           </div>
         </div>
       </div>
@@ -82,8 +82,18 @@
     <script type="text/javascript" src="[% script_name %]/static/busybird.js"></script>
     <script type="text/javascript" src="[% script_name %]/static/timeline.js"></script>
     <script type="text/javascript" src="[% script_name %]/static/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+$(function() {
+    var spinner = new bb.Spinner("#bb-spinner-placeholder");
+    var message_banner = new bb.MessageBanner("#bb-msg");
+    var status_container = new bb.StatusContainer({
+        selectorContainer: "#statuses", timeline: '[% timeline_name | js %]',
+        apiBase: '[% script_name | js %]'
+    });
+    status_container.loadInit().fail(function(reason) {
+        console.error(reason);
+    });
+});
+    </script>
   </body>
 </html>
-
-
-

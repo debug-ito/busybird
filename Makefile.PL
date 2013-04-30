@@ -34,6 +34,7 @@ requires 'Tie::IxHash', '0';
 requires 'Time::HiRes', '1.9720';
 requires 'Try::Tiny', '0.10';
 requires 'autovivification', '0.10';
+requires 'JavaScript::Value::Escape', '0';
 
 test_requires 'FindBin', '0';
 test_requires 'HTTP::Request', '6.00';

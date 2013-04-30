@@ -103,7 +103,7 @@ ul#statuses li.bbtest-anchor {
     border: 3px solid red;
 }
 
-.bb-indicator-placeholder {
+#bb-spinner-placeholder {
     display: inline-block;
     width: 28px;
 }

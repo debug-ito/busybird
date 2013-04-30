@@ -15,6 +15,7 @@ use Carp;
 use Text::Xslate;
 use File::Spec;
 use Encode ();
+use JavaScript::Value::Escape ();
 
 
 sub create_psgi_app {
@@ -31,6 +32,9 @@ sub _new {
             path => [ File::Spec->catdir(BusyBird->sharedir, 'www', 'templates') ],
             cache_dir => File::Spec->tmpdir,
             syntax => 'TTerse',
+            function => {
+                js => \&JavaScript::Value::Escape::js,
+            },
             ## warn_handler => sub { ... },
         )
     }, $class;
