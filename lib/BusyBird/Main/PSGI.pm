@@ -329,7 +329,13 @@ sub _handle_tl_index {
         undef
     };
     return _notfound_response if not defined $timeline;
-    return $self->_template_response(template => "timeline.tt", args => {timeline_name => $timeline->name});
+    return $self->_template_response(
+        template => "timeline.tt",
+        args => {
+            timeline_name => $timeline->name,
+            script_name => $req->script_name,
+        }
+    );
 }
 
 1;

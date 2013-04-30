@@ -3,9 +3,9 @@
   <head>
     <title>[% timeline_name %] - BusyBird</title>
     <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
-    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css" type="text/css" media="screen" />
-    <link rel="stylesheet" href="/static/busybird.css" type="text/css" media="screen" />
-    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-responsive.min.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="[% script_name %]/static/bootstrap/css/bootstrap.min.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="[% script_name %]/static/busybird.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="[% script_name %]/static/bootstrap/css/bootstrap-responsive.min.css" type="text/css" media="screen" />
   </head>
   <body>
     <div class="navbar navbar-inverse navbar-fixed-top">
@@ -77,10 +77,11 @@
     </div>
     
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-    <script type="text/javascript" src="/static/jsdeferred.nodoc.js"></script>
-    <script type="text/javascript" src="/static/spin.js"></script>
-    <script type="text/javascript" src="/static/main.js"></script>
-    <script type="text/javascript" src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="[% script_name %]/static/spin.js"></script>
+    <script type="text/javascript" src="[% script_name %]/static/q.js"></script>
+    <script type="text/javascript" src="[% script_name %]/static/busybird.js"></script>
+    <script type="text/javascript" src="[% script_name %]/static/timeline.js"></script>
+    <script type="text/javascript" src="[% script_name %]/static/bootstrap/js/bootstrap.min.js"></script>
   </body>
 </html>
 
