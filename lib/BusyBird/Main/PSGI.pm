@@ -45,7 +45,7 @@ sub _to_app {
         Plack::Builder::enable 'ContentLength';
         Plack::Builder::mount '/static' => Plack::App::File->new(
             root => File::Spec->catdir(BusyBird->sharedir, 'www', 'static')
-        );
+        )->to_app;
         Plack::Builder::mount '/' => $self->_my_app;
     };
 }
