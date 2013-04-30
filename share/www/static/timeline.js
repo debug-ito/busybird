@@ -3,7 +3,7 @@
 // Javascript library specific to timeline view
 
 
-bb.StatusContainer = $.extend(function(args) {
+bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     // @params: args.selectorContainer, args.timeline, args.apiBase = ""
     if(!defined(args.selectorContainer)) {
         throw "selectorContainer param is mandatory";
@@ -33,7 +33,6 @@ bb.StatusContainer = $.extend(function(args) {
         return '<li class="bb-hidden-statuses-header"><span class="bb-hidden-statuses-num">'+ invisible_num +'</span> status'+plural+' hidden here.</li>';
     },
     _updateHiddenStatusesHeaders: function($statuses, hidden_header_list, window_adjuster) {
-        var selfclass = this;
         if(!defined(window_adjuster)) window_adjuster = function() {};
         $statuses.filter(".bb-hidden-statuses-header").remove();
         window_adjuster();
@@ -61,7 +60,6 @@ bb.StatusContainer = $.extend(function(args) {
         };
     },
     _scanStatusesForDisplayActions: function($statuses, threshold_level, enable_animation, cursor_index) {
-        var selfclass = this;
         var ACTION_STAY_VISIBLE = 0;
         var ACTION_STAY_INVISIBLE = 1;
         var ACTION_BECOME_VISIBLE = 2;
@@ -139,7 +137,6 @@ bb.StatusContainer = $.extend(function(args) {
     setDisplayByThreshold: function(args) {
         // @params: args.$statuses, args.threshold, args.enableAnimation, args.enableWindowAdjust, args.cursorIndex
         // @returns: promise for completion event.
-        var selfclass = this;
         return Q.fcall(function() {
             if(!defined(args.$statuses)) {
                 throw "$statuses param is mandatory";
@@ -182,7 +179,6 @@ bb.StatusContainer = $.extend(function(args) {
         //          args.startMaxID = null, args.maxPageNum = LOAD_STATUS_DEFAULT_MAX_PAGE_NUM
         // @returns: a promise holding the following object in success
         //           { maxReached: (boolean), numRequests: (number of requests sent), statuses: (array of status DOM elements) }
-        var selfclass = this;
         return Q.fcall(function() {
             if(!defined(args.apiURL)) {
                 throw "apiURL param is mandatory";
@@ -241,11 +237,9 @@ bb.StatusContainer = $.extend(function(args) {
             return makeRequest();
         });
     }
-});
-bb.StatusContainer.prototype = {
+}); selfclass.prototype = {
     _setDisplayImmediately: function($target_statuses) {
         var self = this;
-        var selfclass = bb.StatusContainer;
         return selfclass.setDisplayByThreshold({
             $statuses: $target_statuses,
             threshold: self.threshold_level,
@@ -260,7 +254,6 @@ bb.StatusContainer.prototype = {
     },
     _ackStatuses: function(acked_statuses_dom, set_max_id) {
         var self = this;
-        var selfclass = bb.StatusContainer;
         if(acked_statuses_dom.length <= 0) {
             return Q.fcall(function() {});
         }
@@ -279,7 +272,6 @@ bb.StatusContainer.prototype = {
     },
     _addStatuses: function(added_statuses_dom, is_prepend) {
         var self = this;
-        var selfclass = bb.StatusContainer;
         var $container = $(self.sel_container);
         var $next_top = null;
         return bb.blockEach(added_statuses_dom, selfclass.ADD_STATUSES_BLOCK_SIZE, function(statuses_block) {
@@ -351,7 +343,6 @@ bb.StatusContainer.prototype = {
     setThresholdLevel: function(new_threshold) {
         // @returns: promise resolved when done.
         var self = this;
-        var selfclass = bb.StatusContainer;
         self.threshold_level = new_threshold;
         self._adjustCursor();
         return selfclass.setDisplayByThreshold({
@@ -371,7 +362,6 @@ bb.StatusContainer.prototype = {
         // @returns: promise with the following object
         //           { maxReached: (boolean), statuses: (array of status DOM elements loaded) }
         var self = this;
-        var selfclass = bb.StatusContainer;
         var load_result;
         return selfclass.loadStatuses({
             apiURL: self._getLoadStatusesURL(),
@@ -388,7 +378,6 @@ bb.StatusContainer.prototype = {
     loadMoreStatuses: function() {
         // @returns: promise resolved when done
         var self = this;
-        var selfclass = bb.StatusContainer;
         var start_id = null;
         return Q.fcall(function() {
             var $statuses = self._getStatuses();
@@ -432,7 +421,9 @@ bb.StatusContainer.prototype = {
         self.$cursor = $(cursor_dom);
         self.$cursor.addClass("bb-status-cursor");
     },
-};
+}; return selfclass;})();
+
+////////////////////////////////////////////////////////
 
 bb.TimelineUnackedCountsPoller = (function() {
     var selfclass = $.extend(function(args) {
