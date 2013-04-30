@@ -23,8 +23,8 @@ var is = strictEqual;
 
 var createStatusHTML = function(id, level) {
     if(!level) level = 0;
-    return '<li class="bb-status" data-bb-status-level="'+level+'">' +
-           '<span class="bb-status-id">'+id+'</span></li>';
+    return '<li class="bb-status" data-bb-status-level="'+level+'">' + "\n" +
+           '<span class="bb-status-id">'+id+"</span>\n</li>\n";
 };
 
 var createStatus = function(id, level) {
@@ -397,6 +397,43 @@ asyncTest("loadStatuses", function() {
         ok(true, "reason: " + reason);
     }).then(function() {
         server.restore();
+        start();
+    });
+});
+
+asyncTest("_ackStatuses", function() {
+    var fakexhr = sinon.useFakeXMLHttpRequest();
+    var query_deferred = Q.defer();
+    var con = setupContainer();
+    var ack_response_promise;
+    fakexhr.onCreate = function(req) {
+        if(!query_deferred.promise.isPending()) {
+            throw "unexpected request";
+        }
+        query_deferred.resolve(req);
+    };
+    Q.fcall(function() {
+        var i = 0;
+        var statuses = [];
+        for(i = 0 ; i < 5 ; i++) {
+            statuses.push(createStatusDOM(i,0));
+        }
+        ack_response_promise = con._ackStatuses(statuses);
+        return query_deferred.promise;
+    }).then(function(req) {
+        var request_object = JSON.parse(req.requestBody);
+        deepEqual(request_object, {ids: ["0","1","2","3","4"], max_id: "4"}, "ack request object OK");
+        req.respond(200, {"Content-Type": "application/json"}, JSON.stringify({
+            error: null, count: 5
+        }));
+        return ack_response_promise;
+    }).then(function(response_data) {
+        deepEqual(response_data, {error: null, count: 5}, "ack response object OK");
+    }).fail(function(reason) {
+        ok(false, "should not fail");
+        ok(true, "reason: " + reason);
+    }).then(function() {
+        fakexhr.restore();
         start();
     });
 });
