@@ -6,6 +6,9 @@ use HTTP::Request;
 use Test::More;
 use Test::Builder;
 use JSON qw(from_json);
+use HTML::TreeBuilder 5 -weak;
+use HTML::TreeBuilder::XPath;
+
 
 sub new {
     my ($class, %params) = @_;
@@ -40,6 +43,13 @@ sub request_ok {
         like($res->code, $res_code_like, $msg);
     }
     return $res->decoded_content(raise_error => 1);
+}
+
+sub request_htmltree_ok {
+    my ($self, $method, $request_url, $content, $res_code_like, $msg) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my $res = $self->request_ok($method, $request_url, $content, $res_code_like, $msg);
+    return HTML::TreeBuilder::XPath->new_from_content($res);
 }
 
 1;

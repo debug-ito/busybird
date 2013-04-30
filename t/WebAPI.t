@@ -1,6 +1,7 @@
 use strict;
 use warnings;
-use lib 't/lib';
+use FindBin;
+use lib ("$FindBin::RealBin/lib");
 use utf8;
 use Test::More;
 use Test::MockObject;
@@ -392,8 +393,6 @@ EOD
         }
     };
 }
-
-fail('todo: GET statuses: html format');
 
 done_testing();
 

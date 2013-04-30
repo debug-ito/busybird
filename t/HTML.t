@@ -8,8 +8,6 @@ use BusyBird::Log;
 use BusyBird::StatusStorage::Memory;
 use Plack::Test;
 use BusyBird::Test::HTTP;
-use HTML::TreeBuilder 5 -weak;
-use HTML::TreeBuilder::XPath;
 
 $BusyBird::Log::Logger = undef;
 
@@ -29,8 +27,7 @@ $BusyBird::Log::Logger = undef;
             {path => '/timelines/foo/index.htm', exp_timeline => 'foo'},
             {path => '/timelines/bar/', exp_timeline => 'bar'}
         ) {
-            my $res = $tester->request_ok('GET', $case->{path}, undef, qr/^200$/, "$case->{path}: GET OK");
-            my $tree = HTML::TreeBuilder::XPath->new_from_content($res);
+            my $tree = $tester->request_htmltree_ok('GET', $case->{path}, undef, qr/^200$/, "$case->{path}: GET OK");
             my ($title_node) = $tree->findnodes('//title');
             my ($title_text) = $title_node->content_list;
             like($title_text, qr/$case->{exp_timeline}/, '... View title OK');
