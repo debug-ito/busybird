@@ -11,7 +11,7 @@ use BusyBird::Test::HTTP;
 use HTML::TreeBuilder 5 -weak;
 use HTML::TreeBuilder::XPath;
 
-$BusyBird::Log::LOGGER = undef;
+$BusyBird::Log::Logger = undef;
 
 {
     my $main = BusyBird::Main->new;

@@ -9,7 +9,7 @@ use BusyBird::Log;
 use DateTime;
 use utf8;
 
-$BusyBird::Log::LOGGER = undef;
+$BusyBird::Log::Logger = undef;
 
 sub test_log_contains {
     my ($logs_arrayref, $msg_pattern, $test_msg) = @_;
@@ -38,7 +38,7 @@ if(-r $filepath) {
 }
 
 {
-    local $BusyBird::Log::LOGGER = sub { push(@logs, [@_]) };
+    local $BusyBird::Log::Logger = sub { push(@logs, [@_]) };
     my $storage = new_ok('BusyBird::StatusStorage::Memory');
     ok(!$storage->load($filepath), "load() returns false if the file does not exist.");
     test_log_contains \@logs, qr{cannot.*read}i, "fails to load from $filepath";

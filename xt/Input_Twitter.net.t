@@ -70,7 +70,7 @@ sub test_backend {
         exit 1;
     }
     my @logs = ();
-    local $BusyBird::Log::LOGGER = sub {
+    local $BusyBird::Log::Logger = sub {
         my ($level, $msg) = @_;
         push(@logs, [$level, $msg]);
     };

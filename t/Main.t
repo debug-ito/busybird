@@ -15,7 +15,7 @@ BEGIN {
     use_ok('BusyBird::Main');
 }
 
-$BusyBird::Log::LOGGER = undef;
+$BusyBird::Log::Logger = undef;
 
 our $CREATE_STORAGE = sub {
     return BusyBird::StatusStorage::Memory->new;

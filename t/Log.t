@@ -9,14 +9,14 @@ BEGIN {
 }
 
 {
-    local $BusyBird::Log::LOGGER = undef;
+    local $BusyBird::Log::Logger = undef;
     warning_is { bblog('error', 'log is suppressed') } undef, 'Log is suppressed.';
 }
 
 
 my $log = "";
 
-$BusyBird::Log::LOGGER = sub {
+$BusyBird::Log::Logger = sub {
     my ($level, $msg) = @_;
     $log .= "$level: $msg\n";
 };
@@ -26,7 +26,7 @@ is($log, "notice: log test\n", "log OK");
 
 {
     my @logs = ();
-    local $BusyBird::Log::LOGGER = sub {
+    local $BusyBird::Log::Logger = sub {
         my ($level, $msg) = @_;
         push(@logs, [$level, $msg]);
     };
@@ -36,6 +36,6 @@ is($log, "notice: log test\n", "log OK");
 }
 
 bblog('info', 'end log');
-is($log, "notice: log test\ninfo: end log\n", "LOGGER is restored.");
+is($log, "notice: log test\ninfo: end log\n", "Logger is restored.");
 
 done_testing();

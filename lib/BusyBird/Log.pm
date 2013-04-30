@@ -9,7 +9,7 @@ use warnings;
 
 our @EXPORT = qw(bblog);
 our @EXPORT_OK = @EXPORT;
-our $LOGGER = \&default_logger;
+our $Logger = \&default_logger;
 
 sub default_logger {
     my ($level, $msg) = @_;
@@ -19,7 +19,7 @@ sub default_logger {
 
 sub bblog {
     my ($level, $msg) = @_;
-    $LOGGER->($level, $msg) if defined $LOGGER;
+    $Logger->($level, $msg) if defined $Logger;
 }
 
 our $VERSION = '0.01';
@@ -46,8 +46,8 @@ BusyBird::Log - simple logging infrastructure for BusyBird
     {
         my @logs = ();
         
-        ## Temporarily change the LOGGER
-        local $BusyBird::Log::LOGGER = sub {
+        ## Temporarily change the Logger
+        local $BusyBird::Log::Logger = sub {
             my ($level, $msg) = @_;
             push(@logs, [$level, $msg]);
         };
@@ -75,7 +75,7 @@ C<$msg> is the log message body.
 
 =head1 PACKAGE VARIABLES
 
-=head2 $BusyBird::Log::LOGGER = CODEREF($level, $msg)
+=head2 $BusyBird::Log::Logger = CODEREF($level, $msg)
 
 A subroutine reference that is called when C<bblog()> is called.
 The subroutine is supposed to do the logging.

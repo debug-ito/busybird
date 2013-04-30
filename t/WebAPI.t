@@ -18,7 +18,7 @@ use Encode ();
 use JSON qw(encode_json decode_json);
 use Try::Tiny;
 
-$BusyBird::Log::LOGGER = undef;
+$BusyBird::Log::Logger = undef;
 
 sub create_main {
     my $main = BusyBird::Main->new();

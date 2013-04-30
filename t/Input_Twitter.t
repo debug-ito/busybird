@@ -18,7 +18,7 @@ BEGIN {
 }
 
 $BusyBird::Input::Twitter::STATUS_TIMEZONE = DateTime::TimeZone->new(name => '+0900');
-$BusyBird::Log::LOGGER = undef;
+$BusyBird::Log::Logger = undef;
 
 sub test_mock {
     my ($param, $exp_ids, $msg) = @_;
@@ -344,7 +344,7 @@ end_call $mocknt;
     my $diemock = Test::MockObject->new;
     my $call_count = 0;
     my @log = ();
-    local $BusyBird::Log::LOGGER = sub { push(@log, [@_]) };
+    local $BusyBird::Log::Logger = sub { push(@log, [@_]) };
     $diemock->mock('user_timeline', sub {
         my ($self, $params) = @_;
         $call_count++;
@@ -367,7 +367,7 @@ end_call $mocknt;
 {
     note('--- call timeline method with no backend');
     my @log = ();
-    local $BusyBird::Log::LOGGER = sub { push(@log, [@_]) };
+    local $BusyBird::Log::Logger = sub { push(@log, [@_]) };
     my $bbin = new_ok('BusyBird::Input::Twitter', [
         apiurl => 'http://fake.com/',
         page_next_delay => 0,

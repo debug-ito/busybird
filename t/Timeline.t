@@ -21,7 +21,7 @@ BEGIN {
     use_ok('BusyBird::Watcher');
 }
 
-$BusyBird::Log::LOGGER = undef;
+$BusyBird::Log::Logger = undef;
 
 our $CREATE_STORAGE;
 
@@ -343,7 +343,7 @@ sub test_timeline {
             ) {
                 note("--- --- filter mode = $mode: junk filter: $case->{name}");
                 my @log = ();
-                local $BusyBird::Log::LOGGER = sub { push(@log, [@_]) };
+                local $BusyBird::Log::Logger = sub { push(@log, [@_]) };
                 my $timeline = new_ok($CLASS, [
                     name => 'test',
                     storage => $CREATE_STORAGE->(),

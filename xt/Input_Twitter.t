@@ -10,7 +10,7 @@ BEGIN {
     use_ok('BusyBird::Input::Twitter');
 }
 
-$BusyBird::Log::LOGGER = undef;
+$BusyBird::Log::Logger = undef;
 
 my $mocknt = mock_twitter();
 
