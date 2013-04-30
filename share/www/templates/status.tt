@@ -1,0 +1,23 @@
+<li class="bb-status" data-bb-status-level="[% busybird.level %]">
+  <span class="bb-status-id">[% id %]</span>
+  <div class="bb-status-profile-image">
+    [% IF user.profile_image_url %]
+    <img src="[% user.profile_image_url %]" width="48" height="48" />
+    [% END # IF %]
+  </div>
+  <div class="bb-status-main">
+    <div class="bb-status-header">
+      <div class="bb-status-attributes">
+        [% IF !busybird.acked_at %]
+        <span class="label label-success">NEW</span>&nbsp;
+        [% END # IF %]
+        <span class="label">Lv. [% busybird.level %]</span>
+      </div>
+      <div class="bb-status-user-name">
+        <strong>[% user.screen_name %]</strong>&nbsp;&nbsp;
+        <span class="bb-status-created-at">[% created_at %]</span>
+      </div>
+    </div>
+    <div class="bb-status-text">[% text %]</div>
+  </div>
+</li>

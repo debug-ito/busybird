@@ -8,7 +8,7 @@ ul#statuses {
     width: auto;
 }
 
-ul#statuses li {
+li.bb-status {
     border-width: 1px 0 0 0;
     border-color: black;
     border-style: solid;
@@ -18,34 +18,38 @@ ul#statuses li {
     overflow: hidden;
 }
 
-div.status-profile-image {
+.bb-status-id {
+    display: none;
+}
+
+div.bb-status-profile-image {
     float: left;
     text-align: center;
     width: 48px;
 }
 
-div.status-main {
+div.bb-status-main {
     margin-left: 54px;
 }
 
-div.status-header {
+div.bb-status-header {
     border-width: 0 0 1px 0;
     border-color: #999;
     border-style: solid;
     padding: 3px;
 }
 
-div.status-text {
+div.bb-status-text {
     padding: 8px;
 }
 
-div.status-attributes {
+div.bb-status-attributes {
     float: right;
     color: #333;
     font-size: 80%;
 }
 
-span.status-created-at {
+span.bb-status-created-at {
     font-size: 80%;
 }
 

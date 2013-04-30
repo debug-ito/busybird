@@ -20,19 +20,19 @@ $BusyBird::Log::Logger = undef;
     test_psgi $main->to_app, sub {
         my $tester = BusyBird::Test::HTTP->new(requester => shift);
         my $tree = $tester->request_htmltree_ok(
-            "GET", "/timelines/test/statuses.html?count=5&max_id=2", undef,
+            "GET", "/timelines/test/statuses.html?count=5&max_id=7", undef,
             qr/^200$/, "GET statuses.html OK"
         );
-        my @status_nodes = $tree->findnodes('/li');
+        my @status_nodes = $tree->findnodes('//li');
         is(scalar(@status_nodes), 5, "5 status nodes");
-        my @exp_ids = (2 .. 6);
-        my @exp_levels = (12 .. 16);
+        my @exp_ids = reverse(3 .. 7);
+        my @exp_levels = reverse(13 .. 17);
         foreach my $status_node (@status_nodes) {
             my $exp_id = shift(@exp_ids);
             my $exp_level = shift(@exp_levels);
             like($status_node->attr('class'), qr/bb-status/, "status node should have bb-status class");
             is($status_node->attr('data-bb-status-level'), $exp_level, "status node level OK");
-            my @id_nodes = $status_node->findnodes('//*[class="bb-status-id"]');
+            my @id_nodes = $status_node->findnodes('.//*[@class="bb-status-id"]');
             is(scalar(@id_nodes), 1, "status node has only 1 ID node");
             my @id_content = $id_nodes[0]->content_list;
             is(scalar(@id_content), 1, "ID node has only 1 content");

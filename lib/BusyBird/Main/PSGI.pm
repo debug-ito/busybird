@@ -92,7 +92,7 @@ sub _get_timeline {
     return $timeline;
 }
 
-sub _render_template {
+sub _template_response {
     my ($self, %args) = @_;
     my $template_name = delete $args{template};
     croak 'template arg is mandatory' if not defined $template_name;
@@ -135,13 +135,42 @@ sub _json_response {
     }
 }
 
+
+my %RESPONSE_FORMATTER_FOR_TL_GET_STATUSES = (
+    html => sub {
+        my ($self, $code, %response_object) = @_;
+        if($code == 200) {
+            my $result = "";
+            foreach my $status (@{$response_object{statuses}}) {
+                $result .= $self->{renderer}->render("status.tt", $status);
+            }
+            $result = Encode::encode('utf8', $result);
+            return [200, ['Content-Type', 'text/html; charset=utf8'], [$result]];
+        }else {
+            return $self->_template_response(
+                template => 'error.tt', args => {error => $response_object{error}},
+                code => $code
+            );
+        }
+    },
+    json => sub {
+        my ($self, $code, %response_object) = @_;
+        return _json_response($code, %response_object);
+    },
+);
+
 sub _handle_tl_get_statuses {
     my ($self, $req, $dest) = @_;
     return sub {
         my $responder = shift;
+        my $formatter = $RESPONSE_FORMATTER_FOR_TL_GET_STATUSES{$dest->{format}};
         try {
             my $timeline = $self->_get_timeline($dest);
             my $count = $req->query_parameters->{count} || 20;
+            if(!defined($formatter)) {
+                $formatter = $RESPONSE_FORMATTER_FOR_TL_GET_STATUSES{html};
+                die "Unknown format: $dest->{format}";
+            }
             if(!looks_like_number($count) || int($count) != $count) {
                 die "count parameter must be an integer";
             }
@@ -152,15 +181,15 @@ sub _handle_tl_get_statuses {
                 callback => sub {
                     my ($error, $statuses) = @_;
                     if(defined $error) {
-                        $responder->(_json_response(500, error => "$error"));
+                        $responder->($formatter->($self, 500, error => "$error"));
                         return;
                     }
-                    $responder->(_json_response(200, statuses => $statuses));
+                    $responder->($formatter->($self, 200, statuses => $statuses));
                 }
             );
         }catch {
             my $e = shift;
-            $responder->(_json_response(400, error => "$e"));
+            $responder->($formatter->($self, 400, error => "$e"));
         };
     };
 }
@@ -300,7 +329,7 @@ sub _handle_tl_index {
         undef
     };
     return _notfound_response if not defined $timeline;
-    return $self->_render_template(template => "timeline.tt", args => {timeline_name => $timeline->name});
+    return $self->_template_response(template => "timeline.tt", args => {timeline_name => $timeline->name});
 }
 
 1;
