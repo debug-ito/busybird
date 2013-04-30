@@ -375,9 +375,9 @@ bb.StatusContainer.prototype = {
             ackState: "unacked",
         }).then(function(result) {
             load_result = result;
-            return self._ackStatuses(result.statuses);
+            return self._ackStatuses(load_result.statuses);
         }).then(function() {
-            return self.prependStatuses(result.statuses);
+            return self.prependStatuses(load_result.statuses);
         }).then(function() {
             return {maxReached: load_result.maxReached, statuses: load_result.statuses};
         });
