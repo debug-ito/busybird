@@ -39,7 +39,7 @@
             </div>
             <div class="btn-group pull-left">
               <a id="bb-new-statuses-button" class="btn btn-small btn-inverse disabled">
-                New <span class="bb-new-status-num badge">0</span>
+                New <span class="bb-new-statuses-num badge">0</span>
               </a>
             </div>
           </div>
@@ -82,10 +82,40 @@ $(function() {
         selectorContainer: "#statuses", timeline: '[% timeline_name | js %]',
         apiBase: '[% script_name | js %]'
     });
+    var unacked_counts_poller = new bb.TimelineUnackedCountsPoller({
+        statusContainer: status_container
+    });
     var new_statuses_button = {
-        button_selector: "#bb-new-statuses-button",
+        enabled: false,
+        initialize: function() {
+            var self = this;
+            $("#bb-new-statuses-button").on("click", function() { new_statuses_button.trigger(); return false; });
+            self._setEnabled(false);
+            unacked_counts_poller.listenOnChange(function(unacked_counts) {
+                var total = unacked_counts.total;
+                $(".bb-new-statuses-num").text(total);
+                if(total === 0) {
+                    self._setEnabled(false);
+                }else {
+                    self._setEnabled(true);
+                }
+            });
+        },
+        _setEnabled: function(new_state) {
+            var self = this;
+            var $button = $("#bb-new-statuses-button");
+            self.enabled = new_state;
+            if(self.enabled) {
+                $button.removeClass("disabled");
+            }else {
+                $button.addClass("disabled");
+            }
+        },
         trigger: function() {
+            var self = this;
+            if(!self.enabled) return;
             spinner.begin();
+            self._setEnabled(false);
             status_container.loadUnackedStatuses().then(function(result) {
                 // TODO: render messages according to maxReached and statuses.
             }).fail(function(error) {
@@ -96,6 +126,8 @@ $(function() {
             });
         }
     };
+    new_statuses_button.initialize();
+    
     var more_statuses_button = {
         enabled: true,
         initialize: function() {
@@ -122,8 +154,7 @@ $(function() {
     };
     more_statuses_button.initialize();
 
-    $(new_statuses_button.button_selector).on("click", function() { new_statuses_button.trigger() });
-
+    unacked_counts_poller.start();
     spinner.begin();
     status_container.loadInit().then(function() {
         message_banner.show("Initialized");
