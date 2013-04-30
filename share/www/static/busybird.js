@@ -192,12 +192,15 @@ bb.EventPoller.prototype = {
         var makeRequest = function() {
             return bb.ajaxRetry({
                 type: "GET", url: self.url, data: query_object, contentType: "application/json; charset=utf8",
-                dataType: "json", cache: false, timeout: 0,
+                dataType: "json", cache: false, timeout: 0
             }).promise.then(function(response_data) {
                 return self.on_response(response_data);
             }).then(function(next_query) {
                 query_object = next_query;
                 return makeRequest();
+            }).fail(function(reason) {
+                console.error("EventPoller fatal error:");
+                console.error(reason);
             });
         };
         makeRequest();

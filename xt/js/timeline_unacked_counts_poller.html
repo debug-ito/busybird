@@ -34,7 +34,7 @@ var FakeUnackedCountsServer = function() {
     var self = this;
     self.fakexhr = sinon.useFakeXMLHttpRequest();
     self.incoming_request = Q.defer();
-    self.fakexhr.onChange = function(req) {
+    self.fakexhr.onCreate = function(req) {
         if(!self.incoming_request.promise.isPending()) {
             throw "request arrived while there is a unhandled request.";
         }
@@ -45,7 +45,7 @@ FakeUnackedCountsServer.prototype = {
     restore: function() { this.fakexhr.restore() },
     respond: function(unacked_counts_object) {
         var self = this;
-        if(!self.incoming_request.promise.isPending()) {
+        if(self.incoming_request.promise.isPending()) {
             throw "attempt to respond while there is no unhandled request.";
         }
         self.incoming_request.promise.valueOf().respond(
@@ -57,7 +57,9 @@ FakeUnackedCountsServer.prototype = {
     waitForQuery: function() {
         var self = this;
         return self.incoming_request.promise.then(function(req) {
-            return URI.parseQuery(URI.parse(req.url).query || "");
+            var query_object = URI.parseQuery(URI.parse(req.url).query || "");
+            delete query_object["_"];
+            return query_object;
         });
     },
 };
@@ -85,7 +87,7 @@ asyncTest("TimelineUnackedCountsPoller", function() {
         deepEqual(query, {total: "0", "-2": "0", "-1": "0", "0": "0", "1": "0", "2": "0"}, "initial query OK");
         return respondAndWaitForCallback({total: 2, 0: 1, 2: 1});
     }).then(function(callback_result) {
-        deepEqual(callback_result, {total: 2, 0: 1, 2: 1});
+        deepEqual(callback_result, {total: 2, 0: 1, 2: 1}, "listener event OK");
         return server.waitForQuery();
     }).then(function(query) {
         deepEqual(query, {total: "2", "-2": "0", "-1": "0", "0": "1", "1": "0", "2": "1"}, "second query OK");

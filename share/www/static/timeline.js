@@ -362,6 +362,8 @@ bb.StatusContainer.prototype = {
     getThresholdLevel: function() {
         return this.threshold_level;
     },
+    getTimelineName: function() { return this.timeline },
+    getAPIBase: function() { return this.api_base },
     loadUnackedStatuses: function() {
         // @returns: promise with the following object
         //           { maxReached: (boolean), statuses: (array of status DOM elements loaded) }
@@ -429,18 +431,61 @@ bb.StatusContainer.prototype = {
     },
 };
 
-bb.TimelineUnackedCountsPoller = $.extend(function(args) {
-    // @params: args.statusContainer
-    // TODO: set url, initial_query from statusContainer
-}, {
-    LEVEL_MARGIN: 2
-});
-bb.TimelineUnackedCountsPoller.prototype = $.extend(
-    new bb.EventPoller(/* TODO: set onResponse  */),
-    {
-        listenOnChange: function(callback) {
-            // @params: callback (function(unacked_counts))
+bb.TimelineUnackedCountsPoller = (function() {
+    var selfclass = $.extend(function(args) {
+        // @params: args.statusContainer
+        var scon = args.statusContainer;
+        if(!defined(scon)) {
+            throw "statusContainer param is mandatory";
         }
-    }
-);
+        this.status_container = scon;
+        this.url = scon.getAPIBase() + "/timelines/" + scon.getTimelineName() + "/updates/unacked_counts.json";
+        this.initial_query = this._makeQuery({});
+        this.on_change_listeners = [];
+    }, {
+        LEVEL_MARGIN: 2,
+    });
+    selfclass.prototype = $.extend(
+        new bb.EventPoller({
+            onResponse: function(response_data) {
+                var self = this;
+                if(defined(response_data.error)) {
+                    self._onError(response_data.error);
+                    return;
+                }
+                $.each(self.on_change_listeners, function(i, listener) {
+                    listener(response_data.unacked_counts);
+                });
+                return self._makeQuery(response_data.unacked_counts);
+            }
+        }),
+        {
+            _onError: function(error_message) { console.log(error_message) },
+            _setQueryItem: function(target_query_object, current_unacked_counts, key) {
+                var self = this;
+                var cur_value = current_unacked_counts[key];
+                target_query_object[key] = defined(cur_value) ? cur_value : 0;
+            },
+            _makeQuery: function(current_unacked_counts) {
+                var self = this;
+                var query = {};
+                var threshold = self.status_container.getThresholdLevel();
+                var level;
+                if(!defined(current_unacked_counts)) {
+                    current_unacked_counts = {};
+                }
+                self._setQueryItem(query, current_unacked_counts, "total");
+                for(level = threshold - selfclass.LEVEL_MARGIN ; level <= threshold + selfclass.LEVEL_MARGIN ; level++) {
+                    self._setQueryItem(query, current_unacked_counts, level);
+                }
+                return query;
+            },
+            listenOnChange: function(callback) {
+                // @params: callback (function(unacked_counts))
+                this.on_change_listeners.push(callback);
+            }
+        }
+    );
+    return selfclass;
+})();
 
