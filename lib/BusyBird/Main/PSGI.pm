@@ -99,7 +99,7 @@ sub _render_template {
     my $args = delete $args{args};
     my $code = delete $args{code} || 200;
     my $headers = delete $args{headers} || [];
-    if(Plack::Util::header_exists($headers, 'Content-Type')) {
+    if(!Plack::Util::header_exists($headers, 'Content-Type')) {
         push(@$headers, 'Content-Type', 'text/html; charset=utf8');
     }
     my $ret = Encode::encode('utf8', $self->{renderer}->render($template_name, $args));
