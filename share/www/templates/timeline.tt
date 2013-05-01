@@ -84,6 +84,8 @@
         self.spinner = args.spinner;
         self.status_container = args.statusContainer;
         self.message_banner = args.messageBanner;
+        self.cur_unacked_counts = {total: 0};
+        
         $("#bb-new-statuses-button").on("click", function() { self.trigger(); return false; });
         self._setEnabled(false);
         poller.listenOnChange(function(unacked_counts) {
@@ -106,6 +108,19 @@
             }else {
                 $button.addClass("disabled");
             }
+        },
+        _visibleUnackedCount: function() {
+            var self = this;
+            var visible_count = 0;
+            var cur_threshold_level = self.status_container.getThresholdLevel();
+            $.each(self.cur_unacked_counts, function(level, count) {
+                if(level === "total") return true;
+                level = parseInt(level, 10);
+                if(level >= cur_threshold_level) {
+                    visible_count += count;
+                }
+            });
+            return visible_count;
         },
         trigger: function() {
             var self = this;
