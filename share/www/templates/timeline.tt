@@ -199,7 +199,6 @@
             statusContainer: status_container
         });
 
-        unacked_counts_poller.start();
         spinner.begin();
         status_container.loadInit().then(function() {
             message_banner.show("Initialized");
@@ -208,6 +207,7 @@
             console.error(reason);
         }).then(function() {
             spinner.end();
+            unacked_counts_poller.start();
         });
     });
 })();
