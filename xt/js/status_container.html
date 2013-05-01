@@ -438,6 +438,36 @@ asyncTest("_ackStatuses", function() {
     });
 });
 
+asyncTest("listenOnThresholdLevelChanged", function() {
+    var con = setupContainer();
+    var event_deferred = Q.defer();
+    con.listenOnThresholdLevelChanged(function(new_threshold) {
+        if(!event_deferred.promise.isPending()) {
+            throw "unexpected event";
+        }
+        event_deferred.resolve(new_threshold);
+    });
+    Q.fcall(function() {
+        con.setThresholdLevel(0);
+        con.setThresholdLevel(1);
+        return event_deferred.promise;
+    }).then(function(new_threshold) {
+        is(new_threshold, 1, "new threshold is 1");
+        event_deferred = Q.defer();
+        con.setThresholdLevel(1);
+        con.setThresholdLevel(1);
+        con.setThresholdLevel(-10);
+        return event_deferred.promise;
+    }).then(function(new_threshold) {
+        is(new_threshold, -10, "new threshold is -10");
+    }).fail(function(reason) {
+        ok(false, "should not fail");
+        ok(true, "reason: " + reason);
+    }).then(function() {
+        start();
+    });
+});
+
     </script>
   </body>
 </html>

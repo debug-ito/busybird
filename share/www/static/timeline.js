@@ -16,6 +16,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     this.api_base = defined(args.apiBase) ? args.apiBase : "";
     this.threshold_level = 0;
     this.$cursor = null;
+    this.on_threshold_level_changed_callbacks = [];
 }, {
     ADD_STATUSES_BLOCK_SIZE: 100,
     ANIMATE_STATUS_MAX_NUM: 15,
@@ -343,8 +344,14 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     setThresholdLevel: function(new_threshold) {
         // @returns: promise resolved when done.
         var self = this;
+        var old_threshold = self.threshold_level;
         self.threshold_level = new_threshold;
         self._adjustCursor();
+        if(old_threshold !== new_threshold) {
+            $.each(self.on_threshold_level_changed_callbacks, function(i, callback) {
+                callback(new_threshold);
+            });
+        }
         return selfclass.setDisplayByThreshold({
             $statuses: $(self.sel_container).children(),
             threshold: self.threshold_level,
@@ -420,6 +427,10 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         }
         self.$cursor = $(cursor_dom);
         self.$cursor.addClass("bb-status-cursor");
+    },
+    listenOnThresholdLevelChanged: function(callback) {
+        // @params: callback (function(new_threshold) returning anything)
+        this.on_threshold_level_changed_callbacks.push(callback);
     },
 }; return selfclass;})();
 
