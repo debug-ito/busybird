@@ -26,14 +26,14 @@
             </div>
           </div>
           <div class="navbar-text pull-right">
-            <span class="label">Lv. <span class="display-level">0</span></span>
+            <span class="label">Lv. <span class="bb-threshold-level">0</span></span>
           </div>
           <div class="navbar-form pull-right">
             <div class="btn-group pull-right">
-              <a id="bb-button-incriment-display-level" class="btn btn-inverse" href="#">
+              <a id="bb-button-incriment-threshold-level" class="btn btn-inverse" href="#">
                 <i class="icon-zoom-in icon-white"></i>
               </a>
-              <a id="bb-button-decriment-display-level" class="btn btn-inverse" href="#">
+              <a id="bb-button-decriment-threshold-level" class="btn btn-inverse" href="#">
                 <i class="icon-zoom-out icon-white"></i>
               </a>
             </div>
@@ -75,6 +75,8 @@
     <script type="text/javascript" src="[% script_name %]/static/timeline.js"></script>
     <script type="text/javascript" src="[% script_name %]/static/bootstrap/js/bootstrap.min.js"></script>
     <script type="text/javascript">
+"use strict";
+
 (function() {
     var NewStatusesButton = function(args) {
         // @params: args.unackedCountsPoller, args.spinner, args.statusContainer, args.messageBanner
@@ -178,6 +180,49 @@
             $("#bb-more-button").button(this.enabled ? "reset" : "loading");
         }
     };
+    var ThresholdLevelButton = function(args) {
+        // @params: args.spinner, args.statusContainer;
+        var self = this;
+        self.enabled = true;
+        self.spinner = args.spinner;
+        self.status_container = args.statusContainer;
+        self._setEnabled(true);
+        $("#bb-button-incriment-threshold-level").on("click", function() { self.levelUp(); return false; });
+        $("#bb-button-decriment-threshold-level").on("click", function() { self.levelDown(); return false; });
+        $(".bb-threshold-level").text(self.status_container.getThresholdLevel());
+        self.status_container.listenOnThresholdLevelChanged(function(new_threshold) {
+            $(".bb-threshold-level").text(new_threshold);
+        });
+    };
+    ThresholdLevelButton.prototype = {
+        _setEnabled: function(new_state) {
+            var self = this;
+            var $target = $("#bb-button-incriment-threshold-level").add("#bb-button-decriment-threshold-level");
+            self.enabled = new_state;
+            if(self.enabled) {
+                $target.removeClass("disabled");
+            }else {
+                $target.addClass("disabled");
+            }
+        },
+        _levelChange: function(relative_level) {
+            var self = this;
+            var cur_level;
+            if(!self.enabled) return;
+            self._setEnabled(false);
+            cur_level = self.status_container.getThresholdLevel();
+            self.spinner.begin();
+            self.status_container.setThresholdLevel(cur_level + relative_level).fail(function(error) {
+                console.error("Unexpected error while changing level");
+                console.error(error);
+            }).then(function() {
+                self.spinner.end();
+                self._setEnabled(true);
+            });
+        },
+        levelUp: function() { this._levelChange(+1) },
+        levelDown: function() { this._levelChange(-1) }
+    };
 
     $(function() {
         var spinner = new bb.Spinner("#bb-spinner-placeholder");
@@ -197,6 +242,9 @@
         var more_statuses_button = new MoreStatusesButton({
             spinner: spinner, messageBanner: message_banner,
             statusContainer: status_container
+        });
+        var threshold_level_button = new ThresholdLevelButton({
+            spinner: spinner, statusContainer: status_container
         });
 
         spinner.begin();
