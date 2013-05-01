@@ -75,32 +75,28 @@
     <script type="text/javascript" src="[% script_name %]/static/timeline.js"></script>
     <script type="text/javascript" src="[% script_name %]/static/bootstrap/js/bootstrap.min.js"></script>
     <script type="text/javascript">
-$(function() {
-    var spinner = new bb.Spinner("#bb-spinner-placeholder");
-    var message_banner = new bb.MessageBanner("#bb-msg");
-    var status_container = new bb.StatusContainer({
-        selectorContainer: "#statuses", timeline: '[% timeline_name | js %]',
-        apiBase: '[% script_name | js %]'
-    });
-    var unacked_counts_poller = new bb.TimelineUnackedCountsPoller({
-        statusContainer: status_container
-    });
-    var new_statuses_button = {
-        enabled: false,
-        initialize: function() {
-            var self = this;
-            $("#bb-new-statuses-button").on("click", function() { new_statuses_button.trigger(); return false; });
-            self._setEnabled(false);
-            unacked_counts_poller.listenOnChange(function(unacked_counts) {
-                var total = unacked_counts.total;
-                $(".bb-new-statuses-num").text(total);
-                if(total === 0) {
-                    self._setEnabled(false);
-                }else {
-                    self._setEnabled(true);
-                }
-            });
-        },
+(function() {
+    var NewStatusesButton = function(args) {
+        // @params: args.unackedCountsPoller, args.spinner, args.statusContainer, args.messageBanner
+        var self = this;
+        var poller = args.unackedCountsPoller;
+        self.enabled = false;
+        self.spinner = args.spinner;
+        self.status_container = args.statusContainer;
+        self.message_banner = args.messageBanner;
+        $("#bb-new-statuses-button").on("click", function() { self.trigger(); return false; });
+        self._setEnabled(false);
+        poller.listenOnChange(function(unacked_counts) {
+            var total = unacked_counts.total;
+            $(".bb-new-statuses-num").text(total);
+            if(total === 0) {
+                self._setEnabled(false);
+            }else {
+                self._setEnabled(true);
+            }
+        });
+    };
+    NewStatusesButton.prototype = {
         _setEnabled: function(new_state) {
             var self = this;
             var $button = $("#bb-new-statuses-button");
@@ -114,36 +110,38 @@ $(function() {
         trigger: function() {
             var self = this;
             if(!self.enabled) return;
-            spinner.begin();
+            self.spinner.begin();
             self._setEnabled(false);
-            status_container.loadUnackedStatuses().then(function(result) {
+            self.status_container.loadUnackedStatuses().then(function(result) {
                 // TODO: render messages according to maxReached and statuses.
             }).fail(function(error) {
                 console.error(error);
-                message_banner.show(error, "error");
+                self.message_banner.show(error, "error");
             }).then(function() {
-                spinner.end();
+                self.spinner.end();
             });
         }
     };
-    new_statuses_button.initialize();
-    
-    var more_statuses_button = {
-        enabled: true,
-        initialize: function() {
-            var self = this;
-            self._setEnabled(true);
-            $("#bb-more-button").on("click", function() { self.trigger(); return false; });
-        },
+    var MoreStatusesButton = function(args) {
+        // @params: args.spinner, args.messageBanner, args.statusContainer
+        var self = this;
+        self.enabled = true;
+        self.spinner = args.spinner;
+        self.message_banner = args.messageBanner;
+        self.status_container = args.statusContainer;
+        self._setEnabled(true);
+        $("#bb-more-button").on("click", function() { self.trigger(); return false; });
+    };
+    MoreStatusesButton.prototype = {
         trigger: function() {
             var self = this;
             if(!self.enabled) return;
             self._setEnabled(false);
-            spinner.begin();
-            status_container.loadMoreStatuses().fail(function(error) {
-                message_banner.show(error, "error");
+            self.spinner.begin();
+            self.status_container.loadMoreStatuses().fail(function(error) {
+                self.message_banner.show(error, "error");
             }).then(function() {
-                spinner.end();
+                self.spinner.end();
                 self._setEnabled(true);
             });
         },
@@ -152,19 +150,39 @@ $(function() {
             $("#bb-more-button").button(this.enabled ? "reset" : "loading");
         }
     };
-    more_statuses_button.initialize();
 
-    unacked_counts_poller.start();
-    spinner.begin();
-    status_container.loadInit().then(function() {
-        message_banner.show("Initialized");
-    }, function(reason) {
-        message_banner.show(reason, "error");
-        console.error(reason);
-    }).then(function() {
-        spinner.end();
+    $(function() {
+        var spinner = new bb.Spinner("#bb-spinner-placeholder");
+        var message_banner = new bb.MessageBanner("#bb-msg");
+        var status_container = new bb.StatusContainer({
+            selectorContainer: "#statuses", timeline: '[% timeline_name | js %]',
+            apiBase: '[% script_name | js %]'
+        });
+        var unacked_counts_poller = new bb.TimelineUnackedCountsPoller({
+            statusContainer: status_container
+        });
+        var new_statuses_button = new NewStatusesButton({
+            unackedCountsPoller: unacked_counts_poller,
+            spinner: spinner, statusContainer: status_container,
+            messageBanner: message_banner
+        });
+        var more_statuses_button = new MoreStatusesButton({
+            spinner: spinner, messageBanner: message_banner,
+            statusContainer: status_container
+        });
+
+        unacked_counts_poller.start();
+        spinner.begin();
+        status_container.loadInit().then(function() {
+            message_banner.show("Initialized");
+        }, function(reason) {
+            message_banner.show(reason, "error");
+            console.error(reason);
+        }).then(function() {
+            spinner.end();
+        });
     });
-});
+})();
     </script>
   </body>
 </html>
