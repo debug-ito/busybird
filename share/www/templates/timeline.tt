@@ -81,21 +81,20 @@
         var self = this;
         var poller = args.unackedCountsPoller;
         self.enabled = false;
+        self.now_loading = false;
         self.spinner = args.spinner;
         self.status_container = args.statusContainer;
         self.message_banner = args.messageBanner;
         self.cur_unacked_counts = {total: 0};
-        
-        $("#bb-new-statuses-button").on("click", function() { self.trigger(); return false; });
+
         self._setEnabled(false);
+        $("#bb-new-statuses-button").on("click", function() { self.trigger(); return false; });
         poller.listenOnChange(function(unacked_counts) {
-            var total = unacked_counts.total;
-            $(".bb-new-statuses-num").text(total);
-            if(total === 0) {
-                self._setEnabled(false);
-            }else {
-                self._setEnabled(true);
-            }
+            self.cur_unacked_counts = unacked_counts;
+            self._updateUnackedCountView();
+        });
+        self.status_container.listenOnThresholdLevelChanged(function() {
+            self._updateUnackedCountView();
         });
     };
     NewStatusesButton.prototype = {
@@ -107,6 +106,17 @@
                 $button.removeClass("disabled");
             }else {
                 $button.addClass("disabled");
+            }
+        },
+        _updateUnackedCountView: function() {
+            var self = this;
+            var visible_count = self._visibleUnackedCount();
+            document.title = (visible_count > 0 ? '('+ visible_count +') ' : "") + document.title.replace(/^\([0-9]*\) */, "");
+            $(".bb-new-statuses-num").text(visible_count);
+            if(visible_count > 0 && !self.now_loading) {
+                self._setEnabled(true);
+            }else {
+                self._setEnabled(false);
             }
         },
         _visibleUnackedCount: function() {
@@ -125,8 +135,9 @@
         trigger: function() {
             var self = this;
             if(!self.enabled) return;
-            self.spinner.begin();
             self._setEnabled(false);
+            self.now_loading = true;
+            self.spinner.begin();
             self.status_container.loadUnackedStatuses().then(function(result) {
                 // TODO: render messages according to maxReached and statuses.
             }).fail(function(error) {
@@ -134,6 +145,8 @@
                 self.message_banner.show(error, "error");
             }).then(function() {
                 self.spinner.end();
+                self.now_loading = false;
+                self._updateUnackedCountView();
             });
         }
     };
