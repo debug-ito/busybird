@@ -44,7 +44,7 @@ foreach my $i (0..10) {
 
 {
     my $no_level_status = $generators{hoge}->generate(text => "no level");
-    ok(!defined($no_level_status->{busybird}{level}), "if level param is omitted, there is no busybird.level field.");
+    is($no_level_status->{busybird}{level}, 0, "if level param is omitted, busybird.level == 0.");
 }
 
 done_testing();

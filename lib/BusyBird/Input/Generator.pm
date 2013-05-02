@@ -17,7 +17,7 @@ sub new {
 sub generate {
     my ($self, %args) = @_;
     my $text = defined($args{text}) ? $args{text} : "";
-    my $level = $args{level};
+    my $level = defined($args{level}) ? $args{level} : 0;
     my $cur_time = DateTime->now;
     my $status = +{
         id => $self->_generate_id($cur_time),
@@ -118,7 +118,7 @@ Fields in C<%args> are:
 
 The C<text> field of the status. It must be a text string, not a binary (octet) string.
 
-=item C<level> => INT (optional)
+=item C<level> => INT (optional, default: 0)
 
 The C<busybird.level> field of the status.
 
