@@ -21,7 +21,7 @@
             <span id="bb-msg"></span>
           </div>
           <div class="navbar-form pull-right">
-            <div class="btn-group pull-right">
+            <div class="btn-group pull-right bb-nav-button-group">
               <a class="btn btn-inverse" href="https://twitter.com/intent/tweet" target="_blank"><i class="icon-pencil icon-white"></i></a>
             </div>
           </div>
@@ -29,7 +29,7 @@
             <span class="label">Lv. <span class="bb-threshold-level">0</span></span>
           </div>
           <div class="navbar-form pull-right">
-            <div class="btn-group pull-right">
+            <div class="btn-group pull-right bb-nav-button-group">
               <a id="bb-button-incriment-threshold-level" class="btn btn-inverse" href="#">
                 <i class="icon-zoom-in icon-white"></i>
               </a>
@@ -37,8 +37,8 @@
                 <i class="icon-zoom-out icon-white"></i>
               </a>
             </div>
-            <div class="btn-group pull-left">
-              <a id="bb-new-statuses-button" class="btn btn-small btn-inverse disabled">
+            <div class="btn-group pull-left bb-nav-button-group">
+              <a id="bb-new-statuses-button" class="btn btn-inverse disabled">
                 New <span class="bb-new-statuses-num badge">0</span>
               </a>
             </div>

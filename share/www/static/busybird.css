@@ -104,13 +104,18 @@ ul#statuses li.bbtest-anchor {
 }
 
 #bb-spinner-placeholder {
-    display: inline-block;
-    width: 28px;
+    height: 40px;
+    width: 40px;
+    float: left;
 }
 
 .bb-msg-error {
     text-weight: bold;
     color: #ff4758;
+}
+
+.bb-nav-button-group {
+    margin: 0 2px 0 2px;
 }
 
 
