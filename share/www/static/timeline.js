@@ -5,18 +5,23 @@
 
 bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     // @params: args.selectorContainer, args.timeline, args.apiBase = ""
+    var self = this;
     if(!defined(args.selectorContainer)) {
         throw "selectorContainer param is mandatory";
     }
     if(!defined(args.timeline)) {
         throw "timeline param is mandatory";
     }
-    this.sel_container = args.selectorContainer;
-    this.timeline = args.timeline;
-    this.api_base = defined(args.apiBase) ? args.apiBase : "";
-    this.threshold_level = 0;
-    this.$cursor = null;
-    this.on_threshold_level_changed_callbacks = [];
+    self.sel_container = args.selectorContainer;
+    self.timeline = args.timeline;
+    self.api_base = defined(args.apiBase) ? args.apiBase : "";
+    self.threshold_level = 0;
+    self.$cursor = null;
+    self.on_threshold_level_changed_callbacks = [];
+    $(self.sel_container).on("click", ".bb-status", function() {
+        self.setCursor(this);
+        return false;
+    });
 }, {
     ADD_STATUSES_BLOCK_SIZE: 100,
     ANIMATE_STATUS_MAX_NUM: 15,
@@ -303,7 +308,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         if(!defined(self.$cursor)) {
             $statuses = self._getStatuses();
             if($statuses.size() === 0) return;
-            self.$cursor = $statuses.first();
+            self.setCursor($statuses.get(0));
         }
         if(self._isValidForCursor(self.$cursor)) {
             return;
