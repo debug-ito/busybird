@@ -8,7 +8,7 @@ ul#statuses {
     width: auto;
 }
 
-li.bb-status {
+ul#statuses li{
     border-width: 1px 0 0 0;
     border-color: black;
     border-style: solid;
@@ -53,7 +53,7 @@ span.bb-status-created-at {
     font-size: 80%;
 }
 
-.bb-cursor {
+.bb-status-cursor {
     background-color: #e7e8ec;
 }
 
@@ -97,10 +97,6 @@ span.bb-status-created-at {
     display: inline-block;
     margin: 4px;
     height: 100%;
-}
-
-ul#statuses li.bbtest-anchor {
-    border: 3px solid red;
 }
 
 #bb-spinner-placeholder {

@@ -31,10 +31,10 @@
           <div class="navbar-form pull-right">
             <div class="btn-group pull-right bb-nav-button-group">
               <a id="bb-button-incriment-threshold-level" class="btn btn-inverse" href="#">
-                <i class="icon-zoom-in icon-white"></i>
+                <i class="icon-zoom-out icon-white"></i>
               </a>
               <a id="bb-button-decriment-threshold-level" class="btn btn-inverse" href="#">
-                <i class="icon-zoom-out icon-white"></i>
+                <i class="icon-zoom-in icon-white"></i>
               </a>
             </div>
             <div class="btn-group pull-left bb-nav-button-group">
