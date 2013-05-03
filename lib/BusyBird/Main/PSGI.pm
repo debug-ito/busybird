@@ -139,6 +139,13 @@ sub _json_response {
     }
 }
 
+sub _format_status_html_destructive {
+    my ($self, $status) = @_;
+    if(!defined($status->{busybird}{level})) {
+        $status->{busybird}{level} = 0;
+    }
+    return $self->{renderer}->render("status.tt", $status);
+}
 
 my %RESPONSE_FORMATTER_FOR_TL_GET_STATUSES = (
     html => sub {
@@ -146,7 +153,7 @@ my %RESPONSE_FORMATTER_FOR_TL_GET_STATUSES = (
         if($code == 200) {
             my $result = "";
             foreach my $status (@{$response_object{statuses}}) {
-                $result .= $self->{renderer}->render("status.tt", $status);
+                $result .= $self->_format_status_html_destructive($status);
             }
             $result = Encode::encode('utf8', $result);
             return [200, ['Content-Type', 'text/html; charset=utf8'], [$result]];
