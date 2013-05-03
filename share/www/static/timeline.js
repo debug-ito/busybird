@@ -375,7 +375,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         //           { maxReached: (boolean), statuses: (array of status DOM elements loaded) }
         var self = this;
         var load_result;
-        $(self.sel_container).find(".bb-status-new-label").remove();
+        var $acked_new_statuses_label = $(self.sel_container).find(".bb-status-new-label");
         return selfclass.loadStatuses({
             apiURL: self._getLoadStatusesURL(),
             ackState: "unacked",
@@ -385,6 +385,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         }).then(function() {
             return self.prependStatuses(load_result.statuses);
         }).then(function() {
+            $acked_new_statuses_label.remove();
             return {maxReached: load_result.maxReached, statuses: load_result.statuses};
         });
     },
