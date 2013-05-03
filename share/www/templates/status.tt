@@ -9,9 +9,9 @@
     <div class="bb-status-header">
       <div class="bb-status-attributes">
         [% IF !busybird.acked_at %]
-        <span class="label label-success">NEW</span>&nbsp;
+        <span class="bb-status-new-label label label-success">NEW</span>
         [% END # IF %]
-        <span class="label">Lv. [% busybird.level %]</span>
+        &nbsp;<span class="label">Lv. [% busybird.level %]</span>
       </div>
       <div class="bb-status-user-name">
         <strong>[% user.screen_name %]</strong>&nbsp;&nbsp;

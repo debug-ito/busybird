@@ -375,6 +375,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         //           { maxReached: (boolean), statuses: (array of status DOM elements loaded) }
         var self = this;
         var load_result;
+        $(self.sel_container).find(".bb-status-new-label").remove();
         return selfclass.loadStatuses({
             apiURL: self._getLoadStatusesURL(),
             ackState: "unacked",
