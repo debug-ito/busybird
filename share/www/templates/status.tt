@@ -13,8 +13,8 @@
         [% END # IF %]
         &nbsp;<span class="label">Lv. [% busybird.level %]</span>
       </div>
-      <div class="bb-status-user-name">
-        <strong>[% user.screen_name %]</strong>&nbsp;&nbsp;
+      <div>
+        <span class="bb-status-username">[% user.screen_name %]</span>&nbsp;&nbsp;
         <span class="bb-status-created-at">[% created_at %]</span>
       </div>
     </div>

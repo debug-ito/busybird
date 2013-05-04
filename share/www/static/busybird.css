@@ -49,7 +49,11 @@ div.bb-status-attributes {
     font-size: 80%;
 }
 
-span.bb-status-created-at {
+.bb-status-username {
+    font-weight: bold;
+}
+
+.bb-status-created-at {
     font-size: 80%;
 }
 
