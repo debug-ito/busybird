@@ -21,10 +21,20 @@
 
 var is = strictEqual;
 
+var createStatusHTMLDetail = function(status) {
+    if(!status.busybird) status.busybird = {};
+    if(!status.busybird.level) status.busybird.level = 0;
+    if(!status.user) status.user = {};
+    if(!status.user.screen_name) status.user.screen_name = "";
+    var html = '<li class="bb-status" data-bb-status-level="'+status.busybird.level+'">' + "\n" +
+               '<span class="bb-status-id">'+status.id+"</span>\n";
+    html += '<span class="bb-status-username">' + status.user.screen_name + "</span>\n";
+    html += "</li>\n";
+    return html;
+};
+
 var createStatusHTML = function(id, level) {
-    if(!level) level = 0;
-    return '<li class="bb-status" data-bb-status-level="'+level+'">' + "\n" +
-           '<span class="bb-status-id">'+id+"</span>\n</li>\n";
+    return createStatusHTMLDetail({id: id, busybird: {level: level}});
 };
 
 var createStatus = function(id, level) {
@@ -466,6 +476,36 @@ asyncTest("listenOnThresholdLevelChanged", function() {
     }).then(function() {
         start();
     });
+});
+
+test("StatusesSummary", function() {
+    var summary;
+    var next_id = 0;
+    var st = function(level, username) {
+        var status_html = createStatusHTMLDetail({
+            id: next_id,
+            busybird: { level: level  },
+            user: { screen_name: username }
+        });
+        next_id++;
+        return $(status_html).get(0);
+    };
+    var statuses = [
+        st(0,  "a"),
+        st(0,  "a"),
+        st(0,  "b"),
+        st(-1, "a"),
+        st(3,  "a"),
+        st(3,  "c"),
+        st(3,  "c"),
+        st(-1, "a"),
+        st(2,  "d")
+    ];
+    is($(statuses).filter(".bb-status").size(), 9, "9 statuses generated");
+    $("#qunit-fixture").append('<div id="bb-status-summary"></div>');
+    summary = new bb.StatusesSummary({selectorContainer: "#bb-status-summary"});
+    
+    ok(false, "TODO: test showSummaryOf() method.");
 });
 
     </script>

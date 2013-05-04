@@ -503,3 +503,12 @@ bb.TimelineUnackedCountsPoller = (function() {
     return selfclass;
 })();
 
+//////////////////////////////////////////
+
+bb.StatusesSummary = function(args) {
+    // @params: args.selectorContainer
+};
+bb.StatusesSummary.prototype = {
+    showSummaryOf: function($statuses) {}
+};
+
