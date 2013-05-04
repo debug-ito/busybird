@@ -444,6 +444,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
 ////////////////////////////////////////////////////////
 
 bb.TimelineUnackedCountsPoller = (function() {
+    var superclass = bb.EventPoller;
     var selfclass = $.extend(function(args) {
         // @params: args.statusContainer
         var scon = args.statusContainer;
@@ -451,14 +452,10 @@ bb.TimelineUnackedCountsPoller = (function() {
             throw "statusContainer param is mandatory";
         }
         this.status_container = scon;
-        this.url = scon.getAPIBase() + "/timelines/" + scon.getTimelineName() + "/updates/unacked_counts.json";
-        this.initial_query = this._makeQuery({});
         this.on_change_listeners = [];
-    }, {
-        LEVEL_MARGIN: 2,
-    });
-    selfclass.prototype = $.extend(
-        new bb.EventPoller({
+        superclass.call(this, {
+            url: scon.getAPIBase() + "/timelines/" + scon.getTimelineName() + "/updates/unacked_counts.json",
+            initialQuery: this._makeQuery({}),
             onResponse: function(response_data) {
                 var self = this;
                 if(defined(response_data.error)) {
@@ -470,7 +467,12 @@ bb.TimelineUnackedCountsPoller = (function() {
                 });
                 return self._makeQuery(response_data.unacked_counts);
             }
-        }),
+        });
+    }, {
+        LEVEL_MARGIN: 2,
+    });
+    selfclass.prototype = $.extend(
+        new superclass({}),
         {
             _onError: function(error_message) { console.log(error_message) },
             _setQueryItem: function(target_query_object, current_unacked_counts, key) {
