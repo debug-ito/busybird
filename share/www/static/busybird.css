@@ -114,6 +114,11 @@ div.bb-status-attributes {
     color: #ff4758;
 }
 
+.bb-msg-warn {
+    text-weight: bold;
+    color: #faf681;
+}
+
 .bb-nav-button-group {
     margin: 0 2px 0 2px;
 }

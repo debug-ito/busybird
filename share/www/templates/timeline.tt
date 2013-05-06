@@ -78,6 +78,13 @@
 "use strict";
 
 (function() {
+    var showMaxReached = function(is_loading_max_reached, message_banner) {
+        if(!is_loading_max_reached) return;
+        var message = "Too many unread statuses. Some of them are not loaded here.";
+        message_banner.show(message, "warn");
+        console.warn(message);
+    };
+    
     var NewStatusesButton = function(args) {
         // @params: args.unackedCountsPoller, args.spinner, args.statusContainer, args.messageBanner, args.statusesSummary
         var self = this;
@@ -142,7 +149,7 @@
             self.now_loading = true;
             self.spinner.begin();
             self.status_container.loadUnackedStatuses().then(function(result) {
-                // TODO: render messages according to maxReached and statuses.
+                showMaxReached(result.maxReached, self.message_banner);
                 self.statuses_summary.showSummaryOf($(result.statuses));
             }).fail(function(error) {
                 console.error(error);
@@ -255,7 +262,7 @@
         spinner.begin();
         status_container.loadInit().then(function(result) {
             message_banner.show("Initialized");
-            // TODO: if maxReached, show message.
+            showMaxReached(result.maxReached, message_banner);
             statuses_summary.showSummaryOf($(result.statuses));
         }, function(reason) {
             message_banner.show(reason, "error");
