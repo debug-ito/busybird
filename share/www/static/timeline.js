@@ -549,11 +549,11 @@ bb.StatusesSummary.prototype = {
         var $heading = $('<div class="accordion-heading">'
                        + '<a class="accordion-toggle" data-toggle="collapse" href="#'+ accordion_body_id +'">'
                        + 'Lv. <span class="bb-summary-level">' + entry.level + '</span>&nbsp;&nbsp;'
-                       + '<span class="badge badge-info bb-summary-count-above-level">' + count_above + '</span>'
+                       + '<span class="badge badge-info bb-summary-count-above-level">' + count_above + '</span> '
                        + '<span class="badge bb-summary-count-this-level">+' + entry.count + '</span></a></div>');
-        var $body = $('<div id="'+ accordion_body_id +'" class="accordion-body collapse in"></div>')
+        var $body = $('<div id="'+ accordion_body_id +'" class="accordion-body collapse"></div>')
                      .append($('<div class="accordion-inner"></div>').append(self._renderPerUserList(entry.per_user)));
-        var $entry = $('<div class="accordion bb-summary-level-entry">').append($('<div class="accordion-group">').append($heading).append($body));
+        var $entry = $('<div class="accordion-group bb-summary-level-entry">').append($heading).append($body);
         return $entry;
     },
     showSummaryOf: function($statuses) {

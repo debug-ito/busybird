@@ -51,6 +51,7 @@
       <div class="row-fluid">
         <div class="span2">
           <div class="sidebar-nav sidebar-nav-fixed" id="sidebar">
+            <div class="accordion" id="bb-statuses-summary"></div>
           </div>
         </div>
         <div class="span8">
@@ -244,7 +245,7 @@
             statusContainer: status_container
         });
         var statuses_summary = new bb.StatusesSummary({
-            selectorContainer: "#sidebar"
+            selectorContainer: "#bb-statuses-summary"
         });
         var new_statuses_button = new NewStatusesButton({
             unackedCountsPoller: unacked_counts_poller,
