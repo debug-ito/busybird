@@ -273,7 +273,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         return bb.ajaxRetry({
             type: "POST", url: self.api_base + "/timelines/" + self.timeline + "/ack.json",
             data: JSON.stringify(query_object), contentType: "application/json",
-            cache: false, timeout: 3000, dataType: "json", tryMax: selfclass.ACK_TRY_MAX
+            cache: false, timeout: 10000, dataType: "json", tryMax: selfclass.ACK_TRY_MAX
         }).promise;
     },
     _addStatuses: function(added_statuses_dom, is_prepend) {
