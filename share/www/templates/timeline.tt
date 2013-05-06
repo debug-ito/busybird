@@ -50,7 +50,7 @@
     <div class="container-fluid">
       <div class="row-fluid">
         <div class="span2">
-          <div class="sidebar-nav sidebar-nav-fixed accordion" id="sidebar">
+          <div class="sidebar-nav sidebar-nav-fixed" id="sidebar">
           </div>
         </div>
         <div class="span8">
@@ -79,7 +79,7 @@
 
 (function() {
     var NewStatusesButton = function(args) {
-        // @params: args.unackedCountsPoller, args.spinner, args.statusContainer, args.messageBanner
+        // @params: args.unackedCountsPoller, args.spinner, args.statusContainer, args.messageBanner, args.statusesSummary
         var self = this;
         var poller = args.unackedCountsPoller;
         self.enabled = false;
@@ -87,6 +87,7 @@
         self.spinner = args.spinner;
         self.status_container = args.statusContainer;
         self.message_banner = args.messageBanner;
+        self.statuses_summary = args.statusesSummary;
         self.cur_unacked_counts = {total: 0};
 
         self._setEnabled(false);
@@ -142,6 +143,7 @@
             self.spinner.begin();
             self.status_container.loadUnackedStatuses().then(function(result) {
                 // TODO: render messages according to maxReached and statuses.
+                self.statuses_summary.showSummaryOf($(result.statuses));
             }).fail(function(error) {
                 console.error(error);
                 self.message_banner.show(error, "error");
@@ -234,10 +236,13 @@
         var unacked_counts_poller = new bb.TimelineUnackedCountsPoller({
             statusContainer: status_container
         });
+        var statuses_summary = new bb.StatusesSummary({
+            selectorContainer: "#sidebar"
+        });
         var new_statuses_button = new NewStatusesButton({
             unackedCountsPoller: unacked_counts_poller,
             spinner: spinner, statusContainer: status_container,
-            messageBanner: message_banner
+            messageBanner: message_banner, statusesSummary: statuses_summary
         });
         var more_statuses_button = new MoreStatusesButton({
             spinner: spinner, messageBanner: message_banner,
@@ -248,8 +253,10 @@
         });
 
         spinner.begin();
-        status_container.loadInit().then(function() {
+        status_container.loadInit().then(function(result) {
             message_banner.show("Initialized");
+            // TODO: if maxReached, show message.
+            statuses_summary.showSummaryOf($(result.statuses));
         }, function(reason) {
             message_banner.show(reason, "error");
             console.error(reason);
