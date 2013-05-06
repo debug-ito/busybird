@@ -509,12 +509,14 @@ asyncTest("listenOnThresholdLevelChanged", function() {
             old_animation_duration = bb.StatusContainer.ANIMATE_STATUS_DURATION;
             bb.StatusContainer.ANIMATE_STATUS_DURATION = 10;
             appendStatusesFromMeta(con, [
-                {id: 0, level: 2},
-                {id: 1, level: 1},
-                {id: 2, level: 0},
-                {id: 3, level: 0},
-                {id: 4, level: 1},
-                {id: 5, level: 2}
+                {id: 0, level: 1},
+                {id: 1, level: 0},
+                {id: 2, level: 2},
+                {id: 3, level: 1},
+                {id: 4, level: 0},
+                {id: 5, level: 0},
+                {id: 6, level: 1},
+                {id: 7, level: 2}
             ]).then(function() { start() });
         },
         teardown: function() {
@@ -529,33 +531,41 @@ asyncTest("listenOnThresholdLevelChanged", function() {
         });
     });
     asyncTest("cursor stays when visible", function() {
-        setCursorToIndex(4);
+        setCursorToIndex(6);
         con.setThresholdLevel(1).then(function() {
-            is(getCursorId(), "4", "cursor stays at ID = 4");
+            is(getCursorId(), "6", "cursor stays at ID = 6");
         }, function() { ok(false, "should not fail") }).then(function() {
             start();
         });
     });
     asyncTest("cursor moves when the status gets invisible (upward)", function() {
-        setCursorToIndex(2);
+        setCursorToIndex(4);
         con.setThresholdLevel(2).then(function() {
-            is(getCursorId(), "0", "cursor moves ID 2 -> 0");
+            is(getCursorId(), "2", "cursor moves ID 4 -> 2");
         }, function() { ok(false, "should not fail") }).then(function() {
             start();
         });
     });
     asyncTest("cursor moves when the status gets invisible (downward)", function() {
-        setCursorToIndex(3);
+        setCursorToIndex(5);
         con.setThresholdLevel(2).then(function() {
-            is(getCursorId(), "5", "cursor moves ID 3 -> 5");
+            is(getCursorId(), "7", "cursor moves ID 5 -> 7");
         }, function() { ok(false, "should not fail") }).then(function() {
             start();
         });
     });
     asyncTest("cursor stays when all statuses get invisible", function() {
-        setCursorToIndex(2);
+        setCursorToIndex(4);
         con.setThresholdLevel(100).then(function() {
-            is(getCursorId(), "2", "cursor stays at ID = 2");
+            is(getCursorId(), "4", "cursor stays at ID = 4");
+        }, function() { ok(false, "should not fail") }).then(function() {
+            start();
+        });
+    });
+    asyncTest("cursor moves downward when top statuses get invisible", function() {
+        setCursorToIndex(0);
+        con.setThresholdLevel(2).then(function() {
+            is(getCursorId(), "2", "cursor moves ID 0 -> 2");
         }, function() { ok(false, "should not fail") }).then(function() {
             start();
         });

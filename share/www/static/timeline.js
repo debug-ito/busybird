@@ -303,9 +303,9 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
             return self._setDisplayImmediately($(added_statuses_dom));
         });
     },
-    _isValidForCursor: function($status) {
+    _isValidForCursor: function($elem) {
         var self = this;
-        return ($status.data("bb-status-level") >= self.threshold_level);
+        return ($elem.hasClass("bb-status") && $elem.data("bb-status-level") >= self.threshold_level);
     },
     _adjustCursor: function() {
         var self = this;
@@ -322,14 +322,14 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         $next_candidate = self.$cursor;
         $prev_candidate = self.$cursor;
         while(true) {
-            $next_candidate = $next_candidate.next(".bb-status");
-            $prev_candidate = $prev_candidate.prev(".bb-status");
+            $next_candidate = $next_candidate.next();
+            $prev_candidate = $prev_candidate.prev();
             if($next_candidate.size() === 0 && $prev_candidate.size() === 0) {
                 return;
             }
-            if($next_candidate.size() === 1 && self._isValidForCursor($next_candidate)) {
+            if($next_candidate.size() === 1 && self._isValidForCursor($next_candidate.eq(0))) {
                 self.setCursor($next_candidate.get(0));
-                return
+                return;
             }
             if($prev_candidate.size() === 1 && self._isValidForCursor($prev_candidate)) {
                 self.setCursor($prev_candidate.get(0));
