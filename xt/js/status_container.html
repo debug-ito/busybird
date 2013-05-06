@@ -422,17 +422,29 @@ asyncTest("_ackStatuses", function() {
         }
         query_deferred.resolve(req);
     };
+    var acked_statuses = [];
     Q.fcall(function() {
         var i = 0;
-        var statuses = [];
         for(i = 0 ; i < 5 ; i++) {
-            statuses.push(createStatusDOM(i,0));
+            acked_statuses.push(createStatusDOM(i,0));
         }
-        ack_response_promise = con._ackStatuses(statuses, true);
+        ack_response_promise = con._ackStatuses(acked_statuses, true);
         return query_deferred.promise;
     }).then(function(req) {
         var request_object = JSON.parse(req.requestBody);
-        deepEqual(request_object, {ids: ["0","1","2","3","4"], max_id: "4"}, "ack request object OK");
+        deepEqual(request_object, {ids: ["0","1","2","3","4"], max_id: "4"}, "ack request object OK (with max_id)");
+        req.respond(200, {"Content-Type": "application/json"}, JSON.stringify({
+            error: null, count: 5
+        }));
+        return ack_response_promise;
+    }).then(function(response_data) {
+        deepEqual(response_data, {error: null, count: 5}, "ack response object OK");
+        query_deferred = Q.defer();
+        ack_response_promise = con._ackStatuses(acked_statuses, false);
+        return query_deferred.promise;
+    }).then(function(req) {
+        var request_object = JSON.parse(req.requestBody);
+        deepEqual(request_object, {ids: ["0","1","2","3","4"]}, "ack request object OK (without max_id)");
         req.respond(200, {"Content-Type": "application/json"}, JSON.stringify({
             error: null, count: 5
         }));
