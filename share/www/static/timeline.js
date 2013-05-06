@@ -143,6 +143,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     setDisplayByThreshold: function(args) {
         // @params: args.$statuses, args.threshold, args.enableAnimation, args.enableWindowAdjust, args.cursorIndex
         // @returns: promise for completion event.
+        var window_adjuster = function(){};
         return Q.fcall(function() {
             if(!defined(args.$statuses)) {
                 throw "$statuses param is mandatory";
@@ -152,11 +153,9 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
             }
             return selfclass._scanStatusesForDisplayActions(args.$statuses, args.threshold, args.enableAnimation, args.cursorIndex);
         }).then(function(action_description) {
-            var window_adjuster, promise_hidden_statuses, promise_animation, promise_immediate;
+            var promise_hidden_statuses, promise_animation, promise_immediate;
             if(args.enableWindowAdjust) {
                 window_adjuster = selfclass._createWindowAdjuster(action_description.domAnchorElem);
-            }else {
-                window_adjuster = function() {};
             }
             if(action_description.domsAnimateToggle.length > 0) {
                 promise_animation = bb.slideToggleElements(
@@ -177,6 +176,8 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
                 window_adjuster();
             });
             return Q.all([promise_hidden_statuses, promise_animation, promise_immediate]);
+        }).then(function() {
+            window_adjuster();
         });
     },
     loadStatuses: function(args) {
