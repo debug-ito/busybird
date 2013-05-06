@@ -104,7 +104,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
                     metric.action = (cur_is_visible ? ACTION_BECOME_INVISIBLE : ACTION_STAY_INVISIBLE);
                     next_seq_invisible_entries.push($cur_entry);
                 }
-                metric.win_dist = bb.distanceRanges(win_dim.top, win_dim.range, cur_pos, $cur_entry.height());
+                metric.win_dist = bb.distanceRanges(win_dim.top, win_dim.range, cur_pos, cur_is_visible ? $cur_entry.height() : 0);
                 metric.cursor_index_dist = Math.abs(cur_index - cursor_index);
                 prev_pos = cur_pos;
                 metrics_list.push(metric);
