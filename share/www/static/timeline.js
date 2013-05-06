@@ -507,8 +507,65 @@ bb.TimelineUnackedCountsPoller = (function() {
 
 bb.StatusesSummary = function(args) {
     // @params: args.selectorContainer
+    this.selector_container = args.selectorContainer;
 };
 bb.StatusesSummary.prototype = {
-    showSummaryOf: function($statuses) {}
+    _makeSummaryEntries: function($statuses) {
+        var summary_for_level = {};
+        $statuses.each(function() {
+            var $status = $(this);
+            var level = $status.data("bb-status-level");
+            var username = $status.find(".bb-status-username").text();
+            if(!defined(summary_for_level[level])) {
+                summary_for_level[level] = {"level": level, "count": 0, "per_user": {}};
+            }
+            summary_for_level[level].count++;
+            if(!defined(summary_for_level[level]["per_user"][username])) {
+                summary_for_level[level]["per_user"][username] = 0;
+            }
+            summary_for_level[level]["per_user"][username]++;
+        });
+        return $.map(summary_for_level, function(entry) { return entry }).sort(function(a, b) {
+            return b.level - a.level;
+        });
+    },
+    _renderPerUserList: function(count_per_user) {
+        var peruser_entries = $.map(count_per_user, function(count, username) { return {"username": username, "count": count} })
+                               .sort(function(a, b) { return b.count - a.count });
+        var $userlist = $("<ol></ol>");
+        $.each(peruser_entries, function(i, entry) {
+            var plural = (entry.count > 1) ? "es" : "";
+            var $username = $('<span class="bb-summary-count-username"></span>').text(entry.username);
+            var $count    = $('<span class="bb-summary-count-per-user"></span>').text(entry.count);
+            var $li_entry = $('<li class="bb-summary-count-per-user-entry"></li>')
+                             .append($username).append(" : ").append($count).append(" status" + plural);
+            $userlist.append($li_entry);
+        });
+        return $userlist;
+    },
+    _renderSummaryEntry: function(entry, count_above) {
+        var self = this;
+        var accordion_body_id = "bb-summary-body-level" + entry.level;
+        var $heading = $('<div class="accordion-heading">'
+                       + '<a class="accordion-toggle" data-toggle="collapse" href="#'+ accordion_body_id +'">'
+                       + 'Lv. <span class="bb-summary-level">' + entry.level + '</span>&nbsp;&nbsp;'
+                       + '<span class="badge badge-info bb-summary-count-above-level">' + count_above + '</span>'
+                       + '<span class="badge bb-summary-count-this-level">+' + entry.count + '</span></a></div>');
+        var $body = $('<div id="'+ accordion_body_id +'" class="accordion-body collapse in"></div>')
+                     .append($('<div class="accordion-inner"></div>').append(self._renderPerUserList(entry.per_user)));
+        var $entry = $('<div class="accordion bb-summary-level-entry">').append($('<div class="accordion-group">').append($heading).append($body));
+        return $entry;
+    },
+    showSummaryOf: function($statuses) {
+        var self = this;
+        var $container = $(self.selector_container);
+        $container.empty();
+        var summary_entries = self._makeSummaryEntries($statuses);
+        var count_sofar = 0;
+        $.each(summary_entries, function(i, entry) {
+            count_sofar += entry.count;
+            $container.append(self._renderSummaryEntry(entry, count_sofar));
+        });
+    }
 };
 

@@ -490,6 +490,26 @@ test("StatusesSummary", function() {
         next_id++;
         return $(status_html).get(0);
     };
+    var getSummary = function(summary_selector) {
+        var result = [];
+        var $level_entries = $(summary_selector).children(".bb-summary-level-entry");
+        $level_entries.each(function() {
+            var $level_entry = $(this);
+            var level_result = {
+                level: $level_entry.find(".bb-summary-level").text(),
+                count_above: $level_entry.find(".bb-summary-count-above-level").text(),
+                count_this:  $level_entry.find(".bb-summary-count-this-level").text(),
+                per_user: [],
+            };
+            $level_entry.find(".bb-summary-count-per-user-entry").each(function() {
+                var username = $(this).find(".bb-summary-count-username").text();
+                var count = $(this).find(".bb-summary-count-per-user").text();
+                level_result.per_user.push({"name": username, "count": count});
+            });
+            result.push(level_result);
+        });
+        return result;
+    };
     var statuses = [
         st(0,  "a"),
         st(0,  "a"),
@@ -504,8 +524,13 @@ test("StatusesSummary", function() {
     is($(statuses).filter(".bb-status").size(), 9, "9 statuses generated");
     $("#qunit-fixture").append('<div id="bb-status-summary"></div>');
     summary = new bb.StatusesSummary({selectorContainer: "#bb-status-summary"});
-    
-    ok(false, "TODO: test showSummaryOf() method.");
+    summary.showSummaryOf($(statuses));
+    deepEqual(getSummary("#bb-status-summary"), [
+        {level: "3",  count_this: "+3", count_above: "3", per_user: [{"name": "c", "count": "2"}, {"name": "a", "count": "1"}]},
+        {level: "2",  count_this: "+1", count_above: "4", per_user: [{"name": "d", "count": "1" }]},
+        {level: "0",  count_this: "+3", count_above: "7", per_user: [{"name": "a", "count": "2"}, {"name": "b", "count": "1"}]},
+        {level: "-1", count_this: "+2", count_above: "9", per_user: [{"name": "a", "count": "2" }]},
+    ], "summary OK");
 });
 
     </script>
