@@ -26,9 +26,9 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     ADD_STATUSES_BLOCK_SIZE: 100,
     ANIMATE_STATUS_MAX_NUM: 15,
     ANIMATE_STATUS_DURATION: 400,
-    LOAD_STATUS_DEFAULT_COUNT_PER_PAGE: 100,
-    LOAD_STATUS_DEFAULT_MAX_PAGE_NUM: 6,
     LOAD_STATUS_TRY_MAX: 3,
+    LOAD_UNACKED_STATUSES_COUNT_PER_PAGE: 100,
+    LOAD_UNACKED_STATUSES_MAX_PAGE_NUM: 6,
     ACK_TRY_MAX: 3,
     LOAD_MORE_STATUSES_COUNT: 20,
     _getStatusID: function($status) {
@@ -180,23 +180,29 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         });
     },
     loadStatuses: function(args) {
-        // @params: args.apiURL, args.ackState = "any",
-        //          args.countPerPage = LOAD_STATUS_DEFAULT_COUNT_PER_PAGE,
-        //          args.startMaxID = null, args.maxPageNum = LOAD_STATUS_DEFAULT_MAX_PAGE_NUM
+        // @params: args.apiURL, args.countPerPage, args.maxPageNum (so far, required)
+        //          args.ackState = "any",
+        //          args.startMaxID = null,
         // @returns: a promise holding the following object in success
         //           { maxReached: (boolean), numRequests: (number of requests sent), statuses: (array of status DOM elements) }
         return Q.fcall(function() {
             if(!defined(args.apiURL)) {
                 throw "apiURL param is mandatory";
             }
+            if(!defined(args.maxPageNum)) {
+                throw "maxPageNum param is mandatory";
+            }
+            if(!defined(args.countPerPage)) {
+                throw "countPerPage param is mandatory";
+            }
             var api_url = args.apiURL;
-            var max_page_num = defined(args.maxPageNum) ? args.maxPageNum : selfclass.LOAD_STATUS_DEFAULT_MAX_PAGE_NUM;
+            var max_page_num = args.maxPageNum;
             if(max_page_num <= 0) {
                 throw "maxPageNum param must be greater than 0";
             }
             var query_params = {
                 "ack_state": defined(args.ackState) ? args.ackState : "any",
-                "count": defined(args.countPerPage) ? args.countPerPage : selfclass.LOAD_STATUS_DEFAULT_COUNT_PER_PAGE,
+                "count": args.countPerPage
             };
             if(query_params.count <= 0) {
                 throw "countPerPage param must be greater than 0";
@@ -377,8 +383,8 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         var load_result;
         var $acked_new_statuses_label = $(self.sel_container).find(".bb-status-new-label");
         return selfclass.loadStatuses({
-            apiURL: self._getLoadStatusesURL(),
-            ackState: "unacked",
+            apiURL: self._getLoadStatusesURL(), countPerPage: selfclass.LOAD_UNACKED_STATUSES_COUNT_PER_PAGE,
+            maxPageNum: selfclass.LOAD_UNACKED_STATUSES_MAX_PAGE_NUM, ackState: "unacked"
         }).then(function(result) {
             load_result = result;
             return self._ackStatuses(load_result.statuses, load_result.maxReached);
