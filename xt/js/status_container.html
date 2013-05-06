@@ -478,6 +478,79 @@ asyncTest("listenOnThresholdLevelChanged", function() {
     });
 });
 
+(function() {
+    var con;
+    var old_animation_duration;
+    var getCursorId = function() {
+        var $cursor_status = $("#bb-status-container").find(".bb-status-cursor");
+        if($cursor_status.size() === 0) return null;
+        return $cursor_status.find(".bb-status-id").text();
+    };
+    var setCursorToIndex = function(index) {
+        var next_cursor = $("#bb-status-container").find(".bb-status").get(index);
+        con.setCursor(next_cursor);
+    };
+    module("move cursor as threshold level changes", {
+        setup: function() {
+            stop();
+            con = setupContainer();
+            old_animation_duration = bb.StatusContainer.ANIMATE_STATUS_DURATION;
+            bb.StatusContainer.ANIMATE_STATUS_DURATION = 10;
+            appendStatusesFromMeta(con, [
+                {id: 0, level: 2},
+                {id: 1, level: 1},
+                {id: 2, level: 0},
+                {id: 3, level: 0},
+                {id: 4, level: 1},
+                {id: 5, level: 2}
+            ]).then(function() { start() });
+        },
+        teardown: function() {
+            bb.StatusContainer.ANIMATE_STATUS_DURATION = old_animation_duration;
+        },
+    });
+    asyncTest("initially, cursor is at the top", function() {
+        con.setThresholdLevel(0).then(function() {
+            is(getCursorId(), "0", "cursor is at the top");
+        }, function() { ok(false, "should not fail") }).then(function() {
+            start();
+        });
+    });
+    asyncTest("cursor stays when visible", function() {
+        setCursorToIndex(4);
+        con.setThresholdLevel(1).then(function() {
+            is(getCursorId(), "4", "cursor stays at ID = 4");
+        }, function() { ok(false, "should not fail") }).then(function() {
+            start();
+        });
+    });
+    asyncTest("cursor moves when the status gets invisible (upward)", function() {
+        setCursorToIndex(2);
+        con.setThresholdLevel(2).then(function() {
+            is(getCursorId(), "0", "cursor moves ID 2 -> 0");
+        }, function() { ok(false, "should not fail") }).then(function() {
+            start();
+        });
+    });
+    asyncTest("cursor moves when the status gets invisible (downward)", function() {
+        setCursorToIndex(3);
+        con.setThresholdLevel(2).then(function() {
+            is(getCursorId(), "5", "cursor moves ID 3 -> 5");
+        }, function() { ok(false, "should not fail") }).then(function() {
+            start();
+        });
+    });
+    asyncTest("cursor stays when all statuses get invisible", function() {
+        setCursorToIndex(2);
+        con.setThresholdLevel(100).then(function() {
+            is(getCursorId(), "2", "cursor stays at ID = 2");
+        }, function() { ok(false, "should not fail") }).then(function() {
+            start();
+        });
+    });
+})();
+
+module("StatusesSummary");
 test("StatusesSummary", function() {
     var summary;
     var next_id = 0;
