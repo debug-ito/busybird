@@ -20,7 +20,6 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     self.on_threshold_level_changed_callbacks = [];
     $(self.sel_container).on("click", ".bb-status", function() {
         self.setCursor(this);
-        return false;
     });
 }, {
     ADD_STATUSES_BLOCK_SIZE: 100,
