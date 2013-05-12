@@ -106,7 +106,7 @@ div.bb-status-attributes {
 #bb-spinner-placeholder {
     height: 40px;
     width: 40px;
-    float: left;
+    float: right;
 }
 
 .bb-msg-error {

@@ -17,7 +17,6 @@
             <li class="divider-vertical"></li>
           </ul>
           <div id="bb-indicator" class="navbar-text pull-left">
-            <div id="bb-spinner-placeholder"></div>
             <span id="bb-msg"></span>
           </div>
           <div class="navbar-form pull-right">
@@ -43,6 +42,7 @@
               </a>
             </div>
           </div>
+          <div id="bb-spinner-placeholder"></div>
         </div>
       </div>
     </div>
