@@ -49,7 +49,21 @@ sub request_htmltree_ok {
     my ($self, $method, $request_url, $content, $res_code_like, $msg) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     my $res = $self->request_ok($method, $request_url, $content, $res_code_like, $msg);
-    return HTML::TreeBuilder::XPath->new_from_content($res);
+    return ref($self)->parse_html($res);
+}
+
+sub parse_html {
+    my ($class, @html_texts) = @_;
+    my $tree = HTML::TreeBuilder::XPath->new;
+    $tree->no_expand_entities(1);
+    $tree->ignore_unknown(0);
+    $tree->ignore_text(0);
+    $tree->no_space_compacting(1);
+    $tree->ignore_ignorable_whitespace(1);
+    $tree->store_comments(0);
+    $tree->parse($_) foreach @html_texts;
+    $tree->eof();
+    return $tree;
 }
 
 1;

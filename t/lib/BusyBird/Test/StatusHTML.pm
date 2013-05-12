@@ -2,18 +2,19 @@ package BusyBird::Test::StatusHTML;
 use strict;
 use warnings;
 use Carp;
-use HTML::TreeBuilder 5 -weak;
-use HTML::TreeBuilder::XPath;
+use BusyBird::Test::HTTP;
 
 sub new {
     my ($class, %args) = @_;
     my $self = bless {
         status_node => undef,
+        raw_html => undef,
     }, $class;
     if(defined $args{node}) {
         $self->{status_node} = $args{node};
     }elsif(defined $args{html}) {
         $self->_set_node_from_html($args{html});
+        $self->{raw_html} = $args{html};
     }else {
         croak "node or html param is mandatory";
     }
@@ -28,7 +29,7 @@ sub new_multiple {
 
 sub _get_status_nodes_from_html {
     my ($html) = @_;
-    my $root = HTML::TreeBuilder::XPath->new_from_content($html);
+    my $root = BusyBird::Test::HTTP->parse_html($html);
     return $root->findnodes('//*[@class="bb-status"]');
 }
 
@@ -38,6 +39,11 @@ sub _set_node_from_html {
     croak("No status element in HTML") if @status_nodes == 0;
     croak("There are multiple status elements in HTML") if @status_nodes > 1;
     $self->{status_node} = $status_nodes[0];
+}
+
+sub raw_html {
+    my ($self) = @_;
+    return $self->{raw_html};
 }
 
 sub level {
@@ -52,7 +58,7 @@ sub get_member_elem {
         croak(sprintf("There are %d elements for class %s", int(@nodes), $class_name))
     }
     my @contents = $nodes[0]->content_list;
-    return join("", map {ref($_) ? $_->as_HTML : $_} @contents);
+    return join("", map {ref($_) ? $_->as_HTML(undef, undef, {}) : $_} @contents);
 }
 
 foreach my $getter_method (qw(id username created_at text)) {
