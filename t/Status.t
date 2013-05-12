@@ -48,5 +48,20 @@ sub render_status {
     }
 }
 
+{
+    note("------ autolinking");
+    my $ren = create_renderer();
+    my $out_status = render_status($ren, {
+        id => "hoge", text => 'this contains URL http://hogehoge.com/?a=foo+bar&b=%2Fhoge here :->'
+    });
+    is($out_status->text,
+       q{this contains URL <a href="http://hogehoge.com/?a=foo+bar&b=%2Fhoge">http://hogehoge.com/?a=foo+bar&amp;b=%2Fhoge</a> here :-&gt;},
+       "autolinking OK");
+
+    fail("TODO: multiple URLs");
+    fail("TODO: URLs with #");
+    fail("TODO: URL at the top, URL at the bottom.");
+}
+
 done_testing();
 

@@ -139,10 +139,29 @@ sub _json_response {
     }
 }
 
+my $REGEXP_HTTP_URL = qr{https?:\/\/[A-Za-z0-9~\/._!\?\&=\-%#\+:\;,\@\']+};
+
+sub _escape_and_linkify {
+    my ($text) = @_;
+    my $result_text = "";
+    my $remaining_index = 0;
+    while($text =~ m/\G(.*?)($REGEXP_HTTP_URL)/sg) {
+        my ($other_text, $url) = ($1, $2);
+        $result_text .= Text::Xslate::html_escape($other_text);
+        $result_text .= qq{<a href="$url">} . Text::Xslate::html_escape($url) . qq{</a>};
+        $remaining_index = pos($text);
+    }
+    $result_text .= Text::Xslate::html_escape(substr($text, $remaining_index));
+    return $result_text;
+}
+
 sub _format_status_html_destructive {
     my ($self, $status) = @_;
     if(!defined($status->{busybird}{level})) {
         $status->{busybird}{level} = 0;
+    }
+    if(defined($status->{text})) {
+        $status->{text} = Text::Xslate::mark_raw(_escape_and_linkify($status->{text}));
     }
     return $self->{renderer}->render("status.tt", $status);
 }
