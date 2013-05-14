@@ -74,7 +74,7 @@
     <script type="text/javascript" src="[% script_name %]/static/q.js"></script>
     <script type="text/javascript" src="[% script_name %]/static/busybird.js"></script>
     <script type="text/javascript" src="[% script_name %]/static/timeline.js"></script>
-    <script type="text/javascript" src="[% script_name %]/static/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="[% script_name %]/static/bootstrap/js/bootstrap.js"></script>
     <script type="text/javascript">
 "use strict";
 
