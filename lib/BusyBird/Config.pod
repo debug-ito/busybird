@@ -1,0 +1,51 @@
+=pod
+
+=head1 NAME
+
+BusyBird::Config - list of config parameters for BusyBird
+
+=head1 SYNOPSIS
+
+    Write synopsis(?)
+
+=head1 DESCRIPTION
+
+This document describes config parameters for L<BusyBird::Main> and L<BusyBird::Timeline>.
+
+=head2 How to Set/Get Config Parameters
+
+TBW. Keep in mind that users usually write configuration through L<BusyBird> interface.
+
+=head2 Config Precedence
+
+TBW
+
+=head1 PARAMETERS FOR BusyBird::Main
+
+=over
+
+=item C<default_status_storage> => L<BusyBird::StatusStorage> OBJECT
+
+=item C<sharedir_path> => PATH
+
+
+=back
+
+
+=head1 PARAMETERS FOR BusyBird::Timeline
+
+=over
+
+=item C<time_zone> => {TIMEZONE_STR, L<DateTime::TimeZone> OBJECT}
+
+=item C<time_format> => {STRPTIME_FORMAT_STR, DateTime::Format-FAMILY OBJECT}
+
+=back
+
+
+=head1 AUTHOR
+
+Toshio Ito C<< <toshioito [at] cpan.org> >>
+
+=cut
+

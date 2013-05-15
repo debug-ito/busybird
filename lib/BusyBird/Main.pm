@@ -217,10 +217,25 @@ L<BusyBird::StatusStorage::Memory> - storage in the process memory
 
 See each module's documentation for details.
 
+=head2 $main->set_config($key1 => $value1, $key2 => $value2, ...)
+
+Sets config parameters to the C<$main>.
+
+C<$key1>, C<$key2>, ... are the keys for the config parameters, and
+C<$value1>, C<$value2>, ... are the values for them.
+
+See L<BusyBird::Config> for the list of config parameters.
+
+=head2 $value = $main->get_config($key)
+
+Returns the value of config parameter whose key is C<$key>.
+
+If there is no config parameter associated with C<$key>, it returns C<undef>.
+
 
 =head2 $watcher = $main->watch_unacked_counts(%args)
 
-Watch updates in numbers of unacked statuses (i.e. unacked counts) in timelines.
+Watches updates in numbers of unacked statuses (i.e. unacked counts) in timelines.
 
 Fields in C<%args> are as follows.
 
