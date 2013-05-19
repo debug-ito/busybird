@@ -8,6 +8,7 @@ use BusyBird::Main::PSGI;
 use Tie::IxHash;
 use Carp;
 use Scalar::Util qw(looks_like_number);
+use File::ShareDir;
 
 our @CARP_NOT = ('BusyBird::Timeline');
 
@@ -18,6 +19,8 @@ my %DEFAULT_CONFIG_GENERATOR = (
     ## ** no test scripts uses default default_status_storage by writing
     ## ** a dying code in it !!
     default_status_storage => sub { BusyBird::StatusStorage::Memory->new },
+    
+    sharedir_path => sub { File::ShareDir::dist_dir("BusyBird") },
 );
 
 sub new {

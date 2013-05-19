@@ -1,7 +1,6 @@
 package BusyBird::Main::PSGI;
 use strict;
 use warnings;
-use BusyBird ();
 use BusyBird::Util qw(set_param);
 use Router::Simple;
 use Plack::Request;
@@ -28,19 +27,27 @@ sub _new {
     my ($class, %params) = @_;
     my $self = bless {
         router => Router::Simple->new,
-        renderer => Text::Xslate->new(
-            path => [ File::Spec->catdir(BusyBird->sharedir, 'www', 'templates') ],
-            cache_dir => File::Spec->tmpdir,
-            syntax => 'TTerse',
-            function => {
-                js => \&JavaScript::Value::Escape::js,
-            },
-            ## warn_handler => sub { ... },
-        )
+        renderer => undef
     }, $class;
     $self->set_param(\%params, "main_obj", undef, 1);
+    $self->{renderer} = Text::Xslate->new(
+        path => [ File::Spec->catdir($self->_sharedir, 'www', 'templates') ],
+        cache_dir => File::Spec->tmpdir,
+        syntax => 'TTerse',
+        function => {
+            js => \&JavaScript::Value::Escape::js,
+        },
+        ## warn_handler => sub { ... },
+    );
     $self->_build_routes();
     return $self;
+}
+
+sub _sharedir {
+    my ($self) = @_;
+    my $path = $self->{main_obj}->get_config('sharedir_path');
+    $path =~ s{/+$}{};
+    return $path;
 }
 
 sub _to_app {
@@ -48,7 +55,7 @@ sub _to_app {
     return Plack::Builder::builder {
         Plack::Builder::enable 'ContentLength';
         Plack::Builder::mount '/static' => Plack::App::File->new(
-            root => File::Spec->catdir(BusyBird->sharedir, 'www', 'static')
+            root => File::Spec->catdir($self->_sharedir, 'www', 'static')
         )->to_app;
         Plack::Builder::mount '/' => $self->_my_app;
     };

@@ -52,6 +52,13 @@ See each module's documentation for details.
 
 =item C<sharedir_path> => PATH
 
+B<Default:> sharedir in your installation directory
+
+File path to "share" directory.
+
+"share" directory contains static files used by L<BusyBird>,
+which include HTML templates, JavaScript files and image files.
+
 
 =back
 
