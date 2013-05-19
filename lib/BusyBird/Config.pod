@@ -22,9 +22,7 @@ TBW
 
 =head1 PARAMETERS FOR BusyBird::Main
 
-=over
-
-=item C<default_status_storage> => L<BusyBird::StatusStorage> OBJECT
+=head2 C<default_status_storage> => BusyBird::StatusStorage OBJECT
 
 B<Default:> L<BusyBird::StatusStorage::Memory> object.
 
@@ -50,7 +48,7 @@ L<BusyBird::StatusStorage::Memory> - storage in the process memory
 See each module's documentation for details.
 
 
-=item C<sharedir_path> => PATH
+=head2 C<sharedir_path> => PATH
 
 B<Default:> sharedir in your installation directory
 
@@ -60,14 +58,10 @@ File path to "share" directory.
 which include HTML templates, JavaScript files and image files.
 
 
-=back
-
-
 =head1 PARAMETERS FOR BusyBird::Timeline
 
-=over
 
-=item C<time_zone> => TIMEZONE_STR
+=head2 C<time_zone> => TIMEZONE_STR
 
 B<Default:> C<"local">
 
@@ -77,14 +71,14 @@ C<TIMEZONE_STR> accepts various timezone names such as C<"UTC">, C<"America/Chic
 You can set special value C<"local"> to C<TIMEZONE_STR>.
 This means the timezone of the local environment is used.
 
-=item C<time_format> => STRFTIME_FORMAT_STR
+=head2 C<time_format> => STRFTIME_FORMAT_STR
 
 B<Default:> C<"%x (%a) %X %Z">
 
 Format used to render status timestamps.
 The format string conforms to the C<strftime(3)> specification.
 
-=item C<time_locale> => LOCALE_STR
+=head2 C<time_locale> => LOCALE_STR
 
 B<Default:> C<LC_TIME> environment variable or C<"C">
 
@@ -92,13 +86,13 @@ Locale used to render status timestamps.
 
 C<LOCALE_STR> is a valid locale string such as C<"en_US">, C<"ja_JP"> etc.
 
-=item C<post_button_url> => URL_STR
+=head2 C<post_button_url> => URL_STR
 
 B<Default:> C<"https://twitter.com/intent/tweet">
 
 Link URL attached to the "Post" button in the navigation bar.
 
-=item C<default_status_permalink_builder> => CODEREF($status)
+=head2 C<default_status_permalink_builder> => CODEREF($status)
 
 B<Default:> build permalink to twitter.com
 
@@ -113,19 +107,19 @@ The builder subroutine reference is called with the status object, as in:
 
 If the result C<$url> is C<undef> or does not look like a valid URL, it is ignored.
 
-=item C<urls_entity_url_builder> => CODEREF($entity, $status)
+=head2 C<urls_entity_url_builder> => CODEREF($entity, $status)
 
 B<Default:> return C<< $entity->{display_url} >>
 
-=item C<media_entity_url_builder> => CODEREF($entity, $status)
+=head2 C<media_entity_url_builder> => CODEREF($entity, $status)
 
 B<Default:> return C<< $entity->{display_url} >>
 
-=item C<user_mentions_entity_url_builder> => CODEREF($entity, $status)
+=head2 C<user_mentions_entity_url_builder> => CODEREF($entity, $status)
 
 B<Default:> build URL to the user page of twitter.com
 
-=item C<hashtags_entity_url_builder> => CODEREF($entity, $status)
+=head2 C<hashtags_entity_url_builder> => CODEREF($entity, $status)
 
 B<Default> build URL to the hashtag search page of twitter.com
 
@@ -138,7 +132,6 @@ The builder subroutine reference is called with the twitter entity object and th
 
 If the result C<$url> is C<undef> or does not look like a valid URL, it is ignored, i.e., the text is not linked.
 
-=back
 
 
 =head1 AUTHOR
