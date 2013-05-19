@@ -36,9 +36,11 @@ TBW
 
 =over
 
-=item C<time_zone> => {TIMEZONE_STR, L<DateTime::TimeZone> OBJECT}
+=item C<time_zone> => TIMEZONE_STR
 
-=item C<time_format> => {STRPTIME_FORMAT_STR, DateTime::Format-FAMILY OBJECT}
+=item C<time_format> => STRPTIME_FORMAT_STR
+
+=item C<urls_entity_display_key> => KEY_STR
 
 =back
 
