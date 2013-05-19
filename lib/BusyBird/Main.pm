@@ -23,6 +23,7 @@ my %DEFAULT_CONFIG_GENERATOR = (
     sharedir_path => sub { File::ShareDir::dist_dir("BusyBird") },
     time_zone => sub { "local" },
     time_format => sub { '%x (%a) %X %Z' },
+    time_locale => sub { $ENV{LC_TIME} or "C" },
 );
 
 sub new {

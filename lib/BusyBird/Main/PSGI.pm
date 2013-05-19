@@ -62,7 +62,7 @@ sub _template_functions {
             my $dt = BusyBird::DateTime::Format->parse_datetime($timestamp_string);
             return "" if !defined($dt);
             $dt->set_time_zone($timezone);
-            $dt->set_locale($ENV{LC_TIME}) if $ENV{LC_TIME};
+            $dt->set_locale($self->{main_obj}->get_config("time_locale"));
             return $dt->strftime($self->{main_obj}->get_config("time_format"));
         },
     };

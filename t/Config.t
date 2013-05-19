@@ -53,6 +53,7 @@ sub create_main_and_timeline {
     is($main->get_config("_item_for_test"), 1, "_item_for_test is 1 by default");
     is($main->get_config("time_zone"), "local", "default timezone OK");
     is($main->get_config("time_format"), '%x (%a) %X %Z', "default time_format OK");
+    is($main->get_config("time_locale"), $ENV{LC_TIME} || "C", "default time_locale OK");
 }
 
 done_testing();

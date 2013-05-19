@@ -26,7 +26,7 @@ TBW
 
 =item C<default_status_storage> => L<BusyBird::StatusStorage> OBJECT
 
-B<Default:> L<BusyBird:StatusStorage::Memory> object.
+B<Default:> L<BusyBird::StatusStorage::Memory> object.
 
 A StatusStorage object used for Timelines by default.
 
@@ -71,7 +71,7 @@ which include HTML templates, JavaScript files and image files.
 
 B<Default:> C<"local">
 
-Timezone used when rendering status timestamps.
+Timezone used to render status timestamps.
 C<TIMEZONE_STR> accepts various timezone names such as C<"UTC">, C<"America/Chicago">, C<"+0900">, C<"-0300">.
 
 You can set special value C<"local"> to C<TIMEZONE_STR>.
@@ -81,9 +81,16 @@ This means the timezone of the local environment is used.
 
 B<Default:> C<"%x (%a) %X %Z">
 
-Format used when rendering status timestamps.
+Format used to render status timestamps.
 The format string conforms to the C<strftime(3)> specification.
 
+=item C<time_locale> => LOCALE_STR
+
+B<Default:> C<LC_TIME> environment variable or C<"C">
+
+Locale used to render status timestamps.
+
+C<LOCALE_STR> is a valid locale string such as C<"en_US">, C<"ja_JP"> etc.
 
 =item C<urls_entity_display_key> => KEY_STR
 
