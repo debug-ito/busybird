@@ -24,6 +24,7 @@ my %DEFAULT_CONFIG_GENERATOR = (
     time_zone => sub { "local" },
     time_format => sub { '%x (%a) %X %Z' },
     time_locale => sub { $ENV{LC_TIME} or "C" },
+    post_button_url => sub { "https://twitter.com/intent/tweet" },
 );
 
 sub new {

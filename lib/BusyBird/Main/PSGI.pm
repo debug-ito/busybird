@@ -432,6 +432,7 @@ sub _handle_tl_index {
         args => {
             timeline_name => $timeline->name,
             script_name => $req->script_name,
+            post_button_url => $self->{main_obj}->get_timeline_config($timeline->name, "post_button_url")
         }
     );
 }

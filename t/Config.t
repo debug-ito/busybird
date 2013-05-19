@@ -54,6 +54,7 @@ sub create_main_and_timeline {
     is($main->get_config("time_zone"), "local", "default timezone OK");
     is($main->get_config("time_format"), '%x (%a) %X %Z', "default time_format OK");
     is($main->get_config("time_locale"), $ENV{LC_TIME} || "C", "default time_locale OK");
+    is($main->get_config("post_button_url"), "https://twitter.com/intent/tweet", "default post_button_url OK");
 }
 
 done_testing();

@@ -92,6 +92,12 @@ Locale used to render status timestamps.
 
 C<LOCALE_STR> is a valid locale string such as C<"en_US">, C<"ja_JP"> etc.
 
+=item C<post_button_url> => URL_STR
+
+B<Default:> C<"https://twitter.com/intent/tweet">
+
+Link URL attached to the "Post" button in the navigation bar.
+
 =item C<urls_entity_display_key> => KEY_STR
 
 =back
