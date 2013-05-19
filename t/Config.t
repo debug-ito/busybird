@@ -51,7 +51,7 @@ sub create_main_and_timeline {
     note("--- default config (_item_for_test)");
     my ($main, $timeline) = create_main_and_timeline();
     is($main->get_config("_item_for_test"), 1, "_item_for_test is 1 by default");
-    is($main->get_config("timezone"), "local", "default timezone OK");
+    is($main->get_config("time_zone"), "local", "default timezone OK");
     is($main->get_config("time_format"), '%x (%a) %X %Z', "default time_format OK");
 }
 

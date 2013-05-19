@@ -67,7 +67,7 @@ which include HTML templates, JavaScript files and image files.
 
 =over
 
-=item C<timezone> => TIMEZONE_STR
+=item C<time_zone> => TIMEZONE_STR
 
 B<Default:> C<"local">
 

@@ -58,7 +58,7 @@ sub _template_functions {
         format_timestamp => sub {
             my ($timestamp_string) = @_;
             return "" if !$timestamp_string;
-            my $timezone = $self->_get_timezone($self->{main_obj}->get_config("timezone"));
+            my $timezone = $self->_get_timezone($self->{main_obj}->get_config("time_zone"));
             my $dt = BusyBird::DateTime::Format->parse_datetime($timestamp_string);
             return "" if !defined($dt);
             $dt->set_time_zone($timezone);
