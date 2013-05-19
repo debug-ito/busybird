@@ -93,7 +93,7 @@ sub get_config {
     return $value;
 }
 
-sub _get_timeline_config {
+sub get_timeline_config {
     my ($self, $timeline_name, $key) = @_;
     my $timeline = $self->get_timeline($timeline_name);
     return undef if not defined $timeline;
@@ -240,6 +240,14 @@ See L<BusyBird::Config> for the list of config parameters.
 Returns the value of config parameter whose key is C<$key>.
 
 If there is no config parameter associated with C<$key>, it returns C<undef>.
+
+=head2 $value = $main->get_timeline_config($timeline_name, $key)
+
+Returns the value of config parameter for a timeline.
+
+If config item C<$key> is defined in the timeline specified by C<$timeline_name>, it returns the config value from the timeline.
+Otherwise, it returns the config value in the C<$main> object.
+If both the timeline and the C<$main> does not have the config value for C<$key>, it returns C<undef>.
 
 
 =head2 $watcher = $main->watch_unacked_counts(%args)
