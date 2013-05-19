@@ -19,6 +19,7 @@ sub new {
         filter_flow => BusyBird::Flow->new,
         selector => Async::Selector->new,
         unacked_counts => {total => 0},
+        config => {},
     }, $class;
     $self->set_param(\%args, 'name', undef, 1);
     $self->set_param(\%args, 'storage', undef, 1);
@@ -198,6 +199,18 @@ sub add_filter {
 sub add_filter_async {
     my ($self, $filter) = @_;
     $self->add_filter($filter, 1);
+}
+
+sub set_config {
+    my ($self, %configs) = @_;
+    foreach my $key (keys %configs) {
+        $self->{config}{$key} = $configs{$key};
+    }
+}
+
+sub get_config {
+    my ($self, $key) = @_;
+    return $self->{config}{$key};
 }
 
 sub watch_unacked_counts {

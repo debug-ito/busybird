@@ -11,12 +11,17 @@ use Scalar::Util qw(looks_like_number);
 
 our @CARP_NOT = ('BusyBird::Timeline');
 
+my %DEFAULT_CONFIG_GENERATOR = (
+    _item_for_test => sub { 1 },
+);
+
 sub new {
     my ($class) = @_;
     tie(my %timelines, 'Tie::IxHash');
     my $self = bless {
         timelines => \%timelines,
-        default_status_storage => undef
+        default_status_storage => undef,
+        config => {},
     }, $class;
     return $self;
 }
@@ -70,6 +75,32 @@ sub uninstall_timeline {
     my $timeline = $self->get_timeline($name);
     delete $self->{timelines}{$name};
     return $timeline;
+}
+
+sub set_config {
+    my ($self, %configs) = @_;
+    foreach my $key (keys %configs) {
+        $self->{config}{$key} = $configs{$key};
+    }
+}
+
+sub get_config {
+    my ($self, $key) = @_;
+    return $self->{config}{$key} if exists $self->{config}{$key};
+    my $generator = $DEFAULT_CONFIG_GENERATOR{$key};
+    return undef if not defined $generator;
+    my $value = $generator->();
+    $self->set_config($key, $value);
+    return $value;
+}
+
+sub _get_timeline_config {
+    my ($self, $timeline_name, $key) = @_;
+    my $timeline = $self->get_timeline($timeline_name);
+    return undef if not defined $timeline;
+    my $timeline_config = $timeline->get_config($key);
+    return $timeline_config if defined $timeline_config;
+    return $self->get_config($key);
 }
 
 sub watch_unacked_counts {
