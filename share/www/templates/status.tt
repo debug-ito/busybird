@@ -15,7 +15,7 @@
       </div>
       <div>
         <span class="bb-status-username">[% user.screen_name %]</span>&nbsp;&nbsp;
-        <span class="bb-status-created-at">[% created_at %]</span>
+        <span class="bb-status-created-at">[% format_timestamp(created_at) %]</span>
       </div>
     </div>
     <div class="bb-status-text">[% text %]</div>

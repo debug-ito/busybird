@@ -9,13 +9,15 @@ use Plack::App::File;
 use Plack::Util ();
 use Try::Tiny;
 use JSON qw(decode_json encode_json to_json);
-use Scalar::Util qw(looks_like_number);
+use Scalar::Util qw(looks_like_number weaken);
 use Carp;
-use Text::Xslate;
+use Text::Xslate qw(html_builder);
 use File::Spec;
 use Encode ();
 use JavaScript::Value::Escape ();
-
+use DateTime::TimeZone;
+use BusyBird::DateTime::Format;
+use Cache::Memory::Simple;
 
 sub create_psgi_app {
     my ($class, $main_obj) = @_;
@@ -34,9 +36,7 @@ sub _new {
         path => [ File::Spec->catdir($self->_sharedir, 'www', 'templates') ],
         cache_dir => File::Spec->tmpdir,
         syntax => 'TTerse',
-        function => {
-            js => \&JavaScript::Value::Escape::js,
-        },
+        function => $self->_template_functions(),
         ## warn_handler => sub { ... },
     );
     $self->_build_routes();
@@ -48,6 +48,42 @@ sub _sharedir {
     my $path = $self->{main_obj}->get_config('sharedir_path');
     $path =~ s{/+$}{};
     return $path;
+}
+
+sub _template_functions {
+    my ($self) = @_;
+    weaken $self;
+    return {
+        js => \&JavaScript::Value::Escape::js,
+        format_timestamp => sub {
+            my ($timestamp_string) = @_;
+            return "" if !$timestamp_string;
+            my $timezone = $self->_get_timezone($self->{main_obj}->get_config("timezone"));
+            my $dt = BusyBird::DateTime::Format->parse_datetime($timestamp_string);
+            return "" if !defined($dt);
+            $dt->set_time_zone($timezone);
+            $dt->set_locale($ENV{LC_TIME}) if $ENV{LC_TIME};
+            return $dt->strftime($self->{main_obj}->get_config("time_format"));
+        },
+    };
+}
+
+{
+    my $timezone_cache = Cache::Memory::Simple->new();
+    my $CACHE_EXPIRATION_TIME = 3600 * 24;
+    my $CACHE_SIZE_LIMIT = 100;
+    sub _get_timezone {
+        my ($self, $timezone_string) = @_;
+        if($timezone_cache->count > $CACHE_SIZE_LIMIT) {
+            $timezone_cache->purge();
+            if($timezone_cache->count > $CACHE_SIZE_LIMIT) {
+                $timezone_cache->delete_all();
+            }
+        }
+        return $timezone_cache->get_or_set($timezone_string, sub {
+            return DateTime::TimeZone->new(name => $timezone_string),
+        }, $CACHE_EXPIRATION_TIME);
+    }
 }
 
 sub _to_app {
@@ -195,6 +231,9 @@ my %RESPONSE_FORMATTER_FOR_TL_GET_STATUSES = (
         return _json_response($code, %response_object);
     },
 );
+
+
+#############################
 
 sub _handle_tl_get_statuses {
     my ($self, $req, $dest) = @_;

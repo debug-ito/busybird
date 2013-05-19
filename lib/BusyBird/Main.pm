@@ -21,6 +21,8 @@ my %DEFAULT_CONFIG_GENERATOR = (
     default_status_storage => sub { BusyBird::StatusStorage::Memory->new },
     
     sharedir_path => sub { File::ShareDir::dist_dir("BusyBird") },
+    timezone => sub { "local" },
+    time_format => sub { '%x (%a) %X %Z' },
 );
 
 sub new {

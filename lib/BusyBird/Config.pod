@@ -69,7 +69,21 @@ which include HTML templates, JavaScript files and image files.
 
 =item C<timezone> => TIMEZONE_STR
 
-=item C<time_format> => STRPTIME_FORMAT_STR
+B<Default:> C<"local">
+
+Timezone used when rendering status timestamps.
+C<TIMEZONE_STR> accepts various timezone names such as C<"UTC">, C<"America/Chicago">, C<"+0900">, C<"-0300">.
+
+You can set special value C<"local"> to C<TIMEZONE_STR>.
+This means the timezone of the local environment is used.
+
+=item C<time_format> => STRFTIME_FORMAT_STR
+
+B<Default:> C<"%x (%a) %X %Z">
+
+Format used when rendering status timestamps.
+The format string conforms to the C<strftime(3)> specification.
+
 
 =item C<urls_entity_display_key> => KEY_STR
 
