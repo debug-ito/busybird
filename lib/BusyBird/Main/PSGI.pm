@@ -11,7 +11,7 @@ use Try::Tiny;
 use JSON qw(decode_json encode_json to_json);
 use Scalar::Util qw(looks_like_number weaken);
 use Carp;
-use Text::Xslate qw(html_builder);
+use Text::Xslate qw(html_builder html_escape);
 use File::Spec;
 use Encode ();
 use JavaScript::Value::Escape ();
@@ -48,42 +48,6 @@ sub _sharedir {
     my $path = $self->{main_obj}->get_config('sharedir_path');
     $path =~ s{/+$}{};
     return $path;
-}
-
-sub _template_functions {
-    my ($self) = @_;
-    weaken $self;
-    return {
-        js => \&JavaScript::Value::Escape::js,
-        format_timestamp => sub {
-            my ($timestamp_string, $timeline_name) = @_;
-            return "" if !$timestamp_string;
-            my $timezone = $self->_get_timezone($self->{main_obj}->get_timeline_config($timeline_name, "time_zone"));
-            my $dt = BusyBird::DateTime::Format->parse_datetime($timestamp_string);
-            return "" if !defined($dt);
-            $dt->set_time_zone($timezone);
-            $dt->set_locale($self->{main_obj}->get_timeline_config($timeline_name, "time_locale"));
-            return $dt->strftime($self->{main_obj}->get_timeline_config($timeline_name, "time_format"));
-        },
-    };
-}
-
-{
-    my $timezone_cache = Cache::Memory::Simple->new();
-    my $CACHE_EXPIRATION_TIME = 3600 * 24;
-    my $CACHE_SIZE_LIMIT = 100;
-    sub _get_timezone {
-        my ($self, $timezone_string) = @_;
-        if($timezone_cache->count > $CACHE_SIZE_LIMIT) {
-            $timezone_cache->purge();
-            if($timezone_cache->count > $CACHE_SIZE_LIMIT) {
-                $timezone_cache->delete_all();
-            }
-        }
-        return $timezone_cache->get_or_set($timezone_string, sub {
-            return DateTime::TimeZone->new(name => $timezone_string),
-        }, $CACHE_EXPIRATION_TIME);
-    }
 }
 
 sub _to_app {
@@ -184,17 +148,70 @@ sub _json_response {
 
 my $REGEXP_HTTP_URL = qr{https?:\/\/[A-Za-z0-9~\/._!\?\&=\-%#\+:\;,\@\']+};
 
+sub _html_link {
+    my ($text, %attr) = @_;
+    $text = "" if not defined $text;
+    return try {
+        die "no attr" if not $attr{href};
+        die "invalid url" if $attr{href} !~ $REGEXP_HTTP_URL;
+        my $href_attr = qq{href="$attr{href}"};
+        my $attrs = join(" ", $href_attr,
+                         map { html_escape($_) . q{="} . html_escape($attr{$_})  . q{"} } keys %attr);
+        return qq{<a $attrs>}. html_escape($text) . qq{</a>}
+    }catch {
+        return html_escape($text);
+    };
+}
+
+sub _template_functions {
+    my ($self) = @_;
+    weaken $self;
+    return {
+        js => \&JavaScript::Value::Escape::js,
+        format_timestamp => sub {
+            my ($timestamp_string, $timeline_name) = @_;
+            return "" if !$timestamp_string;
+            my $timezone = $self->_get_timezone($self->{main_obj}->get_timeline_config($timeline_name, "time_zone"));
+            my $dt = BusyBird::DateTime::Format->parse_datetime($timestamp_string);
+            return "" if !defined($dt);
+            $dt->set_time_zone($timezone);
+            $dt->set_locale($self->{main_obj}->get_timeline_config($timeline_name, "time_locale"));
+            return $dt->strftime($self->{main_obj}->get_timeline_config($timeline_name, "time_format"));
+        },
+        link => html_builder(\&_html_link),
+    };
+}
+
+{
+    my $timezone_cache = Cache::Memory::Simple->new();
+    my $CACHE_EXPIRATION_TIME = 3600 * 24;
+    my $CACHE_SIZE_LIMIT = 100;
+    sub _get_timezone {
+        my ($self, $timezone_string) = @_;
+        if($timezone_cache->count > $CACHE_SIZE_LIMIT) {
+            $timezone_cache->purge();
+            if($timezone_cache->count > $CACHE_SIZE_LIMIT) {
+                $timezone_cache->delete_all();
+            }
+        }
+        return $timezone_cache->get_or_set($timezone_string, sub {
+            return DateTime::TimeZone->new(name => $timezone_string),
+        }, $CACHE_EXPIRATION_TIME);
+    }
+}
+
 sub _escape_and_linkify {
     my ($text) = @_;
     my $result_text = "";
     my $remaining_index = 0;
     while($text =~ m/\G(.*?)($REGEXP_HTTP_URL)/sg) {
         my ($other_text, $url) = ($1, $2);
-        $result_text .= Text::Xslate::html_escape($other_text);
-        $result_text .= qq{<a href="$url">} . Text::Xslate::html_escape($url) . qq{</a>};
+        $result_text .= html_escape($other_text);
+        ## $result_text .= qq{<a href="$url">} . html_escape($url) . qq{</a>};
+        $result_text .= _html_link($url, href => $url);
         $remaining_index = pos($text);
     }
-    $result_text .= Text::Xslate::html_escape(substr($text, $remaining_index));
+    $result_text .= html_escape(substr($text, $remaining_index));
     return $result_text;
 }
 
