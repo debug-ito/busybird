@@ -163,7 +163,7 @@ sub _save_next_since_id_file {
 
 sub _log_query {
     my ($self, $method, $params) = @_;
-    $self->_log("info", sprintf(
+    $self->_log("debug", sprintf(
         "%s: method: %s, args: %s", __PACKAGE__, $method,
         join(", ", map {"$_: " . (defined($params->{$_}) ? $params->{$_} : "[undef]")} keys %$params)
     ));
