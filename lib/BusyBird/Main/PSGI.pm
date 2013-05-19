@@ -56,14 +56,14 @@ sub _template_functions {
     return {
         js => \&JavaScript::Value::Escape::js,
         format_timestamp => sub {
-            my ($timestamp_string) = @_;
+            my ($timestamp_string, $timeline_name) = @_;
             return "" if !$timestamp_string;
-            my $timezone = $self->_get_timezone($self->{main_obj}->get_config("time_zone"));
+            my $timezone = $self->_get_timezone($self->{main_obj}->get_timeline_config($timeline_name, "time_zone"));
             my $dt = BusyBird::DateTime::Format->parse_datetime($timestamp_string);
             return "" if !defined($dt);
             $dt->set_time_zone($timezone);
-            $dt->set_locale($self->{main_obj}->get_config("time_locale"));
-            return $dt->strftime($self->{main_obj}->get_config("time_format"));
+            $dt->set_locale($self->{main_obj}->get_timeline_config($timeline_name, "time_locale"));
+            return $dt->strftime($self->{main_obj}->get_timeline_config($timeline_name, "time_format"));
         },
     };
 }
@@ -199,23 +199,28 @@ sub _escape_and_linkify {
 }
 
 sub _format_status_html_destructive {
-    my ($self, $status) = @_;
+    my ($self, $status, $timeline_name) = @_;
     if(!defined($status->{busybird}{level})) {
         $status->{busybird}{level} = 0;
     }
     if(defined($status->{text})) {
         $status->{text} = Text::Xslate::mark_raw(_escape_and_linkify($status->{text}));
     }
-    return $self->{renderer}->render("status.tt", $status);
+    return $self->{renderer}->render("status.tt", {s => $status, timeline => $timeline_name});
 }
 
 my %RESPONSE_FORMATTER_FOR_TL_GET_STATUSES = (
     html => sub {
-        my ($self, $code, %response_object) = @_;
+        my ($self, $timeline, $code, %response_object) = @_;
+        if(!defined $timeline) {
+            $code = 500;
+            $response_object{error} = "Internal error: timeline is missing.";
+        }
         if($code == 200) {
             my $result = "";
+            my $timeline_name = $timeline->name;
             foreach my $status (@{$response_object{statuses}}) {
-                $result .= $self->_format_status_html_destructive($status);
+                $result .= $self->_format_status_html_destructive($status, $timeline_name);
             }
             $result = Encode::encode('utf8', $result);
             return [200, ['Content-Type', 'text/html; charset=utf8'], [$result]];
@@ -227,7 +232,7 @@ my %RESPONSE_FORMATTER_FOR_TL_GET_STATUSES = (
         }
     },
     json => sub {
-        my ($self, $code, %response_object) = @_;
+        my ($self, $timeline, $code, %response_object) = @_;
         return _json_response($code, %response_object);
     },
 );
@@ -257,15 +262,15 @@ sub _handle_tl_get_statuses {
                 callback => sub {
                     my ($error, $statuses) = @_;
                     if(defined $error) {
-                        $responder->($formatter->($self, 500, error => "$error"));
+                        $responder->($formatter->($self, $timeline, 500, error => "$error"));
                         return;
                     }
-                    $responder->($formatter->($self, 200, statuses => $statuses));
+                    $responder->($formatter->($self, $timeline, 200, statuses => $statuses));
                 }
             );
         }catch {
             my $e = shift;
-            $responder->($formatter->($self, 400, error => "$e"));
+            $responder->($formatter->($self, undef, 400, error => "$e"));
         };
     };
 }
