@@ -37,7 +37,7 @@
               </a>
             </div>
             <div class="btn-group pull-left bb-nav-button-group">
-              <a id="bb-new-statuses-button" class="btn btn-inverse disabled">
+              <a id="bb-new-statuses-button" class="btn btn-inverse disabled" href="#">
                 New <span class="bb-new-statuses-num badge">0</span>
               </a>
             </div>
