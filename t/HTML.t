@@ -13,7 +13,7 @@ $BusyBird::Log::Logger = undef;
 
 {
     my $main = BusyBird::Main->new;
-    $main->default_status_storage(BusyBird::StatusStorage::Memory->new);
+    $main->set_config(default_status_storage => BusyBird::StatusStorage::Memory->new);
     $main->timeline('foo');
     $main->timeline('bar');
 

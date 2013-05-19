@@ -32,8 +32,8 @@ sub test_watcher_basic {
 {
     my $main = new_ok('BusyBird::Main');
     my $storage = $CREATE_STORAGE->();
-    $main->default_status_storage($storage);
-    is($main->default_status_storage, $storage, 'setting default_status_storage OK');
+    $main->set_config(default_status_storage => $storage);
+    is($main->get_config("default_status_storage"), $storage, 'setting default_status_storage OK');
     is_deeply([$main->get_all_timelines], [], 'at first, no timelines');
 
     my $tl1 = $main->timeline('test1');
@@ -63,7 +63,7 @@ sub test_watcher_basic {
 
 {
     my $main = BusyBird::Main->new();
-    $main->default_status_storage($CREATE_STORAGE->());
+    $main->set_config(default_status_storage => $CREATE_STORAGE->());
     $main->timeline($_) foreach reverse 1..20;
     is_deeply(
         [map { $_->name } $main->get_all_timelines],
@@ -74,12 +74,12 @@ sub test_watcher_basic {
 
 {
     my $main = BusyBird::Main->new();
-    $main->default_status_storage($CREATE_STORAGE->());
-    my $storage1 = $main->default_status_storage();
+    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+    my $storage1 = $main->get_config("default_status_storage");
     my $storage2 = $CREATE_STORAGE->();
 
     my $tl1 = $main->timeline('1');
-    is($main->default_status_storage($storage2), $storage2, 'default_status_storage() setter returns the changed setting.');
+    $main->set_config(default_status_storage => $storage2);
     my $tl2 = $main->timeline('2');
     sync($tl1, 'add_statuses', statuses => [status(10)]);
     sync($tl2, 'add_statuses', statuses => [status(20)]);
@@ -96,7 +96,7 @@ sub test_watcher_basic {
 
 {
     my $main = BusyBird::Main->new();
-    $main->default_status_storage($CREATE_STORAGE->());
+    $main->set_config(default_status_storage => $CREATE_STORAGE->());
     my $app = $main->to_app();
     is(ref($app), 'CODE', 'to_app() returns a coderef');
     my @timelines = $main->get_all_timelines();
@@ -104,7 +104,7 @@ sub test_watcher_basic {
     is($timelines[0]->name, 'home', '... the timeline is named "home"');
 
     $main = BusyBird::Main->new();
-    $main->default_status_storage($CREATE_STORAGE->());
+    $main->set_config(default_status_storage => $CREATE_STORAGE->());
     my $tl = $main->timeline('hoge');
     $app = $main->to_app();
     is(ref($app), 'CODE', 'to_app() returns a coderef');
@@ -116,7 +116,7 @@ sub test_watcher_basic {
     note('--- -- watch_unacked_counts');
     my $main = BusyBird::Main->new();
     memory_cycle_ok($main, 'no cyclic ref in main');
-    $main->default_status_storage($CREATE_STORAGE->());
+    $main->set_config(default_status_storage => $CREATE_STORAGE->());
     $main->timeline('a');
     sync($main->timeline('b'), 'add_statuses', statuses => [status(1), status(2, 2)]);
     sync($main->timeline('c'), 'add_statuses', statuses => [status(3, -3), status(4,0), status(5)]);
@@ -216,7 +216,7 @@ sub test_watcher_basic {
 {
     note('--- watch_unacked_counts: junk input');
     my $main = BusyBird::Main->new();
-    $main->default_status_storage($CREATE_STORAGE->());
+    $main->set_config(default_status_storage => $CREATE_STORAGE->());
     $main->timeline('a');
     my %a = (assumed => {a => 1});
     foreach my $case (

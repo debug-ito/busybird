@@ -13,6 +13,11 @@ our @CARP_NOT = ('BusyBird::Timeline');
 
 my %DEFAULT_CONFIG_GENERATOR = (
     _item_for_test => sub { 1 },
+
+    ## ** When you change this into SQLite-based storage, make sure
+    ## ** no test scripts uses default default_status_storage by writing
+    ## ** a dying code in it !!
+    default_status_storage => sub { BusyBird::StatusStorage::Memory->new },
 );
 
 sub new {
@@ -20,7 +25,6 @@ sub new {
     tie(my %timelines, 'Tie::IxHash');
     my $self = bless {
         timelines => \%timelines,
-        default_status_storage => undef,
         config => {},
     }, $class;
     return $self;
@@ -34,22 +38,11 @@ sub to_app {
     return BusyBird::Main::PSGI->create_psgi_app($self);
 }
 
-sub default_status_storage {
-    my ($self, $storage) = @_;
-    if(defined $storage) {
-        $self->{default_status_storage} = $storage;
-    }
-    if(not defined $self->{default_status_storage}) {
-        $self->{default_status_storage} = BusyBird::StatusStorage::Memory->new;
-    }
-    return $self->{default_status_storage};
-}
-
 sub timeline {
     my ($self, $name) = @_;
     my $timeline = $self->get_timeline($name);
     if(not defined $timeline) {
-        $timeline = BusyBird::Timeline->new(name => $name, storage => $self->default_status_storage);
+        $timeline = BusyBird::Timeline->new(name => $name, storage => $self->get_config("default_status_storage"));
         $self->install_timeline($timeline);
     }
     return $timeline;
@@ -196,6 +189,10 @@ C<$timeline> is a L<BusyBird::Timeline> object.
 If there is no timeline named C<$name> in C<$main>, a new timeline is created, installed and returned.
 C<$name> must be a string consisting only of C<[a-zA-Z0-9_-]>.
 
+If a new timeline is created by this method, it uses the StatusStorage object
+given by C<< $main->get_config("default_status_storage") >> for that timeline.
+See L<BusyBird::Config> for defail.
+
 
 =head2 $timeline = $main->get_timeline($name)
 
@@ -222,31 +219,6 @@ It returns the uninstalled C<$timeline>.
 
 If there is no timeline named C<$name>, it returns C<undef>.
 
-=head2 $status_storage = $main->default_status_storage([$status_storage])
-
-Accessor for the default StatusStorage object used by C<$main>.
-
-A StatusStorage is an object where timelines save their statuses.
-When a timeline is created by C<timeline()> method, the default StatusStorage is used for the timeline.
-
-When an argument is given, this method sets the default StatusStorage to the given C<$status_storage> object.
-This method returns the current (changed) default StatusStorage object.
-
-Note that the default StatusStorage object is referred to only when creating timelines via C<timeline()> method.
-Existing timelines are not affected by changing the default StatusStorage object.
-
-A StatusStorage object is an implementation of L<BusyBird::StatusStorage> interface.
-For example, the following modules can be used as StatusStorage.
-
-=over
-
-=item *
-
-L<BusyBird::StatusStorage::Memory> - storage in the process memory
-
-=back
-
-See each module's documentation for details.
 
 =head2 $main->set_config($key1 => $value1, $key2 => $value2, ...)
 

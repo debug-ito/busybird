@@ -26,6 +26,30 @@ TBW
 
 =item C<default_status_storage> => L<BusyBird::StatusStorage> OBJECT
 
+B<Default:> L<BusyBird:StatusStorage::Memory> object.
+
+A StatusStorage object used for Timelines by default.
+
+A StatusStorage is an object where timelines save their statuses.
+When a timeline is created by L<BusyBird::Main>'s C<timeline()> method, the default StatusStorage is used for the timeline.
+
+Note that the default StatusStorage object is referred to only when creating timelines via C<timeline()> method.
+Existing timelines are not affected by changing the default StatusStorage object.
+
+A StatusStorage object is an implementation of L<BusyBird::StatusStorage> interface.
+For example, the following modules can be used as StatusStorage.
+
+=over
+
+=item *
+
+L<BusyBird::StatusStorage::Memory> - storage in the process memory
+
+=back
+
+See each module's documentation for details.
+
+
 =item C<sharedir_path> => PATH
 
 
@@ -36,7 +60,7 @@ TBW
 
 =over
 
-=item C<time_zone> => TIMEZONE_STR
+=item C<timezone> => TIMEZONE_STR
 
 =item C<time_format> => STRPTIME_FORMAT_STR
 

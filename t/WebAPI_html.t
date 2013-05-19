@@ -15,7 +15,7 @@ $BusyBird::Log::Logger = undef;
 
 {
     my $main = BusyBird::Main->new;
-    $main->default_status_storage(BusyBird::StatusStorage::Memory->new);
+    $main->set_config(default_status_storage => BusyBird::StatusStorage::Memory->new);
     my @statuses = map { status($_, $_ + 10) } 0..9;
     $main->timeline('test')->add(\@statuses);
     test_psgi $main->to_app, sub {

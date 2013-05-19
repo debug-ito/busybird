@@ -23,7 +23,7 @@ $BusyBird::Log::Logger = undef;
 
 sub create_main {
     my $main = BusyBird::Main->new();
-    $main->default_status_storage(BusyBird::StatusStorage::Memory->new);
+    $main->set_config(default_status_storage => BusyBird::StatusStorage::Memory->new);
     return $main;
 }
 
@@ -263,7 +263,7 @@ sub test_error_request {
     ) {
         note("--- $storage_case->{label} status storage");
         my $main = create_main();
-        $main->default_status_storage($storage_case->{storage});
+        $main->set_config(default_status_storage => $storage_case->{storage});
         $main->timeline('test');
         test_psgi $main->to_app, sub {
             my $tester = BusyBird::Test::HTTP->new(requester => shift);
