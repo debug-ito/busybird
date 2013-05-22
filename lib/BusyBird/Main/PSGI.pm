@@ -438,3 +438,24 @@ sub _handle_tl_index {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+BusyBird::Main::PSGI - PSGI controller for BusyBird::Main
+
+=head1 DESCRIPTION
+
+This is the controller object for L<BusyBird::Main>.
+
+L<BusyBird::Main::PSGI> has practically no public interface.
+It just creates a L<PSGI> application.
+
+=head1 AUTHOR
+
+Toshio Ito C<< <toshioito [at] cpan.org> >>
+
+=cut
