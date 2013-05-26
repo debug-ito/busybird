@@ -103,9 +103,10 @@ Otherwise, C<default_status_permalink_builder> is used to build the permalink.
 
 The builder subroutine reference is called with the status object, as in:
 
-    $url = $builder->($status)
+    $url_str = $builder->($status)
 
-If the result C<$url> is C<undef> or does not look like a valid URL, it is ignored.
+C<$url_str> is a string.
+If the result C<$url_str> is C<undef> or does not look like a valid URL, it is ignored.
 
 =head2 C<urls_entity_url_builder> => CODEREF($entity, $status)
 
@@ -128,9 +129,10 @@ in a status object generate link URLs attached to the status text.
 
 The builder subroutine reference is called with the twitter entity object and the status object, as in:
 
-    $url = $builder->($entity, $status)
+    $url_str = $builder->($entity, $status)
 
-If the result C<$url> is C<undef> or does not look like a valid URL, it is ignored, i.e., the text is not linked.
+C<$url_str> is a string.
+If the result C<$url_str> is C<undef> or does not look like a valid URL, it is ignored, i.e., the text is not linked.
 
 
 
