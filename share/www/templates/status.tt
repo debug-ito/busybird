@@ -1,9 +1,7 @@
-<li class="bb-status" data-bb-status-level="[% s.busybird.level %]">
+<li class="bb-status" data-bb-status-level="[% bb_level(s.busybird.level) %]">
   <span class="bb-status-id">[% s.id %]</span>
   <div class="bb-status-profile-image">
-    [% IF s.user.profile_image_url %]
-    <img src="[% s.user.profile_image_url %]" width="48" height="48" />
-    [% END # IF %]
+    [% image(src => s.user.profile_image_url, width => 48, height => 48) %]
   </div>
   <div class="bb-status-main">
     <div class="bb-status-header">
@@ -11,13 +9,13 @@
         [% IF !s.busybird.acked_at %]
         <span class="bb-status-new-label label label-success">NEW</span>
         [% END # IF %]
-        &nbsp;<span class="label">Lv. [% s.busybird.level %]</span>
+        &nbsp;<span class="label">Lv. [% bb_level(s.busybird.level) %]</span>
       </div>
       <div>
         <span class="bb-status-username">[% s.user.screen_name %]</span>&nbsp;&nbsp;
-        <span class="bb-status-created-at">[% format_timestamp(s.created_at, timeline) %]</span>
+        <span class="bb-status-created-at">[% bb_timestamp(s.created_at) %]</span>
       </div>
     </div>
-    <div class="bb-status-text">[% s.text %]</div>
+    <div class="bb-status-text">[% bb_text(s) %]</div>
   </div>
 </li>

@@ -81,8 +81,8 @@ sub _response_template {
 
 
 my $REGEXP_URL_CHAR = qr{[A-Za-z0-9~\/._!\?\&=\-%#\+:\;,\@\']};
-my $REGEXP_HTTP_URL = qr{^https?:\/\/$REGEXP_URL_CHAR+$};
-my $REGEXP_ABSOLUTE_PATH = qr{^/$REGEXP_URL_CHAR*$};
+my $REGEXP_HTTP_URL = qr{https?:\/\/$REGEXP_URL_CHAR+};
+my $REGEXP_ABSOLUTE_PATH = qr{/$REGEXP_URL_CHAR*};
 my %URL_ATTRIBUTES = map { $_ => 1 } qw(src href);
 
 sub _html_attributes_string {
@@ -99,7 +99,7 @@ sub _html_attributes_string {
         my $attr_value = $attr{$attr_key};
         my $value_str;
         if($URL_ATTRIBUTES{$attr_key}) {
-            croak "$attr_key attribute is invalid as a URL" if $attr_value !~ /$REGEXP_HTTP_URL|$REGEXP_ABSOLUTE_PATH/;
+            croak "$attr_key attribute is invalid as a URL" if $attr_value !~ /^(?:$REGEXP_HTTP_URL|$REGEXP_ABSOLUTE_PATH)$/;
             $value_str = $attr_value;
         }else {
             $value_str = html_escape($attr_value);
@@ -118,24 +118,13 @@ sub _html_link {
         return qq{<a $attr_str>$escaped_text</a>};
     }catch {
         return $escaped_text;
-    }
+    };
 }
 
 sub template_functions {
     my ($self) = @_;
-    ## weaken $self;
     return {
         js => \&JavaScript::Value::Escape::js,
-        ## format_timestamp => sub {
-        ##     my ($timestamp_string, $timeline_name) = @_;
-        ##     return "" if !$timestamp_string;
-        ##     my $timezone = $self->_get_timezone($self->{main_obj}->get_timeline_config($timeline_name, "time_zone"));
-        ##     my $dt = BusyBird::DateTime::Format->parse_datetime($timestamp_string);
-        ##     return "" if !defined($dt);
-        ##     $dt->set_time_zone($timezone);
-        ##     $dt->set_locale($self->{main_obj}->get_timeline_config($timeline_name, "time_locale"));
-        ##     return $dt->strftime($self->{main_obj}->get_timeline_config($timeline_name, "time_format"));
-        ## },
         link => html_builder(\&_html_link),
         image => html_builder {
             my (@attr) = @_;
@@ -151,6 +140,32 @@ sub template_functions {
             $level = 0 if not defined $level;
             return $level;
         },
+    };
+}
+
+sub template_functions_for_timeline {
+    my ($self, $timeline_name) = @_;
+    weaken $self;
+    return {
+        bb_timestamp => sub {
+            my ($timestamp_string) = @_;
+            return "" if !$timestamp_string;
+            my $timezone = $self->_get_timezone($self->{main_obj}->get_timeline_config($timeline_name, "time_zone"));
+            my $dt = BusyBird::DateTime::Format->parse_datetime($timestamp_string);
+            return "" if !defined($dt);
+            $dt->set_time_zone($timezone);
+            $dt->set_locale($self->{main_obj}->get_timeline_config($timeline_name, "time_locale"));
+            return $dt->strftime($self->{main_obj}->get_timeline_config($timeline_name, "time_format"));
+        },
+        bb_status_permalink => sub {
+            ## STUB
+            return "";
+        },
+        bb_text => html_builder {
+            my $status = shift;
+            return "" if not defined $status->{text};
+            return _escape_and_linkify($status->{text});
+        }
     };
 }
 
@@ -179,7 +194,6 @@ sub _escape_and_linkify {
     while($text =~ m/\G(.*?)($REGEXP_HTTP_URL)/sg) {
         my ($other_text, $url) = ($1, $2);
         $result_text .= html_escape($other_text);
-        ## $result_text .= qq{<a href="$url">} . html_escape($url) . qq{</a>};
         $result_text .= _html_link($url, href => $url);
         $remaining_index = pos($text);
     }
@@ -189,14 +203,11 @@ sub _escape_and_linkify {
 
 sub _format_status_html_destructive {
     my ($self, $status, $timeline_name) = @_;
-    if(!defined($status->{busybird}{level})) {
-        $status->{busybird}{level} = 0;
-    }
-    if(defined($status->{text})) {
-        $status->{text} = Text::Xslate::mark_raw(_escape_and_linkify($status->{text}));
-    }
     $timeline_name = "" if not defined $timeline_name;
-    return $self->{renderer}->render("status.tt", {s => $status, timeline => $timeline_name});
+    return $self->{renderer}->render(
+        "status.tt",
+        {s => $status, %{$self->template_functions_for_timeline($timeline_name)}}
+    );
 }
 
 my %RESPONSE_FORMATTER_FOR_TL_GET_STATUSES = (
