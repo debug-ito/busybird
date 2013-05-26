@@ -48,6 +48,7 @@ test_requires 'Test::More', '0.98';
 test_requires 'Test::Warn', '0.24';
 test_requires 'HTML::TreeBuilder', '5';
 test_requires 'HTML::TreeBuilder::XPath', '0.12';
+test_requires 'JSON', '0';
 
 
 ## auto_install;
