@@ -4,7 +4,6 @@ use warnings;
 use BusyBird::StatusStorage::Memory;
 use BusyBird::Timeline;
 use BusyBird::Watcher::Aggregator;
-use BusyBird::Main::PSGI;
 use Tie::IxHash;
 use Carp;
 use Scalar::Util qw(looks_like_number);
@@ -35,14 +34,6 @@ sub new {
         config => {},
     }, $class;
     return $self;
-}
-
-sub to_app {
-    my ($self) = @_;
-    if(!%{$self->{timelines}}) {
-        $self->timeline('home');
-    }
-    return BusyBird::Main::PSGI->create_psgi_app($self);
 }
 
 sub timeline {
@@ -184,10 +175,6 @@ See L<BusyBird> and L<BusyBird::Tutorial> for detail.
 
 =head1 OBJECT METHODS
 
-=head2 $app = $main->to_app()
-
-Creates and returns a L<PSGI> application object from the C<$main> object.
-
 =head2 $timeline = $main->timeline($name)
 
 Returns the C<$timeline> whose name is C<$name> from the C<$main>.
@@ -319,7 +306,7 @@ one of which is in level 0 and the other is in level 2.
 Note that although you can specify multiple timelines in C<assumed>,
 the returned C<$tl_unacked_counts> may not contain all the specified timelines.
 
-In failure, the argument C<$error> is defined, and it describes the error. C<$w> is an inactive L<BusyBird:Watcher>.
+In failure, the argument C<$error> is defined, and it describes the error. C<$w> is an inactive L<BusyBird::Watcher>.
 
 The return value of this method (C<$watcher>) is the same instance as C<$w>.
 You can use C<< $watcher->cancel() >> or C<< $w->cancel() >> method to cancel the watch.

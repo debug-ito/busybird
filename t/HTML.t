@@ -4,6 +4,7 @@ use FindBin;
 use lib ("$FindBin::RealBin/lib");
 use Test::More;
 use BusyBird::Main;
+use BusyBird::Main::PSGI;
 use BusyBird::Log;
 use BusyBird::StatusStorage::Memory;
 use Plack::Test;
@@ -19,7 +20,7 @@ note("----- static HTML view tests");
     $main->timeline('foo');
     $main->timeline('bar');
 
-    test_psgi $main->to_app, sub {
+    test_psgi create_psgi_app($main), sub {
         my $tester = BusyBird::Test::HTTP->new(requester => shift);
         note('--- timeline view');
         foreach my $case (

@@ -95,24 +95,6 @@ sub test_watcher_basic {
 }
 
 {
-    my $main = BusyBird::Main->new();
-    $main->set_config(default_status_storage => $CREATE_STORAGE->());
-    my $app = $main->to_app();
-    is(ref($app), 'CODE', 'to_app() returns a coderef');
-    my @timelines = $main->get_all_timelines();
-    is(int(@timelines), 1, 'when no timeline is configured, to_app() generates one.');
-    is($timelines[0]->name, 'home', '... the timeline is named "home"');
-
-    $main = BusyBird::Main->new();
-    $main->set_config(default_status_storage => $CREATE_STORAGE->());
-    my $tl = $main->timeline('hoge');
-    $app = $main->to_app();
-    is(ref($app), 'CODE', 'to_app() returns a coderef');
-    @timelines = $main->get_all_timelines();
-    is_deeply(\@timelines, [$tl], 'If the main has a timeline, "home" timeline is not created by to_app()');
-}
-
-{
     note('--- -- watch_unacked_counts');
     my $main = BusyBird::Main->new();
     memory_cycle_ok($main, 'no cyclic ref in main');

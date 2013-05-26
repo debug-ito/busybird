@@ -8,6 +8,7 @@ use Test::MockObject;
 use DateTime;
 use DateTime::Duration;
 use BusyBird::Main;
+use BusyBird::Main::PSGI;
 use BusyBird::StatusStorage::Memory;
 use BusyBird::DateTime::Format;
 use BusyBird::Test::HTTP;
@@ -100,7 +101,7 @@ sub test_error_request {
     $main->timeline('test');
     $main->timeline('foobar');
 
-    test_psgi $main->to_app, sub {
+    test_psgi create_psgi_app($main), sub {
         my $tester = BusyBird::Test::HTTP->new(requester => shift);
         test_get_statuses($tester, 'test', undef, [], 'No status');
         my $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
@@ -196,7 +197,7 @@ sub test_error_request {
         note("--- POST ack case: $case->{label}");
         my $main = create_main();
         $main->timeline('test');
-        test_psgi $main->to_app, sub {
+        test_psgi create_psgi_app($main), sub {
             my $tester = BusyBird::Test::HTTP->new(requester => shift);
             my $already_acked_at = $f->format_datetime(
                 DateTime->now(time_zone => 'UTC') - DateTime::Duration->new(days => 1)
@@ -221,7 +222,7 @@ sub test_error_request {
     my $main = create_main();
     $main->timeline('test');
     note('--- GET /updates/unacked_counts.json with no valid TL');
-    test_psgi $main->to_app, sub {
+    test_psgi create_psgi_app($main), sub {
         my $tester = BusyBird::Test::HTTP->new(requester => shift);
         foreach my $case (
             {label => "no params", param => ""},
@@ -239,7 +240,7 @@ sub test_error_request {
     my $main = create_main();
     $main->timeline('test');
     note('--- Not Found cases');
-    test_psgi $main->to_app, sub {
+    test_psgi create_psgi_app($main), sub {
         my $tester = BusyBird::Test::HTTP->new(requester => shift);
         foreach my $case (
             {endpoint => "GET /timelines/foobar/statuses.json"},
@@ -265,7 +266,7 @@ sub test_error_request {
         my $main = create_main();
         $main->set_config(default_status_storage => $storage_case->{storage});
         $main->timeline('test');
-        test_psgi $main->to_app, sub {
+        test_psgi create_psgi_app($main), sub {
             my $tester = BusyBird::Test::HTTP->new(requester => shift);
             foreach my $case (
                 {endpoint => "GET /timelines/test/statuses.json"},
@@ -284,7 +285,7 @@ sub test_error_request {
     my $main = create_main();
     $main->timeline('test');
     note('--- status with weird ID');
-    test_psgi $main->to_app, sub {
+    test_psgi create_psgi_app($main), sub {
         my $tester = BusyBird::Test::HTTP->new(requester => shift);
         my $weird_id_status = {
             id => q{!"#$%&'(){}=*+>< []\\|/-_;^~@`?: 3},
@@ -382,7 +383,7 @@ EOD
 EOD
          exp_response => q{{"error": null, "count": 2}}}
     );
-    test_psgi $main->to_app, sub {
+    test_psgi create_psgi_app($main), sub {
         my $tester = BusyBird::Test::HTTP->new(requester => shift);
         foreach my $case (@cases) {
             my ($method, $request_url) = split(/ +/, $case->{endpoint});

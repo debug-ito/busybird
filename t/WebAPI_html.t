@@ -9,6 +9,7 @@ use BusyBird::Test::Timeline_Util qw(status);
 use BusyBird::Test::StatusHTML;
 use Plack::Test;
 use BusyBird::Main;
+use BusyBird::Main::PSGI;
 use BusyBird::StatusStorage::Memory;
 
 $BusyBird::Log::Logger = undef;
@@ -18,7 +19,7 @@ $BusyBird::Log::Logger = undef;
     $main->set_config(default_status_storage => BusyBird::StatusStorage::Memory->new);
     my @statuses = map { status($_, $_ + 10) } 0..9;
     $main->timeline('test')->add(\@statuses);
-    test_psgi $main->to_app, sub {
+    test_psgi create_psgi_app($main), sub {
         my $tester = BusyBird::Test::HTTP->new(requester => shift);
         my @statuses_html = BusyBird::Test::StatusHTML->new_multiple($tester->request_ok(
             "GET", "/timelines/test/statuses.html?count=5&max_id=7", undef,

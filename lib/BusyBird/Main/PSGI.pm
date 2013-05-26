@@ -7,15 +7,21 @@ use Router::Simple;
 use Plack::Request;
 use Plack::Builder ();
 use Plack::App::File;
-use Plack::Util ();
 use Try::Tiny;
 use JSON qw(decode_json);
 use Scalar::Util qw(looks_like_number);
 use Carp;
+use Exporter qw(import);
+
+our @EXPORT = our @EXPORT_OK = qw(create_psgi_app);
 
 sub create_psgi_app {
-    my ($class, $main_obj) = @_;
-    my $self = $class->_new(main_obj => $main_obj);
+    my ($main_obj) = @_;
+    my @timelines = $main_obj->get_all_timelines();
+    if(!@timelines) {
+        $main_obj->timeline('home');
+    }
+    my $self = __PACKAGE__->_new(main_obj => $main_obj);
     return $self->_to_app;
 }
 
@@ -276,6 +282,7 @@ sub _handle_tl_index {
 
 1;
 
+
 __END__
 
 =pod
@@ -284,12 +291,29 @@ __END__
 
 BusyBird::Main::PSGI - PSGI controller for BusyBird::Main
 
+=head1 SYNOPSIS
+
+    use BusyBird::Main;
+    use BusyBird::Main::PSGI;
+    
+    my $main = BusyBird::Main->new();
+    my $psgi_app = create_psgi_app($main);
+
 =head1 DESCRIPTION
 
 This is the controller object for L<BusyBird::Main>.
+It creates a L<PSGI> application from a L<BusyBird::Main> object.
 
-L<BusyBird::Main::PSGI> has practically no public interface.
-It just creates a L<PSGI> application.
+=head1 EXPORTED FUNCTIONS
+
+The following functions are exported by default.
+
+=head2 $psgi_app = create_psgi_app($main_obj)
+
+Creates a L<PSGI> application object.
+
+C<$main_obj> is a L<BusyBird::Main> object.
+If there is no timeline in the C<$main_obj>, it creates C<"home"> timeline.
 
 =head1 AUTHOR
 

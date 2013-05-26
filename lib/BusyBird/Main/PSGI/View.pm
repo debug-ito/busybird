@@ -13,7 +13,7 @@ use JavaScript::Value::Escape ();
 use DateTime::TimeZone;
 use BusyBird::DateTime::Format;
 use Cache::Memory::Simple;
-
+use Plack::Util ();
 
 sub new {
     my ($class, %args) = @_;
