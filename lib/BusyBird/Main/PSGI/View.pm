@@ -232,7 +232,9 @@ BusyBird::Main::PSGI::View - view renderer for BusyBird::Main
 
 This is a view renderer object for L<BusyBird::Main>.
 
-End-users usually do not have to use this module directly.
+End-users should not use this module directly.
+Specification in this document may be changed in the future.
+
 
 =head1 CLASS METHODS
 
@@ -318,6 +320,62 @@ If the timeline does not exist in C<$view>'s L<BusyBird::Main> object, it return
 
 C<$script_name> is the base path for internal hyperlinks.
 It should be C<SCRIPT_NAME> of the C<PSGI> environment.
+
+=head2 $functions = $view->template_functions()
+
+Returns a hash-ref of subroutine references for template rendering.
+They are supposed to be called from L<Text::Xslate> templates.
+
+C<$functions> contain the following keys. All of their values are subroutine references.
+
+=over
+
+=item C<js> => CODE($text)
+
+Escapes JavaScript value.
+
+=item C<link> => CODE($text, %attr)
+
+Linkifies C<$text> with C<< <a> >> tag with C<%attr> attributes. C<$text> will be HTML-escaped.
+If C<< $attr{href} >> does not look like a valid link URL, it returns the escaped C<$text> only.
+
+=item C<image> => CODE(%attr)
+
+Returns C<< <img> >> tag with C<%attr> attributes.
+If C<< $attr{src} >> does not look like a valid image URL, it returns an empty string.
+
+=item C<bb_level> => CODE($level)
+
+Formats status level. C<$level> may be C<undef>, in which case the level is assumed to be 0.
+
+
+=back
+
+=head2 $functions = $view->template_functions_for_timeline($timeline_name)
+
+Returns a hash-ref of subroutine references for template rendering.
+They are supposed to be called from L<Text::Xslate> templates.
+
+C<$timeline_name> is the name of a timeline. C<$functions> is the set of functions that are dependent of the timeline's configuration.
+
+C<$functions> contain the following keys. All of their values are subroutine references.
+
+=over
+
+=item C<bb_timestamp> => CODE($timestamp_str)
+
+Returns a timestamp string formatted with the timeline's configuration.
+C<$timestamp_str> is the timestamp in status objects such as C<< $status->{created_at} >>.
+
+=item C<bb_status_permalink> => CODE($status)
+
+Returns the permalink URL for the status.
+
+=item C<bb_text> => CODE($status)
+
+Returns the HTML text for the status.
+
+=back
 
 =head1 AUTHOR
 
