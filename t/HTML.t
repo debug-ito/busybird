@@ -11,6 +11,8 @@ use BusyBird::Test::HTTP;
 
 $BusyBird::Log::Logger = undef;
 
+note("----- static HTML view tests");
+
 {
     my $main = BusyBird::Main->new;
     $main->set_config(default_status_storage => BusyBird::StatusStorage::Memory->new);

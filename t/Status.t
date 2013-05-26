@@ -11,7 +11,7 @@ note('--- test of status rendering');
 
 BEGIN {
     use_ok("BusyBird::Main");
-    use_ok("BusyBird::Main::PSGI");
+    use_ok("BusyBird::Main::PSGI::View");
     use_ok("BusyBird::StatusStorage::Memory");
 }
 
@@ -21,9 +21,7 @@ sub create_renderer {
     my $main = BusyBird::Main->new;
     $main->set_config(default_status_storage => BusyBird::StatusStorage::Memory->new());
     $main->timeline("home");
-    return BusyBird::Main::PSGI->_new(
-        main_obj => $main
-    );
+    return BusyBird::Main::PSGI::View->new(main_obj => $main);
 }
 
 sub render_status {
