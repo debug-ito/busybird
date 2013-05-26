@@ -330,21 +330,21 @@ C<$functions> contain the following keys. All of their values are subroutine ref
 
 =over
 
-=item C<js> => CODE($text)
+=item C<js> => CODEREF($text)
 
 Escapes JavaScript value.
 
-=item C<link> => CODE($text, %attr)
+=item C<link> => CODEREF($text, %attr)
 
 Linkifies C<$text> with C<< <a> >> tag with C<%attr> attributes. C<$text> will be HTML-escaped.
 If C<< $attr{href} >> does not look like a valid link URL, it returns the escaped C<$text> only.
 
-=item C<image> => CODE(%attr)
+=item C<image> => CODEREF(%attr)
 
 Returns C<< <img> >> tag with C<%attr> attributes.
 If C<< $attr{src} >> does not look like a valid image URL, it returns an empty string.
 
-=item C<bb_level> => CODE($level)
+=item C<bb_level> => CODEREF($level)
 
 Formats status level. C<$level> may be C<undef>, in which case the level is assumed to be 0.
 
@@ -362,16 +362,16 @@ C<$functions> contain the following keys. All of their values are subroutine ref
 
 =over
 
-=item C<bb_timestamp> => CODE($timestamp_str)
+=item C<bb_timestamp> => CODEREF($timestamp_str)
 
 Returns a timestamp string formatted with the timeline's configuration.
 C<$timestamp_str> is the timestamp in status objects such as C<< $status->{created_at} >>.
 
-=item C<bb_status_permalink> => CODE($status)
+=item C<bb_status_permalink> => CODEREF($status)
 
 Returns the permalink URL for the status.
 
-=item C<bb_text> => CODE($status)
+=item C<bb_text> => CODEREF($status)
 
 Returns the HTML text for the status.
 
