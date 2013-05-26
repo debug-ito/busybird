@@ -75,8 +75,8 @@ sub create_main {
     my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
     my $funcs = $view->template_functions();
 
-    note("--- -- js"); ## from SYNOPSIS of JavaScript::Value::Escape
-    is($funcs->{js}->(q{&foo"bar'</script>}), "\\u0026foo\\u0022bar\\u0027\\u003c\\/script\\u003e", "js filter OK");
+    note("--- -- js"); ## from SYNOPSIS of JavaScript::Value::Escape with a small modification
+    is($funcs->{js}->(q{&foo"bar'</script>}), "\\u0026foo\\u0022bar\\u0027\\u003c/script\\u003e", "js filter OK");
 
     note("--- -- link");
     foreach my $case (
@@ -94,7 +94,7 @@ sub create_main {
         {label => "javascript: href", args => ['alert!', href => 'javascript: alert("hogehoge"); return false;'],
          exp => 'alert!'},
         {label => "empty text", args => ['', href => 'http://empty.net/'],
-         exp => '<a href="http://empty.net"></a>'},
+         exp => '<a href="http://empty.net/"></a>'},
         {label => "undef text", args => [undef], exp => ""},
     ) {
         is($funcs->{link}->(@{$case->{args}}), $case->{exp}, "$case->{label} OK");

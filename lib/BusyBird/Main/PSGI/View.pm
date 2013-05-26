@@ -14,6 +14,7 @@ use DateTime::TimeZone;
 use BusyBird::DateTime::Format;
 use Cache::Memory::Simple;
 use Plack::Util ();
+use Tie::IxHash;
 
 sub new {
     my ($class, %args) = @_;
@@ -28,7 +29,7 @@ sub new {
         path => [ File::Spec->catdir($sharedir, 'www', 'templates') ],
         cache_dir => File::Spec->tmpdir,
         syntax => 'TTerse',
-        function => $self->_template_functions(),
+        function => $self->template_functions(),
         ## warn_handler => sub { ... },
     );
     return $self;
@@ -79,39 +80,77 @@ sub _response_template {
 }
 
 
-my $REGEXP_HTTP_URL = qr{https?:\/\/[A-Za-z0-9~\/._!\?\&=\-%#\+:\;,\@\']+};
+my $REGEXP_URL_CHAR = qr{[A-Za-z0-9~\/._!\?\&=\-%#\+:\;,\@\']};
+my $REGEXP_HTTP_URL = qr{^https?:\/\/$REGEXP_URL_CHAR+$};
+my $REGEXP_ABSOLUTE_PATH = qr{^/$REGEXP_URL_CHAR*$};
+my %URL_ATTRIBUTES = map { $_ => 1 } qw(src href);
 
-sub _html_link {
-    my ($text, %attr) = @_;
-    $text = "" if not defined $text;
-    return try {
-        die "no attr" if not $attr{href};
-        die "invalid url" if $attr{href} !~ $REGEXP_HTTP_URL;
-        my $href_attr = qq{href="$attr{href}"};
-        my $attrs = join(" ", $href_attr,
-                         map { html_escape($_) . q{="} . html_escape($attr{$_})  . q{"} } keys %attr);
-        return qq{<a $attrs>}. html_escape($text) . qq{</a>}
-    }catch {
-        return html_escape($text);
-    };
+sub _html_attributes_string {
+    my ($mandatory_attrs_ref, @attr) = @_;
+    for(my $i = 0 ; $i < $#attr ; $i += 2) {
+        $attr[$i] = lc($attr[$i]);
+    }
+    tie(my %attr, 'Tie::IxHash', @attr);
+    foreach my $attr_key (@$mandatory_attrs_ref) {
+        croak "$attr_key attribute is mandatory" if not defined $attr{$attr_key};
+    }
+    my @attr_strings = ();
+    foreach my $attr_key (keys %attr) {
+        my $attr_value = $attr{$attr_key};
+        my $value_str;
+        if($URL_ATTRIBUTES{$attr_key}) {
+            croak "$attr_key attribute is invalid as a URL" if $attr_value !~ /$REGEXP_HTTP_URL|$REGEXP_ABSOLUTE_PATH/;
+            $value_str = $attr_value;
+        }else {
+            $value_str = html_escape($attr_value);
+        }
+        push(@attr_strings, html_escape($attr_key) . qq{="$value_str"});
+    }
+    return join(" ", @attr_strings);
 }
 
-sub _template_functions {
+sub _html_link {
+    my ($text, @attr) = @_;
+    $text = "" if not defined $text;
+    my $escaped_text = html_escape($text);
+    return try {
+        my $attr_str = _html_attributes_string(['href'], @attr);
+        return qq{<a $attr_str>$escaped_text</a>};
+    }catch {
+        return $escaped_text;
+    }
+}
+
+sub template_functions {
     my ($self) = @_;
-    weaken $self;
+    ## weaken $self;
     return {
         js => \&JavaScript::Value::Escape::js,
-        format_timestamp => sub {
-            my ($timestamp_string, $timeline_name) = @_;
-            return "" if !$timestamp_string;
-            my $timezone = $self->_get_timezone($self->{main_obj}->get_timeline_config($timeline_name, "time_zone"));
-            my $dt = BusyBird::DateTime::Format->parse_datetime($timestamp_string);
-            return "" if !defined($dt);
-            $dt->set_time_zone($timezone);
-            $dt->set_locale($self->{main_obj}->get_timeline_config($timeline_name, "time_locale"));
-            return $dt->strftime($self->{main_obj}->get_timeline_config($timeline_name, "time_format"));
-        },
+        ## format_timestamp => sub {
+        ##     my ($timestamp_string, $timeline_name) = @_;
+        ##     return "" if !$timestamp_string;
+        ##     my $timezone = $self->_get_timezone($self->{main_obj}->get_timeline_config($timeline_name, "time_zone"));
+        ##     my $dt = BusyBird::DateTime::Format->parse_datetime($timestamp_string);
+        ##     return "" if !defined($dt);
+        ##     $dt->set_time_zone($timezone);
+        ##     $dt->set_locale($self->{main_obj}->get_timeline_config($timeline_name, "time_locale"));
+        ##     return $dt->strftime($self->{main_obj}->get_timeline_config($timeline_name, "time_format"));
+        ## },
         link => html_builder(\&_html_link),
+        image => html_builder {
+            my (@attr) = @_;
+            return try {
+                my $attr_str = _html_attributes_string(['src'], @attr);
+                return qq{<img $attr_str />}
+            }catch {
+                return "";
+            };
+        },
+        bb_level => sub {
+            my $level = shift;
+            $level = 0 if not defined $level;
+            return $level;
+        },
     };
 }
 
