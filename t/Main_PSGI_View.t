@@ -134,6 +134,27 @@ sub create_main {
     }
 }
 
+{
+    note("--- template_functions_for_timeline");
+    my $main = create_main();
+    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
+    my $funcs = $view->template_functions_for_timeline('test');
+    $main->set_config(
+        time_zone => "UTC",
+        time_format => '%Y-%m-%d %H:%M:%S',
+        time_locale => 'en_US',
+    );
+
+    note("--- -- bb_timestamp");
+    foreach my $case (
+        {label => 'normal', args => ['Tue May 28 20:10:13 +0900 2013'], exp => '2013-05-28 11:10:13'},
+        {label => 'undef', args => [undef], exp => ''},
+        {label => 'empty string', args => [''], exp => ''},
+    ) {
+        is($funcs->{bb_timestamp}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
+    }
+}
+
 fail("TODO: template_functions_for_timeline");
 
 done_testing();
