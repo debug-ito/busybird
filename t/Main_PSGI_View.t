@@ -153,9 +153,26 @@ sub create_main {
     ) {
         is($funcs->{bb_timestamp}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
     }
+
+    note("--- -- bb_status_permalink");
+    foreach my $case (
+        {label => "complete status",
+         args => [{id => "191", user => {screen_name => "hoge"}, busybird => {status_permalink => "http://hoge.com/"}}],
+         exp => "http://hoge.com/"},
+        {label => "missing status_permalink field",
+         args => [{id => "191", user => {screen_name => "hoge"}}],
+         exp => "https://twitter.com/hoge/status/191"},
+        {label => "unable to build", args => [{id => "191"}], exp => ""},
+        {label => "invalid status_permalink",
+         args => [{id => "191", busybird => {status_permalink => "javascript: alert('hoge')"}}],
+         exp => ""},
+    ) {
+        is($funcs->{bb_status_permalink}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
+    }
+
+    fail("TODO: test bb_text");
 }
 
-fail("TODO: template_functions_for_timeline");
 
 done_testing();
 

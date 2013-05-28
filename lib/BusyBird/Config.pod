@@ -92,14 +92,11 @@ B<Default:> C<"https://twitter.com/intent/tweet">
 
 Link URL attached to the "Post" button in the navigation bar.
 
-=head2 C<default_status_permalink_builder> => CODEREF($status)
+=head2 C<status_permalink_builder> => CODEREF($status)
 
-B<Default:> build permalink to twitter.com
+B<Default:> return C<< $status->{busybird}{status_permalink} >>, or build permalink to the status page of twitter.com, or return C<undef>
 
 Subroutine reference that is supposed to build permalink URL to the status.
-
-If the status has the C<busybird.status_permalink> field, that field is used for the permalink.
-Otherwise, C<default_status_permalink_builder> is used to build the permalink.
 
 The builder subroutine reference is called with the status object, as in:
 
