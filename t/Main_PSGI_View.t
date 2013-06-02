@@ -231,6 +231,48 @@ sub create_main {
              }
          }],
          exp => q{<a href="http://t.co/0u6Ki0bOYQ">office.com</a> - plain,  <a href="http://t.co/0u6Ki0bOYQ">office.com</a> - with scheme}},
+
+        {label => "Unicode hashtags and media entities",
+         args => [{
+             text => q{ドコモ「docomo Wi-Fi」、南海/阪急/JR 九州でサービス エリア拡大 http://t.co/mvgqG5v3mQ #南海 #阪急 #JR九州 http://t.co/U3h7lEDZKT},
+             entities => {
+                 "hashtags" => [
+                     { "text" => "南海", "indices" => [64, 67] },
+                     { "text" => "阪急", "indices" => [68, 71] },
+                     { "text" => "JR九州", "indices" => [72, 77] }
+                 ],
+                 "user_mentions" => [],
+                 "media" => [
+                     {
+                         "display_url" => "pic.twitter.com/U3h7lEDZKT",
+                         "id_str" => "340966457888370689",
+                         "sizes" => {
+                             "small" => { "w" => 340, "resize" => "fit", "h" => 83 },
+                             "large" => { "w" => 389, "resize" => "fit", "h" => 95 },
+                             "medium" => { "w" => 389, "resize" => "fit", "h" => 95 },
+                             "thumb" => { "w" => 150, "resize" => "crop", "h" => 95 }
+                         },
+                         "expanded_url" => "http://twitter.com/jic_news/status/340966457884176384/photo/1",
+                         "media_url_https" => "https://pbs.twimg.com/media/BLtbL9rCcAEfjCr.jpg",
+                         "url" => "http://t.co/U3h7lEDZKT",
+                         "indices" => [78,100],
+                         "type" => "photo",
+                         "id" => 340966457888370689,
+                         "media_url" => "http://pbs.twimg.com/media/BLtbL9rCcAEfjCr.jpg"
+                     }
+                 ],
+                 "symbols" => [],
+                 "urls" => [
+                     {
+                         "display_url" => "bit.ly/14jappE",
+                         "expanded_url" => "http://bit.ly/14jappE",
+                         "url" => "http://t.co/mvgqG5v3mQ",
+                         "indices" => [41,63]
+                     }
+                 ]
+             }
+         }],
+         exp => q{ドコモ「docomo Wi-Fi」、南海/阪急/JR 九州でサービス エリア拡大 <a href="http://t.co/mvgqG5v3mQ">bit.ly/14jappE</a> <a href="https://twitter.com/search?q=%23%E5%8D%97%E6%B5%B7&src=hash">#南海</a> <a href="https://twitter.com/search?q=%23%E9%98%AA%E6%80%A5&src=hash">#阪急</a> <a href="https://twitter.com/search?q=%23JR%E4%B9%9D%E5%B7%9E&src=hash">#JR九州</a> <a href="http://t.co/U3h7lEDZKT">pic.twitter.com/U3h7lEDZKT</a>}}
     ) {
         is($funcs->{bb_text}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
     }
