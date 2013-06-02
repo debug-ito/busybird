@@ -105,8 +105,7 @@ sub get_config {
 sub get_timeline_config {
     my ($self, $timeline_name, $key) = @_;
     my $timeline = $self->get_timeline($timeline_name);
-    return undef if not defined $timeline;
-    my $timeline_config = $timeline->get_config($key);
+    my $timeline_config = defined($timeline) ? $timeline->get_config($key) : undef;
     return $timeline_config if defined $timeline_config;
     return $self->get_config($key);
 }

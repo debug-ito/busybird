@@ -44,7 +44,8 @@ sub create_main_and_timeline {
     is($main->get_config("_some_item"), "hoge", "main gives hoge even after timeline config is set");
     is($timeline->get_config("_some_item"), "foobar", "timeline gives foobar after timeline config is set");
     is($main->get_timeline_config("test", "_some_item"), "foobar", "timeline_config gives foobar");
-    is($main->get_timeline_config("__no_timeline", "_some_item"), undef, "timeline_config for non-existent timeline gives undef");
+    is($main->get_timeline_config("__no_timeline", "_some_item"), "hoge", "timeline_config for non-existent timeline gives main's config");
+    is($main->get_timeline_config("test", "no_item"), undef, "timeline_config for item not existing in either timeline or main gives undef");
 }
 
 {
