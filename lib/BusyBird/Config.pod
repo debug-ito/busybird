@@ -105,33 +105,64 @@ The builder subroutine reference is called with the status object, as in:
 C<$url_str> is a string.
 If the result C<$url_str> is C<undef> or does not look like a valid URL, it is ignored.
 
-=head2 C<urls_entity_url_builder> => CODEREF($entity, $status)
+=head2 C<urls_entity_url_builder> => CODEREF($text, $entity, $status)
 
-B<Default:> return C<< $entity->{display_url} >>
+B<Default:> return C<< $entity->{url} >>
 
-=head2 C<media_entity_url_builder> => CODEREF($entity, $status)
+=head2 C<media_entity_url_builder> => CODEREF($text, $entity, $status)
 
-B<Default:> return C<< $entity->{display_url} >>
+B<Default:> return C<< $entity->{url} >>
 
-=head2 C<user_mentions_entity_url_builder> => CODEREF($entity, $status)
+=head2 C<user_mentions_entity_url_builder> => CODEREF($text, $entity, $status)
 
 B<Default:> build URL to the user page of twitter.com
 
-=head2 C<hashtags_entity_url_builder> => CODEREF($entity, $status)
+=head2 C<hashtags_entity_url_builder> => CODEREF($text, $entity, $status)
 
 B<Default> build URL to the hashtag search page of twitter.com
 
 The above four configurations specify how L<Twitter Entities|https://dev.twitter.com/docs/platform-objects/entities>
 in a status object generate link URLs attached to the status text.
 
-The builder subroutine reference is called with the twitter entity object and the status object, as in:
+The builder subroutine reference is called in the following way
 
-    $url_str = $builder->($entity, $status)
+    $url_str = $builder->($text, $entity, $status)
 
-C<$url_str> is a string.
+where C<$text> is the segment of status text the entity is attached to, C<$entity> is the Twitter Entity object,
+and C<$status> is the whole status object. C<$url_str> is a string.
+
 If the result C<$url_str> is C<undef> or does not look like a valid URL, it is ignored, i.e., the text is not linked.
 
+=head2 C<urls_entity_text_builder> => CODEREF($text, $entity, $status)
 
+B<Default:> return C<< $entity->{display_url} >>
+
+=head2 C<media_entity_text_builder> => CODEREF($text, $entity, $status)
+
+B<Default:> return C<< $entity->{display_url} >>
+
+=head2 C<user_mentions_entity_text_builder> => CODEREF($text, $entity, $status)
+
+B<Default:> return C<$text>
+
+=head2 C<hashtags_entity_text_builder> => CODEREF($text, $entity, $status)
+
+B<Default:> return C<$text>
+
+The above four configurations specify how L<Twitter Entities|https://dev.twitter.com/docs/platform-objects/entities>
+in a status object convert status texts to be displayed.
+
+The builder subroutine reference is called in the following way
+
+    $text_to_be_displayed = $builder->($text, $entity, $status)
+
+where C<$text> is the segment of status text the entity is attached to, C<$entity> is the Twitter Entity object,
+and C<$status> is the whole status object. C<$text_to_be_displayed> is a string.
+
+If C<$text_to_be_displayed> is C<undef>, the original C<$text> is used for display.
+
+If a C<*_entity_url_builder> subroutine reference returns non-URL for the C<$entity>,
+the text is not linked and the corresponding C<*_entity_text_builder> is not called.
 
 =head1 AUTHOR
 
