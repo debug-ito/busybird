@@ -276,8 +276,6 @@ sub create_main {
     ) {
         is($funcs->{bb_text}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
     }
-    
-    fail("TODO: more tests for bb_text");
 }
 
 
