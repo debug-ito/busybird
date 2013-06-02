@@ -24,6 +24,23 @@ my %DEFAULT_CONFIG_GENERATOR = (
     time_format => sub { '%x (%a) %X %Z' },
     time_locale => sub { $ENV{LC_TIME} or "C" },
     post_button_url => sub { "https://twitter.com/intent/tweet" },
+
+    status_permalink_builder => sub { return sub {
+        no autovivification;
+        my ($status) = @_;
+        if(defined $status->{busybird}{status_permalink}) {
+            return $status->{busybird}{status_permalink};
+        }
+        my $id =   $status->{busybird}{original}{id}
+                || $status->{busybird}{original}{id_str}
+                || $status->{id}
+                || $status->{id_str};
+        my $username = $status->{user}{screen_name};
+        if(defined($id) && defined($username)) {
+            return qq{https://twitter.com/$username/status/$id};
+        }
+        return undef;
+    } },
 );
 
 sub new {

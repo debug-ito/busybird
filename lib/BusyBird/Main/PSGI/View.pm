@@ -85,6 +85,12 @@ my $REGEXP_HTTP_URL = qr{https?:\/\/$REGEXP_URL_CHAR+};
 my $REGEXP_ABSOLUTE_PATH = qr{/$REGEXP_URL_CHAR*};
 my %URL_ATTRIBUTES = map { $_ => 1 } qw(src href);
 
+sub _is_valid_link_url {
+    my ($url) = @_;
+    $url = "" if not defined $url;
+    return ($url =~ /^(?:$REGEXP_HTTP_URL|$REGEXP_ABSOLUTE_PATH)$/);
+}
+
 sub _html_attributes_string {
     my ($mandatory_attrs_ref, @attr) = @_;
     for(my $i = 0 ; $i < $#attr ; $i += 2) {
@@ -99,7 +105,7 @@ sub _html_attributes_string {
         my $attr_value = $attr{$attr_key};
         my $value_str;
         if($URL_ATTRIBUTES{$attr_key}) {
-            croak "$attr_key attribute is invalid as a URL" if $attr_value !~ /^(?:$REGEXP_HTTP_URL|$REGEXP_ABSOLUTE_PATH)$/;
+            croak "$attr_key attribute is invalid as a URL" if not _is_valid_link_url($attr_value);
             $value_str = $attr_value;
         }else {
             $value_str = html_escape($attr_value);
@@ -158,8 +164,10 @@ sub template_functions_for_timeline {
             return $dt->strftime($self->{main_obj}->get_timeline_config($timeline_name, "time_format"));
         },
         bb_status_permalink => sub {
-            ## STUB
-            return "";
+            my ($status) = @_;
+            my $builder = $self->{main_obj}->get_timeline_config($timeline_name, "status_permalink_builder");
+            my $url = $builder->($status);
+            return (_is_valid_link_url($url) ? $url : "");
         },
         bb_text => html_builder {
             my $status = shift;
