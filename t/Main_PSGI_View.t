@@ -175,12 +175,62 @@ sub create_main {
         {label => "HTML special char, no URL, no entity",
          args => [{text => q{foo bar "A & B"} }],
          exp => q{foo bar &quot;A &amp; B&quot;}},
+        
         {label => "URL and HTML special char, no entity",
          args => [{id => "hoge", text => 'this contains URL http://hogehoge.com/?a=foo+bar&b=%2Fhoge here :->'}],
          exp => q{this contains URL <a href="http://hogehoge.com/?a=foo+bar&b=%2Fhoge">http://hogehoge.com/?a=foo+bar&amp;b=%2Fhoge</a> here :-&gt;}},
+        
         {label => "URL at the top and bottom",
          args => [{text => q{http://hoge.com/toc.html#item5 hogehoge http://foobar.co.jp/q=hoge&page=5}}],
-         exp => q{<a href="http://hoge.com/toc.html#item5">http://hoge.com/toc.html#item5</a> hogehoge <a href="http://foobar.co.jp/q=hoge&page=5">http://foobar.co.jp/q=hoge&amp;page=5</a>}}
+         exp => q{<a href="http://hoge.com/toc.html#item5">http://hoge.com/toc.html#item5</a> hogehoge <a href="http://foobar.co.jp/q=hoge&page=5">http://foobar.co.jp/q=hoge&amp;page=5</a>}},
+        
+        {label => "Twitter Entities",
+         args => [{
+             text => q{てすと &lt;"&amp;hearts;&amp;&amp;hearts;"&gt; http://t.co/dNlPhACDcS &gt;"&lt; @debug_ito &amp; &amp; &amp; #test},
+             entities => {
+                 hashtags => [ { text => "test", indices => [106,111] } ],
+                 user_mentions => [ {
+                     "name" => "Toshio Ito",
+                     "id" => 797588971,
+                     "id_str" => "797588971",
+                     "indices" => [ 77, 87 ],
+                     "screen_name" => "debug_ito"
+                 } ],
+                 symbols => [],
+                 urls => [ {
+                     "display_url" => "google.co.jp",
+                     "expanded_url" => "http://www.google.co.jp/",
+                     "url" => "http://t.co/dNlPhACDcS",
+                     "indices" => [ 44, 66 ]
+                 } ]
+             }
+         }],
+         exp => q{てすと &amp;lt;&quot;&amp;amp;hearts;&amp;amp;&amp;amp;hearts;&quot;&amp;gt; <a href="http://t.co/dNlPhACDcS">google.co.jp</a> &amp;gt;&quot;&amp;lt; <a href="https://twitter.com/debug_ito">@debug_ito</a> &amp;amp; &amp;amp; &amp;amp; <a href="https://twitter.com/search?q=%23test&src=hash">#test</a>}},
+
+        {label => "2 urls entities",
+         args => [{
+             text => q{http://t.co/0u6Ki0bOYQ - plain,  http://t.co/0u6Ki0bOYQ - with scheme},
+             entities => {
+                 "hashtags" => [],
+                 "user_mentions" => [],
+                 "symbols" => [],
+                 "urls" => [
+                     {
+                         "display_url" => "office.com",
+                         "expanded_url" => "http://office.com",
+                         "url" => "http://t.co/0u6Ki0bOYQ",
+                         "indices" => [ 0, 22 ]
+                     },
+                     {
+                         "display_url" => "office.com",
+                         "expanded_url" => "http://office.com",
+                         "url" => "http://t.co/0u6Ki0bOYQ",
+                         "indices" => [ 33, 55 ]
+                     }
+                 ]
+             }
+         }],
+         exp => q{<a href="http://t.co/0u6Ki0bOYQ">office.com</a> - plain,  <a href="http://t.co/0u6Ki0bOYQ">office.com</a> - with scheme}},
     ) {
         is($funcs->{bb_text}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
     }
