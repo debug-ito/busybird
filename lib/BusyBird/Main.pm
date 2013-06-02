@@ -8,6 +8,8 @@ use Tie::IxHash;
 use Carp;
 use Scalar::Util qw(looks_like_number);
 use File::ShareDir;
+use URI::Escape qw(uri_escape);
+use Encode ();
 
 our @CARP_NOT = ('BusyBird::Timeline');
 
@@ -41,6 +43,27 @@ my %DEFAULT_CONFIG_GENERATOR = (
         }
         return undef;
     } },
+
+    urls_entity_url_builder => sub { sub { my ($text, $entity) = @_; return $entity->{url} }},
+    urls_entity_text_builder => sub { sub { my ($text, $entity) = @_; return $entity->{display_url} }},
+    
+    media_entity_url_builder => sub { sub { my ($text, $entity) = @_; return $entity->{url} } },
+    media_entity_text_builder => sub { sub { my ($text, $entity) = @_; return $entity->{display_url} }},
+    
+    user_mentions_entity_url_builder => sub { sub {
+        my ($text, $entity, $status) = @_;
+        my $screen_name = $entity->{screen_name};
+        $screen_name = "" if not defined $screen_name;
+        return qq{https://twitter.com/$screen_name};
+    }},
+    user_mentions_entity_text_builder => sub { sub { my $text = shift; return $text }},
+    
+    hashtags_entity_url_builder => sub { sub {
+        my ($text, $entity, $status) = @_;
+        my $query_hashtag = uri_escape('#' . Encode::encode('utf8', $entity->{text}));
+        return qq{https://twitter.com/search?q=$query_hashtag&src=hash};
+    }},
+    hashtags_entity_text_builder => sub { sub { my $text = shift; return $text }},
 );
 
 sub new {
