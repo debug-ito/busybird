@@ -170,7 +170,22 @@ sub create_main {
         is($funcs->{bb_status_permalink}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
     }
 
-    fail("TODO: test bb_text");
+    note("--- -- bb_text");
+    foreach my $case (
+        {label => "HTML special char, no URL, no entity",
+         args => [{text => q{foo bar "A & B"} }],
+         exp => q{foo bar &quot;A &amp; B&quot;}},
+        {label => "URL and HTML special char, no entity",
+         args => [{id => "hoge", text => 'this contains URL http://hogehoge.com/?a=foo+bar&b=%2Fhoge here :->'}],
+         exp => q{this contains URL <a href="http://hogehoge.com/?a=foo+bar&b=%2Fhoge">http://hogehoge.com/?a=foo+bar&amp;b=%2Fhoge</a> here :-&gt;}},
+        {label => "URL at the top and bottom",
+         args => [{text => q{http://hoge.com/toc.html#item5 hogehoge http://foobar.co.jp/q=hoge&page=5}}],
+         exp => q{<a href="http://hoge.com/toc.html#item5">http://hoge.com/toc.html#item5</a> hogehoge <a href="http://foobar.co.jp/q=hoge&page=5">http://foobar.co.jp/q=hoge&amp;page=5</a>}}
+    ) {
+        is($funcs->{bb_text}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
+    }
+    
+    fail("TODO: more tests for bb_text");
 }
 
 
