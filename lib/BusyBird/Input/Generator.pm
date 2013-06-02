@@ -26,6 +26,9 @@ sub generate {
         user => {
             screen_name => $self->{screen_name},
         },
+        busybird => {
+            status_permalink => ""
+        }
     };
     if(defined $level) {
         $status->{busybird}{level} = $level + 0;
