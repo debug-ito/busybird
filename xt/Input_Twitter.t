@@ -5,6 +5,7 @@ use FindBin;
 use lib ("$FindBin::RealBin/../t/lib");
 use BusyBird::Test::Input_Twitter qw(:all);
 use BusyBird::Log;
+use utf8;
 
 BEGIN {
     use_ok('BusyBird::Input::Twitter');
