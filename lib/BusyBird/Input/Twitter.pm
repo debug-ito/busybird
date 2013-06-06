@@ -9,12 +9,10 @@ use JSON;
 use Storable qw(dclone);
 use Try::Tiny;
 use Carp;
-use DateTime::TimeZone;
 use Scalar::Util qw(reftype blessed);
 
 our $VERSION = "0.01";
 
-our $STATUS_TIMEZONE = DateTime::TimeZone->new(name => 'local');
 my $DATETIME_FORMATTER = 'BusyBird::DateTime::Format';
 
 sub new {
@@ -46,10 +44,8 @@ sub _apiurl {
 sub transformer_default {
     my ($self, $status_arrayref) = @_;
     return [
-        map { $self->transform_permalink($_) }
-            map { $self->transform_timezone($_) }
-                map { $self->transform_status_id($_) }
-                    map { $self->transform_search_status($_) } @$status_arrayref ];
+        map { $self->transform_status_id($_) }
+            map { $self->transform_search_status($_) } @$status_arrayref ];
 }
 
 my %_SEARCH_KEY_MAP = (
@@ -87,42 +83,6 @@ sub transform_status_id {
         $new_status->{$key} = "$prefix/statuses/show/" . $status->{$key} . ".json";
         $new_status->{busybird}{original}{$key} = $status->{$key};
     }
-    return $new_status;
-}
-
-sub transform_permalink {
-    my ($self, $status) = @_;
-    my $apiurl = $self->_apiurl;
-    my $id;
-    {
-        no autovivification;
-        $id = $status->{busybird}{original}{id}
-        || $status->{busybird}{original}{id_str}
-            || $status->{id}
-                || $status->{id_str};
-        return $status if not defined($apiurl);
-        return $status if not defined($id);
-        return $status if not defined($status->{user}{screen_name});
-    }
-    if($apiurl =~ m|^(https?)://([^/]+)|i) {
-        $apiurl = "$1://$2";
-    }
-    $apiurl =~ s|api\.twitter\.|twitter\.|;
-    my $new_status = dclone($status);
-    $new_status->{busybird}{status_permalink} = sprintf(
-        "%s/%s/status/%s", $apiurl, $status->{user}{screen_name}, $id
-    );
-    return $new_status;
-}
-
-sub transform_timezone {
-    my ($self, $status, $timezone) = @_;
-    $timezone = $STATUS_TIMEZONE if not defined $timezone;
-    my $dt = $DATETIME_FORMATTER->parse_datetime($status->{created_at});
-    croak 'Invalid created_at field in a status' if not defined $dt;
-    $dt->set_time_zone($timezone);
-    my $new_status = dclone($status);
-    $new_status->{created_at} = $DATETIME_FORMATTER->format_datetime($dt);
     return $new_status;
 }
 
@@ -288,6 +248,8 @@ sub retweets_of_me {
 
 1;
 
+__END__
+
 =pod
 
 =head1 NAME
@@ -332,7 +294,11 @@ Version 0.01
     
     ## You can load other timelines as well.
     $arrayref_of_statuses = $input->user_timeline({screen_name => 'hoge'});
-
+    
+    
+    foreach my $status (@$arrayref_of_statuses) {
+        printf("%s: %s\n", $status->{user}{screen_name}, Encode::encode('utf8', $status->{text}));
+    }
 
 =head1 DESCRIPTION
 
@@ -432,6 +398,8 @@ The second is the array-ref of status objects obtained by L<Net::Twitter> method
 
 The output from the transformer is an array-ref of the transformed result.
 
+    $status_arrayref = $transformer->($input_twitter, $status_arrayref)
+
 By default, C<transformer> is C<transformer_default> function in this module.
 
 Setting C<transformer> to C<undef> suppresses any transformation.
@@ -496,26 +464,6 @@ This transformation is recommended when you load statuses from multiple sources,
 This method does not modify the input C<$status>. The transformation is done to its clone.
 
 The original IDs are saved under C<< $transformed_status->{busybird}{original} >>
-
-
-=head2 $transformed_status = $input->transform_timezone($status, [$timezone_string])
-
-Transforms the timezone of a status's C<created_at> field to the specified C<$timezone_string>.
-If C<$timezone_string> is omitted, C<$BusyBird::Input::Twitter::STATUS_TIMEZONE>
-(a C<DateTime::TimeZone> object) is used, which represents the local timezone by default.
-
-
-C<$timezone_string> must be a string that L<DateTime::TimeZone> module can understand.
-
-This method does not modify the input C<$status>. The transformation is done to its clone.
-
-=head2 $transformed_status = $input->transform_permalink($status)
-
-Adds a permalink field to the transformed status.
-
-The permalink is stored in C<< $transformed_status->{busybird}{status_permalink}. >>
-
-This method does not modify the input C<$status>. The transformation is done to its clone.
 
 
 =head1 AUTHOR

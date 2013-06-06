@@ -17,7 +17,6 @@ BEGIN {
     use_ok('BusyBird::Input::Twitter');
 }
 
-$BusyBird::Input::Twitter::STATUS_TIMEZONE = DateTime::TimeZone->new(name => '+0900');
 $BusyBird::Log::Logger = undef;
 
 sub test_mock {
@@ -77,34 +76,6 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
         "transform_search_status"
     );
     is_deeply(
-        $bbin->transform_timezone({ id => 5, created_at => "Sat Aug 25 17:26:51 +0000 2012" }, "+0900"),
-        {
-            id => 5, created_at => "Sun Aug 26 02:26:51 +0900 2012"
-        },
-        "transform_timezone"
-    );
-    is_deeply(
-        $bbin->transform_timezone({id => 10, created_at => 'Mon, 31 Dec 2012 22:01:43 +0000'}),
-        { id => 10, created_at => 'Tue Jan 01 07:01:43 +0900 2013' },
-        'transform_timezone to local'
-    );
-    {
-        local $BusyBird::Input::Twitter::STATUS_TIMEZONE
-            = DateTime::TimeZone->new(name => '-0500');
-        is_deeply(
-            $bbin->transform_timezone({id => 10, created_at => 'Mon, 31 Dec 2012 22:01:43 +0000'}),
-            { id => 10, created_at => 'Mon Dec 31 17:01:43 -0500 2012' },
-            'transform_timezone to local (another one)'
-        );
-    }
-    is_deeply(
-        $bbin->transform_permalink({ id => 5, user => { screen_name => "hoge" } }),
-        { id => 5, user => {screen_name => "hoge"},
-          busybird => { status_permalink => "${apiurl}hoge/status/5" } },
-        'transform_permalink'
-    );
-
-    is_deeply(
         $bbin->transformer_default([decode_json(q{
 {
             "id": 5, "id_str": "5", "created_at": "Wed, 05 Dec 2012 14:09:11 +0000",
@@ -121,7 +92,7 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
             id => "${apiurl}statuses/show/5.json", id_str => "${apiurl}statuses/show/5.json",
             in_reply_to_status_id => "${apiurl}statuses/show/12.json",
             in_reply_to_status_id_str => "${apiurl}statuses/show/12.json",
-            created_at => "Wed Dec 05 23:09:11 +0900 2012",
+            created_at => "Wed Dec 05 14:09:11 +0000 2012",
             true_flag => JSON::true,
             false_flag => JSON::false,
             null_value => undef,
@@ -131,7 +102,6 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
                 id_str => "100"
             },
             busybird => {
-                status_permalink => "${apiurl}foobar/status/5",
                 original => {
                     id => 5,
                     id_str => "5",
@@ -142,39 +112,6 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
         }],
         'transformer_default'
     );
-}
-
-{
-    note('--- transform_permalink with various apiurl');
-    foreach my $case (
-        {apiurl => 'http://api.twitter.com/1.1', exp_base => 'http://twitter.com'},
-        {apiurl => 'https://api.twitter.com/1.1', exp_base => 'https://twitter.com'},
-        {apiurl => 'https://api.twitter.com/1', exp_base => 'https://twitter.com'},
-        {apiurl => 'https://api.twitter.com/1.1/', exp_base => 'https://twitter.com'},
-        {apiurl => 'http://www.example.com/api/', exp_base => 'http://www.example.com'},
-        {apiurl => 'https://hoge.co.jp/foo/bar', exp_base => 'https://hoge.co.jp'},
-    ) {
-        my $bbin = BusyBird::Input::Twitter->new(
-            apiurl => $case->{apiurl}
-        );
-        my $status = {
-            id => 1129, user => {
-                screen_name => "toshio"
-            }
-        };
-        is_deeply(
-            $bbin->transform_permalink($status),
-            {
-                id => 1129, user => {
-                    screen_name => "toshio"
-                },
-                busybird => {
-                    status_permalink => "$case->{exp_base}/toshio/status/1129"
-                }
-            },
-            "trasform_permalink with apiurl '$case->{apiurl}' OK"
-        );
-    }
 }
 
 {
@@ -200,14 +137,6 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
                 }}
             },
             "$label: transform_status_id ok"
-        );
-        is_deeply(
-            $bbin->transform_permalink({id => 110, user => { screen_name => "hoge" }}),
-            {
-                id => 110, user => {screen_name => "hoge"},
-                busybird => { status_permalink => 'https://foobar.co.jp/hoge/status/110' }
-            },
-            "$label: transform_permalink ok"
         );
     }
     my $noapiurl_mock = Test::MockObject->new;
