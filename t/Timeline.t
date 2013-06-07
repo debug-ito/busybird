@@ -195,6 +195,25 @@ sub test_timeline {
     }
 
     {
+        note('--- -- add single status');
+        my $timeline = new_ok($CLASS, [name => "test", storage => $CREATE_STORAGE->()]);
+        my ($error, $ret) = sync($timeline, 'add_statuses', statuses => status(1));
+        is($error, undef, "add_statuses() with a single status OK");
+        is($ret, 1, "1 added");
+        my $callbacked = 0;
+        $timeline->add(status(2), sub {
+            my ($error, $ret) = @_;
+            $callbacked = 1;
+            is($error, undef, "add() with a single status OK");
+            is($ret, 1, "1 added");
+            $UNLOOP->();
+        });
+        $LOOP->();
+        ok($callbacked, "callbacked");
+        test_content($timeline, {count => "all"}, [2, 1], "content OK");
+    }
+
+    {
         note('--- -- various ack arguments');
         foreach my $case (test_cases_for_ack(is_ordered => 0), test_cases_for_ack(is_orderd => 1)) {
             next if not defined $case->{req};
@@ -822,7 +841,7 @@ sub test_timeline {
     local $@;
     eval('use BusyBird::Test::StatusStorage::AEDelayed');
     if($@) {
-        diag("SKIP: Error while loading AEDelayed: $@");
+        diag("SKIP TESTS: Error while loading AEDelayed: $@");
     }else {
         note('---------- async storage');
         my $cv;

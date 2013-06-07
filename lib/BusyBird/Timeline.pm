@@ -122,9 +122,20 @@ sub ack_statuses {
 
 sub add_statuses {
     my ($self, %args) = @_;
-    if(!ref($args{statuses}) || ref($args{statuses}) ne 'ARRAY') {
-        croak 'statuses argument must be an array-ref of statuses';
+    if(!defined($args{statuses})) {
+        croak "statuses argument is mandatory";
     }
+    my %switch = (
+        ARRAY => sub {},
+        HASH => sub {
+            $args{statuses} = [ $args{statuses} ];
+        },
+    );
+    my $case_do = $switch{ref($args{statuses}) || ""};
+    if(!$case_do) {
+        croak "statuses argument must be a status or an array-ref of statuses";
+    }
+    $case_do->();
     my $statuses = dclone($args{statuses});
     $self->{filter_flow}->execute($statuses, sub {
         my $filter_result = shift;
@@ -349,9 +360,9 @@ Fields in C<%args> are as follows.
 
 =over
 
-=item C<statuses> => ARRAYREF_OF_STATUSES (mandatory)
+=item C<statuses> => {STATUS, ARRAYREF_OF_STATUSES} (mandatory)
 
-Specifies an array-ref of status objects to be added.
+Specifies a status object or an array-ref of status objects to be added.
 See L<BusyBird::Status> about what status objects look like.
 
 =item C<callback> => CODEREF($error, $added_num) (optional, default: C<undef>)
