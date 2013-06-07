@@ -1,7 +1,7 @@
 package BusyBird::Main::PSGI::View;
 use strict;
 use warnings;
-use BusyBird::Util qw(set_param);
+use BusyBird::Util qw(set_param split_with_entities);
 use Carp;
 use Try::Tiny;
 use Scalar::Util qw(weaken);
@@ -127,55 +127,6 @@ sub _html_link {
     };
 }
 
-sub _create_text_segment {
-    my (%args) = @_;
-    return {
-        text => substr($args{orig_text}, $args{start}, $args{end} - $args{start}),
-        start => $args{start},
-        end => $args{end},
-        type => $args{type},
-        entity => $args{entity}
-    };
-}
-
-sub _split_text_with_entities {
-    my ($text, $entities_hashref) = @_;
-    $entities_hashref = {} if not defined $entities_hashref;
-
-    ## create entity segments
-    my @entity_segments = ();
-    foreach my $entity_type (keys %$entities_hashref) {
-        foreach my $entity (@{$entities_hashref->{$entity_type}}) {
-            push(@entity_segments, _create_text_segment(
-                orig_text => $text, start => $entity->{indices}[0], end => $entity->{indices}[1],
-                type => $entity_type, entity => $entity
-            ));
-        }
-    }
-    @entity_segments = sort { $a->{start} <=> $b->{start} } @entity_segments;
-
-    ## combine entity_segments with non-entity segments
-    my $pos = 0;
-    my @final_segments = ();
-    foreach my $entity_segment (@entity_segments) {
-        if($pos < $entity_segment->{start}) {
-            push(@final_segments, _create_text_segment(
-                orig_text => $text, start => $pos, end => $entity_segment->{start},
-                type => ':non-entity'
-            ));
-        }
-        push(@final_segments, $entity_segment);
-        $pos = $entity_segment->{end};
-    }
-    if($pos < length($text)) {
-        push(@final_segments, _create_text_segment(
-            orig_text => $text, start => $pos, end => length($text),
-            type => ':non-entity'
-        ));
-    }
-    return \@final_segments;
-}
-
 sub template_functions {
     my ($self) = @_;
     return {
@@ -221,7 +172,7 @@ sub template_functions_for_timeline {
         bb_text => html_builder {
             my $status = shift;
             return "" if not defined $status->{text};
-            my $segments_ref = _split_text_with_entities($status->{text}, $status->{entities});
+            my $segments_ref = split_with_entities($status->{text}, $status->{entities});
             my $result_text = "";
             foreach my $segment (@$segments_ref) {
                 $result_text .= try {
@@ -240,7 +191,6 @@ sub template_functions_for_timeline {
                 };
             }
             return $result_text;
-            ## return _escape_and_linkify($status->{text});
         }
     };
 }
