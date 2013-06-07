@@ -4,6 +4,8 @@ our $VERSION = '0.01';
 
 1;
 
+__END__
+
 =pod
 
 =head1 NAME
@@ -95,7 +97,7 @@ the method either throws an exception or automatically generates IDs for them an
 
 C<ack_statuses()> method should update C<< $status->{busybird}{acked_at} >> field
 of the target statuses to the date/time string of the current time.
-The date/fime format should be the same as C<< $status->{created_at} >> field.
+The date/fime format should be parsable by L<BusyBird::DateTime::Format> class.
 
 
 =head2 Order of Statuses
