@@ -25,7 +25,6 @@ sub new {
     $self->set_param(\%args, 'storage', undef, 1);
     $self->set_param(\%args, 'watcher_max', 512);
     croak 'name must not be empty' if $self->{name} eq '';
-    croak 'name must consist only of [a-zA-Z0-9_-]' if $self->{name} !~ /^[a-zA-Z0-9_-]+$/;
     $self->_init_selector();
     $self->_update_unacked_counts();
     return $self;
@@ -329,7 +328,6 @@ Fields in C<%args> are as follows.
 =item C<name> => STRING (mandatory)
 
 Specifies the name of the timeline.
-It must be a string consisting only of C<[a-zA-Z0-9_-]>.
 
 =item C<storage> => STATUS_STORAGE (mandatory)
 

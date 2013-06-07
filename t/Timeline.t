@@ -92,16 +92,9 @@ sub test_timeline {
     {
         note('-- checking names');
         my %s = (storage => $CREATE_STORAGE->());
-        dies_ok { $CLASS->new(%s, name => '') } 'NG: empty name';
-        my $ng_symbols = '!"#$%&\\(){}[]<>@*+;:.,^~|/?' . "' \t\r\n";
-        foreach my $i (0 .. (length($ng_symbols)-1)) {
-            my $name = substr($ng_symbols, $i, 1);
-            dies_ok { $CLASS->new(%s, name => $name) } "NG: name '$name'";
-        }
-        dies_ok { $CLASS->new(%s, name => 'space in the middle') } "NG: contains space";
         my $tl;
-        lives_ok { $tl = $CLASS->new(%s, name => 'a-zA-Z0-9_-') } "OK: a-zA-Z0-9_-";
-        is($tl->name(), 'a-zA-Z0-9_-', 'name OK');
+        lives_ok { $tl = $CLASS->new(%s, name => 'a-zA-Z 0-9_-') } "OK: a-zA-Z 0-9_-";
+        is($tl->name(), 'a-zA-Z 0-9_-', 'name OK');
     }
 
     {

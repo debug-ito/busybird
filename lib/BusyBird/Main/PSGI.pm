@@ -12,6 +12,7 @@ use JSON qw(decode_json);
 use Scalar::Util qw(looks_like_number);
 use Carp;
 use Exporter qw(import);
+use URI::Escape qw(uri_unescape);
 
 our @EXPORT = our @EXPORT_OK = qw(create_psgi_app);
 
@@ -83,11 +84,20 @@ sub _build_routes {
                              {method => '_handle_get_unacked_counts'}, {method => 'GET'});
 }
 
+sub _get_timeline_name {
+    my ($dest) = @_;
+    my $name = $dest->{timeline};
+    $name = "" if not defined($name);
+    $name =~ s/\+/ /g;
+    return uri_unescape($name);
+}
+
 sub _get_timeline {
     my ($self, $dest) = @_;
-    my $timeline = $self->{main_obj}->get_timeline($dest->{timeline});
+    my $name = _get_timeline_name($dest);
+    my $timeline = $self->{main_obj}->get_timeline($name);
     if(!defined($timeline)) {
-        die qq{No timeline named $dest->{timeline}};
+        die qq{No timeline named $name};
     }
     return $timeline;
 }
@@ -112,14 +122,12 @@ sub _handle_tl_get_statuses {
                 callback => sub {
                     my ($error, $statuses) = @_;
                     if(defined $error) {
-                        ## $responder->($formatter->($self, $timeline, 500, error => "$error"));
                         $responder->($self->{view}->response_statuses(
                             error => "$error", http_code => 500, format => $dest->{format},
                             timeline_name => $timeline->name
                         ));
                         return;
                     }
-                    ## $responder->($formatter->($self, $timeline, 200, statuses => $statuses));
                     $responder->($self->{view}->response_statuses(
                         statuses => $statuses, http_code => 200, format => $dest->{format},
                         timeline_name => $timeline->name
@@ -128,7 +136,6 @@ sub _handle_tl_get_statuses {
             );
         }catch {
             my $e = shift;
-            ## $responder->($formatter->($self, undef, 400, error => "$e"));
             $responder->($self->{view}->response_statuses(
                 error => "$e", http_code => 400, format => $dest->{format},
             ));
@@ -151,17 +158,14 @@ sub _handle_tl_post_statuses {
                 callback => sub {
                     my ($error, $added_num) = @_;
                     if(defined $error) {
-                        ## $responder->(_json_response(500, error => "$error"));
                         $responder->($self->{view}->response_json(500, {error => "$error"}));
                         return;
                     }
-                    ## $responder->(_json_response(200, count => $added_num + 0));
                     $responder->($self->{view}->response_json(200, {count => $added_num + 0}));
                 }
             );
         } catch {
             my $e = shift;
-            ## $responder->(_json_response(400, error => "$e"));
             $responder->($self->{view}->response_json(400, {error => "$e"}));
         };
     };
@@ -188,17 +192,14 @@ sub _handle_tl_ack {
                 callback => sub {
                     my ($error, $acked_num) = @_;
                     if(defined $error) {
-                        ## $responder->(_json_response(500, error => "$error"));
                         $responder->($self->{view}->response_json(500, {error => "$error"}));
                         return;
                     }
-                    ## $responder->(_json_response(200, count => $acked_num + 0));
                     $responder->($self->{view}->response_json(200, {count => $acked_num + 0}));
                 }
             );
         }catch {
             my $e = shift;
-            ## $responder->(_json_response(400, error => "$e"));
             $responder->($self->{view}->response_json(400, {error => "$e"}));
         };
     };
@@ -224,16 +225,13 @@ sub _handle_tl_get_unacked_counts {
                 my ($error, $w, $unacked_counts) = @_;
                 $w->cancel();
                 if(defined $error) {
-                    ## $responder->(_json_response(500, error => "$error"));
                     $responder->($self->{view}->response_json(500, {error => "$error"}));
                     return;
                 }
-                ## $responder->(_json_response(200, unacked_counts => $unacked_counts));
                 $responder->($self->{view}->response_json(200, {unacked_counts => $unacked_counts}));
             });
         }catch {
             my $e = shift;
-            ## $responder->(_json_response(400, error => "$e"));
             $responder->($self->{view}->response_json(400, {error => "$e"}));
         };
     };
@@ -260,16 +258,13 @@ sub _handle_get_unacked_counts {
                 my ($error, $w, $tl_unacked_counts) = @_;
                 $w->cancel();
                 if(defined $error) {
-                    ## $responder->(_json_response(500, error => "$error"));
                     $responder->($self->{view}->response_json(500, {error => "$error"}));
                     return;
                 }
-                ## $responder->(_json_response(200, unacked_counts => $tl_unacked_counts));
                 $responder->($self->{view}->response_json(200, {unacked_counts => $tl_unacked_counts}));
             });
         }catch {
             my $e = shift;
-            ## $responder->(_json_response(400, error => "$e"));
             $responder->($self->{view}->response_json(400, {error => "$e"}));
         };
     };
@@ -277,7 +272,7 @@ sub _handle_get_unacked_counts {
 
 sub _handle_tl_index {
     my ($self, $req, $dest) = @_;
-    return $self->{view}->response_timeline($dest->{timeline}, $req->script_name);
+    return $self->{view}->response_timeline(_get_timeline_name($dest), $req->script_name);
 }
 
 1;

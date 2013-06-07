@@ -225,7 +225,6 @@ Returns the C<$timeline> whose name is C<$name> from the C<$main>.
 C<$timeline> is a L<BusyBird::Timeline> object.
 
 If there is no timeline named C<$name> in C<$main>, a new timeline is created, installed and returned.
-C<$name> must be a string consisting only of C<[a-zA-Z0-9_-]>.
 
 If a new timeline is created by this method, it uses the StatusStorage object
 given by C<< $main->get_config("default_status_storage") >> for that timeline.
