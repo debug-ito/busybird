@@ -428,7 +428,7 @@ By default, API URL is obtained from the C<backend> object, so usually you can o
 If C<backend> is omitted, you must specify this option.
 If both C<backend> and C<apiurl> options are specified, C<apiurl> option is used as API URL.
 
-=item transformer (optional, default: C<transformer_default>)
+=item transformer => CODEREF (optional, default: C<transformer_default>)
 
 A subroutine reference that transforms the result from L<Net::Twitter> methods.
 

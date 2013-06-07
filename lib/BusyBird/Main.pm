@@ -183,6 +183,8 @@ our $VERSION = '0.01';
 
 1;
 
+__END__
+
 =pod
 
 =head1 NAME
@@ -201,6 +203,9 @@ BusyBird::Main - main application object of BusyBird
 
 L<BusyBird::Main> is the main application object of L<BusyBird>.
 It keeps application configuration and timelines (L<BusyBird::Timeline> objects).
+
+L<BusyBird::Main> does not depend on L<PSGI> or any other controller mechanism.
+If you want to create L<PSGI> application from L<BusyBird::Main>, check out L<BusyBird::Main::PSGI> class.
 
 =head1 CLASS METHODS
 

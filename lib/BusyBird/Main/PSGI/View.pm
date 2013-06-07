@@ -432,7 +432,7 @@ Formats status level. C<$level> may be C<undef>, in which case the level is assu
 Returns a hash-ref of subroutine references for template rendering.
 They are supposed to be called from L<Text::Xslate> templates.
 
-C<$timeline_name> is the name of a timeline. C<$functions> is the set of functions that are dependent of the timeline's configuration.
+C<$timeline_name> is the name of a timeline. C<$functions> is the set of functions that are dependent on the timeline's configuration.
 
 C<$functions> contain the following keys. All of their values are subroutine references.
 
