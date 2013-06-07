@@ -352,6 +352,10 @@ Adds new statuses to the C<$timeline>.
 Note that statuses added by C<add_statuses()> method go through the C<$timeline>'s filters.
 It is the filtered statuses that are actually inserted to the storage.
 
+In addition to filtering, if statuses added to the C<$timeline> lack C<id> or C<created_at> field,
+it automatically generates and sets these fields.
+This auto-generation of IDs and timestamps are done after the filtering.
+
 C<add()> method is a short-hand of C<< add_statuses(statuses => $statuses, callback => $callback) >>.
 
 Fields in C<%args> are as follows.

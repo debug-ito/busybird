@@ -820,6 +820,52 @@ sub test_timeline {
             }
         }
     }
+    
+    {
+        note('--- auto-generation of id and created_at');
+        my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
+        my @in_statuses = (
+            {text => "status 1", id => 1},
+            {text => "status 2", created_at => BusyBird::DateTime::Format->format_datetime(DateTime->now)},
+            {text => "status 3"},
+        );
+        my ($error, $ret) = sync($timeline, 'add_statuses', statuses => \@in_statuses);
+        is($error, undef, "add succeed");
+        is($ret, 3, "3 added");
+        ($error, my $out_statuses) = sync($timeline, 'get_statuses', count => 'all');
+        is($error, undef, "get succeed");
+        is(int(@$out_statuses), 3, "3 statuses obtained");
+        foreach my $s (@$out_statuses) {
+            like($s->{text}, qr/^status \d$/, "status text OK");
+            ok($s->{id}, "$s->{text}: id set");
+            ok($s->{created_at}, "$s->{text}: created_at set");
+        }
+    }
+    
+    {
+        note('--- ID and created_at auto-generation is done before filtering');
+        my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
+        my $callbacked = 0;
+        my ($filter_id, $filter_created_at);
+        $timeline->add_filter(sub {
+            my $statuses = shift;
+            $callbacked++;
+            $filter_id = $statuses->[0]{id};
+            $filter_created_at = $statuses->[0]{created_at};
+            return $statuses;
+        });
+        my ($error, $ret) = sync($timeline, "add_statuses", statuses => {text => 'hoge'});
+        is($error, undef, "add succeed");
+        is($ret, 1, "1 added");
+        is($callbacked, 1, "filter callbacked once");
+        is($filter_id, undef, "id is undef in filter");
+        is($filter_created_at, undef, "created_at is undef in filter");
+        ($error, my $statuses) = sync($timeline, "get_statuses", count => 'all');
+        is($error, undef, "get succeed");
+        is(int(@$statuses), 1, "1 status obtained");
+        ok($statuses->[0]{id}, "id set");
+        ok($statuses->[0]{created_at}, "created_at set");
+    }
 }
 
 {
