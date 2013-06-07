@@ -56,6 +56,8 @@ our $VERSION = '0.01';
 
 1;
 
+__END__
+
 =pod
 
 =head1 NAME
@@ -125,7 +127,3 @@ The result will given to C<$finish_callback>.
 Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut
-
-
-
-

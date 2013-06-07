@@ -5,11 +5,14 @@ use BusyBird::Util qw(set_param);
 use BusyBird::Log;
 use BusyBird::Flow;
 use BusyBird::Watcher::Aggregator;
+use BusyBird::Input::Generator;
+use BusyBird::DateTime::Format;
 use Async::Selector 1.0;
 use Carp;
 use CPS qw(kforeach);
 use Storable qw(dclone);
 use Scalar::Util qw(weaken looks_like_number);
+use DateTime;
 
 our @CARP_NOT = ();
 
@@ -20,6 +23,7 @@ sub new {
         selector => Async::Selector->new,
         unacked_counts => {total => 0},
         config => {},
+        id_generator => BusyBird::Input::Generator->new,
     }, $class;
     $self->set_param(\%args, 'name', undef, 1);
     $self->set_param(\%args, 'storage', undef, 1);
@@ -136,11 +140,25 @@ sub add_statuses {
     }
     $case_do->();
     my $statuses = dclone($args{statuses});
+    my $final_callback = $args{callback};
     $self->{filter_flow}->execute($statuses, sub {
         my $filter_result = shift;
-        $args{mode} = 'insert';
-        $args{statuses} = $filter_result;
-        $self->_write_statuses('put_statuses', \%args);
+        my $cur_time;
+        foreach my $status (@$filter_result) {
+            next if !defined($status) || ref($status) ne 'HASH';
+            if(!defined($status->{id})) {
+                $cur_time ||= DateTime->now;
+                $status->{id} = $self->{id_generator}->generate_id($self->name, $cur_time);
+            }
+            if(!defined($status->{created_at})) {
+                $cur_time ||= DateTime->now;
+                $status->{created_at} = BusyBird::DateTime::Format->format_datetime($cur_time);
+            }
+        }
+        $self->_write_statuses('put_statuses', {
+            mode => 'insert', statuses => $filter_result,
+            callback => $final_callback
+        });
     });
 }
 

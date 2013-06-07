@@ -825,7 +825,7 @@ sub test_timeline {
         note('--- auto-generation of id and created_at');
         my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
         my @in_statuses = (
-            {text => "status 1", id => 1},
+            {text => "status 1", id => "test1"},
             {text => "status 2", created_at => BusyBird::DateTime::Format->format_datetime(DateTime->now)},
             {text => "status 3"},
         );
@@ -838,7 +838,9 @@ sub test_timeline {
         foreach my $s (@$out_statuses) {
             like($s->{text}, qr/^status \d$/, "status text OK");
             ok($s->{id}, "$s->{text}: id set");
+            like($s->{id}, qr/test/, "$s->{text}: id contains the timeline name");
             ok($s->{created_at}, "$s->{text}: created_at set");
+            isa_ok(BusyBird::DateTime::Format->parse_datetime($s->{created_at}), "DateTime", "$s->{text}: parsed created_at");
         }
     }
     
@@ -865,6 +867,8 @@ sub test_timeline {
         is(int(@$statuses), 1, "1 status obtained");
         ok($statuses->[0]{id}, "id set");
         ok($statuses->[0]{created_at}, "created_at set");
+        isa_ok(BusyBird::DateTime::Format->parse_datetime($statuses->[0]{created_at}),
+               "DateTime", "parsed created_at");
     }
 }
 
