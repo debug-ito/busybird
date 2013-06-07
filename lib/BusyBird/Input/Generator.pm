@@ -20,7 +20,7 @@ sub generate {
     my $level = defined($args{level}) ? $args{level} : 0;
     my $cur_time = DateTime->now;
     my $status = +{
-        id => $self->_generate_id($cur_time),
+        id => $self->generate_id(undef, $cur_time),
         text => $text,
         created_at => BusyBird::DateTime::Format->format_datetime($cur_time),
         user => {
@@ -36,13 +36,15 @@ sub generate {
     return $status;
 }
 
-sub _generate_id {
-    my ($self, $cur_time) = @_;
+sub generate_id {
+    my ($self, $namespace, $cur_time) = @_;
+    $namespace = $self->{screen_name} if not defined($namespace);
+    $cur_time = DateTime->now if not defined($cur_time);
     my $cur_epoch = $cur_time->epoch;
     if($self->{last_epoch} != $cur_epoch) {
         $self->{next_sequence_number} = 0;
     }
-    my $id = qq{busybird://$self->{screen_name}/$cur_epoch/$self->{next_sequence_number}};
+    my $id = qq{busybird://$namespace/$cur_epoch/$self->{next_sequence_number}};
     $self->{next_sequence_number}++;
     $self->{last_epoch} = $cur_epoch;
     return $id;
@@ -126,6 +128,20 @@ The C<text> field of the status. It must be a text string, not a binary (octet) 
 The C<busybird.level> field of the status.
 
 =back
+
+=head2 $id_str = $gen->generate_id([$namespace, $current_time])
+
+Generates a new ID string from C<$namespace> string and the timestamp C<$current_time>.
+Both C<$namespace> and C<$current_time> are optional.
+
+C<$namespace> is an arbitrary string that is included in the C<$id_str>.
+If C<$namespace> is C<undef>, the C<screen_name> field given in C<new()> is used.
+
+C<$current_time> is supposed to be L<DateTime> object representing the current time.
+If it's C<undef>, C<< DateTime->now >> is used.
+If you give C<$current_time>, make sure it is older or equal to the C<$current_time> for
+any previous call to C<generate_id()>.
+Note also that C<generate()> method calls C<generate_id()> method.
 
 =head1 AUTHOR
 
