@@ -151,6 +151,74 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
     }
 }
 
+{
+    note("--- transform_html_unescape");
+    my $bbin = new_ok('BusyBird::Input::Twitter', [apiurl => 'hoge']);
+    foreach my $case (
+        {label => "without entities", in_status => {
+            text => '&amp; &lt; &gt; &amp; &quot;',
+        }, out_status => {
+            text => q{& < > & "},
+        }},
+            
+        {label => "with entities", in_status => {
+            'text' => q{&lt;http://t.co/3Rh1Zcymvo&gt; " #test " $GOOG てすと&amp;hearts; ' @debug_ito '},
+            'entities' => {
+                'hashtags' => [ { 'text' => 'test', 'indices' => [33, 38] }],
+                'user_mentions' => [ { 'indices' => [65,75], 'screen_name' => 'debug_ito' } ],
+                'symbols' => [ { 'text' => 'GOOG', 'indices' => [41, 46] } ],
+                'urls' => [ { 'url' => 'http://t.co/3Rh1Zcymvo', 'indices' => [4, 26] } ]
+            },
+        }, out_status => {
+            text => q{<http://t.co/3Rh1Zcymvo> " #test " $GOOG てすと&hearts; ' @debug_ito '},
+            'entities' => {
+                'hashtags' => [ { 'text' => 'test', 'indices' => [27, 32] }],
+                'user_mentions' => [ { 'indices' => [55,65], 'screen_name' => 'debug_ito' } ],
+                'symbols' => [ { 'text' => 'GOOG', 'indices' => [35, 40] } ],
+                'urls' => [ { 'url' => 'http://t.co/3Rh1Zcymvo', 'indices' => [1, 23] } ],
+            },
+        }},
+        
+        {label => "with retweets", in_status => {
+            'text' => 'RT @slashdot: Quadcopter Guided By Thought &amp;mdash; Accurately http://t.co/reAljIdd89',
+            'entities' => {
+                'hashtags' => [],
+                'user_mentions' => [ {'screen_name' => 'slashdot',  'indices' => [3,12] } ],
+                'symbols' => [],
+                'urls' => [ { 'url' => 'http://t.co/reAljIdd89', 'indices' => [66,88] } ],
+            },
+            retweeted_status => {
+                'text' => 'Quadcopter Guided By Thought &amp;mdash; Accurately http://t.co/reAljIdd89',
+                'entities' => {
+                    'hashtags' => [],
+                    'user_mentions' => [],
+                    'symbols' => [],
+                    'urls' => [ { 'url' => 'http://t.co/reAljIdd89', 'indices' => [52,74]} ],
+                },
+            },
+        }, out_status => {
+            text => 'RT @slashdot: Quadcopter Guided By Thought &mdash; Accurately http://t.co/reAljIdd89',
+            'entities' => {
+                'hashtags' => [],
+                'user_mentions' => [ {'screen_name' => 'slashdot',  'indices' => [3,12] } ],
+                'symbols' => [],
+                'urls' => [ { 'url' => 'http://t.co/reAljIdd89', 'indices' => [62,84] } ],
+            },
+            retweeted_status => {
+                'text' => 'Quadcopter Guided By Thought &mdash; Accurately http://t.co/reAljIdd89',
+                'entities' => {
+                    'hashtags' => [],
+                    'user_mentions' => [],
+                    'symbols' => [],
+                    'urls' => [ { 'url' => 'http://t.co/reAljIdd89', 'indices' => [48,70]} ],
+                },
+            },
+        }}
+    ) {
+        is_deeply($bbin->transform_html_unescape($case->{in_status}), $case->{out_status}, "$case->{label}: HTML unescape OK");
+    }
+}
+
 my $mocknt = mock_twitter();
 
 note('--- iteration by user_timeline');

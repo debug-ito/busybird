@@ -1,7 +1,7 @@
 package BusyBird::Input::Twitter;
 use strict;
 use warnings;
-use BusyBird::Util qw(set_param);
+use BusyBird::Util qw(set_param split_with_entities);
 use BusyBird::Log;
 use BusyBird::DateTime::Format;
 use Time::HiRes qw(sleep);
@@ -44,8 +44,9 @@ sub _apiurl {
 sub transformer_default {
     my ($self, $status_arrayref) = @_;
     return [
-        map { $self->transform_status_id($_) }
-            map { $self->transform_search_status($_) } @$status_arrayref ];
+        map { $self->transform_html_unescape($_) }
+            map { $self->transform_status_id($_) }
+                map { $self->transform_search_status($_) } @$status_arrayref ];
 }
 
 my %_SEARCH_KEY_MAP = (
@@ -83,6 +84,45 @@ sub transform_status_id {
         $new_status->{$key} = "$prefix/statuses/show/" . $status->{$key} . ".json";
         $new_status->{busybird}{original}{$key} = $status->{$key};
     }
+    return $new_status;
+}
+
+sub _html_unescape_destructive_recursive {
+    my ($status) = @_;
+    if(defined($status->{retweeted_status})) {
+        _html_unescape_destructive_recursive($status->{retweeted_status});
+    }
+    if(!defined($status->{text})) {
+        return;
+    }
+    my $segments = split_with_entities($status->{text}, $status->{entities});
+    my $new_text = "";
+    my %new_entities = ();
+    if(defined($status->{entities}) && ref($status->{entities}) eq 'HASH') {
+        %new_entities = map { $_ => [] } keys %{$status->{entities}};
+    }
+    foreach my $segment (@$segments) {
+        $segment->{text} =~ s/&lt;/</g;
+        $segment->{text} =~ s/&gt;/>/g;
+        $segment->{text} =~ s/&amp;/&/g;
+        $segment->{text} =~ s/&quot;/"/g;
+        if(defined($segment->{entity})) {
+            $segment->{entity}{indices}[0] = length($new_text);
+            $segment->{entity}{indices}[1] = $segment->{entity}{indices}[0] + length($segment->{text});
+            push(@{$new_entities{$segment->{type}}}, $segment->{entity});
+        }
+        $new_text .= $segment->{text};
+    }
+    $status->{text} = $new_text;
+    if(defined($status->{entities})) {
+        $status->{entities} = \%new_entities;
+    }
+}
+
+sub transform_html_unescape {
+    my ($self, $status) = @_;
+    my $new_status = dclone($status);
+    _html_unescape_destructive_recursive($new_status);
     return $new_status;
 }
 
@@ -465,6 +505,21 @@ This method does not modify the input C<$status>. The transformation is done to 
 
 The original IDs are saved under C<< $transformed_status->{busybird}{original} >>
 
+=head2 $transformed_status = $input->transform_html_unescape($status)
+
+HTML-unescapes the C<$status>'s text field.
+
+This transformation is necessary because twitter.com automatically HTML-escapes some special characters,
+AND L<BusyBird> also HTML-escapes status texts when it renders them.
+This results in double HTML-escape.
+
+The transformation changes the status's text length.
+C<"indices"> fields in the status's L<Twitter Entities|https://dev.twitter.com/docs/platform-objects/entities> are
+adjusted appropriately.
+
+The transformtion is applied recursively to the status's C<retweeted_status>, if any.
+
+This method does not modify the input C<$status>. The transformation is done to its clone.
 
 =head1 AUTHOR
 
