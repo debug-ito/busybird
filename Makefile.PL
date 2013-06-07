@@ -37,6 +37,8 @@ requires 'autovivification', '0.10';
 requires 'JavaScript::Value::Escape', '0';
 requires 'Cache::Memory::Simple', '1.01';
 requires 'URI::Escape', '0';
+requires 'perl', '5.10.0';
+requires 'sort', '0';
 
 test_requires 'FindBin', '0';
 test_requires 'HTTP::Request', '6.00';

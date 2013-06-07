@@ -6,8 +6,9 @@ use Carp;
 use Exporter qw(import);
 use BusyBird::DateTime::Format;
 use DateTime;
+use 5.10.0;
 
-our @EXPORT_OK = (qw(set_param expand_param sort_statuses));
+our @EXPORT_OK = (qw(set_param expand_param sort_statuses split_with_entities));
 
 sub set_param {
     my ($hashref, $params_ref, $key, $default, $is_mandatory) = @_;
@@ -53,6 +54,8 @@ sub _sort_compare {
 
 sub sort_statuses {
     my ($statuses) = @_;
+    use sort 'stable';
+    
     my @dt_statuses = do {
         no autovivification;
         map {
@@ -73,6 +76,56 @@ sub sort_statuses {
     } @dt_statuses];
 }
 
+sub _create_text_segment {
+    return {
+        text => substr($_[0], $_[1], $_[2] - $_[1]),
+        start => $_[1],
+        end => $_[2],
+        type => $_[3],
+        entity => $_[4],
+    };
+}
+
+sub split_with_entities {
+    my ($text, $entities_hashref) = @_;
+    use sort 'stable';
+    if(!defined($text)) {
+        croak "text must not be undef";
+    }
+    $entities_hashref = {} if not defined $entities_hashref;
+
+    ## create entity segments
+    my @entity_segments = ();
+    foreach my $entity_type (keys %$entities_hashref) {
+        foreach my $entity (@{$entities_hashref->{$entity_type}}) {
+            push(@entity_segments, _create_text_segment(
+                $text, $entity->{indices}[0], $entity->{indices}[1], $entity_type, $entity
+            ));
+        }
+    }
+    @entity_segments = sort { $a->{start} <=> $b->{start} } @entity_segments;
+
+    ## combine entity_segments with non-entity segments
+    my $pos = 0;
+    my @final_segments = ();
+    foreach my $entity_segment (@entity_segments) {
+        if($pos < $entity_segment->{start}) {
+            push(@final_segments, _create_text_segment(
+                $text, $pos, $entity_segment->{start}
+            ));
+        }
+        push(@final_segments, $entity_segment);
+        $pos = $entity_segment->{end};
+    }
+    if($pos < length($text)) {
+        push(@final_segments, _create_text_segment(
+            $text, $pos, length($text)
+        ));
+    }
+    return \@final_segments;
+}
+
+
 1;
 
 __END__
@@ -85,9 +138,13 @@ BusyBird::Util - utility functions for BusyBird
 
 =head1 SYNOPSIS
 
-    use BusyBird::Util qw(sort_statuses);
+    use BusyBird::Util qw(sort_statuses split_with_entities);
     
     my @sorted_statuses = sort_statuses(@statuses);
+    
+    my $status = @sorted_statuses[0];
+    my $segments_arrayref = split_with_entities($status->{text}, $status->{entities});
+
 
 =head1 DESCRIPTION
 
@@ -103,6 +160,93 @@ Sorts an array of status object appropriately.
 
 The sort refers to C<< $status->{created_at} >> and C<< $status->{busybird}{acked_at} >> fields.
 See L<BusyBird::StatusStorage/Order_of_Statuses> section.
+
+=head2 $segments_arrayref = split_with_entities($text, $entities_hashref)
+
+Splits the given C<$text> with the "entities" and returns the split segments.
+
+C<$text> is a string to be split. C<$entities_hashref> is a hash-ref which has the same stucture as
+L<Twitter Entities|https://dev.twitter.com/docs/platform-objects/entities>.
+Each entity object annotates a part of C<$text> with such information as linked URLs, mentioned users,
+mentioned hashtags, etc.
+
+The return value C<$segments_arrayref> is an array-ref of "segment" objects.
+A "segment" is a hash-ref containing a part of C<$text> and the entity object (if any) attached to it.
+Note that C<$segments_arrayref> has segments that no entity is attached to.
+C<$segments_arrayref> is sorted, so you can assemble the complete C<$text> by concatenating all the segments.
+
+Example:
+
+    my $text = 'aaa --- bb ---- ccaa -- ccccc';
+    my $entities = {
+        a => [
+            {indices => [0, 3],   url => 'http://hoge.com/a/1'},
+            {indices => [18, 20], url => 'http://hoge.com/a/2'},
+        ],
+        b => [
+            {indices => [8, 10], style => "bold"},
+        ],
+        c => [
+            {indices => [16, 18], footnote => 'first c'},
+            {indices => [24, 29], some => {complex => 'structure'}},
+        ],
+        d => []
+    };
+    my $segments = split_with_entities($text, $entities);
+    
+    ## $segments = [
+    ##     { text => 'aaa', start => 0, end => 3, type => 'a',
+    ##       entity => {indices => [0, 3], url => 'http://hoge.com/a/1'} },
+    ##     { text => ' --- ', start => 3, end => 8, type => undef,
+    ##       entity => undef},
+    ##     { text => 'bb', start => 8, end => 10, type => 'b',
+    ##       entity => {indices => [8, 10], style => "bold"} },
+    ##     { text => ' ---- ', start => 10, end =>  16, type => undef,
+    ##       entity => undef },
+    ##     { text => 'cc', start => 16, end => 18, type => 'c',
+    ##       entity => {indices => [16, 18], footnote => 'first c'} },
+    ##     { text => 'aa', start => 18, end => 20, type => 'a',
+    ##       entity => {indices => [18, 20], url => 'http://hoge.com/a/2'} },
+    ##     { text => ' -- ', start => 20, end => 24, type => undef,
+    ##       entity => undef },
+    ##     { text => 'ccccc', start => 24, end => 29, type => 'c',
+    ##       entity => {indices => [24, 29], some => {complex => 'structure'}} }
+    ## ];
+
+Any entity object is required to have C<indices> field, which is an array-ref
+of starting and ending indices of the text part.
+The ending index must be greater than or equal to the starting index.
+Other fields in entity objects are optional.
+
+Entity objects must not overlap. In that case, the result is undefined.
+
+A segment hash-ref has the following fields.
+
+=over
+
+=item C<text>
+
+Substring of the C<$text>.
+
+=item C<start>
+
+Starting index of the segment in C<$text>.
+
+=item C<end>
+
+Ending index of the segment in C<$text>.
+
+=item C<type>
+
+Type of the entity. If the segment has no entity attached, it is C<undef>.
+
+=item C<entity>
+
+Attached entity object. If the segment has no entity attached, it is C<undef>.
+
+=back
+
+It croaks if C<$text> is C<undef>.
 
 =head1 AUTHOR
 
