@@ -136,6 +136,10 @@ __END__
 
 BusyBird::Util - utility functions for BusyBird
 
+
+=for test_synopsis
+my @statuses;
+
 =head1 SYNOPSIS
 
     use BusyBird::Util qw(sort_statuses split_with_entities);
