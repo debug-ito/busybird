@@ -230,6 +230,13 @@ sub _escape_and_linkify {
 sub _format_status_html_destructive {
     my ($self, $status, $timeline_name) = @_;
     $timeline_name = "" if not defined $timeline_name;
+    if(defined($status->{retweeted_status}) && ref($status->{retweeted_status}) eq "HASH") {
+        my $retweet = $status->{retweeted_status};
+        $status->{busybird}{retweeted_by_user} = $status->{user};
+        foreach my $key (qw(text created_at user entities)) {
+            $status->{$key} = $retweet->{$key};
+        }
+    }
     return $self->{renderer}->render(
         "status.tt",
         {s => $status, %{$self->template_functions_for_timeline($timeline_name)}}

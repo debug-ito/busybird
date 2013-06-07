@@ -63,9 +63,11 @@ sub get_member_elem {
 
 foreach my $getter_method (qw(id username created_at text)) {
     no strict "refs";
+    my $property_name = $getter_method;
+    $property_name =~ s/_/-/g;
     *{$getter_method} = sub {
         my ($self) = @_;
-        return $self->get_member_elem("bb-status-$getter_method");
+        return $self->get_member_elem("bb-status-$property_name");
     };
 }
 

@@ -17,5 +17,10 @@
       </div>
     </div>
     <div class="bb-status-text">[% bb_text(s) %]</div>
+    [% IF s.busybird.retweeted_by_user.screen_name %]
+    <div class="bb-status-retweeted-by">
+      <i class="icon-retweet"></i> Retweeted by <span class="bb-status-retweeted-by-username">[% s.busybird.retweeted_by_user.screen_name %]</span>
+    </div>
+    [% END # IF %]
   </div>
 </li>

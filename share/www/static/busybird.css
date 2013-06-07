@@ -30,6 +30,7 @@ div.bb-status-profile-image {
 
 div.bb-status-main {
     margin-left: 54px;
+    padding-bottom: 8px;
 }
 
 div.bb-status-header {
@@ -40,13 +41,22 @@ div.bb-status-header {
 }
 
 div.bb-status-text {
-    padding: 8px;
+    padding: 8px 8px 0 8px;
 }
 
 div.bb-status-attributes {
     float: right;
     color: #333;
     font-size: 80%;
+}
+
+.bb-status-retweeted-by {
+    color: #666;
+    padding: 0 8px 0 12px;
+}
+
+.bb-status-retweeted-by i {
+    vertical-align: middle;
 }
 
 .bb-status-username {
@@ -60,7 +70,6 @@ div.bb-status-attributes {
 .bb-status-cursor {
     background-color: #e7e8ec;
 }
-
 
 
 /****

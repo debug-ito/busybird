@@ -14,9 +14,15 @@ use BusyBird::StatusStorage::Memory;
 
 $BusyBird::Log::Logger = undef;
 
-{
+sub create_main {
     my $main = BusyBird::Main->new;
     $main->set_config(default_status_storage => BusyBird::StatusStorage::Memory->new);
+    $main->timeline('test');
+    return $main;
+}
+
+{
+    my $main = create_main();
     my @statuses = map { status($_, $_ + 10) } 0..9;
     $main->timeline('test')->add(\@statuses);
     test_psgi create_psgi_app($main), sub {
@@ -39,8 +45,7 @@ $BusyBird::Log::Logger = undef;
 
 {
     note("--- various status ID renderings");
-    my $main = BusyBird::Main->new;
-    $main->set_config(default_status_storage => BusyBird::StatusStorage::Memory->new);
+    my $main = create_main();
     my $timeline = $main->timeline('test');
     foreach my $case (
         {in_id => 'http://example.com/', exp_id => 'http://example.com/'},
@@ -61,6 +66,48 @@ $BusyBird::Log::Logger = undef;
             is($statuses_html[0]->id, $case->{exp_id}, "In ID: $case->{in_id} OK");
         };
     }
+}
+
+{
+    note("--- retweet rendering");
+    my $main = create_main();
+    $main->set_config(
+        time_zone => "+0000",
+        time_locale => 'en_US',
+        time_format => '%Y-%m-%d %H:%M:%S',
+        status_permalink_builder => sub { "" },
+    );
+    my $timeline = $main->timeline('test');
+    $timeline->add([{
+        id => "retweet_id",
+        created_at => "Fri Jun 07 13:50:13 +0900 2013",
+        user => { screen_name => "retweeter" },
+        busybird => { level => 5 },
+        text => 'RT @speaker: I say something!',
+        entities => {
+            user_mentions => [ { screen_name => 'speaker', indices => [3,11] } ],
+        },
+        retweeted_status => {
+            id => "original_id",
+            created_at => "Tue Jun 04 22:12:01 +0000 2013",
+            user => { screen_name => 'speaker' },
+            text => 'I say something!',
+        },
+    }]);
+    test_psgi create_psgi_app($main), sub {
+        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my @statuses_html = BusyBird::Test::StatusHTML->new_multiple($tester->request_ok(
+            "GET", "/timelines/test/statuses.html?count=100", undef,
+            qr/^200$/, "GET statuses.html OK"
+        ));
+        is(scalar(@statuses_html), 1, "1 status node");
+        my $status_html = $statuses_html[0];
+        is($status_html->id, "retweet_id", "ID: retweet");
+        is($status_html->level, 5, "level: retweet");
+        is($status_html->username, "speaker", "username: original");
+        is($status_html->created_at, "2013-06-04 22:12:01", 'created_at: original');
+        is($status_html->text, "I say something!", "text: original");
+    };
 }
 
 done_testing();
