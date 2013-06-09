@@ -434,6 +434,8 @@ This storage stores all statuses in the process memory.
 The stored statuses can be saved to a file in JSON format.
 The saved statuses can be loaded from the file.
 
+This storage is synchronous, i.e., all operations block the thread.
+
 This module uses L<BusyBird::Log> for logging.
 
 =head1 CAVEATS
@@ -466,7 +468,6 @@ You can specify the folowing options in C<%options>.
 
 Specifies the maximum number of statuses the storage can store.
 If more statuses are added to the full storage, the oldest statuses are removed automatically.
-
 
 =back
 
