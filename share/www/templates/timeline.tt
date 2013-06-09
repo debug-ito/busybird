@@ -16,9 +16,6 @@
             <li class="active"><a>[% timeline_name %]</a></li>
             <li class="divider-vertical"></li>
           </ul>
-          <div id="bb-indicator" class="navbar-text pull-left">
-            <span id="bb-msg"></span>
-          </div>
           <div class="navbar-form pull-right">
             <div class="btn-group pull-right bb-nav-button-group">
               <a class="btn btn-inverse" href="[% post_button_url %]" target="_blank"><i class="icon-pencil icon-white"></i></a>
@@ -43,6 +40,9 @@
             </div>
           </div>
           <div id="bb-spinner-placeholder"></div>
+          <div id="bb-indicator" class="navbar-text pull-right">
+            <span id="bb-msg"></span>
+          </div>
         </div>
       </div>
     </div>

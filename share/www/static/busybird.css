@@ -116,6 +116,7 @@ div.bb-status-attributes {
     height: 40px;
     width: 40px;
     float: right;
+    margin-left: 20px;
 }
 
 .bb-msg-error {
