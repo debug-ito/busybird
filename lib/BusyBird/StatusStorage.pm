@@ -1,6 +1,6 @@
 package BusyBird::StatusStorage;
-
-our $VERSION = '0.01';
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
 
 1;
 
@@ -11,10 +11,6 @@ __END__
 =head1 NAME
 
 BusyBird::StatusStorage - interface for status storage objects
-
-=head1 VERSION
-
-Version 0.01
 
 =head1 DESCRIPTION
 

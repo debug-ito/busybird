@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use DateTime;
 use BusyBird::DateTime::Format;
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
 
 sub new {
     my ($class, %args) = @_;
@@ -50,8 +52,6 @@ sub generate_id {
     return $id;
 }
 
-our $VERSION = "0.01";
-
 1;
 __END__
 
@@ -60,10 +60,6 @@ __END__
 =head1 NAME
 
 BusyBird::Input::Generator - status generator
-
-=head1 VERSION
-
-0.01
 
 =head1 SYNOPSIS
 

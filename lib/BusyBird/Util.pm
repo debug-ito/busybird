@@ -7,6 +7,9 @@ use Exporter qw(import);
 use BusyBird::DateTime::Format;
 use DateTime;
 use 5.10.0;
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
+
 
 our @EXPORT_OK = (qw(set_param expand_param sort_statuses split_with_entities));
 

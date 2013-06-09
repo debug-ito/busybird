@@ -11,6 +11,10 @@ use File::ShareDir;
 use URI::Escape qw(uri_escape);
 use Encode ();
 
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
+
+
 our @CARP_NOT = ('BusyBird::Timeline');
 
 my %DEFAULT_CONFIG_GENERATOR = (
@@ -179,7 +183,6 @@ sub watch_unacked_counts {
     return $watcher;
 }
 
-our $VERSION = '0.01';
 
 1;
 
@@ -190,10 +193,6 @@ __END__
 =head1 NAME
 
 BusyBird::Main - main application object of BusyBird
-
-=head1 VERSION
-
-0.01
 
 =head1 SYNOPSIS
 

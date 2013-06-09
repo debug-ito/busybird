@@ -1,11 +1,9 @@
 package BusyBird::Log;
 use strict;
 use warnings;
-
 use Exporter qw(import);
-
-use strict;
-use warnings;
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
 
 our @EXPORT = qw(bblog);
 our @EXPORT_OK = @EXPORT;
@@ -22,8 +20,6 @@ sub bblog {
     $Logger->($level, $msg) if defined $Logger;
 }
 
-our $VERSION = '0.01';
-
 1;
 
 =pod
@@ -31,10 +27,6 @@ our $VERSION = '0.01';
 =head1 NAME
 
 BusyBird::Log - simple logging infrastructure for BusyBird
-
-=head1 VERSION
-
-0.01
 
 =head1 SYNOPSIS
 

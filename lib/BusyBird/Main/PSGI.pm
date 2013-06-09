@@ -13,6 +13,9 @@ use Scalar::Util qw(looks_like_number);
 use Carp;
 use Exporter qw(import);
 use URI::Escape qw(uri_unescape);
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
+
 
 our @EXPORT = our @EXPORT_OK = qw(create_psgi_app);
 

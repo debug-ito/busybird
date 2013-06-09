@@ -1,6 +1,7 @@
 package BusyBird::Watcher;
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
 
-our $VERSION = '0.01';
 
 1;
 
@@ -9,11 +10,6 @@ our $VERSION = '0.01';
 =head1 NAME
 
 BusyBird::Watcher - interface for watcher objects
-
-=head1 VERSION
-
-Version 0.01
-
 
 =for test_synopsis
 my ($timeline); sub callback {}

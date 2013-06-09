@@ -6,6 +6,9 @@ use BusyBird::Log;
 use CPS qw(kforeach);
 use Carp;
 use Scalar::Util qw(weaken);
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
+
 
 sub new {
     my ($class) = @_;
@@ -52,8 +55,6 @@ sub execute {
 }
 
 
-our $VERSION = '0.01';
-
 1;
 
 __END__
@@ -63,10 +64,6 @@ __END__
 =head1 NAME
 
 BusyBird::Flow - CPS data flow with concurrency regulation
-
-=head1 VERSION
-
-0.01
 
 =head1 SYNOPSIS
 

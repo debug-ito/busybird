@@ -13,6 +13,8 @@ use JSON;
 use Try::Tiny;
 use CPS qw(kpar);
 use CPS::Functional qw(kmap);
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
 
 sub new {
     my ($class, %options) = @_;
@@ -400,20 +402,15 @@ sub get_unacked_counts {
     goto $args{callback};
 }
 
-
-our $VERSION = '0.01';
-
 1;
+
+__END__
 
 =pod
 
 =head1 NAME
 
 BusyBird::StatusStorage::Memory - Simple status storage in the process memory
-
-=head1 VERSION
-
-Version 0.01
 
 =head1 SYNOPSIS
 

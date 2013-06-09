@@ -13,6 +13,8 @@ use CPS qw(kforeach);
 use Storable qw(dclone);
 use Scalar::Util qw(weaken looks_like_number);
 use DateTime;
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
 
 our @CARP_NOT = ();
 
@@ -285,8 +287,6 @@ sub watch_unacked_counts {
 }
 
 
-our $VERSION = '0.01';
-
 1;
 
 __END__
@@ -296,10 +296,6 @@ __END__
 =head1 NAME
 
 BusyBird::Timeline - a timeline object in BusyBird
-
-=head1 VERSION
-
-0.01
 
 =head1 SYNOPSIS
 

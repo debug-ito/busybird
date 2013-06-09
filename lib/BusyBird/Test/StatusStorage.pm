@@ -10,6 +10,8 @@ use Test::Exception;
 use BusyBird::DateTime::Format;
 use BusyBird::StatusStorage;
 use Carp;
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
 
 our %EXPORT_TAGS = (
     storage => [
@@ -1364,6 +1366,10 @@ sub test_storage_put_requires_ids {
     }
 }
 
+1;
+
+__END__
+
 =pod
 
 =head1 NAME
@@ -1468,7 +1474,3 @@ Almost the same as the C<test_status_id_set> function, but this test DOES care t
 Toshio Ito C<< toshioito [at] cpan.org >>
 
 =cut
-
-
-1;
-

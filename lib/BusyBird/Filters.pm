@@ -1,6 +1,9 @@
 package BusyBird::Filters;
 use strict;
 use warnings;
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
+
 
 1;
 

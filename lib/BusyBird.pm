@@ -1,7 +1,8 @@
 package BusyBird;
 use strict;
 use warnings;
+use BusyBird::Version;
+our $VERSION = $BusyBired::Version::VERSION;
 
-our $VERSION = '0.01';
 
 1;

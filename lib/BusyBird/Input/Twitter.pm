@@ -10,8 +10,8 @@ use Storable qw(dclone);
 use Try::Tiny;
 use Carp;
 use Scalar::Util qw(reftype blessed);
-
-our $VERSION = "0.01";
+use BusyBird::Version;
+our $VERSION = $BusyBird::Version::VERSION;
 
 my $DATETIME_FORMATTER = 'BusyBird::DateTime::Format';
 
@@ -295,11 +295,6 @@ __END__
 =head1 NAME
 
 BusyBird::Input::Twitter - Loader for Twitter API
-
-=head1 VERSION
-
-Version 0.01
-
 
 =head1 SYNOPSIS
 
