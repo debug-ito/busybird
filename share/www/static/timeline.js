@@ -52,16 +52,14 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
             window_adjuster();
         });
     },
-    _createWindowAdjuster: function(dom_anchor_elem) {
-        var $anchor_elem;
-        var relative_position_of_anchor;
-        if(!defined(dom_anchor_elem)) {
+    _createWindowAdjuster: function(anchor_position_func) {
+        if(!anchor_position_func) {
             return function() {};
         }
-        $anchor_elem = $(dom_anchor_elem);
-        relative_position_of_anchor = $anchor_elem.offset().top - $(window).scrollTop();
+        var relative_position_of_anchor;
+        relative_position_of_anchor = anchor_position_func() - $(window).scrollTop();
         return function() {
-            $(window).scrollTop($anchor_elem.offset().top - relative_position_of_anchor);
+            $(window).scrollTop(anchor_position_func() - relative_position_of_anchor);
         };
     },
     _scanStatusesForDisplayActions: function($statuses, threshold_level, enable_animation, cursor_index) {
@@ -140,7 +138,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         });
     },
     setDisplayByThreshold: function(args) {
-        // @params: args.$statuses, args.threshold, args.enableAnimation, args.enableWindowAdjust, args.cursorIndex
+        // @params: args.$statuses, args.threshold, args.enableAnimation, args.enableWindowAdjust, args.cursorIndex, args.defaultAnchorPositionFunc
         // @returns: promise for completion event.
         var window_adjuster = function(){};
         return Q.fcall(function() {
@@ -153,8 +151,16 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
             return selfclass._scanStatusesForDisplayActions(args.$statuses, args.threshold, args.enableAnimation, args.cursorIndex);
         }).then(function(action_description) {
             var promise_hidden_statuses, promise_animation, promise_immediate;
+            var $anchor_element;
+            var anchor_position_function = null;
             if(args.enableWindowAdjust) {
-                window_adjuster = selfclass._createWindowAdjuster(action_description.domAnchorElem);
+                if(action_description.domAnchorElem) {
+                    $anchor_element = $(action_description.domAnchorElem);
+                    anchor_position_function = function() {
+                        return $anchor_element.offset().top;
+                    };
+                }
+                window_adjuster = selfclass._createWindowAdjuster(anchor_position_function || args.defaultAnchorPositionFunc);
             }
             if(action_description.domsAnimateToggle.length > 0) {
                 promise_animation = bb.slideToggleElements(
@@ -250,13 +256,21 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         });
     }
 }); selfclass.prototype = {
-    _setDisplayImmediately: function($target_statuses) {
+    _setDisplayImmediately: function($target_statuses, enable_window_adjust) {
         var self = this;
-        return selfclass.setDisplayByThreshold({
+        var args = {
             $statuses: $target_statuses,
             threshold: self.threshold_level,
-            cursorIndex: self._getCursorIndex()
-        });
+            cursorIndex: self._getCursorIndex(),
+        };
+        var $container = $(self.sel_container);
+        if(enable_window_adjust) {
+            args.enableWindowAdjust = true;
+            args.defaultAnchorPositionFunc = function() {
+                return $container.offset().top + $container.height();
+            };
+        }
+        return selfclass.setDisplayByThreshold(args);
     },
     _getLoadStatusesURL: function() {
         return this.api_base + "/timelines/" + this.timeline + "/statuses.html";
@@ -282,7 +296,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
             cache: false, timeout: 10000, dataType: "json", tryMax: selfclass.ACK_TRY_MAX
         }).promise;
     },
-    _addStatuses: function(added_statuses_dom, is_prepend) {
+    _addStatuses: function(added_statuses_dom, is_prepend, enable_window_adjust) {
         var self = this;
         var $container = $(self.sel_container);
         var $next_top = null;
@@ -300,7 +314,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
             }
             $next_top = $statuses.last();
         }).then(function() {
-            return self._setDisplayImmediately($(added_statuses_dom));
+            return self._setDisplayImmediately($(added_statuses_dom), enable_window_adjust);
         });
     },
     _isValidForCursor: function($elem) {
@@ -348,9 +362,9 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         // @returns: promise resolved when done.
         return this._addStatuses(added_statuses_dom, false);
     },
-    prependStatuses: function(added_statuses_dom) {
+    prependStatuses: function(added_statuses_dom, enable_window_adjust) {
         // @returns: promise resolved when done.
-        return this._addStatuses(added_statuses_dom, true);
+        return this._addStatuses(added_statuses_dom, true, enable_window_adjust);
     },
     setThresholdLevel: function(new_threshold) {
         // @returns: promise resolved when done.
@@ -376,12 +390,16 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     },
     getTimelineName: function() { return this.timeline },
     getAPIBase: function() { return this.api_base },
-    loadUnackedStatuses: function() {
+    loadUnackedStatuses: function(enable_window_adjust) {
+        // @params: enable_window_adjust = true
         // @returns: promise with the following object
         //           { maxReached: (boolean), statuses: (array of status DOM elements loaded) }
         var self = this;
         var load_result;
         var $acked_new_statuses_label = $(self.sel_container).find(".bb-status-new-label");
+        if(!defined(enable_window_adjust)) {
+            enable_window_adjust = true;
+        }
         return selfclass.loadStatuses({
             apiURL: self._getLoadStatusesURL(), countPerPage: selfclass.LOAD_UNACKED_STATUSES_COUNT_PER_PAGE,
             maxPageNum: selfclass.LOAD_UNACKED_STATUSES_MAX_PAGE_NUM, ackState: "unacked"
@@ -389,7 +407,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
             load_result = result;
             return self._ackStatuses(load_result.statuses, load_result.maxReached);
         }).then(function() {
-            return self.prependStatuses(load_result.statuses);
+            return self.prependStatuses(load_result.statuses, enable_window_adjust);
         }).then(function() {
             $acked_new_statuses_label.remove();
             return {maxReached: load_result.maxReached, statuses: load_result.statuses};
@@ -423,7 +441,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         //           { maxReached: (boolean), statuses: (array of unacked status DOM elements loaded) }
         var self = this;
         var unacked_load_result;
-        return self.loadUnackedStatuses().then(function(result) {
+        return self.loadUnackedStatuses(false).then(function(result) {
             self._adjustCursor();
             unacked_load_result = result;
             if(!result.maxReached) {
