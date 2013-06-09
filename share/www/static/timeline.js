@@ -345,7 +345,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
                 self.setCursor($next_candidate.get(0));
                 return;
             }
-            if($prev_candidate.size() === 1 && self._isValidForCursor($prev_candidate)) {
+            if($prev_candidate.size() === 1 && self._isValidForCursor($prev_candidate.eq(0))) {
                 self.setCursor($prev_candidate.get(0));
                 return;
             }
