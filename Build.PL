@@ -1,0 +1,79 @@
+use 5.006;
+use strict;
+use warnings;
+use Module::Build 0.36;
+
+my $builder = Module::Build->new(
+    module_name         => 'BusyBird',
+    license             => 'perl',
+    dist_author         => q{Toshio Ito <toshioito@cpan.org>},
+    dist_version_from   => 'lib/BusyBird.pm',
+    configure_requires => {
+        'Module::Build' => "0.36",
+    },
+    build_requires => {
+        'Test::More' => 0,
+        'FindBin'=> '0',
+        'HTTP::Request'=> '6.00',
+        'Plack::Test'=> '0',
+        'Test::Builder'=> '0',
+        'Test::Exception'=> '0.31',
+        'Test::Memory::Cycle'=> '1.04',
+        'Test::MockObject'=> '1.09',
+        'Test::More'=> '0.98',
+        'Test::Warn'=> '0.24',
+        'HTML::TreeBuilder'=> '5',
+        'HTML::TreeBuilder::XPath'=> '0.12',
+        'JSON'=> '0',
+    },
+    requires => {
+        'perl' => "5.10.0",
+        'Async::Queue'=> '0.02',
+        'Async::Selector'=> '1.03',
+        'Async::Selector::Aggregator'=> '1.02',
+        'CPS'=> '0.15',
+        'CPS::Functional'=> '0.15',
+        'Carp'=> '0',
+        'DateTime'=> '0.70',
+        'DateTime::Duration'=> '0',
+        'DateTime::Format::Strptime'=> '0',
+        'DateTime::TimeZone'=> '1.42',
+        'Encode'=> '0',
+        'Exporter'=> '0',
+        'File::ShareDir'=> '0',
+        'File::Spec'=> '0',
+        'JSON'=> '0',
+        'List::Util'=> '1.24',
+        'Plack::Builder'=> '0',
+        'Plack::Request'=> '0',
+        'Router::Simple'=> '0',
+        'Scalar::Util'=> '1.24',
+        'Storable'=> '2.27',
+        'Test::Builder'=> '0',
+        'Test::Exception'=> '0',
+        'Test::More'=> '0.98',
+        'Text::Xslate'=> '1.60',
+        'Tie::IxHash'=> '0',
+        'Time::HiRes'=> '1.9720',
+        'Try::Tiny'=> '0.10',
+        'autovivification'=> '0.10',
+        'JavaScript::Value::Escape'=> '0',
+        'Cache::Memory::Simple'=> '1.01',
+        'URI::Escape'=> '0',
+        'sort'=> '0',
+    },
+    share_dir => "share",
+    add_to_cleanup      => [ 'BusyBird-*' ],
+    ## create_makefile_pl => 'traditional',
+    no_index => {
+        directory => ["t", "xt", "eg", "inc", "share"],
+        file => ["README.pod"],
+    },
+    meta_add => {
+        resources => {
+            repository => "git://github.com/debug-ito/busybird.git",
+        },
+    },
+);
+
+$builder->create_build_script();

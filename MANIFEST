@@ -1,13 +1,7 @@
+Build.PL
 Changes
-inc/Module/Install.pm
-inc/Module/Install/Base.pm
-inc/Module/Install/Can.pm
-inc/Module/Install/Fetch.pm
-inc/Module/Install/Metadata.pm
-inc/Module/Install/Share.pm
-inc/Module/Install/Win32.pm
-inc/Module/Install/WriteAll.pm
 lib/BusyBird.pm
+lib/BusyBird/Config.pod
 lib/BusyBird/DateTime/Format.pm
 lib/BusyBird/Filters.pm
 lib/BusyBird/Flow.pm
@@ -16,6 +10,7 @@ lib/BusyBird/Input/Twitter.pm
 lib/BusyBird/Log.pm
 lib/BusyBird/Main.pm
 lib/BusyBird/Main/PSGI.pm
+lib/BusyBird/Main/PSGI/View.pm
 lib/BusyBird/Status.pod
 lib/BusyBird/StatusStorage.pm
 lib/BusyBird/StatusStorage/Memory.pm
@@ -23,14 +18,12 @@ lib/BusyBird/Test/StatusStorage.pm
 lib/BusyBird/Timeline.pm
 lib/BusyBird/Tutorial.pod
 lib/BusyBird/Util.pm
+lib/BusyBird/Version.pm
 lib/BusyBird/Watcher.pm
 lib/BusyBird/Watcher/Aggregator.pm
 lib/BusyBird/WebAPI.pod
 MANIFEST			This list of files
 MANIFEST.SKIP
-META.yml
-MYMETA.json
-MYMETA.yml
 README.markdown
 share/www/static/bootstrap/css/bootstrap-responsive.css
 share/www/static/bootstrap/css/bootstrap-responsive.min.css
@@ -48,6 +41,7 @@ share/www/static/timeline.js
 share/www/templates/error.tt
 share/www/templates/status.tt
 share/www/templates/timeline.tt
+t/Config.t
 t/DateTime_Format.t
 t/Flow.t
 t/HTML.t
@@ -55,14 +49,17 @@ t/Input_Generator.t
 t/Input_Twitter.t
 t/lib/BusyBird/Test/HTTP.pm
 t/lib/BusyBird/Test/Input_Twitter.pm
+t/lib/BusyBird/Test/StatusHTML.pm
 t/lib/BusyBird/Test/StatusStorage/AEDelayed.pm
 t/lib/BusyBird/Test/Timeline_Util.pm
 t/Log.t
 t/Main.t
-t/Status.t
+t/Main_PSGI.t
+t/Main_PSGI_View.t
 t/StatusStorage_Memory.t
 t/Timeline.t
 t/Util_sort_statuses.t
+t/Util_split.t
 t/WebAPI.t
 t/WebAPI_html.t
 xt/10-synopsis.t
