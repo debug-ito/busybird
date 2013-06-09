@@ -409,6 +409,9 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         }).then(function() {
             return self.prependStatuses(load_result.statuses, enable_window_adjust);
         }).then(function() {
+            if(!defined(self.$cursor)) {
+                self._adjustCursor();
+            }
             $acked_new_statuses_label.remove();
             return {maxReached: load_result.maxReached, statuses: load_result.statuses};
         });
@@ -434,6 +437,10 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
                 added_statuses.shift();
             }
             return self.appendStatuses(result.statuses);
+        }).then(function() {
+            if(!defined(self.$cursor)) {
+                self._adjustCursor();
+            }
         });
     },
     loadInit: function() {
@@ -442,7 +449,6 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         var self = this;
         var unacked_load_result;
         return self.loadUnackedStatuses(false).then(function(result) {
-            self._adjustCursor();
             unacked_load_result = result;
             if(!result.maxReached) {
                 return self.loadMoreStatuses();
