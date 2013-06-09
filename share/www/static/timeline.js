@@ -424,7 +424,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
             }
             return selfclass.loadStatuses({
                 apiURL: self._getLoadStatusesURL(),
-                ackState: "any", countPerPage: selfclass.LOAD_MORE_STATUSES_COUNT,
+                ackState: "acked", countPerPage: selfclass.LOAD_MORE_STATUSES_COUNT,
                 startMaxID: start_id, maxPageNum: 1
             });
         }).then(function(result) {
