@@ -104,8 +104,8 @@ sub _html_unescape_destructive_recursive {
     foreach my $segment (@$segments) {
         $segment->{text} =~ s/&lt;/</g;
         $segment->{text} =~ s/&gt;/>/g;
-        $segment->{text} =~ s/&amp;/&/g;
         $segment->{text} =~ s/&quot;/"/g;
+        $segment->{text} =~ s/&amp;/&/g;
         if(defined($segment->{entity})) {
             $segment->{entity}{indices}[0] = length($new_text);
             $segment->{entity}{indices}[1] = $segment->{entity}{indices}[0] + length($segment->{text});

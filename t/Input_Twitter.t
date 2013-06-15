@@ -160,6 +160,12 @@ test_mock {max_id => 20, since_id => 20}, [], "mock max_id == since_id";
         }, out_status => {
             text => q{& < > & "},
         }},
+
+        {label => '&amp; should be unescaped at the last', in_status => {
+            text => '&amp;gt; &amp;lt; &amp;amp; &amp;quot;'
+        }, out_status => {
+            text => q{&gt; &lt; &amp; &quot;}
+        }},
             
         {label => "with entities", in_status => {
             'text' => q{&lt;http://t.co/3Rh1Zcymvo&gt; " #test " $GOOG てすと&amp;hearts; ' @debug_ito '},
