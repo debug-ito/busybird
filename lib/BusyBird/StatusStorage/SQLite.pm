@@ -120,6 +120,9 @@ sub put_statuses {
     if(ref($statuses) eq 'HASH') {
         $statuses = [$statuses];
     }
+    foreach my $status (@$statuses) {
+        croak "status ID is missing" if not defined $status->{id};
+    }
     my $callback = $args{callback} || sub {};
     my $dbh;
     my @results = try {
