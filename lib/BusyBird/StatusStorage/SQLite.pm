@@ -118,7 +118,7 @@ sub put_statuses {
     }
     my $callback = $args{callback} || sub {};
     my $dbh;
-    try {
+    my @results = try {
         $dbh = $self->_get_my_dbh();
         $dbh->begin_work();
         my $timeline_id = $self->_get_timeline_id($dbh, $timeline); ## TODO: create timeline entry if necessary!!
@@ -134,16 +134,16 @@ sub put_statuses {
             }
         }
         $dbh->commit();
-        @_ = (undef, $total_count);
-        goto $callback;
+        return (undef, $total_count);
     } catch {
         my $e = shift;
         if($dbh) {
             $dbh->rollback();
         }
-        @_ = ($e);
-        goto $callback;
+        return ($e);
     };
+    @_ = @results;
+    goto $callback;
 }
 
 sub _get_timeline_id {
@@ -151,7 +151,7 @@ sub _get_timeline_id {
     my ($sql, @bind) = $self->{maker}->select('timelines', ['id'], ['name' => $timeline_name]);
     my $record = $dbh->selectrow_arrayref($sql, undef, @bind);
     if(!defined($record)) {
-        croak "No timeline named '$timeline_name'"; ## TODO: hmm, it is not an error that the given timeline does not exist..
+        return undef;
     }
     return $record->[0];
 }
@@ -228,15 +228,17 @@ sub get_statuses {
     if($count ne 'all' && !looks_like_number($count)) {
         croak "count parameter must be either 'all' or number";
     }
-    try {
+    my @results = try {
         my $dbh = $self->_get_my_dbh();
         my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
+        if(!defined($timeline_id)) {
+            return (undef, []);
+        }
         my $cond = $self->_create_base_condition($timeline_id, $ack_state);
         if(defined($max_id)) {
             my ($max_acked_at, $max_created_at) = $self->_get_timestamps_of($dbh, $timeline_id, $max_id, $ack_state);
             if(!defined($max_acked_at) || !defined($max_created_at)) {
-                @_ = (undef, []);
-                goto $callback;
+                return (undef, []);
             }
             $cond->add_raw(q{utc_acked_at < ? OR ( utc_acked_at = ? AND ( utc_created_at < ? OR ( utc_created_at = ? AND id <= ?)))},
                            $max_acked_at x 2, $max_created_at x 2, $max_id);
@@ -252,13 +254,13 @@ sub get_statuses {
         while(my $record = $sth->fetchrow_hashref('NAME_lc')) {
             push(@statuses, _from_status_record($record));
         }
-        @_ = (undef, \@statuses);
-        goto $callback;
+        return (undef, \@statuses);
     }catch {
         my $e = shift;
-        @_ = ($e);
-        goto $callback;
+        return ($e);
     };
+    @_ = @results;
+    goto $callback;
 }
 
 sub _create_base_condition {
