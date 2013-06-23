@@ -435,6 +435,7 @@ sub delete_statuses {
         }else {
             $total_count = $self->_delete_timeline($dbh, $timeline_id);
         }
+        $dbh->commit();
         $total_count = 0 if $total_count < 0;
         return (undef, $total_count);
     }catch {
@@ -479,6 +480,39 @@ sub _delete_ids {
         }
     }
     return $total_count;
+}
+
+sub get_unacked_counts {
+    my ($self, %args) = @_;
+    my $timeline = $args{timeline};
+    croak 'timeline parameter is mandatory' if not defined $timeline;
+    my $calback = $args{callback};
+    croak 'callback parameter is mandatory' if not defined $callback;
+    croak 'callback parameter must be a CODEREF' if ref($callback) eq 'CODE';
+    my @results = try {
+        my $dbh = $self->_get_my_dbh();
+        my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
+        my %result_obj = (total => 0);
+        if(!defined($timeline_id)) {
+            return (undef, \%result_obj);
+        }
+        my $cond = $self->_create_base_condition($timeline_id, 'unacked');
+        my ($sql, @bind) = $self->{maker}->select('statuses', ['level', \'count(id)'], $cond, {
+            group_by => 'level'
+        });
+        my $sth = $dbh->prepare($sql);
+        $sth->execute(@bind);
+        while(my $record = $sth->fetchrow_arrayref()) {
+            $result_obj{total} += $record->[1];
+            $result_obj{$record->[0]} = $record->[1];
+        }
+        return (undef, \%result_obj);
+    }catch {
+        my $e = shift;
+        return ($e);
+    };
+    @_ = @results;
+    goto $callback;
 }
 
 1;
