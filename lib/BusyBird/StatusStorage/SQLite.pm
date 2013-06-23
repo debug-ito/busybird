@@ -51,20 +51,22 @@ sub _create_tables {
     my $dbh = $self->_get_my_dbh();
     $dbh->do(<<EOD);
 CREATE TABLE IF NOT EXISTS statuses (
-  timeline_id INTEGER PRIMARY KEY,
-  id TEXT PRIMARY KEY,
+  timeline_id INTEGER NOT NULL,
+  id TEXT NOT NULL,
   utc_acked_at TEXT NOT NULL,
   utc_created_at TEXT NOT NULL,
   timezone_acked_at TEXT NOT NULL,
   timezone_created_at TEXT NOT NULL,
   level INTEGER NOT NULL,
-  content TEXT NOT NULL
+  content TEXT NOT NULL,
+
+  PRIMARY KEY (timeline_id, id)
 )
 EOD
     $dbh->do(<<EOD);
 CREATE TABLE IF NOT EXISTS timelines (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT UNIQUE NOT NULL,
+  name TEXT UNIQUE NOT NULL
 )
 EOD
 }
@@ -216,7 +218,7 @@ sub _extract_utc_timestamp_and_timezone {
 
 sub _create_bb_timestamp_from_utc_timestamp_and_timezone {
     my ($utc_timestamp_str, $timezone) = @_;
-    if(utc_timestamp_str eq $UNDEF_TIMESTAMP) {
+    if($utc_timestamp_str eq $UNDEF_TIMESTAMP) {
         return undef;
     }
     my $dt = $TIMESTAMP_FORMAT->parse_datetime($utc_timestamp_str);
@@ -486,9 +488,9 @@ sub get_unacked_counts {
     my ($self, %args) = @_;
     my $timeline = $args{timeline};
     croak 'timeline parameter is mandatory' if not defined $timeline;
-    my $calback = $args{callback};
+    my $callback = $args{callback};
     croak 'callback parameter is mandatory' if not defined $callback;
-    croak 'callback parameter must be a CODEREF' if ref($callback) eq 'CODE';
+    croak 'callback parameter must be a CODEREF' if ref($callback) ne 'CODE';
     my @results = try {
         my $dbh = $self->_get_my_dbh();
         my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
