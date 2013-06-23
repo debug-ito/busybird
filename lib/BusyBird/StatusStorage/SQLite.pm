@@ -190,7 +190,7 @@ Fields in C<%args> are:
 Path string to the SQLite database file.
 If C<":memory:"> is given to this parameter, a temporary in-memory database is created.
 
-=item C<max_status_num> => INT (optional, default: 4096)
+=item C<max_status_num> => INT (optional, default: 4000)
 
 The maximum number of statuses the storage can store per timeline.
 You cannot expect a timeline to keep more statuses than this number.
@@ -201,11 +201,25 @@ The hard limit max number of statuses per timeline.
 When the number of statuses in a timeline exceeds this number,
 it deletes old statuses from the timeline so that the timeline has C<max_status_num> statuses.
 
+=item C<vacuum_on_delete> => INT (optional, default: 1600)
+
+The status storage automatically executes C<vacuum()> every time this number of statuses are
+deleted from the storage. The number is for the whole storage, not per timeline.
+
+If you set this option less than or equal to 0, it never C<vacuum()> itself.
+
+
 =back
 
 =head1 OBJECT METHODS
 
 L<BusyBird::StatusStorage::SQLite> implements all object methods in L<BusyBird::StatusStorage>.
+In addition to it, it has the following methods.
+
+=head2 $storage->vacuum()
+
+Executes SQL C<VACUUM> on the database.
+
 
 =head1 AUTHOR
 
