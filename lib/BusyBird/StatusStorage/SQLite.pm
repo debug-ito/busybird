@@ -29,6 +29,7 @@ sub new {
         maker => SQL::Maker->new(driver => 'SQLite'),
     }, $class;
     croak "path parameter is mandatory" if not defined $args{path};
+    croak "in-memory database (:memory:) is not supported" if $args{path} eq ':memory:';
     $self->{dbi_source} = "dbi:SQLite:dbname=$args{path}";
     $self->_create_tables();
     return $self;
@@ -551,7 +552,7 @@ Fields in C<%args> are:
 =item C<path> => FILE_PATH (mandatory)
 
 Path string to the SQLite database file.
-If C<":memory:"> is given to this parameter, a temporary in-memory database is created.
+Currently, in-memory database is not supported.
 
 =item C<max_status_num> => INT (optional, default: 4000)
 

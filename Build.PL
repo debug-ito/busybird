@@ -14,6 +14,7 @@ my $builder = Module::Build->new(
     build_requires => {
         'Test::More' => 0,
         'FindBin'=> '0',
+        'File::Temp' => '0',
         'HTTP::Request'=> '6.00',
         'Plack::Test'=> '0',
         'Test::Builder'=> '0',
@@ -25,7 +26,6 @@ my $builder = Module::Build->new(
         'HTML::TreeBuilder'=> '5',
         'HTML::TreeBuilder::XPath'=> '0.12',
         'JSON'=> '0',
-        'SQL::Maker' => '1.11',
     },
     requires => {
         'perl' => "5.10.0",
@@ -62,6 +62,7 @@ my $builder = Module::Build->new(
         'Cache::Memory::Simple'=> '1.01',
         'URI::Escape'=> '0',
         'sort'=> '0',
+        'SQL::Maker' => '1.11',
     },
     share_dir => "share",
     add_to_cleanup      => [ 'BusyBird-*' ],

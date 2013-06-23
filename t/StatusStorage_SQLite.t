@@ -2,19 +2,25 @@ use strict;
 use warnings;
 use Test::More;
 use BusyBird::Test::StatusStorage qw(:storage);
+use Test::Exception;
+use File::Temp;
 
 BEGIN {
     use_ok('BusyBird::StatusStorage::SQLite');
 }
 
+
+
 sub create_storage {
-    return BusyBird::StatusStorage::SQLite->new(path => ':memory:');
+    my ($filename) = @_;
+    return BusyBird::StatusStorage::SQLite->new(path => $filename);
 }
 
-$Carp::Verbose = 1;
+dies_ok { BusyBird::StatusStorage::SQLite->new(path => ':memory:') } "in-memory DB is not supported";
 
 {
-    test_storage_common(create_storage());
+    my $tempfile = File::Temp->new;
+    test_storage_common(create_storage($tempfile->filename));
 }
 
 ## test_storage_ordered;
