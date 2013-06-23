@@ -1400,7 +1400,7 @@ If you want to import all functions, import C<:all> tag.
 
 =head1 :storage TAG FUNCTIONS
 
-=head2 test_storage_common($storage, $loop, $unloop)
+=head2 test_storage_common($storage, [$loop, $unloop])
 
 Test the StatusStorage object.
 All StatusStorage implementations should pass this test.
@@ -1415,7 +1415,7 @@ This allows implementations to modify statuses internally.
 In addition, statuses are tested unordered.
 
 
-=head2 test_storage_ordered($storage, $loop, $unloop)
+=head2 test_storage_ordered($storage, [$loop, $unloop])
 
 Test the order of statuses obtained by C<get_statuses()> method.
 
@@ -1426,7 +1426,7 @@ StatusStorage that does not conform to the guideline should not run this test.
 The arguments are the same as C<test_storage_common> function.
 
 
-=head2 test_storage_truncation($storage, $max_status_num $loop, $unloop)
+=head2 test_storage_truncation($storage, $max_status_num [$loop, $unloop])
 
 Test if statuses are properly truncated in the storage.
 
@@ -1438,13 +1438,13 @@ C<$max_status_num> is the maximum number of statuses per timeline
 that C<$storage> can store.
 C<$loop> and C<$unloop> are the same as C<test_storage_common> function.
 
-=head2 test_storage_missing_arguments($storage, $loop, $unloop)
+=head2 test_storage_missing_arguments($storage, [$loop, $unloop])
 
 Test if the C<$storage> throws an exception when a mandatory argument is missing.
 
 The arguments are the same as C<test_storage_common> function.
 
-=head2 test_storage_put_requires_ids($storage, $loop, $unloop)
+=head2 test_storage_put_requires_ids($storage, [$loop, $unloop])
 
 Test if the C<$storage> throws an exception when some C<statuses> given to C<put_statuses()> method
 do not have their C<id> fields.
