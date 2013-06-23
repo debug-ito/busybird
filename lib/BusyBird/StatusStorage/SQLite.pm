@@ -407,6 +407,80 @@ sub _ack_ids {
     return $total_count;
 }
 
+sub delete_statuses {
+    my ($self, %args) = @_;
+    my $timeline = $args{timeline};
+    croak 'timeline parameter is mandatory' if not defined $timeline;
+    croak 'ids parameter is mandatory' if not exists $args{ids};
+    my $ids = $args{ids};
+    if(defined($ids) && ref($ids) && ref($ids) ne 'ARRAY') {
+        croak 'ids parameter must be either undef, a status ID or array-ref of status IDs.';
+    }
+    if(defined($ids) && !ref($ids)) {
+        $ids = [$ids];
+    }
+    my $callback = defined($args{callback}) ? $args{callback} : sub {};
+    croak 'callback parameter must be a CODEREF' if ref($callback) ne 'CODE';
+    my $dbh;
+    my @results = try {
+        my $dbh = $self->_get_my_dbh();
+        $dbh->begin_work();
+        my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
+        if(!defined($timeline_id)) {
+            return (undef, 0);
+        }
+        my $total_count;
+        if(defined($ids)) {
+            $total_count = $self->_delete_ids($dbh, $timeline_id, $ids);
+        }else {
+            $total_count = $self->_delete_timeline($dbh, $timeline_id);
+        }
+        $total_count = 0 if $total_count < 0;
+        return (undef, $total_count);
+    }catch {
+        my $e = shift;
+        if($dbh) {
+            $dbh->rollback();
+        }
+        return ($e);
+    };
+    @_ = @results;
+    goto $callback;
+}
+
+sub _delele_timeline {
+    my ($self, $dbh, $timeline_id) = @_;
+    my ($sql, @bind) = $self->{maker}->delete('statuses', [
+        timeline_id => $timeline_id
+    ]);
+    my $status_count = $dbh->do($sql, undef, @bind);
+    ($sql, @bind) = $self->{maker}->delete('timelines', [
+        id => $timeline_id
+    ]);
+    $dbh->do($sql, undef, @bind);
+    return $status_count;
+}
+
+sub _delete_ids {
+    my ($self, $dbh, $timeline_id, $ids) = @_;
+    return 0 if @$ids == 0;
+    my $sth;
+    my $total_count = 0;
+    foreach my $id (@$ids) {
+        my ($sql, @bind) = $self->{maker}->delete('statuses', [
+            timeline_id => $timeline_id, id => "$id"
+        ]);
+        if(!$sth) {
+            $sth = $dbh->prepare($sql);
+        }
+        my $count = $sth->execute(@bind);
+        if($count > 0) {
+            $total_count += $count;
+        }
+    }
+    return $total_count;
+}
+
 1;
 
 __END__
