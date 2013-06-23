@@ -10,9 +10,16 @@ use Try::Tiny;
 use SQL::Maker;
 use BusyBird::DateTime::Format;
 use JSON;
+use Scalar::Util qw(looks_like_number);
+use DateTime::Format::Strptime;
 no autovivification;
 
 my $UNDEF_TIMESTAMP = '9999-99-99T99:99:99';
+my $TIMESTAMP_FORMAT = DateTime::Format::Strptime->new(
+    pattern => '%Y-%m-%dT:%H:%M:%S',
+    time_zone => 'UTC',
+    on_error => 'croak',
+);
 
 sub new {
     my ($class, %args) = @_;
@@ -43,19 +50,19 @@ sub _create_tables {
     my $dbh = $self->_get_my_dbh();
     $dbh->do(<<EOD);
 CREATE TABLE IF NOT EXISTS statuses (
-  id TEXT PRIMARY KEY NOT NULL,
-  timeline_id INTEGER NOT NULL,
-  level INTEGER NOT NULL,
+  timeline_id INTEGER PRIMARY KEY,
+  id TEXT PRIMARY KEY,
   utc_acked_at TEXT NOT NULL,
   utc_created_at TEXT NOT NULL,
   timezone_acked_at TEXT NOT NULL,
   timezone_created_at TEXT NOT NULL,
+  level INTEGER NOT NULL,
   content TEXT NOT NULL
 )
 EOD
     $dbh->do(<<EOD);
 CREATE TABLE IF NOT EXISTS timelines (
-  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT UNIQUE NOT NULL,
 )
 EOD
@@ -114,7 +121,7 @@ sub put_statuses {
     try {
         $dbh = $self->_get_my_dbh();
         $dbh->begin_work();
-        my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
+        my $timeline_id = $self->_get_timeline_id($dbh, $timeline); ## TODO: create timeline entry if necessary!!
         my $sth;
         my $total_count = 0;
         my $put_method = "_put_$mode";
@@ -127,13 +134,15 @@ sub put_statuses {
             }
         }
         $dbh->commit();
-        $callback->(undef, $total_count);
+        @_ = (undef, $total_count);
+        goto $callback;
     } catch {
         my $e = shift;
         if($dbh) {
             $dbh->rollback();
         }
-        $callback->($e);
+        @_ = ($e);
+        goto $callback;
     };
 }
 
@@ -142,7 +151,7 @@ sub _get_timeline_id {
     my ($sql, @bind) = $self->{maker}->select('timelines', ['id'], ['name' => $timeline_name]);
     my $record = $dbh->selectrow_arrayref($sql, undef, @bind);
     if(!defined($record)) {
-        croak "No timeline named '$timeline_name'";
+        croak "No timeline named '$timeline_name'"; ## TODO: hmm, it is not an error that the given timeline does not exist..
     }
     return $record->[0];
 }
@@ -162,6 +171,24 @@ sub _to_status_record {
     return $record;
 }
 
+sub _from_status_record {
+    my ($record) = @_;
+    my $status = decode_json($record->{content});
+    $status->{id} = $record->{id};
+    if($record->{level} != 0 || defined($status->{busybird}{level})) {
+        $status->{busybird}{level} = $record->{level};
+    }
+    my $acked_at_str = _create_bb_timestamp_from_utc_timestamp_and_timezone($record->{utc_acked_at}, $record->{timezone_acked_at});
+    if(defined($acked_at_str) || defined($status->{busybird}{acked_at})) {
+        $status->{busybird}{acked_at} = $acked_at_str;
+    }
+    my $created_at_str = _create_bb_timestamp_from_utc_timestamp_and_timezone($record->{utc_created_at}, $record->{timezone_created_at});
+    if(defined($created_at_str) || defined($status->{created_at})) {
+        $status->{created_at} = $created_at_str;
+    }
+    return $status;
+}
+
 sub _extract_utc_timestamp_and_timezone {
     my ($timestamp_str) = @_;
     if(!defined($timestamp_str) || $timestamp_str eq '') {
@@ -171,8 +198,94 @@ sub _extract_utc_timestamp_and_timezone {
     croak "Invalid datetime format: $timestamp_str" if not defined $datetime;
     my $timezone_name = $datetime->time_zone->name;
     $datetime->set_time_zone('UTC');
-    my $utc_timestamp = $datetime->strftime('%Y-%m-%dT%H:%M:%S');
+    my $utc_timestamp = $TIMESTAMP_FORMAT->format_datetime($datetime);
     return ($utc_timestamp, $timezone_name);
+}
+
+sub _create_bb_timestamp_from_utc_timestamp_and_timezone {
+    my ($utc_timestamp_str, $timezone) = @_;
+    if(utc_timestamp_str eq $UNDEF_TIMESTAMP) {
+        return undef;
+    }
+    my $dt = $TIMESTAMP_FORMAT->parse_datetime($utc_timestamp_str);
+    $dt->set_time_zone($timezone);
+    return BusyBird::DateTime::Format->format_datetime($dt);
+}
+
+sub get_statuses {
+    my ($self, %args) = @_;
+    my $timeline = $args{timeline};
+    croak "timeline parameter is mandatory" if not defined $timeline;
+    my $callback = $args{callback};
+    croak "callback parameter is mandatory" if not defined $callback;
+    croak "callback parameter must be a CODEREF" if ref($callback) ne "CODE";
+    my $ack_state = defined($args{ack_state}) ? $args{ack_state} : "all";
+    if($ack_state ne "all" && $ack_state ne "unacked" && $ack_state ne "acked") {
+        croak "ack_state parameter must be either 'all' or 'acked' or 'unacked'";
+    }
+    my $max_id = $args{max_id};
+    my $count = defined($args{count}) ? $args{count} : 'all';
+    if($count ne 'all' && !looks_like_number($count)) {
+        croak "count parameter must be either 'all' or number";
+    }
+    try {
+        my $dbh = $self->_get_my_dbh();
+        my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
+        my $cond = $self->_create_base_condition($timeline_id, $ack_state);
+        if(defined($max_id)) {
+            my ($max_acked_at, $max_created_at) = $self->_get_timestamps_of($dbh, $timeline_id, $max_id, $ack_state);
+            if(!defined($max_acked_at) || !defined($max_created_at)) {
+                @_ = (undef, []);
+                goto $callback;
+            }
+            $cond->add_raw(q{utc_acked_at < ? OR ( utc_acked_at = ? AND ( utc_created_at < ? OR ( utc_created_at = ? AND id <= ?)))},
+                           $max_acked_at x 2, $max_created_at x 2, $max_id);
+        }
+        my %maker_opt = (order_by => ['utc_acked_at DESC', 'utc_created_at DESC', 'id DESC']);
+        if($count ne 'all') {
+            $maker_opt{limit} = $count;
+        }
+        my ($sql, @bind) = $self->{maker}->select("statuses", ['*'], $cond, \%maker_opt);
+        my $sth = $dbh->prepare($sql);
+        $sth->execute(@bind);
+        my @statuses = ();
+        while(my $record = $sth->fetchrow_hashref('NAME_lc')) {
+            push(@statuses, _from_status_record($record));
+        }
+        @_ = (undef, \@statuses);
+        goto $callback;
+    }catch {
+        my $e = shift;
+        @_ = ($e);
+        goto $callback;
+    };
+}
+
+sub _create_base_condition {
+    my ($self, $timeline_id, $ack_state) = @_;
+    $ack_state ||= 'all';
+    my $cond = $self->{maker}->new_condition();
+    $cond->add(timeline_id => $timeline_id);
+    if($ack_state eq 'acked') {
+        $cond->add('utc_acked_at', {'!=' => $UNDEF_TIMESTAMP});
+    }elsif($ack_state eq 'unacked') {
+        $cond->add('utc_acked_at' => $UNDEF_TIMESTAMP);
+    }
+    return $cond;
+}
+
+sub _get_timestamps_of {
+    my ($self, $dbh, $timeline_id, $status_id, $ack_state) = @_;
+    my $cond = $self->_create_base_condition($timeline_id, $ack_state);
+    $cond->add(id => $status_id);
+    my ($sql, @bind) = $self->{maker}->select("statuses", ['utc_acked_at', 'utc_created_at'], $cond, {
+        limit => 1
+    });
+    my $record = $dbh->selectrow_arrayref($sql, undef, @bind);
+    if(!$record) {
+        return ();
+    }
+    return ($record->[0], $record->[1]);
 }
 
 1;
