@@ -12,6 +12,7 @@ use BusyBird::DateTime::Format;
 use JSON;
 use Scalar::Util qw(looks_like_number);
 use DateTime::Format::Strptime;
+use DateTime;
 no autovivification;
 
 my $UNDEF_TIMESTAMP = '9999-99-99T99:99:99';
@@ -72,7 +73,7 @@ sub _put_update {
     my ($self, $dbh, $record, $prev_sth) = @_;
     my $sth = $prev_sth;
     my ($sql, @bind) = $self->{maker}->update('statuses', $record, [
-        'timeline_id' => $record->{timeline_id}, id => $record->{id}
+        'timeline_id' => "$record->{timeline_id}", id => "$record->{id}"
     ]);
     if(!$sth) {
         $sth = $dbh->prepare($sql);
@@ -152,7 +153,7 @@ sub put_statuses {
 
 sub _get_timeline_id {
     my ($self, $dbh, $timeline_name) = @_;
-    my ($sql, @bind) = $self->{maker}->select('timelines', ['id'], ['name' => $timeline_name]);
+    my ($sql, @bind) = $self->{maker}->select('timelines', ['id'], ['name' => "$timeline_name"]);
     my $record = $dbh->selectrow_arrayref($sql, undef, @bind);
     if(!defined($record)) {
         return undef;
@@ -162,7 +163,7 @@ sub _get_timeline_id {
 
 sub _create_timeline {
     my ($self, $dbh, $timeline_name) = @_;
-    my ($sql, @bind) = $self->{maker}->insert('timelines', {name => $timeline_name});
+    my ($sql, @bind) = $self->{maker}->insert('timelines', {name => "$timeline_name"});
     $dbh->do($sql, undef, @bind);
     return $self->_get_timeline_id($dbh, $timeline_name);
 }
@@ -247,12 +248,11 @@ sub get_statuses {
         }
         my $cond = $self->_create_base_condition($timeline_id, $ack_state);
         if(defined($max_id)) {
-            my ($max_acked_at, $max_created_at) = $self->_get_timestamps_of($dbh, $timeline_id, $max_id, $ack_state);
-            if(!defined($max_acked_at) || !defined($max_created_at)) {
+            my $max_id_cond = $self->_create_max_id_condition($dbh, $timeline_id, $max_id, $ack_state);
+            if(!defined($max_id_cond)) {
                 return (undef, []);
             }
-            $cond->add_raw(q{utc_acked_at < ? OR ( utc_acked_at = ? AND ( utc_created_at < ? OR ( utc_created_at = ? AND id <= ?)))},
-                           $max_acked_at x 2, $max_created_at x 2, $max_id);
+            $cond = ($cond & $max_id_cond);
         }
         my %maker_opt = (order_by => ['utc_acked_at DESC', 'utc_created_at DESC', 'id DESC']);
         if($count ne 'all') {
@@ -290,7 +290,7 @@ sub _create_base_condition {
 sub _get_timestamps_of {
     my ($self, $dbh, $timeline_id, $status_id, $ack_state) = @_;
     my $cond = $self->_create_base_condition($timeline_id, $ack_state);
-    $cond->add(id => $status_id);
+    $cond->add(id => "$status_id");
     my ($sql, @bind) = $self->{maker}->select("statuses", ['utc_acked_at', 'utc_created_at'], $cond, {
         limit => 1
     });
@@ -299,6 +299,112 @@ sub _get_timestamps_of {
         return ();
     }
     return ($record->[0], $record->[1]);
+}
+
+sub _create_max_id_condition {
+    my ($self, $dbh, $timeline_id, $max_id, $ack_state) = @_;
+    my ($max_acked_at, $max_created_at) = $self->_get_timestamps_of($dbh, $timeline_id, $max_id, $ack_state);
+    if(!defined($max_acked_at) || !defined($max_created_at)) {
+        return undef;
+    }
+    my $cond = $self->{maker}->new_condition();
+    $cond->add_raw(q{utc_acked_at < ? OR ( utc_acked_at = ? AND ( utc_created_at < ? OR ( utc_created_at = ? AND id <= ?)))},
+                   $max_acked_at x 2, $max_created_at x 2, "$max_id");
+    return $cond;
+}
+
+sub ack_statuses {
+    my ($self, %args) = @_;
+    my $timeline = $args{timeline};
+    croak "timeline parameter is mandatory" if not defined $timeline;
+    my $callback = defined($args{callback}) ? $args{callback} : sub {};
+    croak "callback parameter must be a CODEREF" if ref($callback) ne 'CODE';
+    my $ids = $args{ids};
+    if(defined($ids) && ref($ids) ne 'ARRAY' && ref($ids) ne 'HASH') {
+        croak "ids parameter must be either undef, a status object or an array-ref of statuses";
+    }
+    if(defined($ids) && ref($ids) eq 'HASH') {
+        $ids = [$ids];
+    }
+    my $max_id = $args{max_id};
+    my $dbh;
+    my @results = try {
+        my $ack_utc_timestamp = $TIMESTAMP_FORMAT->format_datetime(DateTime->now(time_zone => 'UTC'));
+        $dbh = $self->_get_my_dbh();
+        $dbh->begin_work();
+        my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
+        return (undef, 0) if not defined $timeline_id;
+        my $total_count = 0;
+        if(!defined($ids) && !defined($max_id)) {
+            $total_count = $self->_ack_all($dbh, $timeline_id, $ack_utc_timestamp);
+        }else {
+            if(defined($max_id)) {
+                my $max_id_count = $self->_ack_max_id($dbh, $timeline_id, $ack_utc_timestamp, $max_id);
+                $total_count += $max_id_count if $max_id_count > 0;
+            }
+            if(defined($ids)) {
+                my $ids_count = $self->_ack_ids($dbh, $timeline_id, $ack_utc_timestamp, $ids);
+                $total_count += $ids_count if $ids_count > 0;
+            }
+        }
+        $dbh->commit();
+        $total_count = 0 if $total_count < 0;
+        return (undef, $total_count);
+    }catch {
+        my $e = shift;
+        if($dbh) {
+            $dbh->rollback();
+        }
+        return ($e);
+    };
+    @_ = @results;
+    goto $callback;
+}
+
+sub _ack_all {
+    my ($self, $dbh, $timeline_id, $ack_utc_timestamp) = @_;
+    my ($sql, @bind) = $self->{maker}->update(
+        'statuses', {utc_acked_at => $ack_utc_timestamp},
+        [timeline_id => $timeline_id, utc_acked_at => $UNDEF_TIMESTAMP]
+    );
+    return $dbh->do($sql, undef, @bind);
+}
+
+sub _ack_max_id {
+    my ($self, $dbh, $timeline_id, $ack_utc_timestamp, $max_id) = @_;
+    my $max_id_cond = $self->_create_max_id_condition($dbh, $timeline_id, $max_id, 'unacked');
+    if(!defined($max_id_cond)) {
+        return 0;
+    }
+    my $cond = $self->_create_base_condition($timeline_id, 'unacked');
+    my ($sql, @bind) = $self->{maker}->update(
+        'statuses', {utc_acked_at => $ack_utc_timestamp}, ($cond & $max_id_cond)
+    );
+    return $dbh->do($sql, undef, @bind);
+}
+
+sub _ack_ids {
+    my ($self, $dbh, $timeline_id, $ack_utc_timestamp, $ids) = @_;
+    if(@$ids == 0) {
+        return 0;
+    }
+    my $total_count = 0;
+    my $sth;
+    foreach my $id (@$ids) {
+        my $cond = $self->_create_base_condition($timeline_id, 'unacked');
+        $cond->add(id => "$id");
+        my ($sql, @bind) = $self->{maker}->update(
+            'statuses', {utc_acked_at => $ack_utc_timestamp}, $cond
+        );
+        if(!$sth) {
+            $sth = $dbh->prepare($sql);
+        }
+        my $count = $sth->execute(@bind);
+        if($count > 0) {
+            $total_count += $count;
+        }
+    }
+    return $total_count;
 }
 
 1;
