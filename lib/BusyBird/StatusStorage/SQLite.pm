@@ -119,9 +119,13 @@ sub put_statuses {
     my $callback = $args{callback} || sub {};
     my $dbh;
     my @results = try {
+        return (undef, 0) if @$statuses == 0;
         $dbh = $self->_get_my_dbh();
         $dbh->begin_work();
-        my $timeline_id = $self->_get_timeline_id($dbh, $timeline); ## TODO: create timeline entry if necessary!!
+        my $timeline_id = $self->_get_timeline_id($dbh, $timeline) || $self->_create_timeline($dbh, $timeline);
+        if(!defined($timeline_id)) {
+            die "Internal error: could not create a timeline '$timeline' somehow.";
+        }
         my $sth;
         my $total_count = 0;
         my $put_method = "_put_$mode";
@@ -154,6 +158,13 @@ sub _get_timeline_id {
         return undef;
     }
     return $record->[0];
+}
+
+sub _create_timeline {
+    my ($self, $dbh, $timeline_name) = @_;
+    my ($sql, @bind) = $self->{maker}->insert('timelines', {name => $timeline_name});
+    $dbh->do($sql, undef, @bind);
+    return $self->_get_timeline_id($dbh, $timeline_name);
 }
 
 sub _to_status_record {
