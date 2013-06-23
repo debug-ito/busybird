@@ -234,9 +234,9 @@ sub get_statuses {
     my $callback = $args{callback};
     croak "callback parameter is mandatory" if not defined $callback;
     croak "callback parameter must be a CODEREF" if ref($callback) ne "CODE";
-    my $ack_state = defined($args{ack_state}) ? $args{ack_state} : "all";
-    if($ack_state ne "all" && $ack_state ne "unacked" && $ack_state ne "acked") {
-        croak "ack_state parameter must be either 'all' or 'acked' or 'unacked'";
+    my $ack_state = defined($args{ack_state}) ? $args{ack_state} : "any";
+    if($ack_state ne "any" && $ack_state ne "unacked" && $ack_state ne "acked") {
+        croak "ack_state parameter must be either 'any' or 'acked' or 'unacked'";
     }
     my $max_id = $args{max_id};
     my $count = defined($args{count}) ? $args{count} : 'all';
@@ -279,7 +279,7 @@ sub get_statuses {
 
 sub _create_base_condition {
     my ($self, $timeline_id, $ack_state) = @_;
-    $ack_state ||= 'all';
+    $ack_state ||= 'any';
     my $cond = $self->{maker}->new_condition();
     $cond->add(timeline_id => $timeline_id);
     if($ack_state eq 'acked') {
@@ -452,7 +452,7 @@ sub delete_statuses {
     goto $callback;
 }
 
-sub _delele_timeline {
+sub _delete_timeline {
     my ($self, $dbh, $timeline_id) = @_;
     my ($sql, @bind) = $self->{maker}->delete('statuses', [
         timeline_id => $timeline_id
