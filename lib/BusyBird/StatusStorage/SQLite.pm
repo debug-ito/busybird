@@ -312,7 +312,7 @@ sub _create_max_id_condition {
     }
     my $cond = $self->{maker}->new_condition();
     $cond->add_raw(q{utc_acked_at < ? OR ( utc_acked_at = ? AND ( utc_created_at < ? OR ( utc_created_at = ? AND id <= ?)))},
-                   $max_acked_at x 2, $max_created_at x 2, "$max_id");
+                   [($max_acked_at) x 2, ($max_created_at) x 2, "$max_id"]);
     return $cond;
 }
 
