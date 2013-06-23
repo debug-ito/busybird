@@ -323,10 +323,10 @@ sub ack_statuses {
     my $callback = defined($args{callback}) ? $args{callback} : sub {};
     croak "callback parameter must be a CODEREF" if ref($callback) ne 'CODE';
     my $ids = $args{ids};
-    if(defined($ids) && ref($ids) ne 'ARRAY' && ref($ids) ne 'HASH') {
-        croak "ids parameter must be either undef, a status object or an array-ref of statuses";
+    if(defined($ids) && ref($ids) && ref($ids) ne 'ARRAY') {
+        croak "ids parameter must be either undef, a status ID or an array-ref of status IDs";
     }
-    if(defined($ids) && ref($ids) eq 'HASH') {
+    if(defined($ids) && !ref($ids)) {
         $ids = [$ids];
     }
     my $max_id = $args{max_id};

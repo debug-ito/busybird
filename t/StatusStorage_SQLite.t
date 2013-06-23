@@ -30,7 +30,6 @@ dies_ok { BusyBird::StatusStorage::SQLite->new(path => ':memory:') } "in-memory 
 
 {
     local $TODO = "reminder";
-    fail('TODO: do the whole tests both for :memory: and temp file.');
     fail('TODO: storage truncation is per-timeline (general test)');
     fail('TODO: insert statuses with the same ID (general test, unordered)');
     fail('TODO: insert statuses with the same timestamps (general test, ordered)');
