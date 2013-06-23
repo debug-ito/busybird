@@ -43,7 +43,7 @@ sub _create_tables {
     my $dbh = $self->_get_my_dbh();
     $dbh->do(<<EOD);
 CREATE TABLE IF NOT EXISTS statuses (
-  id TEXT PRIMARY KEY UNIQUE NOT NULL,
+  id TEXT PRIMARY KEY NOT NULL,
   timeline_id INTEGER NOT NULL,
   level INTEGER NOT NULL,
   utc_acked_at TEXT NOT NULL,
@@ -59,6 +59,37 @@ CREATE TABLE IF NOT EXISTS timelines (
   name TEXT UNIQUE NOT NULL,
 )
 EOD
+}
+
+sub _put_update {
+    my ($self, $dbh, $record, $prev_sth) = @_;
+    my $sth = $prev_sth;
+    my ($sql, @bind) = $self->{maker}->update('statuses', $record, [
+        'timeline_id' => $record->{timeline_id}, id => $record->{id}
+    ]);
+    if(!$sth) {
+        $sth = $dbh->prepare($sql);
+    }
+    return ($sth->execute(@bind), $sth);
+}
+
+sub _put_insert {
+    my ($self, $dbh, $record, $prev_sth) = @_;
+    my $sth = $prev_sth;
+    my ($sql, @bind) = $self->{maker}->insert('statuses', $record, {prefix => 'INSERT OR IGNORE INTO'});
+    if(!$sth) {
+        $sth = $dbh->prepare($sql);
+    }
+    return ($sth->execute(@bind), $sth);
+}
+
+sub _put_upsert {
+    my ($self, $dbh, $record) = @_;
+    my ($count) = $self->_put_update($dbh, $record);
+    if($count <= 0) {
+        ($count) = $self->_put_insert($dbh, $record);
+    }
+    return ($count, undef);
 }
 
 sub put_statuses {
@@ -86,27 +117,17 @@ sub put_statuses {
         my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
         my $sth;
         my $total_count = 0;
+        my $put_method = "_put_$mode";
         foreach my $status (@$statuses) {
             my $record = _to_status_record($timeline_id, $status);
-            if($mode eq 'update') {
-                my ($sql, @bind) = $self->{maker}->update('statuses', $record, [
-                    'timeline_id' => $timeline_id, id => $status->{id}
-                ]);
-                if(!$sth) {
-                    $sth = $dbh->prepare($sql);
-                }
-                my $count = $sth->execute(@bind);
-                if($count > 0) {
-                    $total_count += $count;
-                }
-            }elsif($mode eq 'insert') {
-                
-            }else {
-                ## upsert
-                
+            my $count;
+            ($count, $sth) = $self->$put_method($dbh, $record, $sth);
+            if($count > 0) {
+                $total_count += $count;
             }
         }
         $dbh->commit();
+        $callback->(undef, $total_count);
     } catch {
         my $e = shift;
         if($dbh) {
