@@ -29,6 +29,8 @@ my $builder = Module::Build->new(
         'HTML::TreeBuilder'=> '5',
         'HTML::TreeBuilder::XPath'=> '0.12',
         'JSON'=> '0',
+        'DBI' => 0,
+        "DBD::SQLite" => 0,
     },
     requires => {
         'perl' => "5.10.0",

@@ -8,23 +8,24 @@ use Test::MockObject::Extends;
 use FindBin;
 use lib ("$FindBin::RealBin/lib");
 use BusyBird::Test::Timeline_Util qw(sync status);
+use DBI;
 
 BEGIN {
     use_ok('BusyBird::StatusStorage::SQLite');
 }
 
-
-
-sub create_storage {
+sub connect_db {
     my ($filename) = @_;
-    return BusyBird::StatusStorage::SQLite->new(path => $filename);
+    return DBI->connect("dbi:SQLite:dbname=$filename", "", "", {
+        PrintError => 0, RaiseError => 1, AutoCommit => 1
+    });
 }
 
 dies_ok { BusyBird::StatusStorage::SQLite->new(path => ':memory:') } "in-memory DB is not supported";
 
 if(0){
     my $tempfile = File::Temp->new;
-    my $storage = create_storage($tempfile->filename);
+    my $storage = BusyBird::StatusStorage::SQLite->new(path => $tempfile->filename);
     test_storage_common($storage);
     test_storage_ordered($storage);
     test_storage_missing_arguments($storage);
@@ -39,7 +40,7 @@ if(0){
     test_storage_truncation($storage, {soft_max => 5, hard_max => 10});
 }
 
-{
+if(0){
     note('------ vacuum_on_delete tests.');
     my $tempfile = File::Temp->new;
     my @vacuum_log = ();
@@ -176,6 +177,30 @@ if(0){
         is($ret_num, 1, '1 deleted');
         is(scalar(@vacuum_log), 1, 'vacuum should be called because vacuum count is shared by all timelines.');
     }
+}
+
+{
+    note('--- manipulation to DB timezone columns is reflected to obtained stutuses');
+    my $tempfile = File::Temp->new;
+    my $storage = BusyBird::StatusStorage::SQLite->new(path => $tempfile);
+    my %base = (timeline => '_test_timestamp_cols');
+    my ($error, $ret_num);
+    ($error, $ret_num) = sync($storage, 'put_statuses', %base, mode => 'insert', statuses => status(1));
+    is($error, undef, "put succeed");
+    is($ret_num, 1, "1 inserted");
+
+    my $dbh = connect_db($tempfile->filename);
+    my $count = $dbh->do(<<SQL, undef, '2013-01-01T04:32:50', '-1000', '2012-12-31T22:41:05', '+0900', 1);
+UPDATE statuses SET utc_acked_at = ?, timezone_acked_at = ?,
+                    utc_created_at = ?, timezone_created_at = ?
+              WHERE id = ?
+SQL
+    is($count, 1, '1 row updated');
+    ($error, my $statuses) = sync($storage, 'get_statuses', %base, count => 'all');
+    is($error, undef, "get succeeds");
+    is(scalar(@$statuses), 1, "1 status obtained");
+    is($statuses->[0]{busybird}{acked_at}, 'Mon Dec 31 18:32:50 -1000 2012', 'acked_at timestamp restored');
+    is($statuses->[0]{created_at}, 'Tue Jan 01 07:41:05 +0900 2013', 'created_at timestamp restored');
 }
 
 {
