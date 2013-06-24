@@ -35,14 +35,6 @@ dies_ok { BusyBird::StatusStorage::SQLite->new(path => ':memory:') } "in-memory 
     test_storage_truncation($storage, {soft_max => 5, hard_max => 10});
 }
 
-
-{
-    local $TODO = "reminder";
-    fail('TODO: insert statuses with the same ID (general test, unordered)');
-    fail('TODO: insert statuses with the same timestamps (general test, ordered)');
-    fail('TODO: ack max_id and ids: duplicate selection (some IDs are selected both by max_id and ids)');
-}
-
 done_testing();
 
 
