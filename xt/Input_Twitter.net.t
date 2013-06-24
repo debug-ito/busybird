@@ -2,7 +2,6 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Builder;
-use Test::MockObject::Extends;
 use BusyBird::Input::Twitter;
 use BusyBird::Log;
 use Encode;
