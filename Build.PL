@@ -13,6 +13,8 @@ my $builder = Module::Build->new(
     },
     build_requires => {
         'Test::More' => 0,
+        'DateTime' => 0,
+        'DateTime::Duration' => 0,
         'FindBin'=> '0',
         'File::Temp' => '0',
         'HTTP::Request'=> '6.00',
