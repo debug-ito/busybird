@@ -9,6 +9,7 @@ use Carp;
 use Try::Tiny;
 use SQL::Maker;
 use BusyBird::DateTime::Format;
+use BusyBird::Util qw(set_param);
 use JSON;
 use Scalar::Util qw(looks_like_number);
 use DateTime::Format::Strptime;
@@ -21,6 +22,7 @@ my $TIMESTAMP_FORMAT = DateTime::Format::Strptime->new(
     time_zone => 'UTC',
     on_error => 'croak',
 );
+my @STATUSES_ORDER_BY = ('utc_acked_at DESC', 'utc_created_at DESC', 'id DESC');
 
 sub new {
     my ($class, %args) = @_;
@@ -31,6 +33,13 @@ sub new {
     croak "path parameter is mandatory" if not defined $args{path};
     croak "in-memory database (:memory:) is not supported" if $args{path} eq ':memory:';
     $self->{dbi_source} = "dbi:SQLite:dbname=$args{path}";
+    $self->set_param(\%args, "max_status_num", 4000);
+    $self->set_param(\%args, "hard_max_status_num", int($self->{max_status_num} * 1.2));
+    croak "max_status_num must be a number" if !looks_like_number($self->{max_status_num});
+    croak "hard_max_status_num must be a number" if !looks_like_number($self->{hard_max_status_num});
+    $self->{max_status_num} = int($self->{max_status_num});
+    $self->{hard_max_status_num} = int($self->{hard_max_status_num});
+    croak "hard_max_status_num must be >= max_status_num" if !($self->{hard_max_status_num} >= $self->{max_status_num});
     $self->_create_tables();
     return $self;
 }
@@ -143,6 +152,9 @@ sub put_statuses {
             if($count > 0) {
                 $total_count += $count;
             }
+        }
+        if($mode ne "update" && $total_count > 0) {
+            $self->_delete_exceeding_statuses($dbh, $timeline_id);
         }
         $dbh->commit();
         return (undef, $total_count);
@@ -260,7 +272,7 @@ sub get_statuses {
             }
             $cond = ($cond & $max_id_cond);
         }
-        my %maker_opt = (order_by => ['utc_acked_at DESC', 'utc_created_at DESC', 'id DESC']);
+        my %maker_opt = (order_by => \@STATUSES_ORDER_BY);
         if($count ne 'all') {
             $maker_opt{limit} = $count;
         }
@@ -313,6 +325,11 @@ sub _create_max_id_condition {
     if(!defined($max_acked_at) || !defined($max_created_at)) {
         return undef;
     }
+    return $self->_create_max_time_condition($max_acked_at, $max_created_at, $max_id);
+}
+
+sub _create_max_time_condition {
+    my ($self, $max_acked_at, $max_created_at, $max_id) = @_;
     my $cond = $self->{maker}->new_condition();
     $cond->add_raw(q{utc_acked_at < ? OR ( utc_acked_at = ? AND ( utc_created_at < ? OR ( utc_created_at = ? AND id <= ?)))},
                    [($max_acked_at) x 2, ($max_created_at) x 2, "$max_id"]);
@@ -488,6 +505,39 @@ sub _delete_ids {
     return $total_count;
 }
 
+sub _delete_exceeding_statuses {
+    my ($self, $dbh, $timeline_id) = @_;
+    ## get total count in the timeline
+    my ($sql, @bind) = $self->{maker}->select('statuses', [\'count(*)'], [timeline_id => $timeline_id]);
+    my $row = $dbh->selectrow_arrayref($sql, undef, @bind);
+    if(!defined($row)) {
+        die "count query for timeline $timeline_id returns undef. something is wrong.";
+    }
+    my $total_count = $row->[0];
+    
+    if($total_count <= $self->{hard_max_status_num}) {
+        return 0;
+    }
+
+    ## get the top of the exceeding statuses
+    ($sql, @bind) = $self->{maker}->select('statuses', [qw(utc_acked_at utc_created_at id)], [timeline_id => $timeline_id], {
+        order_by => \@STATUSES_ORDER_BY,
+        offset => $self->{max_status_num},
+        limit => 1,
+    });
+    $row = $dbh->selectrow_arrayref($sql, undef, @bind);
+    if(!defined($row)) {
+        die "selecting the top of exceeding status returns undef. something is wrong.";
+    }
+    my $time_cond = $self->_create_max_time_condition(@$row);
+
+    ## execute deletion
+    my $timeline_cond = $self->{maker}->new_condition();
+    $timeline_cond->add(timeline_id => $timeline_id);
+    ($sql, @bind) = $self->{maker}->delete('statuses', ($timeline_cond & $time_cond));
+    return $dbh->do($sql, undef, @bind);
+}
+
 sub get_unacked_counts {
     my ($self, %args) = @_;
     my $timeline = $args{timeline};
@@ -559,12 +609,12 @@ Currently, in-memory database is not supported.
 
 =item C<max_status_num> => INT (optional, default: 4000)
 
-The maximum number of statuses the storage can store per timeline.
+The maximum number of statuses the storage guarantees to store per timeline.
 You cannot expect a timeline to keep more statuses than this number.
 
 =item C<hard_max_status_num> => INT (optional, default: 120% of max_status_num)
 
-The hard limit max number of statuses per timeline.
+The hard limit max number of statuses the storage is able to store per timeline.
 When the number of statuses in a timeline exceeds this number,
 it deletes old statuses from the timeline so that the timeline has C<max_status_num> statuses.
 

@@ -20,17 +20,24 @@ dies_ok { BusyBird::StatusStorage::SQLite->new(path => ':memory:') } "in-memory 
 
 {
     my $tempfile = File::Temp->new;
-    test_storage_common(create_storage($tempfile->filename));
+    my $storage = create_storage($tempfile->filename);
+    test_storage_common($storage);
+    test_storage_ordered($storage);
+    test_storage_missing_arguments($storage);
+    test_storage_put_requires_ids($storage);
 }
 
-## test_storage_ordered;
-## test_storage_truncation;
-## test_storage_missing_arguments;
-## test_storage_put_requires_ids;
+{
+    my $tempfile = File::Temp->new;
+    my $storage = BusyBird::StatusStorage::SQLite->new(
+        path => $tempfile->filename, max_status_num => 5, hard_max_status_num => 10
+    );
+    test_storage_truncation($storage, {soft_max => 5, hard_max => 10});
+}
+
 
 {
     local $TODO = "reminder";
-    fail('TODO: storage truncation is per-timeline (general test)');
     fail('TODO: insert statuses with the same ID (general test, unordered)');
     fail('TODO: insert statuses with the same timestamps (general test, ordered)');
     fail('TODO: ack max_id and ids: duplicate selection (some IDs are selected both by max_id and ids)');
