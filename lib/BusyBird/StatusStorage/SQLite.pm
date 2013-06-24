@@ -18,7 +18,7 @@ no autovivification;
 
 my $UNDEF_TIMESTAMP = '9999-99-99T99:99:99';
 my $TIMESTAMP_FORMAT = DateTime::Format::Strptime->new(
-    pattern => '%Y-%m-%dT:%H:%M:%S',
+    pattern => '%Y-%m-%dT%H:%M:%S',
     time_zone => 'UTC',
     on_error => 'croak',
 );
