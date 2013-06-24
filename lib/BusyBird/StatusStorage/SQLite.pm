@@ -23,6 +23,7 @@ my $TIMESTAMP_FORMAT = DateTime::Format::Strptime->new(
     on_error => 'croak',
 );
 my @STATUSES_ORDER_BY = ('utc_acked_at DESC', 'utc_created_at DESC', 'id DESC');
+my $DELETE_COUNT_ID = 0;
 
 sub new {
     my ($class, %args) = @_;
@@ -35,6 +36,7 @@ sub new {
     $self->{dbi_source} = "dbi:SQLite:dbname=$args{path}";
     $self->set_param(\%args, "max_status_num", 4000);
     $self->set_param(\%args, "hard_max_status_num", int($self->{max_status_num} * 1.2));
+    $self->set_param(\%args, "vacuum_on_delete", 1600);
     croak "max_status_num must be a number" if !looks_like_number($self->{max_status_num});
     croak "hard_max_status_num must be a number" if !looks_like_number($self->{hard_max_status_num});
     $self->{max_status_num} = int($self->{max_status_num});
@@ -79,6 +81,16 @@ CREATE TABLE IF NOT EXISTS timelines (
   name TEXT UNIQUE NOT NULL
 )
 EOD
+    $dbh->do(<<EOD);
+CREATE TABLE IF NOT EXISTS delete_counts (
+  id INTEGER PRIMARY KEY,
+  delete_count INTEGER
+)
+EOD
+    my ($sql, @bind) = $self->{maker}->insert('delete_counts', {
+        id => $DELETE_COUNT_ID, delete_count => 0
+    }, {prefix => 'INSERT OR IGNORE INTO'});
+    $dbh->do($sql, undef, @bind);
 }
 
 sub _put_update {
@@ -154,10 +166,14 @@ sub put_statuses {
                 $total_count += $count;
             }
         }
+        my $exceeding_delete_count = 0;
         if($mode ne "update" && $total_count > 0) {
-            $self->_delete_exceeding_statuses($dbh, $timeline_id);
+            $exceeding_delete_count = $self->_delete_exceeding_statuses($dbh, $timeline_id);
         }
         $dbh->commit();
+        if($exceeding_delete_count > 0) {
+            $self->_add_to_delete_count($dbh, $exceeding_delete_count);
+        }
         return (undef, $total_count);
     } catch {
         my $e = shift;
@@ -459,8 +475,9 @@ sub delete_statuses {
         }else {
             $total_count = $self->_delete_timeline($dbh, $timeline_id);
         }
-        $dbh->commit();
         $total_count = 0 if $total_count < 0;
+        $dbh->commit();
+        $self->_add_to_delete_count($dbh, $total_count);
         return (undef, $total_count);
     }catch {
         my $e = shift;
@@ -570,6 +587,38 @@ sub get_unacked_counts {
     };
     @_ = @results;
     goto $callback;
+}
+
+sub _add_to_delete_count {
+    my ($self, $dbh, $add_count) = @_;
+    return if $add_count <= 0;
+    my ($sql, @bind) = $self->{maker}->update('delete_counts', [
+        delete_count => \ ['delete_count + ?', $add_count]  ## trick to insert unquoted value
+    ], [id => $DELETE_COUNT_ID]);
+    $dbh->do($sql, undef, @bind);
+    
+    ($sql, @bind) = $self->{maker}->select('delete_counts', ["delete_count"], [id => $DELETE_COUNT_ID]);
+    my $row = $dbh->selectrow_arrayref($sql, undef, @bind);
+    if(!defined($row)) {
+        die "no delete_counts row with id = $DELETE_COUNT_ID. something is wrong.";
+    }
+    my $current_delete_count = $row->[0];
+
+    if($current_delete_count >= $self->{vacuum_on_delete}) {
+        $self->_do_vacuum($dbh);
+    }
+}
+
+sub _do_vacuum {
+    my ($self, $dbh) = @_;
+    $dbh->do('VACUUM');
+    my ($sql, @bind) = $self->{maker}->update('delete_counts', [delete_count => 0], [id => $DELETE_COUNT_ID]);
+    $dbh->do($sql, undef, @bind);
+}
+
+sub vacuum {
+    my ($self) = @_;
+    $self->_do_vacuum($self->_get_my_dbh());
 }
 
 1;

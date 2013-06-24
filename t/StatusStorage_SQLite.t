@@ -49,9 +49,9 @@ if(0){
             max_status_num => 10, hard_max_status_num => 20, vacuum_on_delete => 5
         );
         can_ok($storage, "vacuum");
-        my $vacuum_orig = $storage->can('vacuum');
+        my $vacuum_orig = $storage->can('_do_vacuum');
         Test::MockObject::Extends->new($storage);
-        $storage->mock(vacuum => sub {
+        $storage->mock(_do_vacuum => sub {
             push(@vacuum_log, [@_[1..$#_]]);
             goto $vacuum_orig;
         });
@@ -62,7 +62,13 @@ if(0){
     my %base = (timeline => "_test_tl_vacuum");
     my ($error, $ret_num);
 
+    note('--- manual vacuum()');
+    @vacuum_log = ();
+    $storage->vacuum();
+    is(scalar(@vacuum_log), 1, "vacuum called via public vacuum() method");
+
     note("--- vacuum on delete (single)");
+    @vacuum_log = ();
     ($error, $ret_num) = sync(
         $storage, 'put_statuses', %base,
         mode => 'insert', statuses => [map {status($_)} 1..10]
@@ -75,7 +81,7 @@ if(0){
     is($error, undef, "delete succeeds");
     is($ret_num, 4, '4 deleted');
     
-    is(scalar(@vacuum_log), 0, 'vacuum should be called yet. Only 4 statuses are deleted.');
+    is(scalar(@vacuum_log), 0, 'vacuum should not be called yet. Only 4 statuses are deleted.');
 
     ($error, $ret_num) = sync(
         $storage, 'delete_statuses', %base, ids => 6
@@ -127,6 +133,10 @@ if(0){
     is($error, undef, 'get succeeds');
     test_status_id_list($statuses, [reverse 12..21], '10 statuses due to status truncation');
     is(scalar(@vacuum_log), 1, 'vacuum should be called due to status truncation.');
+    ($error, $ret_num) = sync($storage, "delete_statuses", %base, ids => undef);
+    is($error, undef, "delete succeeds. timeline cleared.");
+    is($ret_num, 10, "10 deleted");
+    is(scalar(@vacuum_log), 2, "vacuum should be called once again by explicit call to delete_statuses.");
 
     note('--- vacuum count is persistent');
     @vacuum_log = ();
@@ -144,7 +154,7 @@ if(0){
     undef $storage;
     $storage = $create_spied_storage->();
     ($error, $ret_num) = sync(
-        $storage, 'delete_statuses', %base, ids => 1,
+        $storage, 'delete_statuses', %base, ids => 5,
     );
     is($error, undef, 'delete succeeds');
     is($ret_num, 1, '1 deleted');
@@ -170,6 +180,7 @@ if(0){
 
 {
     local $TODO = "reminder";
+    fail('TODO: enable all tests (remove if(0))');
     fail('TODO: column manipulation to level, {utc,timezone}_{acked,created}_at and get_statuses()');
     fail('TODO: column manipulation to level and get_unacked_counts()');
     fail('TODO: put_statuses() with non-UTC timestamps');
