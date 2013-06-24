@@ -180,7 +180,7 @@ if(0){
 }
 
 {
-    note('--- manipulation to DB timezone columns is reflected to obtained stutuses');
+    note('--- manipulation to DB timestamp columns is reflected to obtained stutuses');
     my $tempfile = File::Temp->new;
     my $storage = BusyBird::StatusStorage::SQLite->new(path => $tempfile);
     my %base = (timeline => '_test_timestamp_cols');
@@ -204,10 +204,34 @@ SQL
 }
 
 {
+    note('--- manipulation to DB level columns is reflected to obtained statuses');
+    my $tempfile = File::Temp->new;
+    my $storage = BusyBird::StatusStorage::SQLite->new(path => $tempfile);
+    my %base = (timeline => '_test_level_cols');
+    my ($error, $ret_num);
+    ($error, $ret_num) = sync($storage, 'put_statuses', %base, mode => 'insert', statuses => status(1));
+    is($error, undef, "put succeed");
+    is($ret_num, 1, "1 inserted");
+    ($error, my $unacked_counts) = sync($storage, 'get_unacked_counts', %base);
+    is($error, undef, "get_unacked_counts succeed");
+    is_deeply($unacked_counts, {total => 1, 0 => 1}, '1 status in level 0');
+
+    my $dbh = connect_db($tempfile->filename);
+    my $count = $dbh->do(<<SQL, undef, 5, 1);
+UPDATE statuses SET level = ? WHERE id = ?
+SQL
+    ($error, $unacked_counts) = sync($storage, 'get_unacked_counts', %base);
+    is($error, undef, "get_unacked_counts succeed");
+    is_deeply($unacked_counts, {total => 1, 5 => 1}, '1 status in level 5');
+    ($error, my $statuses) = sync($storage, 'get_statuses', %base, count => 'all');
+    is($error, undef, "get succeed");
+    is(scalar(@$statuses), 1, "1 status obtained");
+    is($statuses->[0]{busybird}{level}, 5, "level is set to 5");
+}
+
+{
     local $TODO = "reminder";
     fail('TODO: enable all tests (remove if(0))');
-    fail('TODO: column manipulation to level, {utc,timezone}_{acked,created}_at and get_statuses()');
-    fail('TODO: column manipulation to level and get_unacked_counts()');
     fail('TODO: put_statuses() with non-UTC timestamps');
 }
 
