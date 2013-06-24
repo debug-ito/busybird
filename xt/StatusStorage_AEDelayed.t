@@ -28,6 +28,6 @@ sub storage {
 
 test_storage_common(storage(), \&loop, \&unloop);
 test_storage_ordered(storage(), \&loop, \&unloop);
-test_storage_truncation(storage(max_status_num => 2), 2, \&loop, \&unloop);
+test_storage_truncation(storage(max_status_num => 2), {hard_max => 2, soft_max => 2}, \&loop, \&unloop);
 
 done_testing();
