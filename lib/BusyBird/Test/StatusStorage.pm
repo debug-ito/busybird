@@ -1244,12 +1244,21 @@ sub test_storage_ordered {
 }
 
 sub test_storage_truncation {
-    my ($storage, $max_status_num, $loop, $unloop) = @_;
-    note("-------- test_storage_truncation max_status_num = $max_status_num");
+    my ($storage, $options, $loop, $unloop) = @_;
+    note("-------- test_storage_truncation");
+    if(!defined($options) || ref($options) ne 'HASH') {
+        croak "options must be a hash-ref";
+    }
+    croak "soft_max option is mandatory" if not defined $options->{soft_max};
+    my $soft_max = int($options->{soft_max});
+    croak "soft_max must be bigger than 0" if !($soft_max > 0);
+    my $hard_max = defined($options->{hard_max}) ? $options->{hard_max} : $soft_max;
+    $hard_max = int($hard_max);
+    croak "hard_max must be >= soft_max" if !($hard_max >= $soft_max);
+    note("--- soft_max = $soft_max, hard_max = $hard_max");
     $loop ||= sub {};
     $unloop ||= sub {};
-    $max_status_num = int($max_status_num);
-    croak 'max_status_num must be bigger than 0' if $max_status_num <= 0;
+    
     note('--- clear the timeline');
     my $callbacked = 0;
     my %base = (timeline => '_test_tl4');
@@ -1270,44 +1279,90 @@ sub test_storage_truncation {
     note('--- populate to the max');
     change_and_check(
         $storage, $loop, $unloop, %base,
-        mode => 'insert', target => [map {status($_)} (1..$max_status_num)],
-        exp_change => $max_status_num, exp_unacked => [1..$max_status_num],
+        mode => 'insert', target => [map {status($_)} (1..$hard_max)],
+        exp_change => $hard_max, exp_unacked => [1..$hard_max],
         exp_acked => []
     );
-    note('--- insert another one');
+    note('--- insert another one: truncation occurs');
     change_and_check(
         $storage, $loop, $unloop, %base,
-        mode => 'insert', target => status($max_status_num+1),
-        exp_change => 1, exp_unacked => [2..($max_status_num+1)],
+        mode => 'insert', target => status($hard_max+1),
+        exp_change => 1, exp_unacked => [($hard_max+1 - ($soft_max-1))..($hard_max+1)],
         exp_acked => []
     );
-    note('--- insert multiple statuses');
+    note('--- insert multiple statuses: truncation occurs');
     change_and_check(
         $storage, $loop, $unloop, %base,
-        mode => 'insert', target => [map { status($max_status_num+1+$_) } 1..4],
-        exp_change => 4, exp_unacked => [6..($max_status_num+5)],
+        mode => 'insert', target => [map { status($_) } ($hard_max+2) .. ($hard_max*2 - $soft_max + 11)],
+        exp_change => ($hard_max - $soft_max + 10),
+        exp_unacked => [($hard_max*2 - $soft_max*2 + 12) .. ($hard_max*2 - $soft_max + 11)],
         exp_acked => []
     );
-    note('--- the top to acked');
+
+    note('--- clear and populate to the max');
+    change_and_check(
+        $storage, $loop, $unloop, %base,
+        mode => 'delete', target => undef,
+        exp_change => $soft_max, exp_unacked => [], exp_acked => []
+    );
+    change_and_check(
+        $storage, $loop, $unloop, %base,
+        mode => 'insert', target => [map {status($_)} 1..$hard_max],
+        exp_change => $hard_max, exp_unacked => [1..$hard_max], exp_acked => []
+    );
+    note('--- ack the top status');
     on_statuses $storage, $loop, $unloop, {
-        %base, count => 1, max_id => ($max_status_num+5)
+        %base, count => 1, max_id => $hard_max
     }, sub {
         my ($statuses) = @_;
         $statuses->[0]{busybird}{acked_at} = nowstring();
         change_and_check(
             $storage, $loop, $unloop, %base,
             mode => 'update', target => $statuses,
-            exp_change => 1, exp_unacked => [6 .. $max_status_num+4],
-            exp_acked => [$max_status_num+5]
+            exp_change => 1, exp_unacked => [1..($hard_max-1)],
+            exp_acked => [$hard_max]
         );
     };
     note('--- inserting another one removes the acked status');
     change_and_check(
         $storage, $loop, $unloop, %base,
-        mode => 'insert', target => status($max_status_num+6),
-        exp_change => 1, exp_unacked => [6 .. $max_status_num+4, $max_status_num+6],
+        mode => 'insert', target => status($hard_max+1),
+        exp_change => 1, exp_unacked => [($hard_max - $soft_max + 1)..($hard_max - 1), ($hard_max + 1)],
         exp_acked => []
     );
+    note('--- populate timeline to the max');
+    change_and_check(
+        $storage, $loop, $unloop, %base,
+        mode => 'insert', target => [map {status($_)} ($hard_max+2) .. ($hard_max+2 + $hard_max - $soft_max - 1)],
+        exp_change => $hard_max - $soft_max,
+        exp_unacked => [($hard_max - $soft_max + 1)..($hard_max - 1), ($hard_max + 1)..($hard_max*2+2 - $soft_max-1)],
+        exp_acked => []
+    );
+    note('--- clear another timeline');
+    $storage->delete_statuses(timeline => '_test_tl4_2', ids => undef, callback => sub {
+        my $error = shift;
+        is($error, undef, "delete succeed");
+        $callbacked = 1;
+        $unloop->();
+    });
+    $loop->();
+    ok($callbacked, "callbacked");
+    note('--- populate another timeline to the max');
+    change_and_check(
+        $storage, $loop, $unloop, timeline => '_test_tl4_2',
+        mode => 'insert', target => [map {status($_)} 1..$hard_max],
+        exp_change => $hard_max, exp_unacked => [1..$hard_max], exp_acked => []
+    );
+    note('--- statuses in the first timeline is maintained.');
+    on_statuses $storage, $loop, $unloop, {
+        %base, count => 'all'
+    }, sub {
+        my $statuses = shift;
+        test_status_id_list(
+            $statuses, [reverse( ($hard_max - $soft_max + 1)..($hard_max - 1), ($hard_max + 1)..($hard_max*2+2 - $soft_max-1) )],
+            "statuses in the first timeline are intact"
+        );
+    };
 }
 
 sub test_storage_missing_arguments {
@@ -1385,6 +1440,7 @@ BusyBird::Test::StatusStorage - Test routines for StatusStorage
     my $storage = My::Storage->new();
     test_storage_common($storage);
     test_storage_ordered($storage);
+    test_storage_truncation($storage, {soft_max => 25, hard_max => 50});
     done_testing();
 
 
@@ -1426,7 +1482,7 @@ StatusStorage that does not conform to the guideline should not run this test.
 The arguments are the same as C<test_storage_common> function.
 
 
-=head2 test_storage_truncation($storage, $max_status_num [$loop, $unloop])
+=head2 test_storage_truncation($storage, $options, [$loop, $unloop])
 
 Test if statuses are properly truncated in the storage.
 
@@ -1434,9 +1490,26 @@ This test assumes the C<$storage> passes C<test_storage_ordered()> test.
 In each timeline, the "oldest" status should be removed first.
 
 C<$storage> is the StatusStorage object to be tested.
-C<$max_status_num> is the maximum number of statuses per timeline
-that C<$storage> can store.
+
+C<$options> is a hash-ref. Fields in C<%$options> are:
+
+=over
+
+=item C<soft_max> => INT (mandatory)
+
+The number of statuses per timeline the storage guarantees to keep.
+
+=item C<hard_max> => INT (optional, default: same value as C<soft_max>)
+
+The number of statuses per timeline the storage is able to keep.
+
+=back
+
+If the user tries to put more statuses than C<hard_max>, the storage should automatically
+truncate the timeline so that the timeline has exactly C<soft_max> statuses.
+
 C<$loop> and C<$unloop> are the same as C<test_storage_common> function.
+
 
 =head2 test_storage_missing_arguments($storage, [$loop, $unloop])
 

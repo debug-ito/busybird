@@ -17,7 +17,7 @@ BEGIN {
 
 {
     my $storage = new_ok('BusyBird::StatusStorage::Memory', [max_status_num => 5, logger => undef]);
-    test_storage_truncation($storage, 5);
+    test_storage_truncation($storage, {soft_max => 5, hard_max => 5});
 }
 
 
