@@ -14,6 +14,12 @@ BEGIN {
     use_ok('BusyBird::StatusStorage::SQLite');
 }
 
+sub create_tempfile_storage {
+    my $tempfile = File::Temp->new;
+    my $storage = BusyBird::StatusStorage::SQLite->new(path => $tempfile->filename);
+    return ($tempfile, $storage);
+}
+
 sub connect_db {
     my ($filename) = @_;
     return DBI->connect("dbi:SQLite:dbname=$filename", "", "", {
@@ -23,16 +29,15 @@ sub connect_db {
 
 dies_ok { BusyBird::StatusStorage::SQLite->new(path => ':memory:') } "in-memory DB is not supported";
 
-if(0){
-    my $tempfile = File::Temp->new;
-    my $storage = BusyBird::StatusStorage::SQLite->new(path => $tempfile->filename);
+{
+    my ($tempfile, $storage) = create_tempfile_storage();
     test_storage_common($storage);
     test_storage_ordered($storage);
     test_storage_missing_arguments($storage);
     test_storage_put_requires_ids($storage);
 }
 
-if(0){
+{
     my $tempfile = File::Temp->new;
     my $storage = BusyBird::StatusStorage::SQLite->new(
         path => $tempfile->filename, max_status_num => 5, hard_max_status_num => 10
@@ -40,7 +45,7 @@ if(0){
     test_storage_truncation($storage, {soft_max => 5, hard_max => 10});
 }
 
-if(0){
+{
     note('------ vacuum_on_delete tests.');
     my $tempfile = File::Temp->new;
     my @vacuum_log = ();
@@ -181,8 +186,7 @@ if(0){
 
 {
     note('--- manipulation to DB timestamp columns is reflected to obtained stutuses');
-    my $tempfile = File::Temp->new;
-    my $storage = BusyBird::StatusStorage::SQLite->new(path => $tempfile);
+    my ($tempfile, $storage) = create_tempfile_storage();
     my %base = (timeline => '_test_timestamp_cols');
     my ($error, $ret_num);
     ($error, $ret_num) = sync($storage, 'put_statuses', %base, mode => 'insert', statuses => status(1));
@@ -205,8 +209,7 @@ SQL
 
 {
     note('--- manipulation to DB level columns is reflected to obtained statuses');
-    my $tempfile = File::Temp->new;
-    my $storage = BusyBird::StatusStorage::SQLite->new(path => $tempfile);
+    my ($tempfile, $storage) = create_tempfile_storage();
     my %base = (timeline => '_test_level_cols');
     my ($error, $ret_num);
     ($error, $ret_num) = sync($storage, 'put_statuses', %base, mode => 'insert', statuses => status(1));
@@ -230,11 +233,24 @@ SQL
 }
 
 {
-    local $TODO = "reminder";
-    fail('TODO: enable all tests (remove if(0))');
-    fail('TODO: put_statuses() with non-UTC timestamps');
+    note("--- timestamps with non-UTC timezones");
+    my ($tempfile, $storage) = create_tempfile_storage();
+    my %base = (timeline => '_test_nonutc');
+    my $status = {
+        id => 1,
+        created_at => 'Tue Jun 04 14:08:33 +0900 2013',
+        busybird => {
+            acked_at => 'Fri May 31 21:42:00 -0400 2013'
+        }
+    };
+    my ($error, $ret_num) = sync($storage, 'put_statuses', %base, mode => 'insert', statuses => $status);
+    is($error, undef, "put succeeds");
+    is($ret_num, 1, "1 inserted");
+    ($error, my $statuses) = sync($storage, 'get_statuses', %base, count => 'all');
+    is($error, undef, "get succeeds");
+    is(scalar(@$statuses), 1, "1 status obtained");
+    is($statuses->[0]{created_at}, 'Tue Jun 04 14:08:33 +0900 2013', 'created_at maintained');
+    is($statuses->[0]{busybird}{acked_at}, 'Fri May 31 21:42:00 -0400 2013', 'acked_at maintained');
 }
 
 done_testing();
-
-
