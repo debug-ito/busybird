@@ -130,6 +130,7 @@ sub put_statuses {
         $statuses = [$statuses];
     }
     foreach my $status (@$statuses) {
+        croak "status object must be a hash-ref" if !defined($status) || !ref($status) || ref($status) ne 'HASH';
         croak "status ID is missing" if not defined $status->{id};
     }
     my $callback = $args{callback} || sub {};
