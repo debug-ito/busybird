@@ -591,6 +591,7 @@ sub get_unacked_counts {
 
 sub _add_to_delete_count {
     my ($self, $dbh, $add_count) = @_;
+    return if $self->{vacuum_on_delete} <= 0;
     return if $add_count <= 0;
     my ($sql, @bind) = $self->{maker}->update('delete_counts', [
         delete_count => \ ['delete_count + ?', $add_count]  ## trick to insert unquoted value
@@ -670,10 +671,10 @@ it deletes old statuses from the timeline so that the timeline has C<max_status_
 
 =item C<vacuum_on_delete> => INT (optional, default: 1600)
 
-The status storage automatically executes C<vacuum()> every time this number of statuses are
+The status storage automatically executes C<VACUUM> every time this number of statuses are
 deleted from the storage. The number is for the whole storage, not per timeline.
 
-If you set this option less than or equal to 0, it never C<vacuum()> itself.
+If you set this option less than or equal to 0, it never C<VACUUM> itself.
 
 
 =back
