@@ -32,8 +32,6 @@ sub connect_db {
     });
 }
 
-## dies_ok { BusyBird::StatusStorage::SQLite->new(path => ':memory:') } "in-memory DB is not supported";
-
 sub test_sqlite {
     my ($storage_type) = @_;
     note("------------ test $storage_type");
@@ -213,6 +211,9 @@ sub test_sqlite {
     }
 }
 
+######################################################
+
+
 test_sqlite('file');
 
 {
@@ -263,5 +264,6 @@ SQL
     is($statuses->[0]{busybird}{level}, 5, "level is set to 5");
 }
 
+test_sqlite('memory');
 
 done_testing();

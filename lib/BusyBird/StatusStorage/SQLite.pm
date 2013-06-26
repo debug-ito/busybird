@@ -656,7 +656,7 @@ Fields in C<%args> are:
 =item C<path> => FILE_PATH (mandatory)
 
 Path string to the SQLite database file.
-Currently, in-memory database is not supported.
+If C<':memory:'> is specified, it creates a temporary in-memory storage.
 
 =item C<max_status_num> => INT (optional, default: 4000)
 
