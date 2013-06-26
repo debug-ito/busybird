@@ -7,7 +7,7 @@ use FindBin;
 use lib ("$FindBin::RealBin/lib");
 use BusyBird::Test::Timeline_Util qw(status sync);
 use BusyBird::Test::StatusStorage qw(:status);
-use BusyBird::StatusStorage::Memory;
+use BusyBird::StatusStorage::SQLite;
 use BusyBird::Timeline;
 use BusyBird::Log;
 
@@ -18,7 +18,7 @@ BEGIN {
 $BusyBird::Log::Logger = undef;
 
 our $CREATE_STORAGE = sub {
-    return BusyBird::StatusStorage::Memory->new;
+    return BusyBird::StatusStorage::SQLite->new(path => ':memory:');
 };
 
 sub test_watcher_basic {

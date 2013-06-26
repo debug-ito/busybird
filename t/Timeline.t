@@ -17,7 +17,7 @@ use Storable qw(dclone);
 
 BEGIN {
     use_ok('BusyBird::Timeline');
-    use_ok('BusyBird::StatusStorage::Memory');
+    use_ok('BusyBird::StatusStorage::SQLite');
     use_ok('BusyBird::Watcher');
 }
 
@@ -876,7 +876,7 @@ sub test_timeline {
     note('---------- sync storage');
     local $LOOP = sub {};
     local $UNLOOP = sub {};
-    local $CREATE_STORAGE = sub { BusyBird::StatusStorage::Memory->new };
+    local $CREATE_STORAGE = sub { BusyBird::StatusStorage::SQLite->new(path => ':memory:') };
     test_timeline();
 }
 
@@ -899,7 +899,7 @@ sub test_timeline {
         };
         local $CREATE_STORAGE = sub {
             BusyBird::Test::StatusStorage::AEDelayed->new(
-                backend => BusyBird::StatusStorage::Memory->new,
+                backend => BusyBird::StatusStorage::SQLite->new(path => ':memory:'),
                 delay_sec => 0
             );
         };

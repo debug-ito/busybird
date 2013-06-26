@@ -9,7 +9,7 @@ use DateTime;
 use DateTime::Duration;
 use BusyBird::Main;
 use BusyBird::Main::PSGI;
-use BusyBird::StatusStorage::Memory;
+use BusyBird::StatusStorage::SQLite;
 use BusyBird::DateTime::Format;
 use BusyBird::Test::HTTP;
 use BusyBird::Test::StatusStorage qw(:status test_cases_for_ack);
@@ -24,7 +24,7 @@ $BusyBird::Log::Logger = undef;
 
 sub create_main {
     my $main = BusyBird::Main->new();
-    $main->set_config(default_status_storage => BusyBird::StatusStorage::Memory->new);
+    $main->set_config(default_status_storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:'));
     return $main;
 }
 
@@ -390,7 +390,7 @@ EOD
             my $res_obj = $tester->request_json_ok($method, $request_url, $case->{content},
                                                    qr/^200$/, "$case->{endpoint} OK");
             my $exp_obj = decode_json($case->{exp_response});
-            is_deeply($res_obj, $exp_obj, "$case->{endpoint} response OK");
+            is_deeply($res_obj, $exp_obj, "$case->{endpoint} response OK") or diag(explain $res_obj);
         }
     };
 }

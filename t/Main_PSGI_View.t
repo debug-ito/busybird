@@ -4,7 +4,7 @@ use Test::More;
 use Test::Builder;
 use BusyBird::Main;
 use BusyBird::Log;
-use BusyBird::StatusStorage::Memory;
+use BusyBird::StatusStorage::SQLite;
 use JSON qw(decode_json);
 use utf8;
 
@@ -34,7 +34,7 @@ sub test_json_response {
 sub create_main {
     my $main = BusyBird::Main->new;
     $main->set_config(
-        default_status_storage => BusyBird::StatusStorage::Memory->new
+        default_status_storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:')
     );
     $main->timeline('test');
     return $main;

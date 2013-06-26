@@ -4,7 +4,7 @@ use FindBin;
 use lib ("$FindBin::RealBin/../t/lib");
 use Test::More;
 use BusyBird::Test::StatusStorage qw(:all);
-use BusyBird::StatusStorage::Memory;
+use BusyBird::StatusStorage::SQLite;
 use BusyBird::Test::StatusStorage::AEDelayed;
 use AnyEvent;
 
@@ -22,12 +22,12 @@ sub unloop {
 sub storage {
     my (%backend_args) = @_;
     return BusyBird::Test::StatusStorage::AEDelayed->new(
-        backend => BusyBird::StatusStorage::Memory->new(%backend_args)
+        backend => BusyBird::StatusStorage::SQLite->new(path => ':memory:', %backend_args)
     );
 }
 
 test_storage_common(storage(), \&loop, \&unloop);
 test_storage_ordered(storage(), \&loop, \&unloop);
-test_storage_truncation(storage(max_status_num => 2), {hard_max => 2, soft_max => 2}, \&loop, \&unloop);
+test_storage_truncation(storage(max_status_num => 2, hard_max_status_num => 2), {hard_max => 2, soft_max => 2}, \&loop, \&unloop);
 
 done_testing();

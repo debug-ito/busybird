@@ -3,7 +3,7 @@ use warnings;
 use Test::More;
 use BusyBird::Main;
 use BusyBird::Timeline;
-use BusyBird::StatusStorage::Memory;
+use BusyBird::StatusStorage::SQLite;
 use BusyBird::Log;
 
 $BusyBird::Log::Logger = undef;
@@ -12,7 +12,7 @@ sub create_main_and_timeline {
     my $main = BusyBird::Main->new();
     my $timeline = BusyBird::Timeline->new(
         name => "test",
-        storage => BusyBird::StatusStorage::Memory->new()
+        storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:'),
     );
     $main->install_timeline($timeline);
     return ($main, $timeline);

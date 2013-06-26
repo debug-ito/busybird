@@ -10,13 +10,13 @@ use BusyBird::Test::StatusHTML;
 use Plack::Test;
 use BusyBird::Main;
 use BusyBird::Main::PSGI;
-use BusyBird::StatusStorage::Memory;
+use BusyBird::StatusStorage::SQLite;
 
 $BusyBird::Log::Logger = undef;
 
 sub create_main {
     my $main = BusyBird::Main->new;
-    $main->set_config(default_status_storage => BusyBird::StatusStorage::Memory->new);
+    $main->set_config(default_status_storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:'));
     $main->timeline('test');
     return $main;
 }
