@@ -371,9 +371,9 @@ sub ack_statuses {
     my @results = try {
         my $ack_utc_timestamp = $TIMESTAMP_FORMAT->format_datetime(DateTime->now(time_zone => 'UTC'));
         $dbh = $self->_get_my_dbh();
-        $dbh->begin_work();
         my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
         return (undef, 0) if not defined $timeline_id;
+        $dbh->begin_work();
         my $total_count = 0;
         if(!defined($ids) && !defined($max_id)) {
             $total_count = $self->_ack_all($dbh, $timeline_id, $ack_utc_timestamp);
@@ -464,11 +464,11 @@ sub delete_statuses {
     my $dbh;
     my @results = try {
         my $dbh = $self->_get_my_dbh();
-        $dbh->begin_work();
         my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
         if(!defined($timeline_id)) {
             return (undef, 0);
         }
+        $dbh->begin_work();
         my $total_count;
         if(defined($ids)) {
             $total_count = $self->_delete_ids($dbh, $timeline_id, $ids);
