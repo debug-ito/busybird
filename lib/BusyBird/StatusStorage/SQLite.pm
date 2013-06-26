@@ -210,7 +210,8 @@ sub _to_status_record {
         timeline_id => $timeline_id,
         level => $status->{busybird}{level} || 0,
     };
-    ($record->{utc_acked_at}, $record->{timezone_acked_at}) = _extract_utc_timestamp_and_timezone($status->{busybird}{acked_at});
+    my $acked_at = $status->{busybird}{acked_at};  ## avoid autovivification
+    ($record->{utc_acked_at}, $record->{timezone_acked_at}) = _extract_utc_timestamp_and_timezone($acked_at);
     ($record->{utc_created_at}, $record->{timezone_created_at}) = _extract_utc_timestamp_and_timezone($status->{created_at});
     $record->{content} = encode_json($status);
     return $record;
