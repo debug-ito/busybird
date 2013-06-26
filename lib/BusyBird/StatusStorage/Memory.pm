@@ -434,6 +434,9 @@ This storage stores all statuses in the process memory.
 The stored statuses can be saved to a file in JSON format.
 The saved statuses can be loaded from the file.
 
+If you want a light-weight in-memory status storage,
+L<BusyBird::StatusStorage::SQLite> is a good idea, too.
+
 This storage is synchronous, i.e., all operations block the thread.
 
 This module uses L<BusyBird::Log> for logging.
