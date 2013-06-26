@@ -149,7 +149,7 @@ my @statuses;
     
     my @sorted_statuses = sort_statuses(@statuses);
     
-    my $status = @sorted_statuses[0];
+    my $status = $sorted_statuses[0];
     my $segments_arrayref = split_with_entities($status->{text}, $status->{entities});
 
 
