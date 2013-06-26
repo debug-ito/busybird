@@ -28,12 +28,10 @@ my $DELETE_COUNT_ID = 0;
 sub new {
     my ($class, %args) = @_;
     my $self = bless {
-        dbi_source => undef,
         maker => SQL::Maker->new(driver => 'SQLite'),
+        in_memory_dbh => undef,
     }, $class;
-    croak "path parameter is mandatory" if not defined $args{path};
-    croak "in-memory database (:memory:) is not supported" if $args{path} eq ':memory:';
-    $self->{dbi_source} = "dbi:SQLite:dbname=$args{path}";
+    $self->set_param(\%args, "path", undef, 1);
     $self->set_param(\%args, "max_status_num", 4000);
     $self->set_param(\%args, "hard_max_status_num", int($self->{max_status_num} * 1.2));
     $self->set_param(\%args, "vacuum_on_delete", 1600);
@@ -46,16 +44,16 @@ sub new {
     return $self;
 }
 
-sub _get_dbh {
-    my ($self, $dbi_source, $dbi_username, $dbi_password, $attr) = @_;
-    return DBI->connect($dbi_source, $dbi_username, $dbi_password, $attr);
-}
-
 sub _get_my_dbh {
     my ($self) = @_;
-    return $self->_get_dbh($self->{dbi_source}, "", "", {
+    my @connect_params = ("dbi:SQLite:dbname=$self->{path}", "", "", {
         RaiseError => 1, PrintError => 0, AutoCommit => 1
     });
+    if($self->{path} eq ':memory:') {
+        $self->{in_memory_dbh} = DBI->connect(@connect_params) if !$self->{in_memory_dbh};
+        return $self->{in_memory_dbh};
+    }
+    return DBI->connect(@connect_params);
 }
 
 sub _create_tables {
