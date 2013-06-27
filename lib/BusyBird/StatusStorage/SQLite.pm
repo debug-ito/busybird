@@ -611,9 +611,9 @@ sub _add_to_delete_count {
 
 sub _do_vacuum {
     my ($self, $dbh) = @_;
-    $dbh->do('VACUUM');
     my ($sql, @bind) = $self->{maker}->update('delete_counts', [delete_count => 0], [delete_count_id => $DELETE_COUNT_ID]);
     $dbh->do($sql, undef, @bind);
+    $dbh->do('VACUUM');
 }
 
 sub vacuum {
