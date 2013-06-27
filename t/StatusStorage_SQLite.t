@@ -229,7 +229,7 @@ test_sqlite('file');
     my $count = $dbh->do(<<SQL, undef, '2013-01-01T04:32:50', '-1000', '2012-12-31T22:41:05', '+0900', 1);
 UPDATE statuses SET utc_acked_at = ?, timezone_acked_at = ?,
                     utc_created_at = ?, timezone_created_at = ?
-              WHERE id = ?
+              WHERE status_id = ?
 SQL
     is($count, 1, '1 row updated');
     ($error, my $statuses) = sync($storage, 'get_statuses', %base, count => 'all');
@@ -253,7 +253,7 @@ SQL
 
     my $dbh = connect_db($tempfile->filename);
     my $count = $dbh->do(<<SQL, undef, 5, 1);
-UPDATE statuses SET level = ? WHERE id = ?
+UPDATE statuses SET level = ? WHERE status_id = ?
 SQL
     ($error, $unacked_counts) = sync($storage, 'get_unacked_counts', %base);
     is($error, undef, "get_unacked_counts succeed");

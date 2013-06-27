@@ -22,7 +22,7 @@ my $TIMESTAMP_FORMAT = DateTime::Format::Strptime->new(
     time_zone => 'UTC',
     on_error => 'croak',
 );
-my @STATUSES_ORDER_BY = ('utc_acked_at DESC', 'utc_created_at DESC', 'id DESC');
+my @STATUSES_ORDER_BY = ('utc_acked_at DESC', 'utc_created_at DESC', 'status_id DESC');
 my $DELETE_COUNT_ID = 0;
 
 sub new {
@@ -62,7 +62,7 @@ sub _create_tables {
     $dbh->do(<<EOD);
 CREATE TABLE IF NOT EXISTS statuses (
   timeline_id INTEGER NOT NULL,
-  id TEXT NOT NULL,
+  status_id TEXT NOT NULL,
   utc_acked_at TEXT NOT NULL,
   utc_created_at TEXT NOT NULL,
   timezone_acked_at TEXT NOT NULL,
@@ -70,23 +70,23 @@ CREATE TABLE IF NOT EXISTS statuses (
   level INTEGER NOT NULL,
   content TEXT NOT NULL,
 
-  PRIMARY KEY (timeline_id, id)
+  PRIMARY KEY (timeline_id, status_id)
 )
 EOD
     $dbh->do(<<EOD);
 CREATE TABLE IF NOT EXISTS timelines (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timeline_id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT UNIQUE NOT NULL
 )
 EOD
     $dbh->do(<<EOD);
 CREATE TABLE IF NOT EXISTS delete_counts (
-  id INTEGER PRIMARY KEY,
+  delete_count_id INTEGER PRIMARY KEY,
   delete_count INTEGER
 )
 EOD
     my ($sql, @bind) = $self->{maker}->insert('delete_counts', {
-        id => $DELETE_COUNT_ID, delete_count => 0
+        delete_count_id => $DELETE_COUNT_ID, delete_count => 0
     }, {prefix => 'INSERT OR IGNORE INTO'});
     $dbh->do($sql, undef, @bind);
 }
@@ -95,7 +95,7 @@ sub _put_update {
     my ($self, $dbh, $record, $prev_sth) = @_;
     my $sth = $prev_sth;
     my ($sql, @bind) = $self->{maker}->update('statuses', $record, [
-        'timeline_id' => "$record->{timeline_id}", id => "$record->{id}"
+        'timeline_id' => "$record->{timeline_id}", status_id => "$record->{status_id}"
     ]);
     if(!$sth) {
         $sth = $dbh->prepare($sql);
@@ -186,7 +186,7 @@ sub put_statuses {
 
 sub _get_timeline_id {
     my ($self, $dbh, $timeline_name) = @_;
-    my ($sql, @bind) = $self->{maker}->select('timelines', ['id'], ['name' => "$timeline_name"]);
+    my ($sql, @bind) = $self->{maker}->select('timelines', ['timeline_id'], ['name' => "$timeline_name"]);
     my $record = $dbh->selectrow_arrayref($sql, undef, @bind);
     if(!defined($record)) {
         return undef;
@@ -206,8 +206,8 @@ sub _to_status_record {
     croak "status ID must be set" if not defined $status->{id};
     croak "timeline_id must be defined" if not defined $timeline_id;
     my $record = {
-        id => $status->{id},
         timeline_id => $timeline_id,
+        status_id => $status->{id},
         level => $status->{busybird}{level} || 0,
     };
     my $acked_at = $status->{busybird}{acked_at};  ## avoid autovivification
@@ -220,7 +220,7 @@ sub _to_status_record {
 sub _from_status_record {
     my ($record) = @_;
     my $status = decode_json($record->{content});
-    $status->{id} = $record->{id};
+    $status->{id} = $record->{status_id};
     if($record->{level} != 0 || defined($status->{busybird}{level})) {
         $status->{busybird}{level} = $record->{level};
     }
@@ -324,7 +324,7 @@ sub _create_base_condition {
 sub _get_timestamps_of {
     my ($self, $dbh, $timeline_id, $status_id, $ack_state) = @_;
     my $cond = $self->_create_base_condition($timeline_id, $ack_state);
-    $cond->add(id => "$status_id");
+    $cond->add(status_id => "$status_id");
     my ($sql, @bind) = $self->{maker}->select("statuses", ['utc_acked_at', 'utc_created_at'], $cond, {
         limit => 1
     });
@@ -347,7 +347,7 @@ sub _create_max_id_condition {
 sub _create_max_time_condition {
     my ($self, $max_acked_at, $max_created_at, $max_id) = @_;
     my $cond = $self->{maker}->new_condition();
-    $cond->add_raw(q{utc_acked_at < ? OR ( utc_acked_at = ? AND ( utc_created_at < ? OR ( utc_created_at = ? AND id <= ?)))},
+    $cond->add_raw(q{utc_acked_at < ? OR ( utc_acked_at = ? AND ( utc_created_at < ? OR ( utc_created_at = ? AND status_id <= ?)))},
                    [($max_acked_at) x 2, ($max_created_at) x 2, "$max_id"]);
     return $cond;
 }
@@ -431,7 +431,7 @@ sub _ack_ids {
     my $sth;
     foreach my $id (@$ids) {
         my $cond = $self->_create_base_condition($timeline_id, 'unacked');
-        $cond->add(id => "$id");
+        $cond->add(status_id => "$id");
         my ($sql, @bind) = $self->{maker}->update(
             'statuses', {utc_acked_at => $ack_utc_timestamp}, $cond
         );
@@ -496,7 +496,7 @@ sub _delete_timeline {
     ]);
     my $status_count = $dbh->do($sql, undef, @bind);
     ($sql, @bind) = $self->{maker}->delete('timelines', [
-        id => $timeline_id
+        timeline_id => $timeline_id
     ]);
     $dbh->do($sql, undef, @bind);
     return $status_count;
@@ -509,7 +509,7 @@ sub _delete_ids {
     my $total_count = 0;
     foreach my $id (@$ids) {
         my ($sql, @bind) = $self->{maker}->delete('statuses', [
-            timeline_id => $timeline_id, id => "$id"
+            timeline_id => $timeline_id, status_id => "$id"
         ]);
         if(!$sth) {
             $sth = $dbh->prepare($sql);
@@ -537,7 +537,7 @@ sub _delete_exceeding_statuses {
     }
 
     ## get the top of the exceeding statuses
-    ($sql, @bind) = $self->{maker}->select('statuses', [qw(utc_acked_at utc_created_at id)], [timeline_id => $timeline_id], {
+    ($sql, @bind) = $self->{maker}->select('statuses', [qw(utc_acked_at utc_created_at status_id)], [timeline_id => $timeline_id], {
         order_by => \@STATUSES_ORDER_BY,
         offset => $self->{max_status_num},
         limit => 1,
@@ -570,7 +570,7 @@ sub get_unacked_counts {
             return (undef, \%result_obj);
         }
         my $cond = $self->_create_base_condition($timeline_id, 'unacked');
-        my ($sql, @bind) = $self->{maker}->select('statuses', ['level', \'count(id)'], $cond, {
+        my ($sql, @bind) = $self->{maker}->select('statuses', ['level', \'count(status_id)'], $cond, {
             group_by => 'level'
         });
         my $sth = $dbh->prepare($sql);
@@ -594,13 +594,13 @@ sub _add_to_delete_count {
     return if $add_count <= 0;
     my ($sql, @bind) = $self->{maker}->update('delete_counts', [
         delete_count => \ ['delete_count + ?', $add_count]  ## trick to insert unquoted value
-    ], [id => $DELETE_COUNT_ID]);
+    ], [delete_count_id => $DELETE_COUNT_ID]);
     $dbh->do($sql, undef, @bind);
     
-    ($sql, @bind) = $self->{maker}->select('delete_counts', ["delete_count"], [id => $DELETE_COUNT_ID]);
+    ($sql, @bind) = $self->{maker}->select('delete_counts', ["delete_count"], [delete_count_id => $DELETE_COUNT_ID]);
     my $row = $dbh->selectrow_arrayref($sql, undef, @bind);
     if(!defined($row)) {
-        die "no delete_counts row with id = $DELETE_COUNT_ID. something is wrong.";
+        die "no delete_counts row with delete_count_id = $DELETE_COUNT_ID. something is wrong.";
     }
     my $current_delete_count = $row->[0];
 
@@ -612,7 +612,7 @@ sub _add_to_delete_count {
 sub _do_vacuum {
     my ($self, $dbh) = @_;
     $dbh->do('VACUUM');
-    my ($sql, @bind) = $self->{maker}->update('delete_counts', [delete_count => 0], [id => $DELETE_COUNT_ID]);
+    my ($sql, @bind) = $self->{maker}->update('delete_counts', [delete_count => 0], [delete_count_id => $DELETE_COUNT_ID]);
     $dbh->do($sql, undef, @bind);
 }
 
