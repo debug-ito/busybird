@@ -75,7 +75,7 @@ my $builder = Module::Build->new(
     add_to_cleanup      => [ 'BusyBird-*' ],
     ## create_makefile_pl => 'traditional',
     no_index => {
-        directory => ["t", "xt", "eg", "inc", "share"],
+        directory => ["t", "xt", "eg", "inc", "share", "benchmark"],
         file => ["README.pod"],
     },
     meta_add => {
