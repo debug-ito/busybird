@@ -44,24 +44,38 @@ sub new {
     return $self;
 }
 
+sub _create_new_dbh {
+    my ($self, @connect_params) = @_;
+    my $dbh = DBI->connect(@connect_params);
+    $dbh->do(q{PRAGMA foreign_keys = ON});
+    return $dbh;
+}
+
 sub _get_my_dbh {
     my ($self) = @_;
     my @connect_params = ("dbi:SQLite:dbname=$self->{path}", "", "", {
         RaiseError => 1, PrintError => 0, AutoCommit => 1
     });
     if($self->{path} eq ':memory:') {
-        $self->{in_memory_dbh} = DBI->connect(@connect_params) if !$self->{in_memory_dbh};
+        $self->{in_memory_dbh} = $self->_create_new_dbh(@connect_params) if !$self->{in_memory_dbh};
         return $self->{in_memory_dbh};
     }
-    return DBI->connect(@connect_params);
+    return $self->_create_new_dbh(@connect_params);
 }
 
 sub _create_tables {
     my ($self) = @_;
     my $dbh = $self->_get_my_dbh();
     $dbh->do(<<EOD);
+CREATE TABLE IF NOT EXISTS timelines (
+  timeline_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT UNIQUE NOT NULL
+)
+EOD
+    $dbh->do(<<EOD);
 CREATE TABLE IF NOT EXISTS statuses (
-  timeline_id INTEGER NOT NULL,
+  timeline_id INTEGER NOT NULL
+              REFERENCES timelines(timeline_id) ON DELETE CASCADE ON UPDATE CASCADE,
   status_id TEXT NOT NULL,
   utc_acked_at TEXT NOT NULL,
   utc_created_at TEXT NOT NULL,
@@ -71,12 +85,6 @@ CREATE TABLE IF NOT EXISTS statuses (
   content TEXT NOT NULL,
 
   PRIMARY KEY (timeline_id, status_id)
-)
-EOD
-    $dbh->do(<<EOD);
-CREATE TABLE IF NOT EXISTS timelines (
-  timeline_id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT UNIQUE NOT NULL
 )
 EOD
     $dbh->do(<<EOD);

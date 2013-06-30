@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Exception;
 use BusyBird::Test::StatusStorage qw(:storage :status);
 use File::Temp;
 use Test::MockObject::Extends;
@@ -27,9 +28,11 @@ sub create_storage {
 
 sub connect_db {
     my ($filename) = @_;
-    return DBI->connect("dbi:SQLite:dbname=$filename", "", "", {
+    my $dbh = DBI->connect("dbi:SQLite:dbname=$filename", "", "", {
         PrintError => 0, RaiseError => 1, AutoCommit => 1
     });
+    $dbh->do(q{PRAGMA foreign_keys = ON});
+    return $dbh;
 }
 
 sub test_sqlite {
@@ -262,6 +265,19 @@ SQL
     is($error, undef, "get succeed");
     is(scalar(@$statuses), 1, "1 status obtained");
     is($statuses->[0]{busybird}{level}, 5, "level is set to 5");
+}
+
+{
+    note('--- foreign key constraint on statuses.timeline_id');
+    my ($tempfile, $storage) = create_storage('file');
+    my %base = (timeline => '_test_level_foreign');
+    my ($error, $ret_num);
+    ($error, $ret_num) = sync($storage, 'put_statuses', %base, mode => 'insert', statuses => status(1));
+    is($error, undef, "put succeeds");
+    is($ret_num, 1, '1 inserted');
+    my $dbh = connect_db($tempfile->filename);
+    throws_ok { $dbh->do(q{UPDATE statuses SET timeline_id = 256}) } qr/foreign/i,
+        "statuses.timeline_id cannot be modified to non-existent ID due to foreign key constraint";
 }
 
 test_sqlite('memory');
