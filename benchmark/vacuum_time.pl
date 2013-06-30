@@ -1,5 +1,7 @@
 use strict;
 use warnings;
+use FindBin;
+use lib ("$FindBin::RealBin/lib");
 use Getopt::Long qw(:config bundling no_ignore_case);
 use Pod::Usage;
 use Try::Tiny;
@@ -7,8 +9,10 @@ use JSON;
 use DBI;
 use BusyBird::StatusStorage::SQLite;
 use BusyBird::Timeline;
+use BusyBirdBenchmark::StatusStorage;
 use Timer::Simple;
 use Storable qw(dclone);
+
 
 sub get_delete_count {
     my ($db_filename) = @_;
@@ -22,122 +26,6 @@ sub get_delete_count {
     die "cannot fetch delete count" if not defined $record;
     return $record->[0];
 }
-
-my $status = {
-    'source' => '<a href="http://www.google.com/" rel="nofollow">debug_ito writer</a>',
-    'retweeted' => JSON::false,
-    'favorited' => JSON::false,
-    'coordinates' => undef,
-    'place' => undef,
-    'retweet_count' => 0,
-    'entities' => {
-        'hashtags' => [
-            {
-                'text' => 'test',
-                'indices' => [
-                    106,
-                    111
-                ]
-            }
-        ],
-        'user_mentions' => [
-            {
-                'name' => 'Toshio Ito',
-                'id' => 797588971,
-                'id_str' => '797588971',
-                'indices' => [
-                    77,
-                    87
-                ],
-                'screen_name' => 'debug_ito'
-            }
-        ],
-        'symbols' => [],
-        'urls' => [
-            {
-                'display_url' => 'google.co.jp',
-                'expanded_url' => 'http://www.google.co.jp/',
-                'url' => 'http://t.co/dNlPhACDcS',
-                'indices' => [
-                    44,
-                    66
-                ]
-            }
-        ]
-    },
-    'truncated' => JSON::false,
-    'in_reply_to_status_id_str' => undef,
-    'created_at' => 'Thu May 16 12:56:23 +0000 2013',
-    'contributors' => undef,
-    'text' => "\x{e3}\x{81}\x{a6}\x{e3}\x{81}\x{99}\x{e3}\x{81}\x{a8} &lt;\"&amp;hearts;&amp;&amp;hearts;\"&gt; http://t.co/dNlPhACDcS &gt;\"&lt; \@debug_ito &amp; &amp; &amp; #test",
-    'in_reply_to_user_id' => undef,
-    'user' => {
-        'friends_count' => 12,
-        'follow_request_sent' => JSON::false,
-        'profile_background_image_url_https' => 'https://si0.twimg.com/images/themes/theme1/bg.png',
-        'profile_image_url' => 'http://a0.twimg.com/sticky/default_profile_images/default_profile_4_normal.png',
-        'profile_sidebar_fill_color' => 'DDEEF6',
-        'entities' => {
-            'url' => {
-                'urls' => [
-                    {
-                        'display_url' => "metacpan.org/author/TOSHIOI\x{e2}\x{80}\x{a6}",
-                        'expanded_url' => 'https://metacpan.org/author/TOSHIOITO',
-                        'url' => 'https://t.co/ZyZqxH0g',
-                        'indices' => [
-                            0,
-                            21
-                        ]
-                    }
-                ]
-            },
-            'description' => {
-                'urls' => []
-            }
-        },
-        'profile_background_color' => 'C0DEED',
-        'notifications' => JSON::false,
-        'url' => 'https://t.co/ZyZqxH0g',
-        'id' => 797588971,
-        'is_translator' => JSON::false,
-        'following' => JSON::false,
-        'screen_name' => 'debug_ito',
-        'lang' => 'ja',
-        'location' => '',
-        'followers_count' => 1,
-        'name' => 'Toshio Ito',
-        'statuses_count' => 10,
-        'description' => 'Perl etc.',
-        'favourites_count' => 0,
-        'profile_background_tile' => JSON::false,
-        'listed_count' => 0,
-        'contributors_enabled' => JSON::false,
-        'profile_link_color' => '0084B4',
-        'profile_image_url_https' => 'https://si0.twimg.com/sticky/default_profile_images/default_profile_4_normal.png',
-        'profile_sidebar_border_color' => 'C0DEED',
-        'created_at' => 'Sun Sep 02 05:33:08 +0000 2012',
-        'utc_offset' => 32400,
-        'verified' => JSON::false,
-        'profile_background_image_url' => 'http://a0.twimg.com/images/themes/theme1/bg.png',
-        'default_profile' => JSON::true, ##bless( do{\(my $o = 1)}, 'JSON::PP::Boolean' ),
-        'protected' => JSON::false,
-        'id_str' => '797588971',
-        'profile_text_color' => '333333',
-        'default_profile_image' => JSON::true,
-        'time_zone' => 'Irkutsk',
-        'geo_enabled' => JSON::false,
-        'profile_use_background_image' => JSON::true,
-    },
-    ## 'id' => '335015876287950848',
-    'in_reply_to_status_id' => undef,
-    'geo' => undef,
-    'lang' => 'ja',
-    'possibly_sensitive' => JSON::false,
-    'in_reply_to_user_id_str' => undef,
-    ## 'id_str' => '335015876287950848',
-    'in_reply_to_screen_name' => undef,
-    'favorite_count' => 0
-};
 
 my $AUTO_REMOVE = 0;
 my $TIMELINE_NUM = 1;
@@ -176,7 +64,7 @@ my $storage = BusyBird::StatusStorage::SQLite->new(
 
 my @timelines = map { BusyBird::Timeline->new(name => "timeline_$_", storage => $storage) } 1..$TIMELINE_NUM;
 
-my @statuses = (map { dclone($status) } 1..$STATUS_COUNT_ONE_TIME);
+my @statuses = (map { dclone($BusyBirdBenchmark::StatusStorage::SAMPLE_STATUS) } 1..$STATUS_COUNT_ONE_TIME);
 
 my $timer = Timer::Simple->new;
 print STDERR "Start putting: ";
