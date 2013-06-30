@@ -21,17 +21,12 @@ sub new {
     my $self = bless {
         timelines => {}, ## timelines should always be sorted.
     }, $class;
-    $self->set_param(\%options, 'max_status_num', 4000);
+    $self->set_param(\%options, 'max_status_num', 2000);
     if($self->{max_status_num} <= 0) {
         croak "max_status_num option must be bigger than 0.";
     }
     return $self;
 }
-
-## sub _exists {
-##     my ($self, $timeline, $id) = @_;
-##     return exists($self->{indices}{$timeline}{$id});
-## }
 
 sub _log {
     my ($self, $level, $msg) = @_;
@@ -467,7 +462,7 @@ You can specify the folowing options in C<%options>.
 
 =over
 
-=item C<max_status_num> => MAX_STATUS_NUM (optional, default: 4000)
+=item C<max_status_num> => MAX_STATUS_NUM (optional, default: 2000)
 
 Specifies the maximum number of statuses the storage can store per timeline.
 If more statuses are added to a full timeline, the oldest statuses in the timeline are removed automatically.

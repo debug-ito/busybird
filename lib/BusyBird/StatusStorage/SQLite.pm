@@ -32,9 +32,9 @@ sub new {
         in_memory_dbh => undef,
     }, $class;
     $self->set_param(\%args, "path", undef, 1);
-    $self->set_param(\%args, "max_status_num", 4000);
+    $self->set_param(\%args, "max_status_num", 2000);
     $self->set_param(\%args, "hard_max_status_num", int($self->{max_status_num} * 1.2));
-    $self->set_param(\%args, "vacuum_on_delete", 1600);
+    $self->set_param(\%args, "vacuum_on_delete", int($self->{max_status_num} * 2.0));
     croak "max_status_num must be a number" if !looks_like_number($self->{max_status_num});
     croak "hard_max_status_num must be a number" if !looks_like_number($self->{hard_max_status_num});
     $self->{max_status_num} = int($self->{max_status_num});
@@ -665,7 +665,7 @@ Fields in C<%args> are:
 Path string to the SQLite database file.
 If C<':memory:'> is specified, it creates a temporary in-memory storage.
 
-=item C<max_status_num> => INT (optional, default: 4000)
+=item C<max_status_num> => INT (optional, default: 2000)
 
 The maximum number of statuses the storage guarantees to store per timeline.
 You cannot expect a timeline to keep more statuses than this number.
@@ -676,10 +676,10 @@ The hard limit max number of statuses the storage is able to store per timeline.
 When the number of statuses in a timeline exceeds this number,
 it deletes old statuses from the timeline so that the timeline has C<max_status_num> statuses.
 
-=item C<vacuum_on_delete> => INT (optional, default: 1600)
+=item C<vacuum_on_delete> => INT (optional, default: 200% of max_status_num)
 
 The status storage automatically executes C<VACUUM> every time this number of statuses are
-deleted from the storage. The number is for the whole storage, not per timeline.
+deleted from the storage. B<The number is for the whole storage, not per timeline>.
 
 If you set this option less than or equal to 0, it never C<VACUUM> itself.
 
