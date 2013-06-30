@@ -7,6 +7,7 @@ use List::Util qw(shuffle);
 use Timer::Simple;
 use Storable qw(dclone);
 use JSON;
+use Statistics::Descriptive;
 
 our $SAMPLE_STATUS = {
     'source' => '<a href="http://www.google.com/" rel="nofollow">debug_ito writer</a>',
@@ -224,6 +225,21 @@ sub run_once {
     return \%result;
 }
 
+sub get_statistics {
+    my ($self, $count) = @_;
+    my %stats = ();
+    foreach (1 .. $count) {
+        my $ret = $self->run_once();
+        foreach my $key (keys %$ret) {
+            if(!defined($stats{$key})) {
+                $stats{$key} = Statistics::Descriptive::Full->new;
+            }
+            $stats{$key}->add_data($ret->{$key});
+        }
+    }
+    return \%stats;
+}
+
 1;
 
 __END__
@@ -236,6 +252,8 @@ BusyBirdBenchmark::StatusStorage - benchmark utility class for StatusStorages
 
 =head1 SYNOPSIS
 
+Benchmark a single storage.
+
     my $bench = BusyBirdBenchmark::StatusStorage->new(
         storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:'),
     );
@@ -244,6 +262,16 @@ BusyBirdBenchmark::StatusStorage - benchmark utility class for StatusStorages
     foreach my $key (%$ret) {
         print "$key : $ret->{$key}\n";
     }
+
+Or, benchmark bunch of status storages.
+
+    BusyBirdBenchmark::StatusStorage->benchmark(
+        { timeline_num => 5, run_count => 200 },
+        {
+            memory     => BusyBird::StatusStorage::Memory->new,
+            sqlite_mem => BusyBird::StatusStorage::SQLite->new(path => ':memory:'),
+        }
+    );
 
 =head1 DESCRIPTION
 
@@ -330,6 +358,30 @@ Number of statuses obtained from a timeline in step 6.
 
 =back
 
+=head2 BusyBirdBenchMark::StatusStorage->benchmark($options, $targets)
+
+Benchmark multiple status storages and prints the results.
+
+C<$options> is a hash-ref.
+Its content is directly passed to C<new()> method, though C<storage> field is ignored.
+In addition, it accepts the following fields.
+
+=over
+
+=item C<run_count> => INT (optional, default: 100)
+
+Number of executions of steps 2 - 6 for each target status storage.
+This is passed to C<get_statistics()> method.
+
+=item C<output> => IO::Handle object (optional, default: STDOUT)
+
+An L<IO::Handle> object that it will prints the results to.
+
+=back
+
+C<$targets> is also a hash-ref that contains L<BusyBird::StatusStorage> to be tested.
+Its value is the testee L<BusyBird::StatusStorage> object, and its key is an arbitrary name for the storage.
+
 =head1 OBJECT METHODS
 
 =head2 $result = $bench->run_once()
@@ -359,6 +411,13 @@ Time in seconds it took to do step 5.
 Time in seconds it took to do step 6.
 
 =back
+
+=head2 $stats = $bench->get_statistics($count)
+
+Runs C<run_once()> method C<$count> times and returns all results in a hash-ref of L<Statistics::Descriptive::Full> objects.
+
+The return value C<$stats> is a hash-ref with the same struture as the one returned by C<run_once()>.
+The defference is that values for C<$stats> are L<Statistics::Descriptive::Full> objects containing C<$count> values for each measurement.
 
 =head1 AUTHOR
 
