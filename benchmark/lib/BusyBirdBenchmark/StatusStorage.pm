@@ -173,6 +173,7 @@ sub run_once {
     my ($self) = @_;
     my %result = (
         add => undef,
+        get_count => undef,
         get_unacked => undef,
         ack => undef,
         get_acked => undef
@@ -188,14 +189,24 @@ sub run_once {
     }
     $result{add} = $timer->elapsed / $self->{insert_num};
     
-    my $exp_get_unacked = $self->{insert_num} * $self->{insert_status_num};
+    my $exp_unacked_count = $self->{insert_num} * $self->{insert_status_num};
+    $timer = Timer::Simple->new;
+    $timeline->get_unacked_counts(callback => sub {
+        my ($e, $unacked_counts) = @_;
+        die "get unacked counts error: $e" if defined $e;
+        if($unacked_counts->{total} != $exp_unacked_count) {
+            die "get unacked counts error: total unacked count = $unacked_counts->{total}, but expected $exp_unacked_count";
+        }
+        $result{get_count} = $timer->elapsed;
+    });
+    
     my @unacked_ids = ();
     $timer = Timer::Simple->new;
     $timeline->get_statuses(ack_state => 'unacked', count => 'all', callback => sub {
         my ($e, $statuses) = @_;
         die "get unacked error: $e" if defined $e;
         my $got_num = scalar(@$statuses);
-        die "get unacked error: got $got_num but expected $exp_get_unacked" if $got_num != $exp_get_unacked;
+        die "get unacked error: got $got_num but expected $exp_unacked_count" if $got_num != $exp_unacked_count;
         $result{get_unacked} = $timer->elapsed;
         @unacked_ids = map { $_->{id} } @$statuses;
     });
@@ -204,7 +215,7 @@ sub run_once {
     $timeline->ack_statuses(ids => \@unacked_ids, callback => sub {
         my ($e, $num) = @_;
         die "ack error: $e" if defined $e;
-        die "ack error: ack $num statuses but expected $exp_get_unacked" if $num != $exp_get_unacked;
+        die "ack error: ack $num statuses but expected $exp_unacked_count" if $num != $exp_unacked_count;
         $result{ack} = $timer->elapsed;
     });
 
@@ -298,22 +309,27 @@ It measures the time the storage takes to insert all the statuses.
 
 =item 4.
 
+It gets the unacked counts of the timeline.
+It measures the time the storage takes to return the counts.
+
+=item 5.
+
 It gets all the unacked statuses just inserted.
 It measures the time the storage takes to return the statuses.
 
-=item 5.
+=item 6.
 
 It acks all the unacked statuses just inserted by explicitly calling C<< ack_statuses(ids => \@ids ...) >>.
 It measures the time the storage takes to complete the acking.
 
-=item 6.
+=item 7.
 
 It gets some acked statuses below the statuses just inserted by calling C<< get_statuses(max_id => $bottom_id ...) >>.
 It measures the time the storage takes to return the statuses.
 
-=item 7.
+=item 8.
 
-Repeat the steps 2 - 6.
+Repeat the steps 2 - 7.
 
 =back
 
@@ -356,7 +372,7 @@ The total number of statuses inserted to a timeline is thus C<< insert_status_nu
 
 =item C<get_acked_status_num> => INT (optional, default: 20)
 
-Number of statuses obtained from a timeline in step 6.
+Number of statuses obtained from a timeline in step 7.
 
 =back
 
@@ -372,7 +388,7 @@ In addition, it accepts the following fields.
 
 =item C<run_count> => INT (optional, default: 100)
 
-Number of executions of steps 2 - 6 for each target status storage.
+Number of executions of steps 2 - 7 for each target status storage.
 This is passed to C<get_statistics()> method.
 
 =item C<output> => IO::Handle object (optional, default: STDOUT)
@@ -388,7 +404,7 @@ Its value is the testee L<BusyBird::StatusStorage> object, and its key is an arb
 
 =head2 $result = $bench->run_once()
 
-Runs the steps 2 - 6 once, and returns the measured time.
+Runs the steps 2 - 7 once, and returns the measured time.
 
 The steps executed by C<run_once()> is more or less the same as the ones the browser would take when it accesses to a timeline.
 
@@ -398,19 +414,23 @@ The C<$result> is a hash-ref containing following values.
 
 =item C<add> => NUMBER
 
-Time in seconds it took to do step 3.
+Time in seconds it took to complete one insertion in step 3. (not time to do ALL insertion)
+
+=item C<get_count> => NUMBER
+
+Time in seconds it took to return the unacked counts in step 4.
 
 =item C<get_unacked> => NUMBER
 
-Time in seconds it took to do step 4.
+Time in seconds it took to do step 5.
 
 =item C<ack> => NUMBER
 
-Time in seconds it took to do step 5.
+Time in seconds it took to do step 6.
 
 =item C<get_acked> => NUMBER
 
-Time in seconds it took to do step 6.
+Time in seconds it took to do step 7.
 
 =back
 
