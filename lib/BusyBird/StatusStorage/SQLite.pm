@@ -68,7 +68,7 @@ sub _create_tables {
     my $dbh = $self->_get_my_dbh();
     $dbh->do(<<EOD);
 CREATE TABLE IF NOT EXISTS timelines (
-  timeline_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timeline_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   name TEXT UNIQUE NOT NULL
 )
 EOD
@@ -89,8 +89,8 @@ CREATE TABLE IF NOT EXISTS statuses (
 EOD
     $dbh->do(<<EOD);
 CREATE TABLE IF NOT EXISTS delete_counts (
-  delete_count_id INTEGER PRIMARY KEY,
-  delete_count INTEGER
+  delete_count_id INTEGER PRIMARY KEY NOT NULL,
+  delete_count INTEGER NOT NULL
 )
 EOD
     my ($sql, @bind) = $self->{maker}->insert('delete_counts', {
