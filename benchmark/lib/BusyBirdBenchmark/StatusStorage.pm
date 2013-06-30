@@ -6,6 +6,7 @@ use BusyBird::Timeline;
 use List::Util qw(shuffle);
 use Timer::Simple;
 use Storable qw(dclone);
+use JSON;
 
 our $SAMPLE_STATUS = {
     'source' => '<a href="http://www.google.com/" rel="nofollow">debug_ito writer</a>',
@@ -131,7 +132,8 @@ sub new {
     }, $class;
     $self->set_param(\%args, 'storage', undef, 1);
     $self->set_param(\%args, 'timeline_num', 3);
-    $self->set_param(\%args, 'initial_status_num', 2000);
+    $self->set_param(\%args, 'initial_insert_status_num', 20);
+    $self->set_param(\%args, 'initial_insert_num', 100);
     $self->set_param(\%args, 'insert_status_num', 20);
     $self->set_param(\%args, 'insert_num', 10);
     $self->set_param(\%args, 'get_acked_status_num', 20);
@@ -142,15 +144,19 @@ sub new {
 sub _init {
     my ($self) = @_;
     $self->{timelines} = [map {
-        BusyBird::Timeline->(name => "tl_$_", storage => $self->{storage});
+        BusyBird::Timeline->new(name => "tl_$_", storage => $self->{storage});
     } 0 .. ($self->{timeline_num} - 1)];
     $self->{statuses_to_add} = [map { dclone($SAMPLE_STATUS) } 1..$self->{insert_status_num}];
-    my @insert_timeline_indice = shuffle map { ($_) x $self->{initial_status_num} } 0 .. ($self->{timeline_num} - 1);
+
+    my @initial_statuses_to_add = map { dclone($SAMPLE_STATUS) } 1..$self->{initial_insert_status_num};
+    my @insert_timeline_indice = shuffle map { ($_) x $self->{initial_insert_num} } 0 .. ($self->{timeline_num} - 1);
     foreach my $timeline_index (@insert_timeline_indice) {
-        $self->{timelines}[$timeline_index]->add($SAMPLE_STATUS, sub {
+        $self->{timelines}[$timeline_index]->add(\@initial_statuses_to_add, sub {
             my ($error, $num) = @_;
-            die "insert error: $error" if defined $error;
-            die "insert error: num of insert = $num (!= 1)" if $num != 1;
+            die "initial insert error: $error" if defined $error;
+            if($num != $self->{initial_insert_status_num}) {
+                die "initial insert error: num of insert = $num, but expected $self->{initial_insert_status_num}";
+            }
         });
     }
     foreach my $timeline (@{$self->{timelines}}) {
@@ -175,7 +181,7 @@ sub run_once {
     foreach (1 .. $self->{insert_num}) {
         $timeline->add($self->{statuses_to_add}, sub {
             my ($e, $num) = @_;
-            die "add error: $e" if not defined $e;
+            die "add error: $e" if defined $e;
             die "add error: add num != $self->{insert_status_num}" if $num != $self->{insert_status_num};
         });
     }
@@ -186,7 +192,7 @@ sub run_once {
     $timer = Timer::Simple->new;
     $timeline->get_statuses(ack_state => 'unacked', count => 'all', callback => sub {
         my ($e, $statuses) = @_;
-        die "get unacked error: $e" if not defined $e;
+        die "get unacked error: $e" if defined $e;
         my $got_num = scalar(@$statuses);
         die "get unacked error: got $got_num but expected $exp_get_unacked" if $got_num != $exp_get_unacked;
         $result{get_unacked} = $timer->elapsed;
@@ -203,7 +209,7 @@ sub run_once {
 
     $timer = Timer::Simple->new;
     $timeline->get_statuses(
-        ack_state => 'unacked', count => $self->{get_acked_status_num}, max_id => $unacked_ids[-1],
+        ack_state => 'acked', count => $self->{get_acked_status_num}, max_id => $unacked_ids[-1],
         callback => sub {
             my ($e, $statuses) = @_;
             die "get acked error: $e" if defined $e;
@@ -220,3 +226,142 @@ sub run_once {
 
 1;
 
+__END__
+
+=pod
+
+=head1 NAME
+
+BusyBirdBenchmark::StatusStorage - benchmark utility class for StatusStorages
+
+=head1 SYNOPSIS
+
+    my $bench = BusyBirdBenchmark::StatusStorage->new(
+        storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:'),
+    );
+    
+    my $ret = $bench->run_once();
+    foreach my $key (%$ret) {
+        print "$key : $ret->{$key}\n";
+    }
+
+=head1 DESCRIPTION
+
+This is a helper module to do benchmarks for L<BusyBird::StatusStorage> implementations.
+
+The benchmark is done in the following procedure.
+
+=over
+
+=item 1.
+
+Initially it populates timelines in the given storage.
+
+=item 2.
+
+It picks up a timeline randomly.
+
+=item 3.
+
+It inserts some unacked statuses to the timeline.
+It measures the time the storage takes to insert all the statuses.
+
+=item 4.
+
+It gets all the unacked statuses just inserted.
+It measures the time the storage takes to return the statuses.
+
+=item 5.
+
+It acks all the unacked statuses just inserted by explicitly calling C<< ack_statuses(ids => \@ids ...) >>.
+It measures the time the storage takes to complete the acking.
+
+=item 6.
+
+It gets some acked statuses below the statuses just inserted by calling C<< get_statuses(max_id => $bottom_id ...) >>.
+It measures the time the storage takes to return the statuses.
+
+=item 7.
+
+Repeat the steps 2 - 6.
+
+=back
+
+=head1 CLASS METHODS
+
+=head2 $bench = BusyBirdBenchmark::StatusStorage->new(%args)
+
+The constructor. It runs the step 1 explained in the L</DESCRIPTION> section.
+
+Fields in C<%args> are:
+
+=over
+
+=item C<storage> => STATUS_STORAGE (mandatory)
+
+The L<BusyBird::StatusStorage> object to be benchmarked.
+The storage should be empty.
+
+=item C<timeline_num> => INT (optional, default: 3)
+
+Number of timelines it creates for benchmark.
+
+=item C<initial_insert_status_num> => INT (optional, default: 20)
+
+Number of statuses inserted to a timeline by a single call to C<< add_statuses() >> during the initialization phase (step 1).
+
+=item C<initial_insert_num> => INT (optional, default: 100)
+
+Number of status insertions to a timeline during the initialization phase (step 1).
+The total number of statuses inserted to a timeline is thus C<< initial_insert_status_num * initial_insert_num >>.
+
+=item C<insert_status_num> => INT (optinal, default: 20)
+
+Number of statuses inserted to a timeline by a single call to C<< add_statuses() >> during the measurement phase (step 3).
+
+=item C<insert_num> => INT (optional, default: 10)
+
+Number of status insertions to a timeline during the measurement phase (step 3).
+The total number of statuses inserted to a timeline is thus C<< insert_status_num * insert_num >>.
+
+=item C<get_acked_status_num> => INT (optional, default: 20)
+
+Number of statuses obtained from a timeline in step 6.
+
+=back
+
+=head1 OBJECT METHODS
+
+=head2 $result = $bench->run_once()
+
+Runs the steps 2 - 6 once, and returns the measured time.
+
+The steps executed by C<run_once()> is more or less the same as the ones the browser would take when it accesses to a timeline.
+
+The C<$result> is a hash-ref containing following values.
+
+=over
+
+=item C<add> => NUMBER
+
+Time in seconds it took to do step 3.
+
+=item C<get_unacked> => NUMBER
+
+Time in seconds it took to do step 4.
+
+=item C<ack> => NUMBER
+
+Time in seconds it took to do step 5.
+
+=item C<get_acked> => NUMBER
+
+Time in seconds it took to do step 6.
+
+=back
+
+=head1 AUTHOR
+
+Toshio Ito C<< <toshioito [at] cpan.org> >>
+
+=cut

@@ -5,7 +5,6 @@ use lib ("$FindBin::RealBin/lib");
 use Getopt::Long qw(:config bundling no_ignore_case);
 use Pod::Usage;
 use Try::Tiny;
-use JSON;
 use DBI;
 use BusyBird::StatusStorage::SQLite;
 use BusyBird::Timeline;
