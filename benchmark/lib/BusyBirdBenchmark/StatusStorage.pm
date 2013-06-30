@@ -226,9 +226,11 @@ sub run_once {
 }
 
 sub get_statistics {
-    my ($self, $count) = @_;
+    my ($self, $count, $progress) = @_;
     my %stats = ();
-    foreach (1 .. $count) {
+    $progress ||= sub {};
+    foreach my $iteration_index (0 .. ($count - 1)) {
+        $progress->($iteration_index);
         my $ret = $self->run_once();
         foreach my $key (keys %$ret) {
             if(!defined($stats{$key})) {
@@ -412,9 +414,16 @@ Time in seconds it took to do step 6.
 
 =back
 
-=head2 $stats = $bench->get_statistics($count)
+=head2 $stats = $bench->get_statistics($count, [$progress])
 
 Runs C<run_once()> method C<$count> times and returns all results in a hash-ref of L<Statistics::Descriptive::Full> objects.
+
+The optional parameter C<$progress> is a subroutine reference that is called before every call to C<run_once()>.
+The iteration index is passed to C<$progress> as in
+
+    $progress->($index)
+
+where C<$index> is zero at the first call.
 
 The return value C<$stats> is a hash-ref with the same struture as the one returned by C<run_once()>.
 The defference is that values for C<$stats> are L<Statistics::Descriptive::Full> objects containing C<$count> values for each measurement.
