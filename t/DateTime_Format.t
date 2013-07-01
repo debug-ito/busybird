@@ -10,7 +10,7 @@ BEGIN {
 my $formatter = 'BusyBird::DateTime::Format';
 
 sub DT {
-    my ($year, $month, $day, $hour, $minute, $second, $time_zone) = @_;
+    my ($year, $month, $day, $hour, $minute, $second, $time_zone, $locale) = @_;
     return DateTime->new(
         year => $year,
         month => $month,
@@ -19,6 +19,7 @@ sub DT {
         minute => $minute,
         second => $second,
         time_zone => $time_zone,
+        (defined($locale) ? (locale => $locale) : ())
     );
 }
 
@@ -45,13 +46,12 @@ checkParse "Thu Jan 03 14:44:12 +0900 2013", DT qw(2013 1 3 14 44 12 +0900);
 checkParse "some text here. Wed  Feb  29 23:34:06 +0900  2012", undef;
 checkParse "Thu, 06 Oct 2011 19:36:17 +0000", DT qw(2011 10 6 19 36 17 +0000);
 checkParse "Sun, 23 Oct 2011 19:03:12 -0500", DT qw(2011 10 23 19 3 12 -0500);
-## checkParse "2012-09-23T11:00:10+0800", undef;
-## checkParse "2012-09-23T11:00:10+08:00", DT qw(2012 9 23 11 0 10 +0800);
-## checkParse "2011/07/12 04:02:00-10:30", undef;
 checkParse undef, undef;
 
 checkFormat DT(qw(2010 8 22 3 34 0 +0900)), "Sun Aug 22 03:34:00 +0900 2010";
 checkFormat DT(qw(2012 1 1 15 8 45 +2000)), "Sun Jan 01 15:08:45 +2000 2012";
+checkFormat DT(qw(2013 5 13 8 0 11 -1000 ja_JP)), "Mon May 13 08:00:11 -1000 2013";
+checkFormat DT(qw(2013 11 1 0 0 3 UTC es_MX)), "Fri Nov 01 00:00:03 +0000 2013";
 
 {
     note('--- synopsis');
