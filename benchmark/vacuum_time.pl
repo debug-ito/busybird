@@ -1,3 +1,51 @@
+=pod
+
+=head1 NAME
+
+vacuum_time.pl - Measure how long BusyBird::StatusStorage::SQLite::vacuum() takes
+
+=head1 SYNOPSIS
+
+    $ perl vacuum_time.pl [OPTIONS] SQLITE_FILENAME
+
+=head1 DESCRIPTION
+
+SQLITE_FILENAME is the SQLite database filename for the test.
+It first populates some statuses into the storage, then it calls vacuum() and measures its time.
+
+=head1 OPTIONS
+
+=over
+
+=item -R
+
+Optional. If set, the file SQLITE_FILENAME is removed before the test.
+Otherwise, it aborts the script if SQLITE_FILENAME already exists.
+
+=item -t TIMELINE_NUM
+
+Optional (default: 1). The number of timelines it will create in the storage.
+
+=item -c STATUS_COUNT_ONE_TIME
+
+Optional (default: 200).
+The number of statuses inserted into each timeline for a single call of put_statuses() method.
+
+=item -N PUT_NUM
+
+Optional (default: 40).
+The number of calls of put_statuses() method for each timeline.
+Thus, (STATUS_COUNT_ONE_TIME * PUT_NUM) statuses will be inserted into each timeline before vacuum().
+
+=back
+
+=head1 AUTHOR
+
+Toshio Ito C<< <toshioito [at] cpan.org> >>
+
+=cut
+
+
 use strict;
 use warnings;
 use FindBin;
@@ -95,51 +143,3 @@ $timer = Timer::Simple->new;
 $storage->vacuum();
 print STDERR "Vacuum completes in $timer\n";
 
-__END__
-
-=pod
-
-=head1 NAME
-
-vacuum_time.pl - Measure how long BusyBird::StatusStorage::SQLite::vacuum() takes
-
-=head1 SYNOPSIS
-
-    $ perl vacuum_time.pl [OPTIONS] SQLITE_FILENAME
-
-=head1 DESCRIPTION
-
-SQLITE_FILENAME is the SQLite database filename for the test.
-It first populates some statuses into the storage, then it calls vacuum() and measures its time.
-
-=head1 OPTIONS
-
-=over
-
-=item -R
-
-Optional. If set, the file SQLITE_FILENAME is removed before the test.
-Otherwise, it aborts the script if SQLITE_FILENAME already exists.
-
-=item -t TIMELINE_NUM
-
-Optional (default: 1). The number of timelines it will create in the storage.
-
-=item -c STATUS_COUNT_ONE_TIME
-
-Optional (default: 200).
-The number of statuses inserted into each timeline for a single call of put_statuses() method.
-
-=item -N PUT_NUM
-
-Optional (default: 40).
-The number of calls of put_statuses() method for each timeline.
-Thus, (STATUS_COUNT_ONE_TIME * PUT_NUM) statuses will be inserted into each timeline before vacuum().
-
-=back
-
-=head1 AUTHOR
-
-Toshio Ito C<< <toshioito [at] cpan.org> >>
-
-=cut
