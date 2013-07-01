@@ -593,9 +593,13 @@ test("StatusesSummary", function() {
             var level_result = {
                 level: $level_entry.find(".bb-summary-level").text(),
                 count_above: $level_entry.find(".bb-summary-count-above-level").text(),
-                count_this:  $level_entry.find(".bb-summary-count-this-level").text(),
+                count_this:  null,
                 per_user: [],
             };
+            var $this_level_elem = $level_entry.find(".bb-summary-count-this-level");
+            if($this_level_elem.size() > 0) {
+                level_result.count_this = $this_level_elem.text();
+            }
             $level_entry.find(".bb-summary-count-per-user-entry").each(function() {
                 var username = $(this).find(".bb-summary-count-username").text();
                 var count = $(this).find(".bb-summary-count-per-user").text();
@@ -621,7 +625,7 @@ test("StatusesSummary", function() {
     summary = new bb.StatusesSummary({selectorContainer: "#bb-status-summary"});
     summary.showSummaryOf($(statuses));
     deepEqual(getSummary("#bb-status-summary"), [
-        {level: "3",  count_this: "+3", count_above: "3", per_user: [{"name": "c", "count": "2"}, {"name": "a", "count": "1"}]},
+        {level: "3",  count_this: null, count_above: "3", per_user: [{"name": "c", "count": "2"}, {"name": "a", "count": "1"}]},
         {level: "2",  count_this: "+1", count_above: "4", per_user: [{"name": "d", "count": "1" }]},
         {level: "0",  count_this: "+3", count_above: "7", per_user: [{"name": "a", "count": "2"}, {"name": "b", "count": "1"}]},
         {level: "-1", count_this: "+2", count_above: "9", per_user: [{"name": "a", "count": "2" }]},
