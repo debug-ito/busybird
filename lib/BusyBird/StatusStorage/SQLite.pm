@@ -70,7 +70,7 @@ sub _create_new_dbh {
 sub _get_my_dbh {
     my ($self) = @_;
     my @connect_params = ("dbi:SQLite:dbname=$self->{path}", "", "", {
-        RaiseError => 1, PrintError => 0, AutoCommit => 1
+        RaiseError => 1, PrintError => 0, AutoCommit => 1, sqlite_unicode => 1,
     });
     if($self->{path} eq ':memory:') {
         $self->{in_memory_dbh} = $self->_create_new_dbh(@connect_params) if !$self->{in_memory_dbh};
@@ -237,13 +237,13 @@ sub _to_status_record {
     my $acked_at = $status->{busybird}{acked_at};  ## avoid autovivification
     ($record->{utc_acked_at}, $record->{timezone_acked_at}) = _extract_utc_timestamp_and_timezone($acked_at);
     ($record->{utc_created_at}, $record->{timezone_created_at}) = _extract_utc_timestamp_and_timezone($status->{created_at});
-    $record->{content} = encode_json($status);
+    $record->{content} = to_json($status);
     return $record;
 }
 
 sub _from_status_record {
     my ($record) = @_;
-    my $status = decode_json($record->{content});
+    my $status = from_json($record->{content});
     $status->{id} = $record->{status_id};
     if($record->{level} != 0 || defined($status->{busybird}{level})) {
         $status->{busybird}{level} = $record->{level};
