@@ -315,6 +315,67 @@ sub test_error_request {
 }
 
 {
+    note('--- Unicode timeline name and status IDs');
+    my $main = create_main();
+    my $tl_name = "タイムライン 壱";
+    my $tl_encoded = '%E3%82%BF%E3%82%A4%E3%83%A0%E3%83%A9%E3%82%A4%E3%83%B3%20%E5%A3%B1';
+    my @post_statuses = map { status($_) } 0..4;
+    my @ids = qw(零 壱 弐 参 四);
+    my @ids_encoded = qw(%E9%9B%B6 %E5%A3%B1 %E5%BC%90 %E5%8F%82 %E5%9B%9B);
+    foreach my $i (0 .. $#ids) {
+        $post_statuses[$i]{id} = $ids[$i];
+    }
+    $main->timeline($tl_name);
+    test_psgi create_psgi_app($main), sub {
+        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $res_obj = $tester->post_json_ok(
+            "/timelines/$tl_encoded/statuses.json",
+            encode_json(\@post_statuses), qr/^200$/, "POST Unicode IDs to Unicode timeline OK"
+        );
+        is_deeply($res_obj, {error => undef, count => 5}, "POST statuses result OK") or diag(explain $res_obj);
+        
+        $res_obj = $tester->get_json_ok(
+            "/timelines/$tl_encoded/statuses.json?count=10&max_id=$ids_encoded[2]",
+            undef, qr/^200$/, "GET max_id = Unicode ID OK"
+        );
+        is($res_obj->{error}, undef, "GET statuses succeed");
+        test_status_id_list($res_obj->{statuses}, [reverse @ids[0,1,2]], "Unicode IDs OK");
+        
+        $res_obj = $tester->post_json_ok(
+            "/timelines/$tl_encoded/ack.json",
+            encode_json({ids => [qw(壱 参)]}), qr/^200$/, "POST ack.json Unicode ids OK"
+        );
+        is_deeply($res_obj, {error => undef, count => 2}, "POST ack.json ids results OK");
+        $res_obj = $tester->get_json_ok(
+            "/timelines/$tl_encoded/statuses.json?count=10&ack_state=unacked",
+            undef, qr/^200$/, "GET unacked statuses OK"
+        );
+        is($res_obj->{error}, undef, "GET unacked statuses succeed");
+        test_status_id_list($res_obj->{statuses}, [reverse @ids[0,2,4]], "unacked statuse ID OK");
+
+        $res_obj = $tester->get_json_ok(
+            "/updates/unacked_counts.json?level=total&tl_${tl_encoded}=0",
+            undef, qr/^200$/, "GET updates unacked_counts OK"
+        );
+        is_deeply($res_obj,
+                  {error => undef, unacked_counts => { $tl_name => { total => 3, 0 => 3 } }},
+                  "GET updates unacked_counts results OK");
+
+        $res_obj = $tester->post_json_ok(
+            "/timelines/$tl_encoded/ack.json",
+            encode_json({max_id => qw(四)}), qr/^200$/, "POST ack.json Unicode max_id OK"
+        );
+        is_deeply($res_obj, {error => undef, count => 3}, "3 statuses acked OK");
+        $res_obj = $tester->get_json_ok(
+            "/timelines/$tl_encoded/statuses.json?count=10&ack_state=acked",
+            undef, qr/^200$/, "GET acked statuses OK"
+        );
+        is($res_obj->{error}, undef, "GET acked statuses succeed");
+        test_status_id_list($res_obj->{statuses}, [reverse @ids], "acked statuse ID OK");
+    };
+}
+
+{
     note('--- For examples');
     my $main = create_main();
     my @cases = (

@@ -13,6 +13,7 @@ use Scalar::Util qw(looks_like_number);
 use Carp;
 use Exporter qw(import);
 use URI::Escape qw(uri_unescape);
+use Encode qw(decode_utf8);
 use BusyBird::Version;
 our $VERSION = $BusyBird::Version::VERSION;
 
@@ -92,7 +93,7 @@ sub _get_timeline_name {
     my $name = $dest->{timeline};
     $name = "" if not defined($name);
     $name =~ s/\+/ /g;
-    return uri_unescape($name);
+    return decode_utf8(uri_unescape($name));
 }
 
 sub _get_timeline {
@@ -119,7 +120,7 @@ sub _handle_tl_get_statuses {
                 die "count parameter must be an integer";
             }
             my $ack_state = $req->query_parameters->{ack_state} || 'any';
-            my $max_id = $req->query_parameters->{max_id};
+            my $max_id = decode_utf8($req->query_parameters->{max_id});
             $timeline->get_statuses(
                 count => $count, ack_state => $ack_state, max_id => $max_id,
                 callback => sub {
@@ -255,7 +256,7 @@ sub _handle_get_unacked_counts {
             my %assumed = ();
             foreach my $query_key (keys %$query_params) {
                 next if substr($query_key, 0, 3) ne 'tl_';
-                $assumed{substr($query_key, 3)} = $query_params->{$query_key};
+                $assumed{decode_utf8(substr($query_key, 3))} = $query_params->{$query_key};
             }
             $self->{main_obj}->watch_unacked_counts(level => $level, assumed => \%assumed, callback => sub {
                 my ($error, $w, $tl_unacked_counts) = @_;
