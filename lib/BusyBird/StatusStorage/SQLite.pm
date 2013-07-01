@@ -16,14 +16,30 @@ use DateTime::Format::Strptime;
 use DateTime;
 no autovivification;
 
-my $UNDEF_TIMESTAMP = '9999-99-99T99:99:99';
-my $TIMESTAMP_FORMAT = DateTime::Format::Strptime->new(
-    pattern => '%Y-%m-%dT%H:%M:%S',
-    time_zone => 'UTC',
-    on_error => 'croak',
-);
 my @STATUSES_ORDER_BY = ('utc_acked_at DESC', 'utc_created_at DESC', 'status_id DESC');
 my $DELETE_COUNT_ID = 0;
+
+my $UNDEF_TIMESTAMP = '9999-99-99T99:99:99';
+
+{
+    my $TIMESTAMP_FORMAT_STR = '%Y-%m-%dT%H:%M:%S';
+    my $TIMESTAMP_FORMAT = DateTime::Format::Strptime->new(
+        pattern => $TIMESTAMP_FORMAT_STR,
+        time_zone => 'UTC',
+        on_error => 'croak',
+    );
+
+    sub _format_datetime {
+        my ($dt) = @_;
+        return $dt->strftime($TIMESTAMP_FORMAT_STR);
+    }
+
+    sub _parse_datetime {
+        my ($dt_str) = @_;
+        return $TIMESTAMP_FORMAT->parse_datetime($dt_str);
+    }
+}
+
 
 sub new {
     my ($class, %args) = @_;
@@ -252,7 +268,7 @@ sub _extract_utc_timestamp_and_timezone {
     croak "Invalid datetime format: $timestamp_str" if not defined $datetime;
     my $timezone_name = $datetime->time_zone->name;
     $datetime->set_time_zone('UTC');
-    my $utc_timestamp = $TIMESTAMP_FORMAT->format_datetime($datetime);
+    my $utc_timestamp = _format_datetime($datetime);
     return ($utc_timestamp, $timezone_name);
 }
 
@@ -261,7 +277,7 @@ sub _create_bb_timestamp_from_utc_timestamp_and_timezone {
     if($utc_timestamp_str eq $UNDEF_TIMESTAMP) {
         return undef;
     }
-    my $dt = $TIMESTAMP_FORMAT->parse_datetime($utc_timestamp_str);
+    my $dt = _parse_datetime($utc_timestamp_str);
     $dt->set_time_zone($timezone);
     return BusyBird::DateTime::Format->format_datetime($dt);
 }
@@ -376,7 +392,7 @@ sub ack_statuses {
     my $max_id = $args{max_id};
     my $dbh;
     my @results = try {
-        my $ack_utc_timestamp = $TIMESTAMP_FORMAT->format_datetime(DateTime->now(time_zone => 'UTC'));
+        my $ack_utc_timestamp = _format_datetime(DateTime->now(time_zone => 'UTC'));
         $dbh = $self->_get_my_dbh();
         my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
         return (undef, 0) if not defined $timeline_id;
