@@ -10,6 +10,7 @@ use BusyBird::Test::StatusStorage qw(:status);
 use BusyBird::StatusStorage::SQLite;
 use BusyBird::Timeline;
 use BusyBird::Log;
+use utf8;
 
 BEGIN {
     use_ok('BusyBird::Main');
@@ -221,6 +222,31 @@ sub test_watcher_basic {
     lives_ok { $w = $main->watch_unacked_counts(assumed => {a => 0, b => 0}, callback => sub {}) } 'unknown timeline is ignored.';
     ok($w->active, 'watcher is active.');
     $w->cancel();
+}
+
+{
+    note('--- Unicode timeline names');
+    my $main = BusyBird::Main->new();
+    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+    my $tl_name = 'ほげ タイムライン';
+    isa_ok($main->timeline($tl_name), "BusyBird::Timeline", "returned from timeline()");
+    isa_ok($main->get_timeline($tl_name), "BusyBird::Timeline", "returned from get_timeline()");
+    my $callbacked = 0;
+    my $watcher = $main->watch_unacked_counts(
+        level => 'total', assumed => {
+            $tl_name => 10
+        },
+        callback => sub {
+            my ($e, $w, $tl_unacked_counts) = @_;
+            $callbacked = 1;
+            is($e, undef, "watch unacked counts succeed");
+            ok($w->active, "watcher still active");
+            is_deeply($tl_unacked_counts, {$tl_name => { total => 0 }}, "unacked counts results OK");
+            $w->cancel;
+        }
+    );
+    ok($callbacked, "callbacked");
+    ok(!$watcher->active, "watcher is inactive now");
 }
 
 done_testing();
