@@ -8,6 +8,7 @@ use Timer::Simple;
 use Storable qw(dclone);
 use JSON;
 use Statistics::Descriptive;
+use IO::Handle;
 
 our $SAMPLE_STATUS = {
     'source' => '<a href="http://www.google.com/" rel="nofollow">debug_ito writer</a>',
@@ -166,6 +167,54 @@ sub _init {
             die "ack error: $e" if defined $e;
             die "ack error: zero ack" if $num == 0;
         });
+    }
+}
+
+sub benchmark {
+    my ($class, $options, $targets) = @_;
+    $options ||= {};
+    $targets ||= {};
+    my $output = delete $options->{output} || IO::Handle->new_from_fd(fileno(STDOUT), "w");
+    die "Cannot open the output" if !$output;
+    my $run_count = delete $options->{run_count} || 100;
+
+    my %results_for_step = ();
+    foreach my $target_name (keys %$targets) {
+        my $target = $targets->{$target_name};
+        print STDERR "$target_name: start initialization...\n";
+        my $bench = $class->new(%$options, storage => $target);
+        print STDERR "$target_name: initialization complete\n";
+        print STDERR "$target_name: ";
+        my $stats = $bench->get_statistics($run_count, sub {
+            my ($index) = @_;
+            if(($index + 1) % int($run_count / 10) == 0) {
+                print STDERR "*";
+            }
+        });
+        print STDERR "\n";
+        print STDERR "$target_name: measurement finished.\n";
+        foreach my $stat_key (sort {$a cmp $b} keys %$stats) {
+            $results_for_step{$stat_key}{$target_name} = $stats->{$stat_key};
+        }
+    }
+    
+    $output->autoflush(1);
+    $output->print(qq{##label count median 10percentile min max 90percentile\n});
+    foreach my $step_key (sort {$a cmp $b} keys %results_for_step) {
+        my $targets = $results_for_step{$step_key};
+        foreach my $target_key (sort {$a cmp $b} keys %$targets) {
+            my $stat = $targets->{$target_key};
+            my $label = "$target_key / $step_key";
+            my $low_percentile = scalar($stat->percentile(10));
+            my $high_percentile = scalar($stat->percentile(90));
+            $low_percentile = "1/0" if not defined $low_percentile;
+            $high_percentile = "1/0" if not defined $high_percentile;
+            $output->printf('"%s" %d %e %e %e %e %e',
+                            $label, $stat->count,
+                            $stat->median, $low_percentile,
+                            $stat->min, $stat->max, $high_percentile);
+            $output->print("\n");
+        }
     }
 }
 
