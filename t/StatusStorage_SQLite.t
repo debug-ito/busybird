@@ -220,6 +220,25 @@ sub test_sqlite {
 test_sqlite('file');
 
 {
+    note('--- timestamps with non-UTC timezones are stored in DB as UTC timestamps');
+    my ($tempfile, $storage) = create_storage('file');
+    my %base = (timeline => '_test_timestamp_timezones');
+    my $status = status(1);
+    $status->{created_at} = 'Mon Jul 01 05:12:11 +0900 2013';
+    $status->{busybird}{acked_at} = 'Fri Apr 19 20:06:00 -1000 2013';
+    my ($error, $ret_num) = sync($storage, 'put_statuses', %base, mode => 'insert', statuses => $status);
+    is($error, undef, "put succeed");
+    is($ret_num, 1, '1 inserted');
+    my $dbh = connect_db($tempfile->filename);
+    my $record = $dbh->selectrow_hashref(q{SELECT * FROM statuses WHERE status_id = ?}, undef, 1);
+    isnt($record, undef, "get record OK");
+    is($record->{utc_created_at}, '2013-06-30T20:12:11', 'row utc_created_at OK');
+    is($record->{timezone_created_at}, '+0900', 'row timezone_created_at OK');
+    is($record->{utc_acked_at}, '2013-04-20T06:06:00', 'row utc_acked_at OK');
+    is($record->{timezone_acked_at}, '-1000', 'row timezone_acked_at OK');
+}
+
+{
     note('--- manipulation to DB timestamp columns is reflected to obtained stutuses');
     my ($tempfile, $storage) = create_storage('file');
     my %base = (timeline => '_test_timestamp_cols');
