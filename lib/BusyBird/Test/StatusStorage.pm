@@ -11,6 +11,8 @@ use BusyBird::DateTime::Format;
 use BusyBird::StatusStorage;
 use Carp;
 use BusyBird::Version;
+use utf8;
+use Encode qw(encode_utf8);
 our $VERSION = $BusyBird::Version::VERSION;
 
 our %EXPORT_TAGS = (
@@ -781,6 +783,67 @@ sub test_storage_common {
             change_and_check(
                 $storage, $loop, $unloop, timeline => '_test_acks', mode => 'ack',
                 %target_args, exp_change => $case->{exp_count}, exp_acked => $case->{exp_acked}, exp_unacked => $case->{exp_unacked}
+            );
+        }
+    }
+
+    {
+        note('--- -- -- Unicode timeline name and Unicode status ID');
+        foreach my $timeline_name ("_test_ascii", '_test_ゆにこーど') {
+            note(encode_utf8("--- -- timeline: $timeline_name"));
+            $storage->delete_statuses(timeline => $timeline_name, ids => undef, callback => sub {
+                my $e = shift;
+                is($e, undef, "initial delete");
+                $unloop->();
+            });
+            $loop->();
+            my @statuses = map { status($_) } 0..1;
+            $statuses[1]{id} = 'いち';
+            $statuses[0]{text} = 'テキスト ゼロ';
+            $statuses[1]{text} = 'テキスト いち';
+            change_and_check(
+                $storage, $loop, $unloop, timeline => $timeline_name, mode => 'insert', target => \@statuses,
+                exp_change => 2, exp_acked => [], exp_unacked => [qw(0 いち)]
+            );
+            $storage->get_unacked_counts(timeline => $timeline_name, callback => sub {
+                my ($e, $unacked_counts) = @_;
+                is($e, undef, "get unacked counts succeed");
+                is_deeply($unacked_counts, {total => 2, 0 => 2}, "unacked counts OK");
+                $unloop->();
+            });
+            $loop->();
+            change_and_check(
+                $storage, $loop, $unloop, timeline => $timeline_name, mode => 'ack', target_ids => $statuses[1]{id},
+                exp_change => 1, exp_acked => ["いち"], exp_unacked => [0]
+            );
+            foreach my $status (@statuses) {
+                my $got_statuses = sync_get(
+                    $storage, $loop, $unloop,
+                    timeline => $timeline_name, count => 1, max_id => $status->{id}
+                );
+                test_status_id_list($got_statuses, [$status->{id}], encode_utf8("status ID $status->{id} OK"));
+                is($got_statuses->[0]{text}, $status->{text}, encode_utf8("status text '$status->{text}' OK"));
+                if($got_statuses->[0]{id} eq "0") {
+                    ok(!$got_statuses->[0]{busybird}{acked_at}, "status 0 is not acked");
+                }else {
+                    ok($got_statuses->[0]{busybird}{acked_at}, "status 1 is acked");
+                }
+            }
+            $statuses[1]{busybird}{level} = 5;
+            change_and_check(
+                $storage, $loop, $unloop, timeline => $timeline_name, mode => "update", target => $statuses[1],
+                exp_change => 1, exp_acked => [], exp_unacked => [0, "いち"]
+            );
+            $storage->get_unacked_counts(timeline => $timeline_name, callback => sub {
+                my ($e, $unacked_counts) = @_;
+                is($e, undef, "get unacked counts succeed");
+                is_deeply($unacked_counts, {total => 2, 0 => 1, 5 => 1}, "unacked counts OK");
+                $unloop->();
+            });
+            $loop->();
+            change_and_check(
+                $storage, $loop, $unloop, timeline => $timeline_name, mode => "delete", target => [map {$_->{id}} @statuses],
+                exp_change => 2, exp_acked => [], exp_unacked => []
             );
         }
     }
