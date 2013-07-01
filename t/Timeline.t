@@ -14,6 +14,7 @@ use BusyBird::Log;
 use DateTime;
 use DateTime::Duration;
 use Storable qw(dclone);
+use utf8;
 
 BEGIN {
     use_ok('BusyBird::Timeline');
@@ -869,6 +870,29 @@ sub test_timeline {
         ok($statuses->[0]{created_at}, "created_at set");
         isa_ok(BusyBird::DateTime::Format->parse_datetime($statuses->[0]{created_at}),
                "DateTime", "parsed created_at");
+    }
+
+    {
+        note('--- Unicode timeline name and status IDs');
+        my $timeline = new_ok($CLASS, [name => 'タイムライン', storage => $CREATE_STORAGE->()]);
+        my @in_statuses = map { status($_) } 1..4;
+        my @ids = qw(壱 弐 参 四);
+        foreach my $i (0 .. $#in_statuses) {
+            $in_statuses[$i]{id} = $ids[$i];
+            $in_statuses[$i]{text} = "テキスト $ids[$i]";
+        }
+        my ($error, $num) = sync($timeline, "add_statuses", statuses => \@in_statuses);
+        is($error, undef, "add succeed");
+        is($num, 4, "4 inserted");
+        ($error, my $got_statuses) = sync($timeline, "get_statuses", count => 'all');
+        is($error, undef, "get succeed");
+        test_status_id_list($got_statuses, [reverse @ids], "IDs OK");
+        foreach my $i (0 .. $#in_statuses) {
+            is($got_statuses->[$i]{text}, $in_statuses[$#in_statuses - $i]{text}, "status $i text OK");
+        }
+        ($error, my $contained, my $not_contained) = sync($timeline, "contains", query => [qw(参 四 五 六)]);
+        is_deeply($contained, [qw(参 四)], "contained OK");
+        is_deeply($not_contained, [qw(五 六)], "not contained OK");
     }
 }
 
