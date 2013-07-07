@@ -5,11 +5,13 @@
 [% MACRO pagination BLOCK -%]
 <div class="pagination pagination-centered">
   <ul class="bb-timeline-page-list">
+    <li><a href="#">&laquo;</a></li>
     <li><a href="#">&lt;</a></li>
     [%- FOREACH page IN page_list %]
     <li[% IF page == cur_page %] class="active"[% END %]><a href="#">[% page + 1 %]</a></li>
     [%- END ## foreach %]
     <li><a href="#">&gt;</a></li>
+    <li><a href="#">&raquo;</a></li>
   </ul>
 </div>
 [% END -%]

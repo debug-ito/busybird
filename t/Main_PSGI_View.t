@@ -285,6 +285,7 @@ sub create_main {
     note("--- tests for response_timeline_list");
     my $main = create_main();
     my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
+    my $EXP_PAGER_ENTRY_MAX = 7;
     foreach my $case (
         {
             label => "single page",
@@ -295,14 +296,67 @@ sub create_main {
                 {link => "/timelines/home/", name => "home"}
             ]
         },
+        {
+            label => "multiple pages (moderate number)",
+            input => {total_page_num => 5, cur_page => 3, timeline_unacked_counts => [
+                {name => 'test', counts => {total => 0}}
+            ]},
+            exp_timelines => [
+                {link => "/timelines/test/", name => "test"}
+            ],
+            exp_shown_pages => [0,1,2,3,4],
+            exp_prev_page => 2, exp_next_page => 4,
+        },
+        {
+            label => "multiple pages (large number, front)",
+            input => {total_page_num => 50, cur_page => 2, timeline_unacked_counts => [
+                {name => 'test', counts => {total => 0}}
+            ]},
+            exp_timelines => [ {link => "/timelines/test/", name => "test"} ],
+            exp_shown_pages => [0 .. ($EXP_PAGER_ENTRY_MAX-1)],
+            exp_prev_page => 1, exp_next_page => 3,
+        },
+        {
+            label => "multiple pages (large number, middle)",
+            input => {total_page_num => 50, cur_page => 20, timeline_unacked_counts => [
+                {name => 'test', counts => {total => 0}}
+            ]},
+            exp_timelines => [ {link => "/timelines/test/", name => "test"} ],
+            exp_shown_pages => [(20 - ($EXP_PAGER_ENTRY_MAX-1)/2) .. (20 + ($EXP_PAGER_ENTRY_MAX-1)/2)],
+            exp_prev_page => 19, exp_next_page => 21
+        },
+        {
+            label => "multiple pages (large number, back)",
+            input => {total_page_num => 50, cur_page => 48, timeline_unacked_counts => [
+                {name => 'test', counts => {total => 0}}
+            ]},
+            exp_timelines => [ {link => "/timelines/test/", name => "test"} ],
+            exp_shown_pages => [(50 - $EXP_PAGER_ENTRY_MAX) .. 49],
+            exp_prev_page => 47, exp_next_page => 49
+        },
     ) {
         note("--- -- case: $case->{label}");
         my $exp_pager_num = ($case->{input}{total_page_num} > 1 ? 2 : 0);
         my $psgi_response = $view->response_timeline_list(%{$case->{input}}, script_name => "");
         test_psgi_response($psgi_response, 200, "PSGI response OK");
         my $tree = BusyBird::Test::HTTP->parse_html(join "", @{$psgi_response->[2]});
+        
         my @pager_nodes = $tree->findnodes('//ul[@class="bb-timeline-page-list"]');
         is(scalar(@pager_nodes), $exp_pager_num, "$exp_pager_num pager objects should exist");
+        foreach my $pager_index (0 .. ($exp_pager_num - 1)) {
+            my $pager_node = $pager_nodes[$pager_index];
+            my (@a_nodes) = $pager_node->findnodes('.//a');
+            is(scalar(@a_nodes), @{$case->{exp_shown_pages}} + 4, "pager $pager_index: num of links OK");
+            is($a_nodes[0]->attr('href'), '/?page=0', "pager $pager_index: link to top OK");
+            is($a_nodes[1]->attr('href'), "/?page=$case->{exp_prev_page}", "pager $pager_index: link to prev OK");
+            is($a_nodes[-1]->attr('href'), '/?page=' . ($case->{input}{total_page_num}-1), "pager $pager_index: link to bottom OK");
+            is($a_nodes[-2]->attr('href'), "/?page=$case->{exp_next_page}", "pager $pager_index: link to next OK");
+            is_deeply(
+                [map { $_->attr('href') } @a_nodes[2 .. (@a_nodes - 3)]], [map { "/?page=$_" } @{$case->{exp_shown_pages}}],
+                "pager $pager_index: links to pages OK"
+            );
+        }
+        
         my ($timeline_list_table) = $tree->findnodes('//table[@id="bb-timeline-list"]');
         isnt($timeline_list_table, undef, "timeline list table exists");
         my @timeline_rows = $timeline_list_table->findnodes('.//tr');
@@ -319,6 +373,8 @@ sub create_main {
         }
     }
 }
+
+fail("TODO: response_timeline_list: timelines with names containing HTML special chars, URL special chars and Unicode chars.");
 
 done_testing();
 
