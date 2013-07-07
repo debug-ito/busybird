@@ -303,6 +303,26 @@ sub response_timeline {
     );
 }
 
+sub response_timeline_list {
+    my ($self, %args) = @_;
+    foreach my $key (qw(script_name timeline_unacked_counts total_page_num cur_page)) {
+        croak "$key parameter is mandatory" if not defined $args{$key};
+    }
+    croak "timeline_unacked_counts must be an array-ref" if ref($args{timeline_unacked_counts}) ne "ARRAY";
+    my %input_args = ();
+    foreach my $input_key (qw(script_name timeline_unacked_counts cur_page)) {
+        $input_args{$input_key} = $args{$input_key};
+    }
+        
+    return $self->_response_template(
+        template => "timeline_list.tt",
+        args => {
+            %input_args,
+            page_list => [0 .. ($args{total_page_num} - 1)],
+        }
+    );
+}
+
 1;
 
 __END__
@@ -405,6 +425,46 @@ If the timeline does not exist in C<$view>'s L<BusyBird::Main> object, it return
 
 C<$script_name> is the base path for internal hyperlinks.
 It should be C<SCRIPT_NAME> of the C<PSGI> environment.
+
+=head2 $psgi_response = $view->response_timeline_list(%args)
+
+Returns a L<PSGI> response object of the view of timeline list.
+
+Fields in C<%args> are:
+
+=over
+
+=item C<script_name> => STR (mandatory)
+
+The base path for internal hyperlinks known as C<SCRIPT_NAME>.
+
+=item C<timeline_unacked_counts> => ARRAYREF (mandatory)
+
+The data structure keeping the initial unacked counts for timelines.
+Its structure is like
+
+    [
+      {name => "first timeline name", counts => {total => 0}},
+      {name => "second timeline name", counts => {
+          total => 10,
+          0 => 5,
+          1 => 3
+          2 => 2
+      }}
+    ]
+
+
+=item C<total_page_num> => INT (mandatory)
+
+Total number of pages for listing all timelines.
+
+=item C<cur_page> => INT (mandatory)
+
+The current page number of the timeline list. The page number starts with 0.
+
+=back
+
+
 
 =head2 $functions = $view->template_functions()
 

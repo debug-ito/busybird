@@ -82,5 +82,7 @@ note("----- static HTML view tests");
     }
 }
 
+fail("TODO: timeline list view (involving link traversal)");
+
 done_testing();
 

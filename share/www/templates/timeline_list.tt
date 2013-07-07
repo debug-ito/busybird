@@ -1,0 +1,39 @@
+%% ## Arguments: script_name, timeline_unacked_counts, page_list, cur_page (begin with 0)
+[% WRAPPER "wrapper_document.tt" WITH script_name = script_name %]
+[% INCLUDE "wrapper_navbar.tt" WITH script_name = script_name, content = "" %]
+
+[% MACRO pagination BLOCK -%]
+<div class="pagination pagination-centered">
+  <ul>
+    <li><a href="#">&lt;</a></li>
+    [% FOREACH page IN page_list %]
+    <li[% IF page == cur_page %] class="active"[% END %]><a href="#">[% page + 1 %]</a></li>
+    [% END ## foreach %]
+    <li><a href="#">&gt;</a></li>
+  </ul>
+</div>
+[% END -%]
+
+<div class="container-fluid">
+  <div class="row-fluid">
+    <div class="span8 offset2">
+      [% pagination() %]
+      <table class="table table-striped">
+        <tbody>
+          [% FOREACH timeline_entry IN timeline_unacked_counts %]
+          <tr>
+            <td><a href="[% script_name %]/timelines/[% timeline_entry.name | uri_escape %]/"><i class="icon-list"></i> [% timeline_entry.name %]</a></td><td>
+              [% FOREACH unacked_count_entry IN timeline_entry.counts.kv() %]
+              Lv.[% unacked_count_entry.key %] <span class="badge">+[% unacked_count_entry.value %]</span><!-- this is temporary rendering for tests -->
+              [% IF !loop.is_last %] / [% END %]
+              [% END ## foreach  %]
+            </td>
+          </tr>
+          [% END ## foreach %]
+        </tbody>
+      </table>
+      [% pagination() %]
+    </div>
+  </div>
+</div>
+[% END ## WRAPPER %]

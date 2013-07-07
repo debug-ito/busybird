@@ -86,6 +86,9 @@ sub _build_routes {
     $tl_mapper->connect($_, {method => '_handle_tl_index'}) foreach "", qw(/ /index.html /index.htm);
     $self->{router}->connect('/updates/unacked_counts.json',
                              {method => '_handle_get_unacked_counts'}, {method => 'GET'});
+    foreach my $path ("/", "/index.html") {
+        $self->{router}->connect($path, {method => '_handle_get_timeline_list'}, {method => 'GET'});
+    }
 }
 
 sub _get_timeline_name {
@@ -277,6 +280,21 @@ sub _handle_get_unacked_counts {
 sub _handle_tl_index {
     my ($self, $req, $dest) = @_;
     return $self->{view}->response_timeline(_get_timeline_name($dest), $req->script_name);
+}
+
+sub _handle_get_timeline_list {
+    my ($self, $req, $dest) = @_;
+    ### for testing..
+    return $self->{view}->response_timeline_list(
+        script_name => $req->script_name,
+        timeline_unacked_counts => [
+            {name => "hoge", counts => {total => 0}},
+            {name => "foobar", counts => {total => 10, -1 => 5, 1 => 5}},
+            {name => "buzz", counts => {total => 20, -3 => 5, 0 => 5, 1 => 2, 2 => 3, 3 => 5}}
+        ],
+        total_page_num => 10,
+        cur_page => 2
+    );
 }
 
 1;

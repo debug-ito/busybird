@@ -42,6 +42,7 @@ share/www/static/timeline.js
 share/www/templates/error.tt
 share/www/templates/status.tt
 share/www/templates/timeline.tt
+share/www/templates/timeline_list.tt
 share/www/templates/wrapper_document.tt
 share/www/templates/wrapper_navbar.tt
 t/Config.t
