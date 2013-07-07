@@ -7,6 +7,9 @@ use BusyBird::Log;
 use BusyBird::StatusStorage::SQLite;
 use JSON qw(decode_json);
 use utf8;
+use FindBin;
+use lib ("$FindBin::RealBin/lib");
+use BusyBird::Test::HTTP;
 
 BEGIN {
     use_ok("BusyBird::Main::PSGI::View");
@@ -278,7 +281,44 @@ sub create_main {
     }
 }
 
-fail("TODO: tests for response_timeline_list (not involving link traversal)");
+{
+    note("--- tests for response_timeline_list");
+    my $main = create_main();
+    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
+    foreach my $case (
+        {
+            label => "single page",
+            input => {total_page_num => 1, cur_page => 0, timeline_unacked_counts => [
+                {name => 'home', counts => {total => 5, 0 => 5}}
+            ]},
+            exp_timelines => [
+                {link => "/timelines/home/", name => "home"}
+            ]
+        },
+    ) {
+        note("--- -- case: $case->{label}");
+        my $exp_pager_num = ($case->{input}{total_page_num} > 1 ? 2 : 0);
+        my $psgi_response = $view->response_timeline_list(%{$case->{input}}, script_name => "");
+        test_psgi_response($psgi_response, 200, "PSGI response OK");
+        my $tree = BusyBird::Test::HTTP->parse_html(join "", @{$psgi_response->[2]});
+        my @pager_nodes = $tree->findnodes('//ul[@class="bb-timeline-page-list"]');
+        is(scalar(@pager_nodes), $exp_pager_num, "$exp_pager_num pager objects should exist");
+        my ($timeline_list_table) = $tree->findnodes('//table[@id="bb-timeline-list"]');
+        isnt($timeline_list_table, undef, "timeline list table exists");
+        my @timeline_rows = $timeline_list_table->findnodes('.//tr');
+        my $exp_timeline_num = @{$case->{exp_timelines}};
+        is(scalar(@timeline_rows), $exp_timeline_num, "$exp_timeline_num timeline rows.");
+        foreach my $i (0 .. ($exp_timeline_num - 1)) {
+            my $row = $timeline_rows[$i];
+            my $exp_timeline = $case->{exp_timelines}[$i];
+            my $href = $row->findvalue('.//a/@href');
+            is($href, $exp_timeline->{link}, "link should be $exp_timeline->{link}");
+            my ($name_node) = $row->findnodes('.//span[@class="bb-timeline-name"]');
+            my $got_name = join "", $name_node->content_list;
+            is($got_name, $exp_timeline->{name}, "name should be $exp_timeline->{name}");
+        }
+    }
+}
 
 done_testing();
 
