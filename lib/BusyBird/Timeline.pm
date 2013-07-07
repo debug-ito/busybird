@@ -342,6 +342,7 @@ Fields in C<%args> are as follows.
 =item C<name> => STRING (mandatory)
 
 Specifies the name of the timeline.
+If it includes Unicode characters, it must be a character string (decoded string), not a binary string (encoded string).
 
 =item C<storage> => STATUS_STORAGE (mandatory)
 
@@ -416,7 +417,7 @@ If both C<max_id> and C<ids> are omitted or set to C<undef>, all unacked statuse
 If both C<max_id> and C<ids> are specified, both statuses older than or equal to C<max_id>
 and statuses specifed by C<ids> are acked.
 
-Status IDs should be Unicode (decoded) strings, not binary (encoded) strings.
+If Status IDs include Unicode characters, they should be character strings (decoded strings), not binary strings (encoded strings).
 
 =item C<max_id> => ID (optional, default: C<undef>)
 
@@ -429,7 +430,8 @@ If both C<max_id> and C<ids> are omitted or set to C<undef>, all unacked statuse
 If both C<max_id> and C<ids> are specified, both statuses older than or equal to C<max_id>
 and statuses specifed by C<ids> are acked.
 
-Status IDs should be Unicode (decoded) strings, not binary (encoded) strings.
+If the Status ID includes Unicode characters, it should be a character string (decoded string), not a binary string (encoded string).
+
 
 =item C<callback> => CODEREF($error, $acked_num) (optional, default: C<undef>)
 
@@ -487,7 +489,7 @@ specified C<ack_state>, the result is an empty array-ref.
 If this option is omitted or set to C<undef>, statuses starting from
 the latest status are fetched.
 
-Status IDs should be Unicode (decoded) strings, not binary (encoded) strings.
+If the Status ID includes Unicode characters, it should be a character string (decoded string), not a binary string (encoded string).
 
 =item C<count> => {'all', NUMBER} (optional)
 
@@ -529,6 +531,8 @@ C<< $status->{id} >> field must be unique in the C<$timeline>.
 So if C<mode> is C<"insert">, statuses whose ID is already in the C<$timeline>
 are ignored and not inserted.
 
+If C<< $status->{id} >> includes Unicode characters, it should be a character string (decoded string), not a binary string (encoded string).
+
 
 =item C<statuses> => {STATUS, ARRAYREF_OF_STATUSES} (mandatory)
 
@@ -568,7 +572,7 @@ If it is a defined scalar, the status with the specified ID is
 deleted.  If it is an array-ref of IDs, the statuses with those IDs
 are deleted.  If it is C<undef>, all statuses in the C<$timeline> are deleted.
 
-Status IDs should be Unicode (decoded) strings, not binary (encoded) strings.
+If Status IDs include Unicode characters, they should be character strings (decoded strings), not binary strings (encoded strings).
 
 
 =item C<callback> => CODEREF($error, $deleted_num) (optional, default: C<undef>)
@@ -656,7 +660,7 @@ If it is an array-ref,
 elements in the array-ref are treated as status objects or IDs.
 Status objects and IDs can be mixed in a single array-ref.
 
-Status IDs should be Unicode (decoded) strings, not binary (encoded) strings.
+If Status IDs include Unicode characters, they should be character strings (decoded strings), not binary strings (encoded strings).
 
 
 =item C<callback> => CODEREF($error, $contained, $not_contained) (mandatory)

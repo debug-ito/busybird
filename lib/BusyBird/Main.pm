@@ -222,6 +222,7 @@ See L<BusyBird> and L<BusyBird::Tutorial> for detail.
 
 Returns the C<$timeline> whose name is C<$name> from the C<$main>.
 C<$timeline> is a L<BusyBird::Timeline> object.
+If C<$name> includes Unicode characters, it must be a character string (decoded string), not a binary string (encoded string).
 
 If there is no timeline named C<$name> in C<$main>, a new timeline is created, installed and returned.
 

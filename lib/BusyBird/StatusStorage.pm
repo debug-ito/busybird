@@ -51,7 +51,7 @@ C<%args> in all the methods has the following field.
 =item C<timeline> => TIMELINE_NAME (mandatory)
 
 Specifies the name of the timeline.
-It IDs should be a Unicode (decoded) string, not a binary (encoded) string.
+If the name includes Unicode characters, it must be a character string (decoded string), not a binary string (encoded string).
 
 =back
 

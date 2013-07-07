@@ -62,8 +62,6 @@ If not set, it is considered as 0.
 
 =head2 $status->{id}
 
-Must be all in ASCII.
-
 =head2 $status->{retweeted_status}
 
 =head2 $status->{text}
