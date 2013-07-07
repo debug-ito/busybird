@@ -14,6 +14,7 @@ lib/BusyBird/Main/PSGI/View.pm
 lib/BusyBird/Status.pod
 lib/BusyBird/StatusStorage.pm
 lib/BusyBird/StatusStorage/Memory.pm
+lib/BusyBird/StatusStorage/SQLite.pm
 lib/BusyBird/Test/StatusStorage.pm
 lib/BusyBird/Timeline.pm
 lib/BusyBird/Tutorial.pod
@@ -23,7 +24,6 @@ lib/BusyBird/Watcher.pm
 lib/BusyBird/Watcher/Aggregator.pm
 lib/BusyBird/WebAPI.pod
 MANIFEST			This list of files
-MANIFEST.SKIP
 README.markdown
 share/www/static/bootstrap/css/bootstrap-responsive.css
 share/www/static/bootstrap/css/bootstrap-responsive.min.css
@@ -35,12 +35,15 @@ share/www/static/bootstrap/js/bootstrap.js
 share/www/static/bootstrap/js/bootstrap.min.js
 share/www/static/busybird.css
 share/www/static/busybird.js
+share/www/static/jquery.js
 share/www/static/q.js
 share/www/static/spin.js
 share/www/static/timeline.js
 share/www/templates/error.tt
 share/www/templates/status.tt
 share/www/templates/timeline.tt
+share/www/templates/wrapper_document.tt
+share/www/templates/wrapper_navbar.tt
 t/Config.t
 t/DateTime_Format.t
 t/Flow.t
@@ -57,6 +60,7 @@ t/Main.t
 t/Main_PSGI.t
 t/Main_PSGI_View.t
 t/StatusStorage_Memory.t
+t/StatusStorage_SQLite.t
 t/Timeline.t
 t/Util_sort_statuses.t
 t/Util_split.t

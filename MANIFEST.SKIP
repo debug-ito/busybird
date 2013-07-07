@@ -9,3 +9,5 @@
 ^MYMETA\.json$
 ^Build$
 ^benchmark
+^MANIFEST\.SKIP$
+^MANIFEST\.bak$

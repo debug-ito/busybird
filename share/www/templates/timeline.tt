@@ -1,76 +1,64 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>[% timeline_name %] - BusyBird</title>
-    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
-    <link rel="stylesheet" href="[% script_name %]/static/bootstrap/css/bootstrap.min.css" type="text/css" media="screen" />
-    <link rel="stylesheet" href="[% script_name %]/static/busybird.css" type="text/css" media="screen" />
-    <link rel="stylesheet" href="[% script_name %]/static/bootstrap/css/bootstrap-responsive.min.css" type="text/css" media="screen" />
-  </head>
-  <body>
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container-fluid">
-          <a class="brand" href="#">BusyBird</a>
-          <ul class="nav pull-left">
-            <li class="active"><a>[% timeline_name %]</a></li>
-            <li class="divider-vertical"></li>
-          </ul>
-          <div class="navbar-form pull-right">
-            <div class="btn-group pull-right bb-nav-button-group">
-              <a class="btn btn-inverse" href="[% post_button_url %]" target="_blank"><i class="icon-pencil icon-white"></i></a>
-            </div>
-          </div>
-          <div class="navbar-text pull-right">
-            <span class="label">Lv. <span class="bb-threshold-level">0</span></span>
-          </div>
-          <div class="navbar-form pull-right">
-            <div class="btn-group pull-right bb-nav-button-group">
-              <a id="bb-button-incriment-threshold-level" class="btn btn-inverse" href="#">
-                <i class="icon-zoom-out icon-white"></i>
-              </a>
-              <a id="bb-button-decriment-threshold-level" class="btn btn-inverse" href="#">
-                <i class="icon-zoom-in icon-white"></i>
-              </a>
-            </div>
-            <div class="btn-group pull-left bb-nav-button-group">
-              <a id="bb-new-statuses-button" class="btn btn-inverse disabled" href="#">
-                New <span class="bb-new-statuses-num badge">0</span>
-              </a>
-            </div>
-          </div>
-          <div id="bb-spinner-placeholder"></div>
-          <div id="bb-indicator" class="navbar-text pull-right">
-            <span id="bb-msg"></span>
-          </div>
-        </div>
-      </div>
-    </div>
+[% WRAPPER "wrapper_document.tt" WITH script_name = script_name, title = timeline_name %]
+[% MACRO timeline_navbar BLOCK -%]
+<ul class="nav pull-left">
+  <li class="active"><a>[% timeline_name %]</a></li>
+  <li class="divider-vertical"></li>
+</ul>
+<div class="navbar-form pull-right">
+  <div class="btn-group pull-right bb-nav-button-group">
+    <a class="btn btn-inverse" href="[% post_button_url %]" target="_blank"><i class="icon-pencil icon-white"></i></a>
+  </div>
+</div>
+<div class="navbar-text pull-right">
+  <span class="label">Lv. <span class="bb-threshold-level">0</span></span>
+</div>
+<div class="navbar-form pull-right">
+  <div class="btn-group pull-right bb-nav-button-group">
+    <a id="bb-button-incriment-threshold-level" class="btn btn-inverse" href="#">
+      <i class="icon-zoom-out icon-white"></i>
+    </a>
+    <a id="bb-button-decriment-threshold-level" class="btn btn-inverse" href="#">
+      <i class="icon-zoom-in icon-white"></i>
+    </a>
+  </div>
+  <div class="btn-group pull-left bb-nav-button-group">
+    <a id="bb-new-statuses-button" class="btn btn-inverse disabled" href="#">
+      New <span class="bb-new-statuses-num badge">0</span>
+    </a>
+  </div>
+</div>
+<div id="bb-spinner-placeholder"></div>
+<div id="bb-indicator" class="navbar-text pull-right">
+  <span id="bb-msg"></span>
+</div>
+[% END ## MACRO  -%]
 
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div class="span2">
-          <div class="sidebar-nav sidebar-nav-fixed" id="sidebar">
-            <div class="accordion" id="bb-statuses-summary"></div>
-          </div>
-        </div>
-        <div class="span8">
-          <ul id="statuses" class="unstyled">
-          </ul>
-          <div id="main-footer">
-            <a class="btn btn-primary" id="bb-more-button" data-loading-text="Loading..." href="#">More...</a>
-          </div>
-        </div>
+[% INCLUDE "wrapper_navbar.tt" WITH script_name = script_name, content = timeline_navbar() %]
+
+<div class="container-fluid">
+  <div class="row-fluid">
+    <div class="span2">
+      <div class="sidebar-nav sidebar-nav-fixed" id="sidebar">
+        <div class="accordion" id="bb-statuses-summary"></div>
       </div>
     </div>
-    
-    <script type="text/javascript" src="[% script_name %]/static/jquery.js"></script>
-    <script type="text/javascript" src="[% script_name %]/static/spin.js"></script>
-    <script type="text/javascript" src="[% script_name %]/static/q.js"></script>
-    <script type="text/javascript" src="[% script_name %]/static/busybird.js"></script>
-    <script type="text/javascript" src="[% script_name %]/static/timeline.js"></script>
-    <script type="text/javascript" src="[% script_name %]/static/bootstrap/js/bootstrap.js"></script>
-    <script type="text/javascript">
+    <div class="span8">
+      <ul id="statuses" class="unstyled">
+      </ul>
+      <div id="main-footer">
+        <a class="btn btn-primary" id="bb-more-button" data-loading-text="Loading..." href="#">More...</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" src="[% script_name %]/static/jquery.js"></script>
+<script type="text/javascript" src="[% script_name %]/static/spin.js"></script>
+<script type="text/javascript" src="[% script_name %]/static/q.js"></script>
+<script type="text/javascript" src="[% script_name %]/static/busybird.js"></script>
+<script type="text/javascript" src="[% script_name %]/static/timeline.js"></script>
+<script type="text/javascript" src="[% script_name %]/static/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript">
 "use strict";
 
 (function() {
@@ -269,6 +257,6 @@
         });
     });
 })();
-    </script>
-  </body>
-</html>
+</script>
+[% END ## document wrapper %]
+
