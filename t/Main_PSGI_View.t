@@ -7,6 +7,7 @@ use BusyBird::Log;
 use BusyBird::StatusStorage::SQLite;
 use JSON qw(decode_json);
 use utf8;
+use Encode qw(encode_utf8);
 use FindBin;
 use lib ("$FindBin::RealBin/lib");
 use BusyBird::Test::HTTP;
@@ -374,7 +375,46 @@ sub create_main {
     }
 }
 
-fail("TODO: response_timeline_list: timelines with names containing HTML special chars, URL special chars and Unicode chars.");
+fail("TODO: set script_name in the other tests.");
+
+{
+    my $main = create_main();
+    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
+    my @counts = (
+        {name => '   ', counts => {total => 0},
+         exp_display_name => "   ", exp_link => '/myapp/timelines/%20%20%20/'},
+        {name => q{"<'&'>"}, counts => {total => 0},
+         exp_display_name => q{&quot;&lt;&#39;&amp;&#39;&gt;&quot;},
+         exp_link => '/myapp/timelines/%22%3C%27%26%27%3E%22/'},
+        {name => 'タイムライン', counts => {total => 0},
+         exp_display_name => encode_utf8('タイムライン'),
+         exp_link => '/myapp/timelines/%E3%82%BF%E3%82%A4%E3%83%A0%E3%83%A9%E3%82%A4%E3%83%B3/'},
+        {name => '#?=&=?#', counts => {total => 0},
+         exp_display_name => '#?=&amp;=?#',
+         exp_link => '/myapp/timelines/%23%3F%3D%26%3D%3F%23/'},
+    );
+    my $psgi_response = $view->response_timeline_list(
+        script_name => "/myapp",
+        timeline_unacked_counts => [map { +{name => $_->{name}, counts => $_->{counts}} } @counts],
+        total_page_num => 1,
+        cur_page => 0
+    );
+    test_psgi_response($psgi_response, 200, "response OK");
+    my $tree = BusyBird::Test::HTTP->parse_html(join "", @{$psgi_response->[2]});
+    my @timeline_rows = $tree->findnodes('//table[@id="bb-timeline-list"]//tr');
+    is(scalar(@timeline_rows), scalar(@counts), "timeline row num OK");
+    foreach my $i (0 .. $#timeline_rows) {
+        my $timeline_row = $timeline_rows[$i];
+        my $exp_count = $counts[$i];
+        my ($a_tag) = $timeline_row->findnodes('.//a');
+        is($a_tag->attr('href'), $exp_count->{exp_link}, "row $i: link OK");
+        my ($name_tag) = $timeline_row->findnodes('.//span[@class="bb-timeline-name"]');
+        my ($got_name) = $name_tag->content_list;
+        is($got_name, $exp_count->{exp_display_name}, "row $i: displayed timeline name OK");
+    }
+}
+
+
 
 done_testing();
 
