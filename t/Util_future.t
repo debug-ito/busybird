@@ -11,14 +11,14 @@ sub create_futurizable_mock {
     my $pending_callback;
     $mock->mock('success_result', sub {
         my ($self, %args) = @_;
-        $args->{callback}->(undef, 1, 2, 3);
+        $args{callback}->(undef, 1, 2, 3);
     });
     $mock->mock('failure_result', sub {
         my ($self, %args) = @_;
-        $args->{callback}->('failure', 'detailed', 'reason');
+        $args{callback}->('failure', 'detailed', 'reason');
     });
     $mock->mock('die', sub {
-        die "fatal error";
+        die "fatal error\n";
     });
     $mock->mock('pend_this', sub {
         my ($self, %args) = @_;
@@ -44,13 +44,15 @@ sub keys_from_list {
         {label => 'failure result', method => 'failure_result', in_args => [],
          exp_result_type => 'reject', exp_result => ['failure', 1]},
         {label => 'die', method => 'die', in_args => [hoge => 10],
-         exp_result_type => 'reject', exp_result => ['fatal error']},
+         exp_result_type => 'reject', exp_result => ["fatal error\n"]},
     ) {
         note("--- -- case: $case->{label}");
         $mock->clear;
         my $f = future_of($mock, $case->{method}, @{$case->{in_args}});
         is($mock->call_pos(1), $case->{method}, "$case->{method} should be called on the mock");
-        is_deeply([sort {$a cmp $b} keys_from_list($mock->call_args(1))],
+        my @got_args = $mock->call_args(1);
+        is(shift(@got_args), $mock, "invocant OK");
+        is_deeply([sort {$a cmp $b} keys_from_list(@got_args)],
                   [sort {$a cmp $b} keys_from_list(@{$case->{in_args}}), 'callback'],
                   "$case->{method} arg keys OK");
         isa_ok($f, 'Future::Q', 'result of future_of()');
@@ -78,7 +80,7 @@ sub keys_from_list {
          exp_failure => qr/no such method/i},
         {label => 'undef method',
          in_invocant => $mock, in_method => undef,
-         exp_failure => qr/method parameter is mandaotry/i},
+         exp_failure => qr/method parameter is mandatory/i},
         {label => "non-object invocant",
          in_invocant => 'plain string', in_method => 'hoge',
          exp_failure => qr/not blessed/i},
@@ -94,7 +96,7 @@ sub keys_from_list {
         my @result;
         $f->catch(sub { @result = @_ });
         is(scalar(@result), 1, "1 result element");
-        like($result->[0], $case->{exp_failure}, "failure message OK");
+        like($result[0], $case->{exp_failure}, "failure message OK");
     }
 }
 
@@ -105,14 +107,17 @@ sub keys_from_list {
         {label => "fulfill empty", fire => [undef], exp_result_type => 'fulfill', exp_result => []},
         {label => "fulfill with 0", fire => [0, 'a', 'b'], exp_result_type => 'fulfill', exp_result => ['a', 'b']},
         {label => "really empty callback", fire => [], exp_result_type => 'fulfill', exp_result => []},
-        {label => "reject", fire => [1], exp_result_type => 'reject', exp_result => [1]}
+        {label => "reject", fire => ["hoge"], exp_result_type => 'reject', exp_result => ["hoge", 1]}
     ) {
+        note("--- -- $case->{label}");
         $mock->clear;
         my $f = future_of($mock, "pend_this");
         ok($f->is_pending, "f is pending");
         is($mock->call_pos(1), "pend_this", "pend_this method should be called");
-        is_deeply([keys_from_list($mock->call_args(1))], ['callback'], "pend_this called with 'callback' param only");
-        $mock->fire($case->{fire});
+        my @got_args = $mock->call_args(1);
+        is(shift(@got_args), $mock, "invocant OK");
+        is_deeply([keys_from_list(@got_args)], ['callback'], "pend_this called with 'callback' param only");
+        $mock->fire(@{$case->{fire}});
         ok(!$f->is_pending, 'f is ready');
         my $got_result_type;
         my @got_result;

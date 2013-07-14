@@ -9,9 +9,11 @@ use DateTime;
 use 5.10.0;
 use BusyBird::Version;
 our $VERSION = $BusyBird::Version::VERSION;
+use Future::Q 0.020;
+use Scalar::Util qw(blessed);
 
 
-our @EXPORT_OK = (qw(set_param expand_param sort_statuses split_with_entities));
+our @EXPORT_OK = (qw(set_param expand_param sort_statuses split_with_entities future_of));
 
 sub set_param {
     my ($hashref, $params_ref, $key, $default, $is_mandatory) = @_;
@@ -126,6 +128,26 @@ sub split_with_entities {
         ));
     }
     return \@final_segments;
+}
+
+sub future_of {
+    my ($invocant, $method, %args) = @_;
+    return Future::Q->try(sub {
+        croak "invocant parameter is mandatory" if not defined $invocant;
+        croak "method parameter is mandatory" if not defined $method;
+        croak "invocant is not blessed" if not blessed $invocant;
+        croak "no such method as $method" if not $invocant->can($method);
+        my $f = Future::Q->new();
+        $invocant->$method(%args, callback => sub {
+            my ($error, @results) = @_;
+            if($error) {
+                $f->reject($error, 1);
+            }else {
+                $f->fulfill(@results);
+            }
+        });
+        return $f;
+    });
 }
 
 
