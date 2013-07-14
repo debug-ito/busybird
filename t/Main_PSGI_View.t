@@ -285,8 +285,9 @@ sub create_main {
 {
     note("--- tests for response_timeline_list");
     my $main = create_main();
-    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
     my $EXP_PAGER_ENTRY_MAX = 7;
+    $main->set_config(timeline_list_pager_entry_max => $EXP_PAGER_ENTRY_MAX);
+    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
     foreach my $case (
         {
             label => "single page",
