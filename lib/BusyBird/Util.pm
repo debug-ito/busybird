@@ -274,6 +274,7 @@ Before the execution, C<callback> field in C<%args> is overwritten, so that the 
 obtained from C<$future>.
 
 To use C<future_of()>, the C<$method> must conform to the following specification.
+(Most of L<BusyBird::Timeline>'s callback-style methods follow this specification)
 
 =over
 

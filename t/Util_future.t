@@ -30,6 +30,11 @@ sub create_futurizable_mock {
     });
 }
 
+sub keys_from_list {
+    my (@list) = @_;
+    return keys %{ +{@list} };
+}
+
 {
     note('--- immediate cases');
     my $mock = create_futurizable_mock();
@@ -42,7 +47,12 @@ sub create_futurizable_mock {
          exp_result_type => 'reject', exp_result => ['fatal error']},
     ) {
         note("--- -- case: $case->{label}");
+        $mock->clear;
         my $f = future_of($mock, $case->{method}, @{$case->{in_args}});
+        is($mock->call_pos(1), $case->{method}, "$case->{method} should be called on the mock");
+        is_deeply([sort {$a cmp $b} keys_from_list($mock->call_args(1))],
+                  [sort {$a cmp $b} keys_from_list(@{$case->{in_args}}), 'callback'],
+                  "$case->{method} arg keys OK");
         isa_ok($f, 'Future::Q', 'result of future_of()');
         ok($f->is_ready, 'f is ready');
         my @got_result;
@@ -77,6 +87,7 @@ sub create_futurizable_mock {
          exp_failure => qr/invocant parameter is mandatory/i},
     ) {
         note("--- -- case: $case->{label}");
+        $mock->clear;
         my $f = future_of($case->{in_invocant}, $case->{in_method});
         isa_ok($f, "Future::Q");
         ok($f->is_rejected, 'f should be rejected');
@@ -87,8 +98,36 @@ sub create_futurizable_mock {
     }
 }
 
+{
+    note("--- pending cases");
+    my $mock = create_futurizable_mock();
+    foreach my $case (
+        {label => "fulfill empty", fire => [undef], exp_result_type => 'fulfill', exp_result => []},
+        {label => "fulfill with 0", fire => [0, 'a', 'b'], exp_result_type => 'fulfill', exp_result => ['a', 'b']},
+        {label => "really empty callback", fire => [], exp_result_type => 'fulfill', exp_result => []},
+        {label => "reject", fire => [1], exp_result_type => 'reject', exp_result => [1]}
+    ) {
+        $mock->clear;
+        my $f = future_of($mock, "pend_this");
+        ok($f->is_pending, "f is pending");
+        is($mock->call_pos(1), "pend_this", "pend_this method should be called");
+        is_deeply([keys_from_list($mock->call_args(1))], ['callback'], "pend_this called with 'callback' param only");
+        $mock->fire($case->{fire});
+        ok(!$f->is_pending, 'f is ready');
+        my $got_result_type;
+        my @got_result;
+        $f->then(sub {
+            @got_result = @_;
+            $got_result_type = 'fulfill';
+        }, sub {
+            @got_result = @_;
+            $got_result_type = 'reject';
+        });
+        is($got_result_type, $case->{exp_result_type}, "result type OK");
+        is_deeply(\@got_result, $case->{exp_result}, "result OK");
+    }
+}
 
-fail("TODO: pending cases");
 
 done_testing();
 
