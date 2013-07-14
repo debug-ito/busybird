@@ -141,11 +141,20 @@ BusyBird::Util - utility functions for BusyBird
 
 
 =for test_synopsis
-my @statuses;
+my $timeline;
 
 =head1 SYNOPSIS
 
-    use BusyBird::Util qw(sort_statuses split_with_entities);
+    use BusyBird::Util qw(sort_statuses split_with_entities future_of);
+    
+    my @statuses;
+    future_of($timeline, "get_statuses", count => 100)->then(sub {
+        my ($statuses) = @_;
+        @statuses = @$statuses;
+    })->catch(sub {
+        my ($error, $is_normal_error) = @_;
+        warn $error;
+    });
     
     my @sorted_statuses = sort_statuses(@statuses);
     
@@ -254,6 +263,66 @@ Attached entity object. If the segment has no entity attached, it is C<undef>.
 =back
 
 It croaks if C<$text> is C<undef>.
+
+
+=head2 $future = future_of($invocant, $method, %args)
+
+Wraps a callback-style method call with a L<Future::Q> object.
+
+This function executes C<< $invocant->$method(%args) >>, which is supposed to be a callback-style method.
+Before the execution, C<callback> field in C<%args> is overwritten, so that the result of the callback can be
+obtained from C<$future>.
+
+To use C<future_of()>, the C<$method> must conform to the following specification.
+
+=over
+
+=item *
+
+The C<$method> takes named arguments as in C<< $invocant->$method(key1 => value1, key2 => value2 ... ) >>.
+
+=item *
+
+When the C<$method>'s operation is done, the subroutine reference stored in C<$args{callback}> must be called exactly once.
+
+=item *
+
+C<$args{callback}> must be called as in
+
+    $args{callback}->($error, @results)
+
+=item *
+
+In success, the C<$error> must be a falsy scalar and the rest of the arguments is the result of the operation.
+The arguments other than C<$error> are used to fulfill the C<$future>.
+
+=item *
+
+In failure, the C<$error> must be a truthy scalar that describes the error.
+The C<$error> is used to reject the C<$future>.
+
+=back
+
+The return value (C<$future>) is a L<Future::Q> object, which represents the result of the C<$method> call.
+If C<$method> throws an exception, it is caught by C<future_of()> and C<$future> becomes rejected.
+
+In success, C<$future> is fulfilled with the results the C<$method> returns.
+
+    $future->then(sub {
+        my @results = @_;
+        ...
+    });
+
+In failure, C<$future> is rejected with the error and a flag.
+
+    $future->catch(sub {
+        my ($error, $is_normal_error) = @_;
+        ...
+    });
+
+If C<$error> is the error passed to the callback, C<$is_normal_error> is true.
+If C<$error> is the exception the method throws, C<$is_normal_error> does not even exist.
+
 
 =head1 AUTHOR
 
