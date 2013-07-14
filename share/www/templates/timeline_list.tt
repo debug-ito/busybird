@@ -1,19 +1,21 @@
-%% ## Arguments: script_name, timeline_unacked_counts, page_list, cur_page (begin with 0)
+%% ## Arguments: script_name, timeline_unacked_counts, page_list, last_page (begin with 0), cur_page (begin with 0)
 [% WRAPPER "wrapper_document.tt" WITH script_name = script_name %]
 [% INCLUDE "wrapper_navbar.tt" WITH script_name = script_name, content = "" %]
 
 [% MACRO pagination BLOCK -%]
+[%- IF last_page > 0 -%]
 <div class="pagination pagination-centered">
   <ul class="bb-timeline-page-list">
-    <li><a href="#">&laquo;</a></li>
-    <li><a href="#">&lt;</a></li>
+    <li><a href="[% script_name %]/?page=0">&laquo;</a></li>
+    [% IF cur_page == 0 %]<li class="disabled"><a href="#">[% ELSE %]<li><a href="[% script_name %]/?page=[% cur_page -1 %]">[% END %]&lt;</a></li>
     [%- FOREACH page IN page_list %]
-    <li[% IF page == cur_page %] class="active"[% END %]><a href="#">[% page + 1 %]</a></li>
+    <li[% IF page == cur_page %] class="active"[% END %]><a href="[% script_name %]/?page=[% page %]">[% page + 1 %]</a></li>
     [%- END ## foreach %]
-    <li><a href="#">&gt;</a></li>
-    <li><a href="#">&raquo;</a></li>
+    [% IF cur_page == last_page %]<li class="disabled"><a href="#">[% ELSE %]<li><a href="[% script_name %]/?page=[% cur_page +1 %]">[% END %]&gt;</a></li>
+    <li><a href="[% script_name %]/?page=[% last_page %]">&raquo;</a></li>
   </ul>
 </div>
+[%- END -%]
 [% END -%]
 
 <div class="container-fluid">

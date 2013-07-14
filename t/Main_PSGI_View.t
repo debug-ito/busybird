@@ -335,6 +335,24 @@ sub create_main {
             exp_shown_pages => [(50 - $EXP_PAGER_ENTRY_MAX) .. 49],
             exp_prev_page => 47, exp_next_page => 49
         },
+        {
+            label => 'top page',
+            input => {total_page_num => 2, cur_page => 0, timeline_unacked_counts => [
+                {name => 'hoge', counts => {total => 0}}
+            ]},
+            exp_timelines => [ {link => '/apptop/timelines/hoge/', name => "hoge"} ],
+            exp_shown_pages => [0, 1],
+            exp_prev_page => undef, exp_next_page => 1
+        },
+        {
+            label => 'bottom page',
+            input => {total_page_num => 2, cur_page => 1, timeline_unacked_counts => [
+                {name => 'hoge', counts => {total => 0}}
+            ]},
+            exp_timelines => [ {link => '/apptop/timelines/hoge/', name => "hoge"} ],
+            exp_shown_pages => [0, 1],
+            exp_prev_page => 0, exp_next_page => undef
+        }
     ) {
         note("--- -- case: $case->{label}");
         my $exp_pager_num = ($case->{input}{total_page_num} > 1 ? 2 : 0);
@@ -346,14 +364,16 @@ sub create_main {
         is(scalar(@pager_nodes), $exp_pager_num, "$exp_pager_num pager objects should exist");
         foreach my $pager_index (0 .. ($exp_pager_num - 1)) {
             my $pager_node = $pager_nodes[$pager_index];
+            my $exp_prev_link = defined($case->{exp_prev_page}) ? "/apptop/?page=$case->{exp_prev_page}" : "#";
+            my $exp_next_link = defined($case->{exp_next_page}) ? "/apptop/?page=$case->{exp_next_page}" : "#";
             my (@a_nodes) = $pager_node->findnodes('.//a');
             is(scalar(@a_nodes), @{$case->{exp_shown_pages}} + 4, "pager $pager_index: num of links OK");
             is($a_nodes[0]->attr('href'), '/apptop/?page=0', "pager $pager_index: link to top OK");
-            is($a_nodes[1]->attr('href'), "/apptop/?page=$case->{exp_prev_page}", "pager $pager_index: link to prev OK");
+            is($a_nodes[1]->attr('href'), $exp_prev_link, "pager $pager_index: link to prev OK");
             is($a_nodes[-1]->attr('href'), '/apptop/?page=' . ($case->{input}{total_page_num}-1), "pager $pager_index: link to bottom OK");
-            is($a_nodes[-2]->attr('href'), "/apptop/?page=$case->{exp_next_page}", "pager $pager_index: link to next OK");
+            is($a_nodes[-2]->attr('href'), $exp_next_link, "pager $pager_index: link to next OK");
             is_deeply(
-                [map { $_->attr('href') } @a_nodes[2 .. (@a_nodes - 3)]], [map { "/?page=$_" } @{$case->{exp_shown_pages}}],
+                [map { $_->attr('href') } @a_nodes[2 .. (@a_nodes - 3)]], [map { "/apptop/?page=$_" } @{$case->{exp_shown_pages}}],
                 "pager $pager_index: links to pages OK"
             );
         }

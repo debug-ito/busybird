@@ -58,6 +58,12 @@ File path to "share" directory.
 which include HTML templates, JavaScript files and image files.
 
 
+=head2 C<timeline_list_pager_entry_max> => INT
+
+B<Default:> 7
+
+Maximum number of page entries shown in the pagination of the timeline list page.
+
 =head1 PARAMETERS FOR BusyBird::Timeline
 
 

@@ -309,17 +309,23 @@ sub response_timeline_list {
         croak "$key parameter is mandatory" if not defined $args{$key};
     }
     croak "timeline_unacked_counts must be an array-ref" if ref($args{timeline_unacked_counts}) ne "ARRAY";
-    my %input_args = ();
+    
+    my %input_args = (last_page => $args{total_page_num} - 1);
     foreach my $input_key (qw(script_name timeline_unacked_counts cur_page)) {
         $input_args{$input_key} = $args{$input_key};
     }
-        
+    my $pager_entry_max = $self->{main_obj}->get_config('timeline_list_pager_entry_max');
+    my $left_margin = int($pager_entry_max / 2);
+    my $right_margin = $pager_entry_max - $left_margin;
+    $input_args{page_list} =
+          $args{total_page_num} <= $pager_entry_max ? [0 .. ($args{total_page_num} - 1)]
+        : $args{cur_page} <= $left_margin           ? [0 .. ($pager_entry_max - 1)]
+        : $args{cur_page} >= ($args{total_page_num} - $right_margin)
+                                                    ? [($args{total_page_num} - $pager_entry_max) .. ($args{total_page_num} - 1)]
+                                                    : [($args{cur_page} - $left_margin) .. ($args{cur_page} + $right_margin - 1)];
     return $self->_response_template(
         template => "timeline_list.tt",
-        args => {
-            %input_args,
-            page_list => [0 .. ($args{total_page_num} - 1)],
-        }
+        args => \%input_args,
     );
 }
 
