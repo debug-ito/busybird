@@ -57,6 +57,11 @@ File path to "share" directory.
 "share" directory contains static files used by L<BusyBird>,
 which include HTML templates, JavaScript files and image files.
 
+=head2 C<timeline_list_per_page> => INT
+
+B<Default:> 30
+
+Number of timelines shown in a single page of the timeline list.
 
 =head2 C<timeline_list_pager_entry_max> => INT
 

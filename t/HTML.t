@@ -82,7 +82,40 @@ note("----- static HTML view tests");
     }
 }
 
-fail("TODO: timeline list view (page param and selection of timelines)");
+{
+    my $main = create_main();
+    $main->timeline($_) foreach 1..12;
+    $main->set_config(timeline_list_per_page => 5);
+    test_psgi create_psgi_app($main), sub {
+        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        
+        note("--- timeline list view (page param and selection of timelines)");
+        foreach my $case (
+            {label => "root", path => '/', exp_timelines => [1 .. 5]},
+            {label => "index.html", path => '/index.html', exp_timelines => [1 .. 5]},
+            {label => "root 0", path => '/?page=0', exp_timelines => [1 .. 5]},
+            {label => "index.html 1", path => '/index.html?page=1', exp_timelines => [6 .. 10]},
+            {label => "root 2", path => '/index.html?page=2', exp_timelines => [11 .. 12]}
+        ) {
+            note("--- -- case $case->{label}");
+            my $tree = $tester->request_htmltree_ok('GET', $case->{path}, undef, qr/^200$/, "GET OK");
+            my @name_nodes = $tree->findnodes('//table[@id="bb-timeline-list"]//span[@class="bb-timeline-name"]');
+            my @names = map { ($_->content_list)[0] } @name_nodes;
+            is_deeply(\@names, $case->{exp_timelines}, "timeline names OK");
+        };
+
+        note("--- timeline list view (invalid requests)");
+        foreach my $case (
+            {label => 'negative page', path => '/?page=-1'},
+            {label => 'too large page number', path => '/?page=5'},
+            {label => 'string page', path => '/?page=hoge'},
+            {label => 'empty page', path => '/?page='},
+        ) {
+            note("--- -- case $case->{label}");
+            $tester->request_ok("GET", $case->{path}, undef, qr/^[45]/, "GET fails OK");
+        }
+    };
+}
 
 done_testing();
 
