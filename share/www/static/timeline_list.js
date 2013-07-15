@@ -32,6 +32,7 @@ bb.UnackedCountsRenderer = (function() {
             var leveled_counts = [];
             var $target = $(self.dom_target);
             var sum_count = null;
+            var count_elements = [];
             $target.empty();
             if(total === 0) {
                 $target.append(self._renderLevel("total", total));
@@ -50,15 +51,21 @@ bb.UnackedCountsRenderer = (function() {
                 }
                 if(defined(sum_count)) {
                     sum_count += count_entry.count;
-                    $target.append(self._renderLevel(count_entry.level, sum_count, count_entry.count));
+                    count_elements.push(self._renderLevel(count_entry.level, sum_count, count_entry.count));
                 }else {
                     sum_count = count_entry.count;
-                    $target.append(self._renderLevel(count_entry.level, sum_count));
+                    count_elements.push(self._renderLevel(count_entry.level, sum_count));
                 }
             });
             if(leveled_counts.length > self.level_num) {
-                $target.append(self._renderLevel("total", total, total - sum_count));
+                count_elements.push(self._renderLevel("total", total, total - sum_count));
             }
+            $.each(count_elements, function(i, elem) {
+                if(i > 0) {
+                    $target.append(" / ");
+                }
+                $target.append(elem);
+            });
         }
     };
     return selfclass;
