@@ -4,9 +4,9 @@
 
 bb.UnackedCountsRenderer = (function() {
     var selfclass = function(args) {
-        // @params: args.dom_target, args.level_num = 2
-        this.dom_target = args.dom_target;
-        this.level_num = defined(args.level_num) ? args.level_num : 2;
+        // @params: args.domTarget, args.levelNum = 2
+        this.dom_target = args.domTarget;
+        this.level_num = defined(args.levelNum) ? args.levelNum : 2;
     };
     selfclass.prototype = {
         _renderLevel: function(level, sum_count, this_count) {
