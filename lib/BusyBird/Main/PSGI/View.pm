@@ -46,6 +46,15 @@ sub response_notfound {
             [$message]];
 }
 
+sub response_error_html {
+    my ($self, $http_code, $message) = @_;
+    return $self->_response_template(
+        template => 'error.tt', args => {error => $message},
+        code => $http_code
+    );
+}
+
+
 sub response_json {
     my ($self, $res_code, $response_object) = @_;
     my $message = try {
@@ -256,10 +265,7 @@ my %RESPONSE_FORMATTER_FOR_TL_GET_STATUSES = (
             $result = Encode::encode('utf8', $result);
             return [200, ['Content-Type', 'text/html; charset=utf8'], [$result]];
         }else {
-            return $self->_response_template(
-                template => 'error.tt', args => {error => $response_object->{error}},
-                code => $code
-            );
+            return $self->response_error_html($code, $response_object->{error});
         }
     },
     json => sub {
@@ -365,11 +371,21 @@ Fields in C<%args> are:
 
 =head2 $psgi_response = $view->response_notfound([$message])
 
-Returns a "404 Not Found" page.
+Returns a simple "404 Not Found" page.
 
 C<$message> is the message body, which is optional.
 
 Return value C<$psgi_response> is a L<PSGI> response object.
+
+=head2 $psgi_response = $view->response_error_html($http_code, $message)
+
+Returns an HTTP error response in HTML.
+
+C<$http_code> is HTTP response code, which should be 4** or 5**.
+C<$message> is a human-readable error message.
+
+Return value C<$psgi_response> is a L<PSGI> response object.
+
 
 =head2 $psgi_response = $view->response_json($http_code, $response_object)
 

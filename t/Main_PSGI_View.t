@@ -74,6 +74,21 @@ sub create_main {
 }
 
 {
+    note("--- response_error_html");
+    my $main = create_main();
+    my $view = new_ok("BusyBird::Main::PSGI::View", [main_obj => $main]);
+    foreach my $case (
+        {in_code => 400, in_message => "bad request, man", exp_message => qr/bad request, man/},
+        {in_code => 404, in_message => "no such page", exp_message => qr/no such page/},
+        {in_code => 500, in_message => "fatal error", exp_message => qr/fatal error/},
+    ) {
+        my $res = $view->response_error_html($case->{in_code}, $case->{in_message});
+        test_psgi_response($res, $case->{in_code}, "case: $case->{in_message} HTTP code OK");
+        like(join("", @{$res->[2]}), $case->{exp_message}, "case: $case->{in_message} message OK");
+    }
+}
+
+{
     note("--- template_functions");
     my $main = create_main();
     my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
