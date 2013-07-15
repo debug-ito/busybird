@@ -11,6 +11,7 @@ use Plack::Test;
 use BusyBird::Main;
 use BusyBird::Main::PSGI;
 use BusyBird::StatusStorage::SQLite;
+use utf8;
 
 $BusyBird::Log::Logger = undef;
 
@@ -48,10 +49,11 @@ sub create_main {
     my $main = create_main();
     my $timeline = $main->timeline('test');
     foreach my $case (
-        {in_id => 'http://example.com/', exp_id => 'http://example.com/'},
-        {in_id => 'crazy<>ID', exp_id => 'crazy&lt;&gt;ID'},
-        {in_id => 'crazier<span>ID</span>', exp_id => 'crazier&lt;span&gt;ID&lt;/span&gt;'},
-        {in_id => 'ID with space', exp_id => 'ID with space'},
+        {label => "url", in_id => 'http://example.com/', exp_id => 'http://example.com/'},
+        {label => "diamond", in_id => 'crazy<>ID', exp_id => 'crazy&lt;&gt;ID'},
+        {label => "span tag", in_id => 'crazier<span>ID</span>', exp_id => 'crazier&lt;span&gt;ID&lt;/span&gt;'},
+        {label => "space", in_id => 'ID with space', exp_id => 'ID with space'},
+        {label => "unicode", in_id => 'Unicode ユニコード ID', exp_id => 'Unicode ユニコード ID'},
     ) {
         $timeline->delete_statuses(ids => undef);
         my $in_status = { id => $case->{in_id} };
@@ -60,10 +62,10 @@ sub create_main {
             my $tester = BusyBird::Test::HTTP->new(requester => shift);
             my @statuses_html = BusyBird::Test::StatusHTML->new_multiple($tester->request_ok(
                 "GET", "/timelines/test/statuses.html?count=100", undef,
-                qr/^200$/, "GET statuses.html OK"
+                qr/^200$/, "$case->{label}: GET statuses.html OK"
             ));
-            is(scalar(@statuses_html), 1, "1 status node");
-            is($statuses_html[0]->id, $case->{exp_id}, "In ID: $case->{in_id} OK");
+            is(scalar(@statuses_html), 1, "$case->{label}: 1 status node");
+            is($statuses_html[0]->id, $case->{exp_id}, "$case->{label}: ID OK");
         };
     }
 }

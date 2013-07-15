@@ -31,6 +31,7 @@ my $builder = Module::Build->new(
         'JSON'=> '0',
         'DBI' => 0,
         "DBD::SQLite" => 0,
+        "Encode" => 0,
     },
     requires => {
         'perl' => "5.10.0",
