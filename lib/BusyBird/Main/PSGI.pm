@@ -198,7 +198,7 @@ sub _handle_tl_get_unacked_counts {
     my ($self, $req, $dest) = @_;
     return sub {
         my $responder = shift;
-        try {
+        Future::Q->try(sub {
             my $timeline = $self->_get_timeline($dest);
             my $query_params = $req->query_parameters;
             my %assumed = ();
@@ -210,19 +210,15 @@ sub _handle_tl_get_unacked_counts {
                 next if int($query_key) != $query_key;
                 $assumed{$query_key} = $query_params->{$query_key};
             }
-            $timeline->watch_unacked_counts(assumed => \%assumed, callback => sub {
-                my ($error, $w, $unacked_counts) = @_;
-                $w->cancel();
-                if(defined $error) {
-                    $responder->($self->{view}->response_json(500, {error => "$error"}));
-                    return;
-                }
-                $responder->($self->{view}->response_json(200, {unacked_counts => $unacked_counts}));
-            });
-        }catch {
-            my $e = shift;
-            $responder->($self->{view}->response_json(400, {error => "$e"}));
-        };
+            return future_of($timeline, "watch_unacked_counts", assumed => \%assumed);
+        })->then(sub {
+            my ($w, $unacked_counts) = @_;
+            $w->cancel();
+            $responder->($self->{view}->response_json(200, {unacked_counts => $unacked_counts}));
+        })->catch(sub {
+            my ($e, $is_normal_error) = @_;
+            $responder->($self->{view}->response_json(($is_normal_error ? 500 : 400), {error => "$e"}));
+        });
     };
 }
 
@@ -230,32 +226,28 @@ sub _handle_get_unacked_counts {
     my ($self, $req, $dest) = @_;
     return sub {
         my $responder = shift;
-        try {
+        Future::Q->try(sub {
             my $query_params = $req->query_parameters;
             my $level = $query_params->{level};
             if(not defined($level)) {
                 $level = "total";
             }elsif($level ne 'total' && (!looks_like_number($level) || int($level) != $level)) {
-                die "level parameter must be an integer";
+                die "level parameter must be an integer\n";
             }
             my %assumed = ();
             foreach my $query_key (keys %$query_params) {
                 next if substr($query_key, 0, 3) ne 'tl_';
                 $assumed{decode_utf8(substr($query_key, 3))} = $query_params->{$query_key};
             }
-            $self->{main_obj}->watch_unacked_counts(level => $level, assumed => \%assumed, callback => sub {
-                my ($error, $w, $tl_unacked_counts) = @_;
-                $w->cancel();
-                if(defined $error) {
-                    $responder->($self->{view}->response_json(500, {error => "$error"}));
-                    return;
-                }
-                $responder->($self->{view}->response_json(200, {unacked_counts => $tl_unacked_counts}));
-            });
-        }catch {
-            my $e = shift;
-            $responder->($self->{view}->response_json(400, {error => "$e"}));
-        };
+            return future_of($self->{main_obj}, "watch_unacked_counts", level => $level, assumed => \%assumed);
+        })->then(sub {
+            my ($w, $tl_unacked_counts) = @_;
+            $w->cancel();
+            $responder->($self->{view}->response_json(200, {unacked_counts => $tl_unacked_counts}));
+        })->catch(sub {
+            my ($e, $is_normal_error) = @_;
+            $responder->($self->{view}->response_json(($is_normal_error ? 500 : 400), {error => "$e"}));
+        });
     };
 }
 
