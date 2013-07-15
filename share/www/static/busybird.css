@@ -71,6 +71,9 @@ div.bb-status-attributes {
     background-color: #e7e8ec;
 }
 
+.bb-unacked-counts-pair {
+    margin: 0 10px;
+}
 
 /****
   fixed sidebar

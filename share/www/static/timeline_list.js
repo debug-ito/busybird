@@ -61,9 +61,6 @@ bb.UnackedCountsRenderer = (function() {
                 count_elements.push(self._renderLevel("total", total, total - sum_count));
             }
             $.each(count_elements, function(i, elem) {
-                if(i > 0) {
-                    $target.append(" / ");
-                }
                 $target.append(elem);
             });
         }
