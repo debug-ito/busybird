@@ -133,19 +133,29 @@ asyncTest("multiple timelines", function() {
     }).then(function() {
         is(server.getRequestURL(), "/apptop/updates/unacked_counts.json?level=total&tl_zero=0&tl_one=2&tl_two=3&tl_three=4", "second request OK");
         server.respond({
-            "one": { "total": 10, "2": 3, "0": 2, "-4": 5 },
-            "two": { "total": 5, "4": 3, "1": 2 }
+            "one": { "2": 3, "0": 2, "-4": 5, "total": 10 },
+            "two": {  "4": 3, "1": 2, "total": 5 }
         });
         return received_counts_defers[1].promise;
     }).then(function(unacked_counts_one) {
-        deepEqual(unacked_counts_one, {"total": 10, "2": 3, "0": 2, "-4": 5}, "response for one OK");
+        deepEqual(unacked_counts_one, { "2": 3, "0": 2, "-4": 5, "total": 10 }, "response for one OK");
         return received_counts_defers[2].promise;
     }).then(function(unacked_counts_two) {
-        deepEqual(unacked_counts_two, {"total": 5, "4": 3, "1": 2}, "response for two OK");
+        deepEqual(unacked_counts_two, {"4": 3, "1": 2, "total": 5}, "response for two OK");
         resetReceivedCountsDefers([1,2]);
         return server.waitForRequest();
     }).then(function() {
         is(server.getRequestURL(), "/apptop/updates/unacked_counts.json?level=total&tl_zero=0&tl_one=10&tl_two=5&tl_three=4", "third request OK");
+        server.respond({
+            "three": { "0": 5, "total": 5 },
+        });
+        return received_counts_defers[3].promise;
+    }).then(function(unacked_counts_three) {
+        deepEqual(unacked_counts_three, {"0": 5, "total": 5}, "response for three (0 => 5, total => 5) OK");
+        resetReceivedCountsDefers([3]);
+        return server.waitForRequest();
+    }).then(function() {
+        is(server.getRequestURL(), "/apptop/updates/unacked_counts.json?level=total&tl_zero=0&tl_one=10&tl_two=5&tl_three=5", "fourth request OK");
     }).fail(function(error) {
         ok(false, "should not fail");
         ok(true, "reason: " + error);
