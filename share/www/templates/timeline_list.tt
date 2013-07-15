@@ -46,14 +46,27 @@
 <script type="text/javascript">
 "use strict";
 $(function() {
-    $("#bb-timeline-list").find(".bb-timeline-unacked-counts-cell").each(function() {
-        var cell = this;
-        var $cell = $(this);
-        var renderer = new bb.UnackedCountsRenderer({
-            domTarget: cell
-        });
-        renderer.show($cell.data("bbInitCounts"));
+    var poller = new bb.UnackedCountsPoller({
+        apiBase: "[% script_name | js %]"
     });
+    $("#bb-timeline-list").find("tr").each(function() {
+        var $row = $(this);
+        var $cell = $row.find(".bb-timeline-unacked-counts-cell");
+        var renderer = new bb.UnackedCountsRenderer({
+            domTarget: $cell.get(0)
+        });
+        var counts = $cell.data("bbInitCounts");
+        var name = $row.find(".bb-timeline-name").text();
+        renderer.show(counts);
+        poller.addTimeline({
+            timelineName: name,
+            initialUnackedCounts: counts,
+            callback: function(received_counts) {
+                renderer.show(received_counts);
+            }
+        });
+    });
+    poller.start();
 });
 </script>
 [% END ## WRAPPER %]
