@@ -1,4 +1,4 @@
-%% ## Arguments: script_name, timeline_unacked_counts, page_list, last_page (begin with 0), cur_page (begin with 0)
+%% ## Arguments: script_name, timeline_unacked_counts_json, page_list, last_page (begin with 0), cur_page (begin with 0)
 [% WRAPPER "wrapper_document.tt" WITH script_name = script_name %]
 [% INCLUDE "wrapper_navbar.tt" WITH script_name = script_name, content = "" %]
 
@@ -24,15 +24,10 @@
       [% pagination() %]
       <table id="bb-timeline-list" class="table table-striped">
         <tbody>
-          [%- FOREACH timeline_entry IN timeline_unacked_counts %]
+          [%- FOREACH timeline_entry IN timeline_unacked_counts_json %]
           <tr>
             <td><a href="[% script_name %]/timelines/[% timeline_entry.name | uri_escape %]/"><i class="icon-list"></i> <span class="bb-timeline-name">[% timeline_entry.name %]</span></a></td>
-            <td>
-              [%- FOREACH unacked_count_entry IN timeline_entry.counts.kv() -%]
-              Lv.[% unacked_count_entry.key %] <span class="badge">+[% unacked_count_entry.value %]</span><!-- this is temporary rendering for tests -->
-              [%- IF !loop.is_last %] / [% END -%]
-              [%- END ## foreach -%]
-            </td>
+            <td class="bb-timeline-unacked-counts-cell" data-bb-init-counts="[% timeline_entry.counts_json %]"></td>
           </tr>
           [%- END ## foreach %]
         </tbody>
@@ -41,4 +36,24 @@
     </div>
   </div>
 </div>
+
+<script type="text/javascript" src="[% script_name %]/static/jquery.js"></script>
+<script type="text/javascript" src="[% script_name %]/static/spin.js"></script>
+<script type="text/javascript" src="[% script_name %]/static/q.js"></script>
+<script type="text/javascript" src="[% script_name %]/static/busybird.js"></script>
+<script type="text/javascript" src="[% script_name %]/static/timeline_list.js"></script>
+<script type="text/javascript" src="[% script_name %]/static/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript">
+"use strict";
+$(function() {
+    $("#bb-timeline-list").find(".bb-timeline-unacked-counts-cell").each(function() {
+        var cell = this;
+        var $cell = $(this);
+        var renderer = new bb.UnackedCountsRenderer({
+            domTarget: cell
+        });
+        renderer.show($cell.data("bbInitCounts"));
+    });
+});
+</script>
 [% END ## WRAPPER %]

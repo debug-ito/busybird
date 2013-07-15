@@ -39,6 +39,7 @@ share/www/static/jquery.js
 share/www/static/q.js
 share/www/static/spin.js
 share/www/static/timeline.js
+share/www/static/timeline_list.js
 share/www/templates/error.tt
 share/www/templates/status.tt
 share/www/templates/timeline.tt
@@ -63,6 +64,7 @@ t/Main_PSGI_View.t
 t/StatusStorage_Memory.t
 t/StatusStorage_SQLite.t
 t/Timeline.t
+t/Util_future.t
 t/Util_sort_statuses.t
 t/Util_split.t
 t/WebAPI.t
@@ -77,6 +79,7 @@ xt/js/sinon.js
 xt/js/spinner.html
 xt/js/status_container.html
 xt/js/timeline_unacked_counts_poller.html
+xt/js/unacked_counts_renderer.html
 xt/js/uri.js
 xt/js/utils.html
 xt/Main.t

@@ -317,9 +317,14 @@ sub response_timeline_list {
     croak "timeline_unacked_counts must be an array-ref" if ref($args{timeline_unacked_counts}) ne "ARRAY";
     
     my %input_args = (last_page => $args{total_page_num} - 1);
-    foreach my $input_key (qw(script_name timeline_unacked_counts cur_page)) {
+    foreach my $input_key (qw(script_name cur_page)) {
         $input_args{$input_key} = $args{$input_key};
     }
+    
+    $input_args{timeline_unacked_counts_json} = [map {
+        +{name => $_->{name}, counts_json => to_json($_->{counts})}
+    } @{$args{timeline_unacked_counts}}];
+    
     my $pager_entry_max = $self->{main_obj}->get_config('timeline_list_pager_entry_max');
     my $left_margin = int($pager_entry_max / 2);
     my $right_margin = $pager_entry_max - $left_margin;
