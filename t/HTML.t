@@ -99,6 +99,9 @@ note("----- static HTML view tests");
         ) {
             note("--- -- case $case->{label}");
             my $tree = $tester->request_htmltree_ok('GET', $case->{path}, undef, qr/^200$/, "GET OK");
+            ## my $plain_res = $tester->request_ok('GET', $case->{path}, undef, qr/^200$/, "GET OK");
+            ## note("RES: $plain_res");
+            ## my $tree = BusyBird::Test::HTTP->parse_html($plain_res);
             my @name_nodes = $tree->findnodes('//table[@id="bb-timeline-list"]//span[@class="bb-timeline-name"]');
             my @names = map { ($_->content_list)[0] } @name_nodes;
             is_deeply(\@names, $case->{exp_timelines}, "timeline names OK");

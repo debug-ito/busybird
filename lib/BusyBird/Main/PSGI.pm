@@ -1,7 +1,7 @@
 package BusyBird::Main::PSGI;
 use strict;
 use warnings;
-use BusyBird::Util qw(set_param);
+use BusyBird::Util qw(set_param future_of);
 use BusyBird::Main::PSGI::View;
 use Router::Simple;
 use Plack::Request;
@@ -10,12 +10,15 @@ use Plack::App::File;
 use Try::Tiny;
 use JSON qw(decode_json);
 use Scalar::Util qw(looks_like_number);
+use List::Util qw(min);
 use Carp;
 use Exporter qw(import);
 use URI::Escape qw(uri_unescape);
 use Encode qw(decode_utf8);
 use BusyBird::Version;
 our $VERSION = $BusyBird::Version::VERSION;
+use Future::Q;
+use POSIX qw(ceil);
 
 
 our @EXPORT = our @EXPORT_OK = qw(create_psgi_app);
@@ -284,17 +287,43 @@ sub _handle_tl_index {
 
 sub _handle_get_timeline_list {
     my ($self, $req, $dest) = @_;
-    ### for testing..
-    return $self->{view}->response_timeline_list(
-        script_name => $req->script_name,
-        timeline_unacked_counts => [
-            {name => "hoge", counts => {total => 0}},
-            {name => "foobar", counts => {total => 10, -1 => 5, 1 => 5}},
-            {name => "buzz", counts => {total => 20, -3 => 5, 0 => 5, 1 => 2, 2 => 3, 3 => 5}}
-        ],
-        total_page_num => 10,
-        cur_page => 2
-    );
+    return sub {
+        my $responder = shift;
+        Future::Q->try(sub {
+            my $num_per_page = $self->{main_obj}->get_config('timeline_list_per_page');
+            my @timelines = $self->{main_obj}->get_all_timelines();
+            if(@timelines == 0) {
+                die "No timeline. Something is wrong.";
+            }
+            my $page_num = ceil(scalar(@timelines) / $num_per_page);
+            my $cur_page = 0;
+            my $query = $req->query_parameters;
+            if(defined $query->{page}) {
+                if(!looks_like_number($query->{page}) || $query->{page} < 0 || $query->{page} >= $page_num) {
+                    die "Invalid page parameter\n";
+                }
+                $cur_page = $query->{page};
+            }
+            my @target_timelines = @timelines[($cur_page * $num_per_page) .. min(($cur_page+1) * $num_per_page - 1, $#timelines)];
+            return Future::Q->needs_all(map { future_of($_, "get_unacked_counts") } @target_timelines)->then(sub {
+                my (@unacked_counts_list) = @_;
+                my @timeline_unacked_counts = map {
+                    +{ name => $target_timelines[$_]->name, counts => $unacked_counts_list[$_] }
+                } 0 .. $#target_timelines;
+                $responder->( $self->{view}->response_timeline_list(
+                    script_name => $req->script_name,
+                    timeline_unacked_counts => \@timeline_unacked_counts,
+                    total_page_num => $page_num,
+                    cur_page => $cur_page
+                ) );
+            });
+        })->catch(sub {
+            my ($error, $is_normal_error) = @_;
+            $responder->($self->{view}->response_error_html(
+                ($is_normal_error ? 500 : 400), $error
+            ));
+        });
+    };
 }
 
 1;

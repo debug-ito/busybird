@@ -71,6 +71,7 @@ my $builder = Module::Build->new(
         'DBD::SQLite' => 0,
         'SQL::Maker' => '1.11',
         'Future::Q' => '0.040',
+        'POSIX' => 0,
     },
     share_dir => "share",
     add_to_cleanup      => [ 'BusyBird-*' ],
