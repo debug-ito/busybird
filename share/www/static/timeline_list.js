@@ -38,8 +38,8 @@ bb.UnackedCountsRenderer = (function() {
                 $target.append(self._renderLevel("total", total));
                 return;
             }
-            delete unacked_counts.total;
             $.each(unacked_counts, function(level, count) {
+                if(level === "total") return;
                 leveled_counts.push({level: parseInt("" + level, 10), count: count});
             });
             leveled_counts.sort(function(a, b) {
@@ -116,7 +116,7 @@ bb.UnackedCountsPoller = (function() {
                     $.each(response_data.unacked_counts, function(timeline_name, got_counts) {
                         var polled_timeline = self.polled_timelines[timeline_name];
                         polled_timeline.unacked_counts = got_counts;
-                        polled_timeline.callback(got_counts);
+                        polled_timeline.callback($.extend({}, got_counts));
                     });
                     return self._makeQuery();
                 }
