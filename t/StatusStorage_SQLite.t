@@ -220,6 +220,15 @@ sub test_sqlite {
 test_sqlite('file');
 
 {
+    note("--- trying to create DB at non-existent path");
+    dies_ok {
+        my $s = BusyBird::StatusStorage::SQLite->new(
+            path => './this/path/should/never/exist.sqlite3'
+        );
+    } "trying to create DB at non-existent path throws an exception.";
+}
+
+{
     note('--- timestamps with non-UTC timezones are stored in DB as UTC timestamps');
     my ($tempfile, $storage) = create_storage('file');
     my %base = (timeline => '_test_timestamp_timezones');
