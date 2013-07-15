@@ -3,6 +3,7 @@ use warnings;
 use Test::More;
 use BusyBird::Util qw(future_of);
 use Test::MockObject;
+use Carp;
 
 note('tests for BusyBird::Util::future_of()');
 
@@ -72,21 +73,22 @@ sub keys_from_list {
 }
 
 {
+    local $Carp::Verbose = 0;
     note('--- failure cases');
     my $mock = create_futurizable_mock();
     foreach my $case (
         {label => 'non existent method',
          in_invocant => $mock, in_method => 'non_existent_method',
-         exp_failure => qr/no such method/i},
+         exp_failure => qr/no such method.*Util_future\.t/i},
         {label => 'undef method',
          in_invocant => $mock, in_method => undef,
-         exp_failure => qr/method parameter is mandatory/i},
+         exp_failure => qr/method parameter is mandatory.*Util_future\.t/i},
         {label => "non-object invocant",
          in_invocant => 'plain string', in_method => 'hoge',
-         exp_failure => qr/not blessed/i},
+         exp_failure => qr/not blessed.*Util_future\.t/i},
         {label => "undef invocant",
          in_invocant => undef, in_method => undef,
-         exp_failure => qr/invocant parameter is mandatory/i},
+         exp_failure => qr/invocant parameter is mandatory.*Util_future\.t/i},
     ) {
         note("--- -- case: $case->{label}");
         $mock->clear;
@@ -97,6 +99,7 @@ sub keys_from_list {
         $f->catch(sub { @result = @_ });
         is(scalar(@result), 1, "1 result element");
         like($result[0], $case->{exp_failure}, "failure message OK");
+        note("failure message: $result[0]");
     }
 }
 

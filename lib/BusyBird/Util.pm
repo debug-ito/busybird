@@ -9,11 +9,11 @@ use DateTime;
 use 5.10.0;
 use BusyBird::Version;
 our $VERSION = $BusyBird::Version::VERSION;
-use Future::Q 0.020;
+use Future::Q 0.040;
 use Scalar::Util qw(blessed);
 
-
 our @EXPORT_OK = (qw(set_param expand_param sort_statuses split_with_entities future_of));
+our @CARP_NOT = qw(Future::Q);
 
 sub set_param {
     my ($hashref, $params_ref, $key, $default, $is_mandatory) = @_;

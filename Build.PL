@@ -70,7 +70,7 @@ my $builder = Module::Build->new(
         'DBI' => 0,
         'DBD::SQLite' => 0,
         'SQL::Maker' => '1.11',
-        'Future::Q' => '0.020',
+        'Future::Q' => '0.040',
     },
     share_dir => "share",
     add_to_cleanup      => [ 'BusyBird-*' ],
