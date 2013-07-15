@@ -116,40 +116,33 @@ sub _handle_tl_get_statuses {
     my ($self, $req, $dest) = @_;
     return sub {
         my $responder = shift;
-        try {
-            my $timeline = $self->_get_timeline($dest);
+        my $timeline;
+        Future::Q->try(sub {
+            $timeline = $self->_get_timeline($dest);
             my $count = $req->query_parameters->{count} || 20;
             if(!defined($dest->{format})) {
                 $dest->{format} = "";
             }
             if(!looks_like_number($count) || int($count) != $count) {
-                die "count parameter must be an integer";
+                die "count parameter must be an integer\n";
             }
             my $ack_state = $req->query_parameters->{ack_state} || 'any';
             my $max_id = decode_utf8($req->query_parameters->{max_id});
-            $timeline->get_statuses(
-                count => $count, ack_state => $ack_state, max_id => $max_id,
-                callback => sub {
-                    my ($error, $statuses) = @_;
-                    if(defined $error) {
-                        $responder->($self->{view}->response_statuses(
-                            error => "$error", http_code => 500, format => $dest->{format},
-                            timeline_name => $timeline->name
-                        ));
-                        return;
-                    }
-                    $responder->($self->{view}->response_statuses(
-                        statuses => $statuses, http_code => 200, format => $dest->{format},
-                        timeline_name => $timeline->name
-                    ));
-                }
-            );
-        }catch {
-            my $e = shift;
+            return future_of($timeline, "get_statuses",
+                             count => $count, ack_state => $ack_state, max_id => $max_id);
+        })->then(sub {
+            my $statuses = shift;
             $responder->($self->{view}->response_statuses(
-                error => "$e", http_code => 400, format => $dest->{format},
+                statuses => $statuses, http_code => 200, format => $dest->{format},
+                timeline_name => $timeline->name
             ));
-        };
+        })->catch(sub {
+            my ($error, $is_normal_error) = @_;
+            $responder->($self->{view}->response_statuses(
+                error => "$error", http_code => ($is_normal_error ? 500 : 400), format => $dest->{format},
+                ($timeline ? (timeline_name => $timeline->name) : ())
+            ));
+        });
     };
 }
 
@@ -157,27 +150,20 @@ sub _handle_tl_post_statuses {
     my ($self, $req, $dest) = @_;
     return sub {
         my $responder = shift;
-        try {
+        Future::Q->try(sub {
             my $timeline = $self->_get_timeline($dest);
             my $posted_obj = decode_json($req->content);
             if(ref($posted_obj) ne 'ARRAY') {
                 $posted_obj = [$posted_obj];
             }
-            $timeline->add_statuses(
-                statuses => $posted_obj,
-                callback => sub {
-                    my ($error, $added_num) = @_;
-                    if(defined $error) {
-                        $responder->($self->{view}->response_json(500, {error => "$error"}));
-                        return;
-                    }
-                    $responder->($self->{view}->response_json(200, {count => $added_num + 0}));
-                }
-            );
-        } catch {
-            my $e = shift;
-            $responder->($self->{view}->response_json(400, {error => "$e"}));
-        };
+            return future_of($timeline, "add_statuses", statuses => $posted_obj);
+        })->then(sub {
+            my $added_num = shift;
+            $responder->($self->{view}->response_json(200, {count => $added_num + 0}));
+        })->catch(sub {
+            my ($e, $is_normal_error) = @_;
+            $responder->($self->{view}->response_json(($is_normal_error ? 500 : 400), {error => "$e"}));
+        });
     };
 }
 
@@ -185,33 +171,26 @@ sub _handle_tl_ack {
     my ($self, $req, $dest) = @_;
     return sub {
         my $responder = shift;
-        try {
+        Future::Q->try(sub {
             my $timeline = $self->_get_timeline($dest);
             my $max_id = undef;
             my $ids = undef;
             if($req->content) {
                 my $body_obj = decode_json($req->content);
                 if(ref($body_obj) ne 'HASH') {
-                    die 'Response body must be an object.';
+                    die "Response body must be an object.\n";
                 }
                 $max_id = $body_obj->{max_id};
                 $ids = $body_obj->{ids};
             }
-            $timeline->ack_statuses(
-                max_id => $max_id, ids => $ids,
-                callback => sub {
-                    my ($error, $acked_num) = @_;
-                    if(defined $error) {
-                        $responder->($self->{view}->response_json(500, {error => "$error"}));
-                        return;
-                    }
-                    $responder->($self->{view}->response_json(200, {count => $acked_num + 0}));
-                }
-            );
-        }catch {
-            my $e = shift;
-            $responder->($self->{view}->response_json(400, {error => "$e"}));
-        };
+            return future_of($timeline, "ack_statuses", max_id => $max_id, ids => $ids);
+        })->then(sub {
+            my $acked_num = shift;
+            $responder->($self->{view}->response_json(200, {count => $acked_num + 0}));
+        })->catch(sub {
+            my ($e, $is_normal_error) = @_;
+            $responder->($self->{view}->response_json(($is_normal_error ? 500 : 400), {error => "$e"}));
+        });
     };
 }
 
