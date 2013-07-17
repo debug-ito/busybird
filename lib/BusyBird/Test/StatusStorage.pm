@@ -880,6 +880,45 @@ sub test_storage_ordered {
         $loop->();
         ok($callbacked, "callbacked");    
     }
+    note('--- acked_at and created_at are preserved');
+    foreach my $case (
+        {label => "both unset", created_at => undef, acked_at => undef},
+        {label => "only created_at set", created_at => 'Mon Jul 01 22:11:41 +0900 2013',
+         acked_at => undef},
+        {label => "only acked_at set", created_at => undef,
+         acked_at => "Wed Apr 17 04:23:29 -0500 2013"},
+        {label => 'both set', created_at => 'Fri Oct 12 00:36:44 +0000 2012',
+         acked_at => 'Thu Oct 25 13:10:00 +0200 2012'},
+    ) {
+        note("--- -- case: $case->{label}");
+        $callbacked = 0;
+        my $status = status(1);
+        $status->{created_at} = $case->{created_at};
+        $status->{busybird}{acked_at} = $case->{acked_at};
+        $storage->put_statuses(
+            timeline => "_test_tl3", mode => 'insert', statuses => $status,
+            callback => sub {
+                my ($error, $count) = @_;
+                is($error, undef, "put succeed");
+                is($count, 1, "1 inserted");
+                $callbacked = 1;
+                $unloop->();
+            }
+        );
+        $loop->();
+        ok($callbacked, "callbacked");
+        on_statuses $storage, $loop, $unloop, {timeline => '_test_tl3', count => 'all'}, sub {
+            my $statuses = shift;
+            is(scalar(@$statuses), 1, "1 status obtained");
+            is($statuses->[0]{created_at}, $case->{created_at}, "created_at is preserved");
+            is($statuses->[0]{busybird}{acked_at}, $case->{acked_at}, "acked_at is preserved");
+        };
+        change_and_check(
+            $storage, $loop, $unloop, timeline => '_test_tl3',
+            mode => 'delete', target => undef, exp_change => 1,
+            exp_unacked => [], exp_acked => []
+        );
+    }
     note('--- populate timeline');
     change_and_check(
         $storage, $loop, $unloop, timeline => '_test_tl3',
