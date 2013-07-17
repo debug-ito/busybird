@@ -73,6 +73,7 @@ my $builder = Module::Build->new(
         'SQL::Maker' => '1.11',
         'Future::Q' => '0.040',
         'POSIX' => 0,
+        'Data::UUID' => 0,
     },
     share_dir => "share",
     add_to_cleanup      => [ 'BusyBird-*' ],

@@ -846,7 +846,7 @@ sub test_timeline {
     }
     
     {
-        note('--- ID and created_at auto-generation is done before filtering');
+        note('--- ID and created_at auto-generation is done after filtering');
         my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
         my $callbacked = 0;
         my ($filter_id, $filter_created_at);

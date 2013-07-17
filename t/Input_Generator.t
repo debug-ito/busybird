@@ -50,26 +50,4 @@ sub test_uniqueness {
     }
 }
 
-{
-    note("--- generate_id() tests");
-    my $gen = BusyBird::Input::Generator->new(screen_name => "hoge");
-    my @ids = ();
-    my $hoge_id = $gen->generate_id();
-    like($hoge_id, qr/hoge/, "hoge_id includes hoge");
-    push(@ids, $hoge_id);
-    my $foobar_id = $gen->generate_id("foobar");
-    like($foobar_id, qr/foobar/, "foobar_id includes foobar");
-    unlike($foobar_id, qr/hoge/, "... and does not include hoge");
-    push(@ids, $foobar_id);
-
-    my $future_date = DateTime->now;
-    $future_date->add(days => 10);
-    foreach (1..10) {
-        push(@ids, $gen->generate_id(undef, $future_date));
-    }
-
-    my %ids_dict = map { $_ => 1 } @ids;
-    is(int(@ids), int(keys(%ids_dict)), "IDs are all unique");
-}
-
 done_testing();

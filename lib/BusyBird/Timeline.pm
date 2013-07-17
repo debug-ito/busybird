@@ -5,9 +5,9 @@ use BusyBird::Util qw(set_param);
 use BusyBird::Log;
 use BusyBird::Flow;
 use BusyBird::Watcher::Aggregator;
-use BusyBird::Input::Generator;
 use BusyBird::DateTime::Format;
 use Async::Selector 1.0;
+use Data::UUID;
 use Carp;
 use CPS qw(kforeach);
 use Storable qw(dclone);
@@ -25,7 +25,7 @@ sub new {
         selector => Async::Selector->new,
         unacked_counts => {total => 0},
         config => {},
-        id_generator => BusyBird::Input::Generator->new,
+        id_generator => Data::UUID->new,
     }, $class;
     $self->set_param(\%args, 'name', undef, 1);
     $self->set_param(\%args, 'storage', undef, 1);
@@ -149,8 +149,7 @@ sub add_statuses {
         foreach my $status (@$filter_result) {
             next if !defined($status) || ref($status) ne 'HASH';
             if(!defined($status->{id})) {
-                $cur_time ||= DateTime->now;
-                $status->{id} = $self->{id_generator}->generate_id($self->name, $cur_time);
+                $status->{id} = sprintf('busybird://%s/%s', $self->name, $self->{id_generator}->create_str);
             }
             if(!defined($status->{created_at})) {
                 $cur_time ||= DateTime->now;
