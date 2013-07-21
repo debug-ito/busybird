@@ -336,7 +336,7 @@ sub test_error_request {
         
         $res_obj = $tester->get_json_ok(
             "/timelines/$tl_encoded/statuses.json?count=10&max_id=$ids_encoded[2]",
-            undef, qr/^200$/, "GET max_id = Unicode ID OK"
+            qr/^200$/, "GET max_id = Unicode ID OK"
         );
         is($res_obj->{error}, undef, "GET statuses succeed");
         test_status_id_list($res_obj->{statuses}, [reverse @ids[0,1,2]], "Unicode IDs OK");
@@ -348,14 +348,14 @@ sub test_error_request {
         is_deeply($res_obj, {error => undef, count => 2}, "POST ack.json ids results OK");
         $res_obj = $tester->get_json_ok(
             "/timelines/$tl_encoded/statuses.json?count=10&ack_state=unacked",
-            undef, qr/^200$/, "GET unacked statuses OK"
+            qr/^200$/, "GET unacked statuses OK"
         );
         is($res_obj->{error}, undef, "GET unacked statuses succeed");
         test_status_id_list($res_obj->{statuses}, [reverse @ids[0,2,4]], "unacked statuse ID OK");
 
         $res_obj = $tester->get_json_ok(
             "/updates/unacked_counts.json?level=total&tl_${tl_encoded}=0",
-            undef, qr/^200$/, "GET updates unacked_counts OK"
+            qr/^200$/, "GET updates unacked_counts OK"
         );
         is_deeply($res_obj,
                   {error => undef, unacked_counts => { $tl_name => { total => 3, 0 => 3 } }},
@@ -368,10 +368,51 @@ sub test_error_request {
         is_deeply($res_obj, {error => undef, count => 3}, "3 statuses acked OK");
         $res_obj = $tester->get_json_ok(
             "/timelines/$tl_encoded/statuses.json?count=10&ack_state=acked",
-            undef, qr/^200$/, "GET acked statuses OK"
+            qr/^200$/, "GET acked statuses OK"
         );
         is($res_obj->{error}, undef, "GET acked statuses succeed");
         test_status_id_list($res_obj->{statuses}, [reverse @ids], "acked statuse ID OK");
+    };
+}
+
+{
+    note('--- /updates/unacked_counts.json: strange timeline names');
+    my $main = create_main();
+    my %assumed_counts = (
+        'contains space ' => {request_name => 'tl_contains+space+', counts => 5},
+        ' contains space 2' => {request_name => 'tl_%20contains%20space%202', counts => 8},
+        'tl_tl_tl_' => {request_name => 'tl_tl_tl_tl_', counts => 3},
+        '&?&' => {request_name => 'tl_%26%3F%26', counts => 2},
+        'たいむらいん' => {request_name => 'tl_%E3%81%9F%E3%81%84%E3%82%80%E3%82%89%E3%81%84%E3%82%93', counts => 10},
+    );
+    my $all_done = sub {
+        my ($counts_ref) = @_;
+        foreach my $counts (values %$counts_ref) {
+            return 0 if $counts->{counts} != 0;
+        }
+        return 1;
+    };
+    $main->timeline($_) foreach keys %assumed_counts;
+    test_psgi create_psgi_app($main), sub {
+        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $loop_count = 0;
+        while(!$all_done->(\%assumed_counts)) {
+            if($loop_count > scalar(keys %assumed_counts)) {
+                fail("/updates/unacked_counts.json is called $loop_count times and still all timeline assumptions are not done. something is wrong.");
+                last;
+            }
+            my $query = join('&', 'level=total', map { "$_->{request_name}=$_->{counts}" } values %assumed_counts);
+            my $res = $tester->get_json_ok(
+                "/updates/unacked_counts.json?$query",
+                qr/^200$/, "GET updates unacked_counts OK"
+            );
+            is($res->{error}, undef, "error should be undef");
+            is(ref($res->{unacked_counts}), "HASH", "unacked_counts should be a hash-ref");
+            foreach my $timeline (keys %{$res->{unacked_counts}}) {
+                $assumed_counts{$timeline}{counts} = $res->{unacked_counts}{$timeline}{total};
+            }
+            $loop_count++;
+        }
     };
 }
 
