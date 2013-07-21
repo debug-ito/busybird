@@ -210,10 +210,19 @@ sub _handle_tl_get_unacked_counts {
                 next if int($query_key) != $query_key;
                 $assumed{$query_key} = $query_params->{$query_key};
             }
-            return future_of($timeline, "watch_unacked_counts", assumed => \%assumed);
+            my $ret_future = Future::Q->new;
+            $timeline->watch_unacked_counts(assumed => \%assumed, callback => sub {
+                my ($error, $w, $unacked_counts) = @_;
+                $w->cancel(); ## immediately cancel the watcher to prevent multiple callbacks
+                if($error) {
+                    $ret_future->reject($error, 1);
+                }else {
+                    $ret_future->fulfill($unacked_counts);
+                }
+            });
+            return $ret_future;
         })->then(sub {
-            my ($w, $unacked_counts) = @_;
-            $w->cancel();
+            my ($unacked_counts) = @_;
             $responder->($self->{view}->response_json(200, {unacked_counts => $unacked_counts}));
         })->catch(sub {
             my ($e, $is_normal_error) = @_;
@@ -239,10 +248,21 @@ sub _handle_get_unacked_counts {
                 next if substr($query_key, 0, 3) ne 'tl_';
                 $assumed{decode_utf8(substr($query_key, 3))} = $query_params->{$query_key};
             }
-            return future_of($self->{main_obj}, "watch_unacked_counts", level => $level, assumed => \%assumed);
+            my $ret_future = Future::Q->new;
+            $self->{main_obj}->watch_unacked_counts(
+                level => $level, assumed => \%assumed, callback => sub {
+                    my ($error, $w, $tl_unacked_counts) = @_;
+                    $w->cancel(); ## immediately cancel the watcher to prevent multiple callbacks
+                    if($error) {
+                        $ret_future->reject($error, 1);
+                    }else {
+                        $ret_future->fulfill($tl_unacked_counts);
+                    }
+                }
+            );
+            return $ret_future;
         })->then(sub {
-            my ($w, $tl_unacked_counts) = @_;
-            $w->cancel();
+            my ($tl_unacked_counts) = @_;
             $responder->($self->{view}->response_json(200, {unacked_counts => $tl_unacked_counts}));
         })->catch(sub {
             my ($e, $is_normal_error) = @_;
