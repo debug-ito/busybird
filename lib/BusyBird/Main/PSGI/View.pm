@@ -139,7 +139,6 @@ sub _html_link {
 }
 
 sub template_functions {
-    my ($self) = @_;
     return {
         js => \&JavaScript::Value::Escape::js,
         link => html_builder(\&_html_link),
@@ -162,7 +161,7 @@ sub template_functions {
 
 sub template_functions_for_timeline {
     my ($self, $timeline_name) = @_;
-    weaken $self;
+    weaken $self;  ## in case the functions are kept by $self
     return {
         bb_timestamp => sub {
             my ($timestamp_string) = @_;
