@@ -1,4 +1,4 @@
-package BusyBird::Filters;
+package BusyBird::Filter::Common;
 use strict;
 use warnings;
 use BusyBird::Version;
@@ -11,7 +11,7 @@ our $VERSION = $BusyBird::Version::VERSION;
 
 =head1 NAME
 
-BusyBird::Filters - some status filters you might find useful
+BusyBird::Filter::Common - some status filters you might find useful
 
 =head1 EXPORTABLE FUNCTIONS
 
