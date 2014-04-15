@@ -13,19 +13,19 @@ our $VERSION = $BusyBird::Version::VERSION;
 
 BusyBird::Filter::Common - some status filters you might find useful
 
-=head1 EXPORTABLE FUNCTIONS
+=head1 EXPORTED FUNCTIONS
 
-=head2 ($filter, 0) = filter_exec(@args)
+All functions in this section are exported by default.
 
-Synchronous filter.
+=head2 $filter = filter_map($mapper_func)
 
-=head2 ($filter, 0) = filter_user_levels(%level_spec)
+=head2 $filter = filter_user_levels(%level_spec)
 
 =head2 ($filter, 1) = filter_only_new($timeline)
 
 Be sure C<weaken> the C<$timeline>!!
 
-=head2 ($filter, 0) = filter_distribute_to(@timelines)
+=head2 $filter = filter_distribute_to(@timelines)
 
 Be sure C<weaken> the C<@timelines>!!
 
