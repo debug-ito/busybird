@@ -1,11 +1,6 @@
 use strict;
 use warnings;
 use Test::More;
-use Test::Builder;
-use Test::MockObject;
-use Test::Exception;
-use DateTime::TimeZone;
-use List::Util qw(min);
 use JSON;
 use utf8;
 
@@ -13,45 +8,36 @@ BEGIN {
     use_ok('BusyBird::Filter::Twitter');
 }
 
-fail("review and fix the tests");
-
 {
     note('--- transforms');
-    my $tmock = Test::MockObject->new;
-    my $apiurl = 'http://hoge.com/';
-    $tmock->mock($_, \&mock_timeline) foreach qw(home_timeline);
-    $tmock->mock('search', \&mock_search);
-    $tmock->mock('-apiurl', sub { $apiurl });
-    my $bbin = BusyBird::Input::Twitter->new(
-        backend => $tmock, page_next_delay => 0,
-    );
+    my $default_apiurl = "https://api.twitter.com/1.1/"
     is_deeply(
-        $bbin->transform_status_id({ id => 10, in_reply_to_status_id => 55}),
-        {
-            id => "${apiurl}statuses/show/10.json",
-            in_reply_to_status_id => "${apiurl}statuses/show/55.json",
+        filter_twitter_status_id()->([{ id => 10, in_reply_to_status_id => 55}]),
+        [{
+            id => "${default_apiurl}statuses/show/10.json",
+            in_reply_to_status_id => "${default_apiurl}statuses/show/55.json",
             busybird => { original => {
                 id => 10, in_reply_to_status_id => 55
             } }
-        },
-        "transform_status_id"
+        }],
+        "status id"
     );
     is_deeply(
-        $bbin->transform_search_status({
+        filter_twitter_search_status()->([{
             id => 10, from_user_id => 88, from_user => "hoge",
             created_at => 'Thu, 06 Oct 2011 19:36:17 +0000'
-        }),
-        {
+        }]),
+        [{
             id => 10, user => {
                 id => 88,
                 screen_name => "hoge"
             },
             created_at => 'Thu Oct 06 19:36:17 +0000 2011'
-        },
-        "transform_search_status"
+        }],
+        "search status"
     );
     is_deeply(
-        $bbin->transformer_default([decode_json(q{
+        filter_twitter_all()->([decode_json(q{
 {
             "id": 5, "id_str": "5", "created_at": "Wed, 05 Dec 2012 14:09:11 +0000",
             "in_reply_to_status_id": 12, "in_reply_to_status_id_str": "12",
@@ -64,9 +50,9 @@ fail("review and fix the tests");
         }
 })]),
         [{
-            id => "${apiurl}statuses/show/5.json", id_str => "${apiurl}statuses/show/5.json",
-            in_reply_to_status_id => "${apiurl}statuses/show/12.json",
-            in_reply_to_status_id_str => "${apiurl}statuses/show/12.json",
+            id => "${default_apiurl}statuses/show/5.json", id_str => "${default_apiurl}statuses/show/5.json",
+            in_reply_to_status_id => "${default_apiurl}statuses/show/12.json",
+            in_reply_to_status_id_str => "${default_apiurl}statuses/show/12.json",
             created_at => "Wed Dec 05 14:09:11 +0000 2012",
             true_flag => JSON::true,
             false_flag => JSON::false,
@@ -85,50 +71,31 @@ fail("review and fix the tests");
                 }
             }
         }],
-        'transformer_default'
+        "all"
     );
 }
 
 {
     note('--- apiurl option');
     my $apiurl = 'https://foobar.co.jp';
-    my $apiurlmock = Test::MockObject->new;
-    $apiurlmock->mock('apiurl', sub { $apiurl });
-    foreach my $newarg (
-        {label => "apiurl option", args => [backend => {}, apiurl => $apiurl]},
-        {label => 'only apiurl option', args => [apiurl => $apiurl]},
-        {label => "backend apiurl field", args => [backend => {apiurl => $apiurl}]},
-        {label => "apiurl option and backend field", args => [backend => {apiurl => "http://hogege.com"}, apiurl => $apiurl]},
-        {label => "backend apiurl method", args => [backend => $apiurlmock]}
-    ) {
-        my $bbin = new_ok('BusyBird::Input::Twitter', $newarg->{args});
-        my $label = $newarg->{label};
+    foreach my $label (qw(status_id all)) {
+        no strict "refs";
+        my $func = \&{"filter_twitter_$label"};
         is_deeply(
-            $bbin->transform_status_id({id => 109}),
-            {
+            $func->($apiurl)->([{id => 109}]),
+            [{
                 id => "http://foobar.co.jp/statuses/show/109.json",
                 busybird => { original => {
                     id => 109
                 }}
-            },
-            "$label: transform_status_id ok"
+            }],
+            "$label: apiurl option ok"
         );
-    }
-    my $noapiurl_mock = Test::MockObject->new;
-    foreach my $newarg (
-        {label => "no apiurl field", args => [backend => []]},
-        {label => "no apiurl method", args => [backend => $noapiurl_mock]}
-    ) {
-        my $bbin = new_ok('BusyBird::Input::Twitter', $newarg->{args});
-        my $label = $newarg->{label};
-        my $status = { id => 100, user => {screen_name => "foobar"} };
-        throws_ok { $bbin->transform_status_id($status) } qr{cannot determine api url}i, "$label ok";
     }
 }
 
 {
     note("--- transform_html_unescape");
-    my $bbin = new_ok('BusyBird::Input::Twitter', [apiurl => 'hoge']);
     foreach my $case (
         {label => "without entities", in_status => {
             text => '&amp; &lt; &gt; &amp; &quot;',
@@ -196,10 +163,10 @@ fail("review and fix the tests");
             },
         }}
     ) {
-        is_deeply($bbin->transform_html_unescape($case->{in_status}), $case->{out_status}, "$case->{label}: HTML unescape OK");
+        is_deeply(filter_twitter_unescape()->([$case->{in_status}]),
+                  [$case->{out_status}],
+                  "$case->{label}: HTML unescape OK");
     }
 }
-
-
 
 done_testing();

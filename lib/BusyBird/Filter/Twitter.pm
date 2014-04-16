@@ -74,7 +74,7 @@ Generates a filter that transforms a status object returned by Twitter's Search 
 Generates a filter that transforms a status's ID fields so that they include API URL of the source.
 This transformation is recommended when you load statuses from multiple sources, e.g. twitter.com and loadaverage.org.
 
-Argument C<$api_url> is optional. By default it is C<"http://api.twitter.com/1.1/">.
+Argument C<$api_url> is optional. By default it is C<"https://api.twitter.com/1.1/">.
 You should set it appropriately if you import statuses from other sites.
 
 The original IDs are saved under C<< $transformed_status->{busybird}{original} >>
@@ -82,7 +82,7 @@ The original IDs are saved under C<< $transformed_status->{busybird}{original} >
 
 =head2 $filter = filter_twitter_unescape()
 
-Generates a filter that HTML-unescapes the status's text field.
+Generates a filter that unescapes some HTML entities in the status's text field.
 
 HTML-unescape is necessary because twitter.com automatically HTML-escapes some special characters,
 AND L<BusyBird> also HTML-escapes status texts when it renders them.
