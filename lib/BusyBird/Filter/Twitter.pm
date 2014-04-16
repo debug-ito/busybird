@@ -26,7 +26,6 @@ my %_SEARCH_KEY_MAP = (
 
 sub _transform_search_status {
     my ($status) = @_;
-    ## my $new_status = dclone($status);
     if(exists($status->{created_at})) {
         $status->{created_at} = $DATETIME_FORMATTER->format_datetime(
             $DATETIME_FORMATTER->parse_datetime($status->{created_at})
@@ -47,10 +46,6 @@ sub filter_twitter_search_status {
 
 sub _transform_status_id {
     my ($prefix, $status) = @_;
-    ## my $prefix = $self->_apiurl;
-    ## $prefix =~ s|/+$||;
-    ## $prefix =~ s|https:|http:|;
-    ## my $new_status = dclone($status);
     foreach my $key (qw(id id_str in_reply_to_status_id in_reply_to_status_id_str)) {
         next if not defined $status->{$key};
         $status->{busybird}{original}{$key} = $status->{$key};
@@ -63,7 +58,6 @@ sub _normalize_api_url {
     my ($api_url) = @_;
     $api_url = "https://api.twitter.com/1.1/" if not defined $api_url;
     $api_url =~ s|/+$||;
-    ## $api_url =~ s|https:|http:|;
     return $api_url;
 }
 
@@ -76,7 +70,7 @@ sub filter_twitter_status_id {
 sub _transform_unescape {
     my ($status) = @_;
     if(defined($status->{retweeted_status})) {
-        _transform_unescape($status->{retweeted_status});  ## tail call opt?
+        _transform_unescape($status->{retweeted_status});
     }
     if(!defined($status->{text})) {
         return $status;
