@@ -10,7 +10,7 @@ BEGIN {
 
 {
     note('--- transforms');
-    my $default_apiurl = "https://api.twitter.com/1.1/"
+    my $default_apiurl = "https://api.twitter.com/1.1/";
     is_deeply(
         filter_twitter_status_id()->([{ id => 10, in_reply_to_status_id => 55}]),
         [{

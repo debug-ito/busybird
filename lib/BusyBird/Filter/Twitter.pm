@@ -1,6 +1,125 @@
 package BusyBird::Filter::Twitter;
 use strict;
 use warnings;
+use BusyBird::DateTime::Format;
+use BusyBird::Util qw(split_with_entities);
+use Exporter qw(import);
+use Storable qw(dclone);
+
+our @EXPORT = our @EXPORT_OK = map { "filter_twitter_$_" } qw(all search_status status_id unescape);
+
+my $DATETIME_FORMATTER = 'BusyBird::DateTime::Format';
+
+sub _make_filter {
+    my ($transformer) = @_;
+    return sub {
+        return [ map { $transformer->(dclone($_)) } @{$_[0]} ];
+    };
+}
+
+my %_SEARCH_KEY_MAP = (
+    id => 'from_user_id',
+    id_str => 'from_user_id_str',
+    screen_name => 'from_user',
+    profile_image_url => 'profile_image_url',
+);
+
+sub _transform_search_status {
+    my ($status) = @_;
+    ## my $new_status = dclone($status);
+    if(exists($status->{created_at})) {
+        $status->{created_at} = $DATETIME_FORMATTER->format_datetime(
+            $DATETIME_FORMATTER->parse_datetime($status->{created_at})
+        );
+    }
+    return $status if defined $status->{user};
+    $status->{user} = {};
+    foreach my $new_id_key (keys %_SEARCH_KEY_MAP) {
+        my $orig_id_key = $_SEARCH_KEY_MAP{$new_id_key};
+        $status->{user}{$new_id_key} = delete $status->{$orig_id_key} if exists $status->{$orig_id_key};
+    }
+    return $status;
+}
+
+sub filter_twitter_search_status {
+    return _make_filter \&_transform_search_status;
+}
+
+sub _transform_status_id {
+    my ($prefix, $status) = @_;
+    ## my $prefix = $self->_apiurl;
+    ## $prefix =~ s|/+$||;
+    ## $prefix =~ s|https:|http:|;
+    ## my $new_status = dclone($status);
+    foreach my $key (qw(id id_str in_reply_to_status_id in_reply_to_status_id_str)) {
+        next if not defined $status->{$key};
+        $status->{busybird}{original}{$key} = $status->{$key};
+        $status->{$key} = "$prefix/statuses/show/" . $status->{$key} . ".json";
+    }
+    return $status;
+}
+
+sub _normalize_api_url {
+    my ($api_url) = @_;
+    $api_url = "https://api.twitter.com/1.1/" if not defined $api_url;
+    $api_url =~ s|/+$||;
+    ## $api_url =~ s|https:|http:|;
+    return $api_url;
+}
+
+sub filter_twitter_status_id {
+    my ($api_url) = @_;
+    $api_url = _normalize_api_url($api_url);
+    return _make_filter sub { _transform_status_id($api_url, $_[0]) };
+}
+
+sub _transform_unescape {
+    my ($status) = @_;
+    if(defined($status->{retweeted_status})) {
+        _transform_unescape($status->{retweeted_status});  ## tail call opt?
+    }
+    if(!defined($status->{text})) {
+        return $status;
+    }
+    my $segments = split_with_entities($status->{text}, $status->{entities});
+    my $new_text = "";
+    my %new_entities = ();
+    if(defined($status->{entities}) && ref($status->{entities}) eq 'HASH') {
+        %new_entities = map { $_ => [] } keys %{$status->{entities}};
+    }
+    foreach my $segment (@$segments) {
+        $segment->{text} =~ s/&lt;/</g;
+        $segment->{text} =~ s/&gt;/>/g;
+        $segment->{text} =~ s/&quot;/"/g;
+        $segment->{text} =~ s/&amp;/&/g;
+        if(defined($segment->{entity})) {
+            $segment->{entity}{indices}[0] = length($new_text);
+            $segment->{entity}{indices}[1] = $segment->{entity}{indices}[0] + length($segment->{text});
+            push(@{$new_entities{$segment->{type}}}, $segment->{entity});
+        }
+        $new_text .= $segment->{text};
+    }
+    $status->{text} = $new_text;
+    if(defined($status->{entities})) {
+        $status->{entities} = \%new_entities;
+    }
+    return $status;
+}
+
+sub filter_twitter_unescape {
+    return _make_filter \&_transform_unescape;
+}
+
+sub filter_twitter_all {
+    my ($api_url) = @_;
+    $api_url = _normalize_api_url($api_url);
+    return _make_filter sub {
+        _transform_unescape
+            _transform_status_id $api_url,
+                _transform_search_status shift
+    };
+}
+
 
 1;
 __END__
