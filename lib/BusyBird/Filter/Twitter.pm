@@ -40,8 +40,10 @@ sub _transform_search_status {
     return $status;
 }
 
+my $FILTER_SEARCH = _make_filter \&_transform_search_status;
+
 sub filter_twitter_search_status {
-    return _make_filter \&_transform_search_status;
+    return $FILTER_SEARCH;
 }
 
 sub _transform_status_id {
@@ -100,8 +102,10 @@ sub _transform_unescape {
     return $status;
 }
 
+my $FILTER_UNESCAPE = _make_filter \&_transform_unescape;
+
 sub filter_twitter_unescape {
-    return _make_filter \&_transform_unescape;
+    return $FILTER_UNESCAPE;
 }
 
 sub filter_twitter_all {
