@@ -84,7 +84,7 @@ BEGIN {
         is_deeply(
             $func->($apiurl)->([{id => 109, user => { screen_name => "hoge" }}]),
             [{
-                id => "http://foobar.co.jp/statuses/show/109.json",
+                id => "https://foobar.co.jp/statuses/show/109.json",
                 busybird => { original => {
                     id => 109
                 }},
