@@ -8,9 +8,8 @@ use BusyBird::StatusStorage::SQLite;
 use JSON qw(decode_json);
 use utf8;
 use Encode qw(encode_utf8);
-use FindBin;
-use lib ("$FindBin::RealBin/lib");
-use BusyBird::Test::HTTP;
+use lib "t";
+use testlib::HTTP;
 
 BEGIN {
     use_ok("BusyBird::Main::PSGI::View");
@@ -374,7 +373,7 @@ sub create_main {
         my $exp_pager_num = ($case->{input}{total_page_num} > 1 ? 2 : 0);
         my $psgi_response = $view->response_timeline_list(%{$case->{input}}, script_name => "/apptop");
         test_psgi_response($psgi_response, 200, "PSGI response OK");
-        my $tree = BusyBird::Test::HTTP->parse_html(join "", @{$psgi_response->[2]});
+        my $tree = testlib::HTTP->parse_html(join "", @{$psgi_response->[2]});
         
         my @pager_nodes = $tree->findnodes('//ul[@class="bb-timeline-page-list"]');
         is(scalar(@pager_nodes), $exp_pager_num, "$exp_pager_num pager objects should exist");
@@ -435,7 +434,7 @@ sub create_main {
         cur_page => 0
     );
     test_psgi_response($psgi_response, 200, "response OK");
-    my $tree = BusyBird::Test::HTTP->parse_html(join "", @{$psgi_response->[2]});
+    my $tree = testlib::HTTP->parse_html(join "", @{$psgi_response->[2]});
     my @timeline_rows = $tree->findnodes('//table[@id="bb-timeline-list"]//tr');
     is(scalar(@timeline_rows), scalar(@counts), "timeline row num OK");
     foreach my $i (0 .. $#timeline_rows) {

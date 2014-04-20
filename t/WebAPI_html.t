@@ -1,12 +1,11 @@
 use strict;
 use warnings;
 use Test::More;
-use FindBin;
-use lib "$FindBin::RealBin/lib";
+use lib "t";
 use BusyBird::Log;
-use BusyBird::Test::HTTP;
-use BusyBird::Test::Timeline_Util qw(status);
-use BusyBird::Test::StatusHTML;
+use testlib::HTTP;
+use testlib::Timeline_Util qw(status);
+use testlib::StatusHTML;
 use Plack::Test;
 use BusyBird::Main;
 use BusyBird::Main::PSGI;
@@ -27,8 +26,8 @@ sub create_main {
     my @statuses = map { status($_, $_ + 10) } 0..9;
     $main->timeline('test')->add(\@statuses);
     test_psgi create_psgi_app($main), sub {
-        my $tester = BusyBird::Test::HTTP->new(requester => shift);
-        my @statuses_html = BusyBird::Test::StatusHTML->new_multiple($tester->request_ok(
+        my $tester = testlib::HTTP->new(requester => shift);
+        my @statuses_html = testlib::StatusHTML->new_multiple($tester->request_ok(
             "GET", "/timelines/test/statuses.html?count=5&max_id=7", undef,
             qr/^200$/, "GET statuses.html OK"
         ));
@@ -59,8 +58,8 @@ sub create_main {
         my $in_status = { id => $case->{in_id} };
         $timeline->add([$in_status]);
         test_psgi create_psgi_app($main), sub {
-            my $tester = BusyBird::Test::HTTP->new(requester => shift);
-            my @statuses_html = BusyBird::Test::StatusHTML->new_multiple($tester->request_ok(
+            my $tester = testlib::HTTP->new(requester => shift);
+            my @statuses_html = testlib::StatusHTML->new_multiple($tester->request_ok(
                 "GET", "/timelines/test/statuses.html?count=100", undef,
                 qr/^200$/, "$case->{label}: GET statuses.html OK"
             ));
@@ -97,8 +96,8 @@ sub create_main {
         },
     }]);
     test_psgi create_psgi_app($main), sub {
-        my $tester = BusyBird::Test::HTTP->new(requester => shift);
-        my @statuses_html = BusyBird::Test::StatusHTML->new_multiple($tester->request_ok(
+        my $tester = testlib::HTTP->new(requester => shift);
+        my @statuses_html = testlib::StatusHTML->new_multiple($tester->request_ok(
             "GET", "/timelines/test/statuses.html?count=100", undef,
             qr/^200$/, "GET statuses.html OK"
         ));

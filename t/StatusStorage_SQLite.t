@@ -5,9 +5,8 @@ use Test::Exception;
 use BusyBird::Test::StatusStorage qw(:storage :status);
 use File::Temp;
 use Test::MockObject::Extends;
-use FindBin;
-use lib ("$FindBin::RealBin/lib");
-use BusyBird::Test::Timeline_Util qw(sync status);
+use lib "t";
+use testlib::Timeline_Util qw(sync status);
 use DBI;
 
 BEGIN {

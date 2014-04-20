@@ -1,4 +1,4 @@
-package BusyBird::Test::StatusStorage::AEDelayed;
+package testlib::StatusStorage::AEDelayed;
 use strict;
 use warnings;
 use base ('BusyBird::StatusStorage');
@@ -38,7 +38,7 @@ sub get_unacked_counts { my $self = shift; $self->_delayed_call(@_) }
 
 =head1 NAME
 
-BusyBird::Test::StatusStorage::AEDelayed - StatusStorage wrapper for delayed operation based on AnyEvent
+testlib::StatusStorage::AEDelayed - StatusStorage wrapper for delayed operation based on AnyEvent
 
 =head1 DESCRIPTION
 
@@ -46,7 +46,7 @@ This is a StatusStorage wrapper just for testing asynchronous operations.
 
 =head1 CLASS METHODS
 
-=head2 $storage = BusyBird::Test::StatusStorage::AEDelayed->new(%args)
+=head2 $storage = testlib::StatusStorage::AEDelayed->new(%args)
 
 C<%args> includes:
 

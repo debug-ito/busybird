@@ -1,4 +1,4 @@
-package BusyBird::Test::HTTP;
+package testlib::HTTP;
 use strict;
 use warnings;
 use BusyBird::Util 'set_param';

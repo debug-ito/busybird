@@ -1,4 +1,4 @@
-package BusyBird::Test::Input_Twitter;
+package testlib::Input_Twitter;
 use strict;
 use warnings;
 use Test::Builder;
@@ -77,12 +77,4 @@ sub negative_id_transformer {
 
 
 1;
-
-=pod
-
-=head1 NAME
-
-BusyBird::Test::Input_Twitter - common utilities for testing Input::Twitter
-
-=cut
 

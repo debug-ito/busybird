@@ -1,4 +1,4 @@
-package BusyBird::Test::Timeline_Util;
+package testlib::Timeline_Util;
 use strict;
 use warnings;
 use Exporter qw(import);

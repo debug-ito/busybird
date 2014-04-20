@@ -1,13 +1,12 @@
 use strict;
 use warnings;
-use FindBin;
-use lib ("$FindBin::RealBin/lib");
+use lib "t";
 use Test::More;
 use Test::Builder;
 use Test::Exception;
 use Test::MockObject;
 use BusyBird::Test::StatusStorage qw(:status test_cases_for_ack);
-use BusyBird::Test::Timeline_Util qw(sync status *LOOP *UNLOOP);
+use testlib::Timeline_Util qw(sync status *LOOP *UNLOOP);
 use Test::Memory::Cycle;
 use BusyBird::DateTime::Format;
 use BusyBird::Log;
@@ -906,7 +905,7 @@ sub test_timeline {
 
 {
     local $@;
-    eval('use BusyBird::Test::StatusStorage::AEDelayed');
+    eval('use testlib::StatusStorage::AEDelayed');
     if($@) {
         diag("SKIP TESTS: Error while loading AEDelayed: $@");
     }else {
@@ -922,7 +921,7 @@ sub test_timeline {
             $cv->send;
         };
         local $CREATE_STORAGE = sub {
-            BusyBird::Test::StatusStorage::AEDelayed->new(
+            testlib::StatusStorage::AEDelayed->new(
                 backend => BusyBird::StatusStorage::SQLite->new(path => ':memory:'),
                 delay_sec => 0
             );

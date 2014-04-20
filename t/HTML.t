@@ -1,14 +1,13 @@
 use strict;
 use warnings;
-use FindBin;
-use lib ("$FindBin::RealBin/lib");
+use lib "t";
 use Test::More;
 use BusyBird::Main;
 use BusyBird::Main::PSGI;
 use BusyBird::Log;
 use BusyBird::StatusStorage::SQLite;
 use Plack::Test;
-use BusyBird::Test::HTTP;
+use testlib::HTTP;
 
 $BusyBird::Log::Logger = undef;
 
@@ -32,7 +31,7 @@ note("----- static HTML view tests");
     $main->timeline('foo');
     $main->timeline('bar');
     test_psgi create_psgi_app($main), sub {
-        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $tester = testlib::HTTP->new(requester => shift);
         note('--- timeline view');
         foreach my $case (
             {path => '/timelines/foo', exp_timeline => 'foo'},
@@ -73,7 +72,7 @@ note("----- static HTML view tests");
     ) {
         $main->timeline($case->{name});
         test_psgi create_psgi_app($main), sub {
-            my $tester = BusyBird::Test::HTTP->new(requester => shift);
+            my $tester = testlib::HTTP->new(requester => shift);
             my $tree = $tester->request_htmltree_ok('GET', $case->{path}, undef, qr/^200$/, "$case->{name}: GET OK");
             like(get_title($tree), $case->{title}, "$case->{name}: title OK");
             $main->uninstall_timeline($case->{name});
@@ -87,7 +86,7 @@ note("----- static HTML view tests");
     $main->timeline($_) foreach 1..12;
     $main->set_config(timeline_list_per_page => 5);
     test_psgi create_psgi_app($main), sub {
-        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $tester = testlib::HTTP->new(requester => shift);
         
         note("--- timeline list view (page param and selection of timelines)");
         foreach my $case (
@@ -101,7 +100,7 @@ note("----- static HTML view tests");
             my $tree = $tester->request_htmltree_ok('GET', $case->{path}, undef, qr/^200$/, "GET OK");
             ## my $plain_res = $tester->request_ok('GET', $case->{path}, undef, qr/^200$/, "GET OK");
             ## note("RES: $plain_res");
-            ## my $tree = BusyBird::Test::HTTP->parse_html($plain_res);
+            ## my $tree = testlib::HTTP->parse_html($plain_res);
             my @name_nodes = $tree->findnodes('//table[@id="bb-timeline-list"]//span[@class="bb-timeline-name"]');
             my @names = map { ($_->content_list)[0] } @name_nodes;
             is_deeply(\@names, $case->{exp_timelines}, "timeline names OK");

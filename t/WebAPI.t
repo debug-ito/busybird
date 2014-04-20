@@ -1,7 +1,6 @@
 use strict;
 use warnings;
-use FindBin;
-use lib ("$FindBin::RealBin/lib");
+use lib "t";
 use utf8;
 use Test::More;
 use Test::MockObject;
@@ -11,9 +10,9 @@ use BusyBird::Main;
 use BusyBird::Main::PSGI;
 use BusyBird::StatusStorage::SQLite;
 use BusyBird::DateTime::Format;
-use BusyBird::Test::HTTP;
+use testlib::HTTP;
 use BusyBird::Test::StatusStorage qw(:status test_cases_for_ack);
-use BusyBird::Test::Timeline_Util qw(status);
+use testlib::Timeline_Util qw(status);
 use BusyBird::Log ();
 use Plack::Test;
 use Encode ();
@@ -102,7 +101,7 @@ sub test_error_request {
     $main->timeline('foobar');
 
     test_psgi create_psgi_app($main), sub {
-        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $tester = testlib::HTTP->new(requester => shift);
         test_get_statuses($tester, 'test', undef, [], 'No status');
         my $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
                                            create_json_status(1), qr/^200$/, 'POST statuses (single) OK');
@@ -198,7 +197,7 @@ sub test_error_request {
         my $main = create_main();
         $main->timeline('test');
         test_psgi create_psgi_app($main), sub {
-            my $tester = BusyBird::Test::HTTP->new(requester => shift);
+            my $tester = testlib::HTTP->new(requester => shift);
             my $already_acked_at = $f->format_datetime(
                 DateTime->now(time_zone => 'UTC') - DateTime::Duration->new(days => 1)
             );
@@ -223,7 +222,7 @@ sub test_error_request {
     $main->timeline('test');
     note('--- GET /updates/unacked_counts.json with no valid TL');
     test_psgi create_psgi_app($main), sub {
-        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $tester = testlib::HTTP->new(requester => shift);
         foreach my $case (
             {label => "no params", param => ""},
             {label => "junk TLs and params", param => "?tl_hoge=10&tl_foo=1&bar=3&_=1020"}
@@ -241,7 +240,7 @@ sub test_error_request {
     $main->timeline('test');
     note('--- Not Found cases');
     test_psgi create_psgi_app($main), sub {
-        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $tester = testlib::HTTP->new(requester => shift);
         foreach my $case (
             {endpoint => "GET /timelines/foobar/statuses.json"},
             {endpoint => "GET /timelines/foobar/updates/unacked_counts.json"},
@@ -267,7 +266,7 @@ sub test_error_request {
         $main->set_config(default_status_storage => $storage_case->{storage});
         $main->timeline('test');
         test_psgi create_psgi_app($main), sub {
-            my $tester = BusyBird::Test::HTTP->new(requester => shift);
+            my $tester = testlib::HTTP->new(requester => shift);
             foreach my $case (
                 {endpoint => "GET /timelines/test/statuses.json"},
                 ## {endpoint => "GET /timelines/test/updates/unacked_counts.json"},
@@ -286,7 +285,7 @@ sub test_error_request {
     $main->timeline('test');
     note('--- status with weird ID');
     test_psgi create_psgi_app($main), sub {
-        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $tester = testlib::HTTP->new(requester => shift);
         my $weird_id_status = {
             id => q{!"#$%&'(){}=*+>< []\\|/-_;^~@`?: 3},
             created_at => "Thu Jan 01 00:00:03 +0000 1970",
@@ -327,7 +326,7 @@ sub test_error_request {
     }
     $main->timeline($tl_name);
     test_psgi create_psgi_app($main), sub {
-        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $tester = testlib::HTTP->new(requester => shift);
         my $res_obj = $tester->post_json_ok(
             "/timelines/$tl_encoded/statuses.json",
             encode_json(\@post_statuses), qr/^200$/, "POST Unicode IDs to Unicode timeline OK"
@@ -394,7 +393,7 @@ sub test_error_request {
     };
     $main->timeline($_) foreach keys %assumed_counts;
     test_psgi create_psgi_app($main), sub {
-        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $tester = testlib::HTTP->new(requester => shift);
         my $loop_count = 0;
         while(!$all_done->(\%assumed_counts)) {
             if($loop_count > scalar(keys %assumed_counts)) {
@@ -486,7 +485,7 @@ EOD
          exp_response => q{{"error": null, "count": 2}}}
     );
     test_psgi create_psgi_app($main), sub {
-        my $tester = BusyBird::Test::HTTP->new(requester => shift);
+        my $tester = testlib::HTTP->new(requester => shift);
         foreach my $case (@cases) {
             my ($method, $request_url) = split(/ +/, $case->{endpoint});
             my $res_obj = $tester->request_json_ok($method, $request_url, $case->{content},

@@ -1,8 +1,8 @@
-package BusyBird::Test::StatusHTML;
+package testlib::StatusHTML;
 use strict;
 use warnings;
 use Carp;
-use BusyBird::Test::HTTP;
+use testlib::HTTP;
 
 sub new {
     my ($class, %args) = @_;
@@ -29,7 +29,7 @@ sub new_multiple {
 
 sub _get_status_nodes_from_html {
     my ($html) = @_;
-    my $root = BusyBird::Test::HTTP->parse_html($html);
+    my $root = testlib::HTTP->parse_html($html);
     return $root->findnodes('//*[@class="bb-status"]');
 }
 
