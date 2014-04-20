@@ -9,6 +9,7 @@ use Test::Builder;
 use Test::Exception;
 use BusyBird::DateTime::Format;
 use BusyBird::StatusStorage;
+use BusyBird::Util ();
 use Carp;
 use BusyBird::Version;
 use utf8;
@@ -22,15 +23,10 @@ our %EXPORT_TAGS = (
     ],
     status => [qw(test_status_id_set test_status_id_list)],
 );
-our @EXPORT_OK = qw(test_cases_for_ack);
-{
-    my @all = ();
-    foreach my $tag (keys %EXPORT_TAGS) {
-        push(@all, @{$EXPORT_TAGS{$tag}});
-        push(@EXPORT_OK, @{$EXPORT_TAGS{$tag}});
-    }
-    $EXPORT_TAGS{all} = \@all;
-}
+our @EXPORT_OK = ();
+
+BusyBird::Util::export_ok_all_tags();
+push @EXPORT_OK, qw(test_cases_for_ack);
 
 my $datetime_formatter = 'BusyBird::DateTime::Format';
 

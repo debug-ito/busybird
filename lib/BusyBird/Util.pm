@@ -24,6 +24,20 @@ sub set_param {
     $hashref->{$key} = (defined($params_ref->{$key}) ? $params_ref->{$key} : $default);
 }
 
+sub export_ok_all_tags {
+    no strict "refs";
+    my ($caller_package) = caller;
+    my $export_ok = \@{"${caller_package}::EXPORT_OK"};
+    my $export_tags = \%{"${caller_package}::EXPORT_TAGS"};
+    my @all = @$export_ok;
+    foreach my $tag (keys %$export_tags) {
+        my $exported = $export_tags->{$tag};
+        push(@all, @$exported);
+        push(@$export_ok, @$exported);
+    }
+    $export_tags->{all} = \@all;
+}
+
 sub expand_param {
     my ($param, @names) = @_;
     my $refparam = ref($param);
