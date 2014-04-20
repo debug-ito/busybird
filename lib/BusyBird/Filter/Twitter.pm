@@ -134,7 +134,7 @@ BusyBird::Filter::Twitter - filters for statuses imported from Twitter
 
 =head1 DESCRIPTION
 
-This module provides filters that you should apply to statuses imported from Twitter.
+This module provides transformations and filters that you should apply to statuses imported from Twitter.
 Basically it does the following transformation to the input statuses.
 
 =over
@@ -161,45 +161,38 @@ Transform text content so that L<BusyBird> can render it appropriately.
 Note that this module does not help you import statuses from Twitter.
 For that purpose, I recommend L<Net::Twitter::Loader>.
 
-=head1 EXPORTED FUNCTIONS
+By default, this module exports nothing.
+You can import the following functions individually and/or by tags.
+Import C<":all"> to import all functions at once.
 
-All functions in this section are exported by default.
+=head1 :transform TAG FUNCTIONS
 
-These functions generate a filter, a subroutine reference to process an array-ref of statuses
-and return the result.
+These functions transform a single status object and return the result.
+The transformation is B<destructive>.
 
-    $result_arrayref = $filter->($arrayref_of_statuses)
+=head2 $status = trans_twitter_all($status, [$api_url])
 
-You can directly pass the filter to L<BusyBird::Timeline>'s C<add_filter()> method.
+Applies all transformations described below to the given C<$status>.
 
-    $timeline->add_filter(filter_twitter_all);
+Argument C<$api_url> is optional. See C<trans_twitter_status_id()> function below.
 
-All filters are non-destructive. That is, they won't modify input statuses. Transformation is done to their clones.
+=head2 $status = trans_twitter_search_status($status)
 
-=head2 $filter = filter_twitter_all([$api_url])
+Transforms the C<$status> returned by Twitter's Search API v1.0 into something more like a normal status object.
 
-Generates a filter that applies all filters described below to the given statuses.
+=head2 $status = trans_twitter_status_id($status, [$api_url])
 
-Argument C<$api_url> is optional. See C<filter_twitter_status_id()> function below.
-
-=head2 $filter = filter_twitter_search_status()
-
-Generates a filter that transforms a status object returned by Twitter's Search API v1.0 into something more like a normal status object.
-
-=head2 $filter = filter_twitter_status_id([$api_url])
-
-Generates a filter that transforms a status's ID fields so that they include API URL of the source.
+Transforms the C<$status>'s ID fields so that they include API URL of the source.
 This transformation is recommended when you load statuses from multiple sources, e.g. twitter.com and loadaverage.org.
 
 Argument C<$api_url> is optional. By default it is C<"https://api.twitter.com/1.1/">.
 You should set it appropriately if you import statuses from other sites.
 
-The original IDs are saved under C<< $transformed_status->{busybird}{original} >>
+The original IDs are saved under C<< $status->{busybird}{original} >>
 
+=head2 $status = trans_twitter_unescape($status)
 
-=head2 $filter = filter_twitter_unescape()
-
-Generates a filter that unescapes some HTML entities in the status's text field.
+Unescapes some HTML entities in the C<$status>'s text field.
 
 HTML-unescape is necessary because twitter.com automatically HTML-escapes some special characters,
 AND L<BusyBird> also HTML-escapes status texts when it renders them.
@@ -209,8 +202,21 @@ The transformation changes the status's text length.
 C<"indices"> fields in the status's L<Twitter Entities|https://dev.twitter.com/docs/platform-objects/entities> are
 adjusted appropriately.
 
-The transformtion is applied recursively to the status's C<retweeted_status>, if any.
+The transformation is applied recursively to the status's C<retweeted_status>, if any.
 
+=head1 :filter TAG FUNCTIONS
+
+These functions generate a synchronous status filter corresponding to the C<trans_twitter_*> functions.
+
+All filters are non-destructive. That is, they won't modify input statuses. Transformation is done to their clones.
+
+=head2 $filter = filter_twitter_all([$api_url])
+
+=head2 $filter = filter_twitter_search_status()
+
+=head2 $filter = filter_twitter_status_id([$api_url])
+
+=head2 $filter = filter_twitter_unescape()
 
 =head1 SEE ALSO
 
