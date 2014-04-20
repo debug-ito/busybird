@@ -3,19 +3,21 @@ use strict;
 use warnings;
 use BusyBird::DateTime::Format;
 use BusyBird::Util qw(split_with_entities);
+use BusyBird::Filter qw(filter_map);
 use Exporter qw(import);
-use Storable qw(dclone);
 
-our @EXPORT = our @EXPORT_OK = map { "filter_twitter_$_" } qw(all search_status status_id unescape);
+{
+    my @names = qw(all search_status status_id unescape);
+    our %EXPORT_TAGS = (
+        transform => [map { "trans_twitter_$_" } @names],
+        filter => [map { "filter_twitter_$_" } @names]
+    );
+}
+BusyBird::Util::export_ok_all_tags;
+our @EXPORT = our @EXPORT_OK;
 
 my $DATETIME_FORMATTER = 'BusyBird::DateTime::Format';
 
-sub _make_filter {
-    my ($transformer) = @_;
-    return sub {
-        return [ map { $transformer->(dclone($_)) } @{$_[0]} ];
-    };
-}
 
 my %_SEARCH_KEY_MAP = (
     id => 'from_user_id',
@@ -24,7 +26,7 @@ my %_SEARCH_KEY_MAP = (
     profile_image_url => 'profile_image_url',
 );
 
-sub _transform_search_status {
+sub trans_twitter_search_status {
     my ($status) = @_;
     if(exists($status->{created_at})) {
         $status->{created_at} = $DATETIME_FORMATTER->format_datetime(
@@ -40,39 +42,33 @@ sub _transform_search_status {
     return $status;
 }
 
-my $FILTER_SEARCH = _make_filter \&_transform_search_status;
+my $FILTER_SEARCH = filter_map \&trans_twitter_search_status;
 
 sub filter_twitter_search_status {
     return $FILTER_SEARCH;
 }
 
-sub _transform_status_id {
-    my ($prefix, $status) = @_;
+sub trans_twitter_status_id {
+    my ($status, $api_url) = @_;
+    $api_url = "https://api.twitter.com/1.1/" if not defined $api_url;
+    $api_url =~ s|/+$||;
     foreach my $key (qw(id id_str in_reply_to_status_id in_reply_to_status_id_str)) {
         next if not defined $status->{$key};
         $status->{busybird}{original}{$key} = $status->{$key};
-        $status->{$key} = "$prefix/statuses/show/" . $status->{$key} . ".json";
+        $status->{$key} = "$api_url/statuses/show/" . $status->{$key} . ".json";
     }
     return $status;
 }
 
-sub _normalize_api_url {
-    my ($api_url) = @_;
-    $api_url = "https://api.twitter.com/1.1/" if not defined $api_url;
-    $api_url =~ s|/+$||;
-    return $api_url;
-}
-
 sub filter_twitter_status_id {
     my ($api_url) = @_;
-    $api_url = _normalize_api_url($api_url);
-    return _make_filter sub { _transform_status_id($api_url, $_[0]) };
+    return filter_map sub { trans_twitter_status_id($_[0], $api_url) };
 }
 
-sub _transform_unescape {
+sub trans_twitter_unescape {
     my ($status) = @_;
     if(defined($status->{retweeted_status})) {
-        _transform_unescape($status->{retweeted_status});
+        trans_twitter_unescape($status->{retweeted_status});
     }
     if(!defined($status->{text})) {
         return $status;
@@ -102,20 +98,25 @@ sub _transform_unescape {
     return $status;
 }
 
-my $FILTER_UNESCAPE = _make_filter \&_transform_unescape;
+my $FILTER_UNESCAPE = filter_map \&trans_twitter_unescape;
 
 sub filter_twitter_unescape {
     return $FILTER_UNESCAPE;
 }
 
+sub trans_twitter_all {
+    my ($status, $api_url) = @_;
+    return trans_twitter_unescape(
+        trans_twitter_status_id(
+            trans_twitter_search_status($status),
+            $api_url
+        )
+    );
+}
+
 sub filter_twitter_all {
     my ($api_url) = @_;
-    $api_url = _normalize_api_url($api_url);
-    return _make_filter sub {
-        _transform_unescape
-            _transform_status_id $api_url,
-                _transform_search_status shift
-    };
+    return filter_map sub { trans_twitter_all($_[0], $api_url) };
 }
 
 

@@ -5,39 +5,39 @@ use JSON;
 use utf8;
 
 BEGIN {
-    use_ok('BusyBird::Filter::Twitter');
+    use_ok('BusyBird::Filter::Twitter', qw(:transform :filter));
 }
 
 {
     note('--- transforms');
     my $default_apiurl = "https://api.twitter.com/1.1/";
     is_deeply(
-        filter_twitter_status_id()->([{ id => 10, in_reply_to_status_id => 55}]),
-        [{
+        trans_twitter_status_id({ id => 10, in_reply_to_status_id => 55}),
+        {
             id => "${default_apiurl}statuses/show/10.json",
             in_reply_to_status_id => "${default_apiurl}statuses/show/55.json",
             busybird => { original => {
                 id => 10, in_reply_to_status_id => 55
             } }
-        }],
+        },
         "status id"
     );
     is_deeply(
-        filter_twitter_search_status()->([{
+        trans_twitter_search_status({
             id => 10, from_user_id => 88, from_user => "hoge",
             created_at => 'Thu, 06 Oct 2011 19:36:17 +0000'
-        }]),
-        [{
+        }),
+        {
             id => 10, user => {
                 id => 88,
                 screen_name => "hoge"
             },
             created_at => 'Thu Oct 06 19:36:17 +0000 2011'
-        }],
+        },
         "search status"
     );
     is_deeply(
-        filter_twitter_all()->([decode_json(q{
+        trans_twitter_all(decode_json(q{
 {
             "id": 5, "id_str": "5", "created_at": "Wed, 05 Dec 2012 14:09:11 +0000",
             "in_reply_to_status_id": 12, "in_reply_to_status_id_str": "12",
@@ -48,8 +48,8 @@ BEGIN {
             "false_flag": false,
             "null_value": null
         }
-})]),
-        [{
+})),
+        {
             id => "${default_apiurl}statuses/show/5.json", id_str => "${default_apiurl}statuses/show/5.json",
             in_reply_to_status_id => "${default_apiurl}statuses/show/12.json",
             in_reply_to_status_id_str => "${default_apiurl}statuses/show/12.json",
@@ -70,7 +70,7 @@ BEGIN {
                     in_reply_to_status_id_str => "12",
                 }
             }
-        }],
+        },
         "all"
     );
 }
@@ -80,23 +80,23 @@ BEGIN {
     my $apiurl = 'https://foobar.co.jp';
     foreach my $label (qw(status_id all)) {
         no strict "refs";
-        my $func = \&{"filter_twitter_$label"};
+        my $func = \&{"trans_twitter_$label"};
         is_deeply(
-            $func->($apiurl)->([{id => 109, user => { screen_name => "hoge" }}]),
-            [{
+            $func->({id => 109, user => { screen_name => "hoge" }}, $apiurl),
+            {
                 id => "https://foobar.co.jp/statuses/show/109.json",
                 busybird => { original => {
                     id => 109
                 }},
                 user => { screen_name => "hoge" },
-            }],
+            },
             "$label: apiurl option ok"
         );
     }
 }
 
 {
-    note("--- transform_html_unescape");
+    note("--- trans_twitter_unescape");
     foreach my $case (
         {label => "without entities", in_status => {
             text => '&amp; &lt; &gt; &amp; &quot;',
@@ -164,9 +164,20 @@ BEGIN {
             },
         }}
     ) {
-        is_deeply(filter_twitter_unescape()->([$case->{in_status}]),
-                  [$case->{out_status}],
+        is_deeply(trans_twitter_unescape($case->{in_status}),
+                  $case->{out_status},
                   "$case->{label}: HTML unescape OK");
+    }
+}
+
+{
+    note("--- filters");
+    foreach my $name (qw(all search_status status_id unescape)) {
+        no strict "refs";
+        my $func_name = "filter_twitter_$name";
+        my $func = \&{$func_name};
+        my $filter = $func->();
+        is ref($filter), "CODE", "$func_name returns a code-ref";
     }
 }
 
