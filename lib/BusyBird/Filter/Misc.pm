@@ -1,4 +1,4 @@
-package BusyBird::Filter::Common;
+package BusyBird::Filter::Misc;
 use strict;
 use warnings;
 use BusyBird::Version;
@@ -11,13 +11,11 @@ our $VERSION = $BusyBird::Version::VERSION;
 
 =head1 NAME
 
-BusyBird::Filter::Common - some status filters you might find useful
+BusyBird::Filter::Misc - some status filters you might find useful
 
-=head1 EXPORTED FUNCTIONS
+=head1 EXPORTABLE FUNCTIONS
 
-All functions in this section are exported by default.
-
-=head2 $filter = filter_map($mapper_func)
+You can explicitly import all functions below. None of them is exported by default.
 
 =head2 $filter = filter_user_levels(%level_spec)
 
