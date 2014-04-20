@@ -15,7 +15,7 @@ BusyBird::Filter::Misc - some status filters you might find useful
 
 =head1 EXPORTABLE FUNCTIONS
 
-You can explicitly import all functions below. None of them is exported by default.
+You can import all functions below. None of them is exported by default.
 
 =head2 $filter = filter_user_levels(%level_spec)
 
@@ -26,6 +26,10 @@ Be sure C<weaken> the C<$timeline>!!
 =head2 $filter = filter_distribute_to(@timelines)
 
 Be sure C<weaken> the C<@timelines>!!
+
+=head1 AUTHOR
+
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut
 
