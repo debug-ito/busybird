@@ -1,6 +1,34 @@
 package BusyBird::Filter;
 use strict;
 use warnings;
+use Exporter qw(import);
+use Carp;
+use Storable qw(dclone);
+
+our @EXPORT = our @EXPORT_OK = qw(filter_map filter_each);
+our %EXPORT_TAGS = (all => \@EXPORT_OK);
+
+sub filter_each {
+    my ($func) = @_;
+    croak "func parameter is mandatory" if not defined $func;
+    croak "func parameter must be a code-ref" if ref($func) ne "CODE";
+    return sub {
+        my $statuses = shift;
+        $func->($_) foreach @$statuses;
+        return $statuses;
+    };
+}
+
+sub filter_map {
+    my ($func) = @_;
+    croak "func parameter is mandatory" if not defined $func;
+    croak "func parameter must be a code-ref" if ref($func) ne "CODE";
+    return sub {
+        my $statuses = shift;
+        return [ map { $func->(dclone($_)) } @$statuses ];
+    };
+}
+
 
 1;
 __END__
@@ -39,7 +67,7 @@ and return the result.
 
 You can directly pass the filter to L<BusyBird::Timeline>'s C<add_filter()> method.
 
-    $timeline->add_filter(filter_twitter_all);
+    $timeline->add_filter($filter);
 
 
 =head2 $filter = filter_each($func)
@@ -69,7 +97,7 @@ For each status, C<$func> is called like
 C<$func> is supposed to return a list of statuses.
 The result of the C<$filter> is all statuses collected from the C<$func>.
 
-Note that the C<$status> given to C<$func> is a clone of the original status.
+Note that the C<$status> given to C<$func> is a deep clone of the original status.
 If you modify C<$status> in C<$func>, the original status is intact.
 
 =head1 AUTHOR
