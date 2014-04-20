@@ -56,23 +56,35 @@ BusyBird::Filter - common utilities about status filters
     
     ## TODO: add the filters to timeline
 
+=head1 DESCRIPTION
+
+This module provides some functions to create status filters.
+
+A status filter is a subroutine reference to process an array-ref of statuses.
+See L<BusyBird::Timeline>'s C<add_filter()> method for details about status filters.
+
+=head2 Pre-defined Filters
+
+=over
+
+=item L<BusyBird::Filter::Twitter>
+
+Filters and transformations useful when you import statuses from Twitter.
+
+=item L<BusyBird::Filter::Misc>
+
+Miscellaneous filters you may find interesting.
+
+=back
+
 =head1 EXPORTABLE FUNCTIONS
 
-You can import all functions below. None of them is exported by default.
-
-These functions generate a filter, a subroutine reference to process an array-ref of statuses
-and return the result.
-
-    $result_arrayref = $filter->($arrayref_of_statuses)
-
-You can directly pass the filter to L<BusyBird::Timeline>'s C<add_filter()> method.
-
-    $timeline->add_filter($filter);
-
+You can import any of the functions below. None of them is exported by default.
+Import C<":all"> to import all functions at once.
 
 =head2 $filter = filter_each($func)
 
-Creates a status filter that modifies each of the statuses destructively.
+Creates a synchronous status filter that modifies each of the statuses destructively.
 
 C<$func> is a subroutine reference that takes a single status.
 For each status, C<$func> is called like
@@ -86,10 +98,10 @@ Return value from C<$func> is ignored.
 
 =head2 $filter = filter_map($func)
 
-Creates a status filter that maps each of the statuses.
+Creates a synchronous status filter that maps each of the statuses.
 This is similar to Perl's built-in C<map()> function.
 
-C<$func> is a subroutine reference that takes a signle status.
+C<$func> is a subroutine reference that takes a single status.
 For each status, C<$func> is called like
 
     @mapped_statuses = $func->($status)
@@ -98,7 +110,21 @@ C<$func> is supposed to return a list of statuses.
 The result of the C<$filter> is all statuses collected from the C<$func>.
 
 Note that the C<$status> given to C<$func> is a deep clone of the original status.
-If you modify C<$status> in C<$func>, the original status is intact.
+Even if you modify C<$status> in C<$func>, the original status is intact.
+
+=head1 SEE ALSO
+
+=over
+
+=item *
+
+L<BusyBird::Status>
+
+=item *
+
+L<BusyBird::Timeline>
+
+=back
 
 =head1 AUTHOR
 

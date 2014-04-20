@@ -319,6 +319,8 @@ Using status filters, you can modify or even drop the added statuses before they
 actually inserted to the timeline.
 Statuse filters are executed in the same order as they are added.
 
+L<BusyBird> comes with some pre-defined status filters. See L<BusyBird::Filter> for detail.
+
 =head2 Status Storage
 
 A timeline's statuses are actually saved in a L<BusyBird::StatusStorage> object.
@@ -676,28 +678,43 @@ In failure, C<$error> is defined and it describes the error.
 =back
 
 
-=head2 $timeline->add_filter($filter->($arrayref_of_statuses, [$done]), [$is_async])
+=head2 $timeline->add_filter($filter, [$is_async])
 
 Add a status filter to the C<$timeline>.
 
 C<$filter> is a subroutine reference that is called upon added statuses.
 C<$is_async> specifies whether the C<$filter> is synchronous or asynchronous.
 
-C<$filter> subroutine will be called with at least one argument (C<$arrayref_of_statuses>).
-C<$arrayref_of_statuses> is an array-ref of statuses that is injected to the filter.
-C<$filter> can use and modify the C<$arrayref_of_statuses>.
+L<BusyBird::Filter> may help you create common status filters.
 
-If C<$is_async> is false, C<$filter> must return an array-ref of statuses, which is going to be passed to the next filter
+
+B<< Synchronous Filter >>
+
+If C<$is_async> is false, C<$filter> is a synchronous filter. It is called like
+
+    $result_arrayref = $filter->($arrayref_of_statuses);
+
+where C<$arrayref_of_statuses> is an array-ref of statuses that is injected to the filter.
+
+C<$filter> must return an array-ref of statuses (C<$result_arrayref>), which is going to be passed to the next filter
 (or the status storage if there is no next filter).
-The return value of C<$filter> may be either C<$arrayref_of_statuses> or a new array-ref.
+C<$result_arrayref> may be either C<$arrayref_of_statuses> or a new array-ref.
 If C<$filter> returns anything other than an array-ref,
 a warning is logged and C<$arrayref_of_statuses> is passed to the next.
 
-If C<$is_async> is true, C<$filter> is given the additional second argument C<$done>, which is a subroutine reference.
-Instead of returning the result, C<$filter> must call C<< $done->($result) >> when it completes the filtering task.
-The argument to the C<$done> callback (C<$result>) is an array-ref of statuses that is the result of the filter.
+B<< Asynchronous Filter >>
 
-=head2 $timeline->add_filter_async($filter->($arrayref_of_statuses, $done))
+If C<$is_async> is true, C<$filter> is a asynchronous filter. It is called like
+
+    $filter->($arrayref_of_statuses, $done);
+
+where C<$done> is a subroutine reference that C<$filter> is supposed to call when it completes its task.
+C<$filter> must pass the result array-ref of statuses to the C<$done> callback.
+
+    $done->($result_arrayref)
+
+
+=head2 $timeline->add_filter_async($filter)
 
 Add an asynchronous status filter. This is equivalent to C<< $timeline->add_filter($filter, 1) >>.
 
