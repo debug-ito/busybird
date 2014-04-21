@@ -14,7 +14,6 @@ use Exporter qw(import);
     );
 }
 BusyBird::Util::export_ok_all_tags;
-our @EXPORT = our @EXPORT_OK;
 
 my $DATETIME_FORMATTER = 'BusyBird::DateTime::Format';
 
