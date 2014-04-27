@@ -463,20 +463,19 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
 ////////////////////////////////////////////////////////
 
 bb.TimelineUnackedCountsPoller = (function() {
-    var superclass = bb.EventPoller;
     var selfclass = $.extend(function(args) {
         // @params: args.statusContainer
         var scon = args.statusContainer;
+        var self = this;
         if(!defined(scon)) {
             throw "statusContainer param is mandatory";
         }
         this.status_container = scon;
         this.on_change_listeners = [];
-        superclass.call(this, {
+        this.poller = new bb.EventPoller({
             url: scon.getAPIBase() + "/timelines/" + scon.getTimelineName() + "/updates/unacked_counts.json",
             initialQuery: this._makeQuery({}),
             onResponse: function(response_data) {
-                var self = this;
                 if(defined(response_data.error)) {
                     self._onError(response_data.error);
                     return;
@@ -490,35 +489,32 @@ bb.TimelineUnackedCountsPoller = (function() {
     }, {
         LEVEL_MARGIN: 2,
     });
-    selfclass.prototype = $.extend(
-        new superclass({}),
-        {
-            _onError: function(error_message) { console.log(error_message) },
-            _setQueryItem: function(target_query_object, current_unacked_counts, key) {
-                var self = this;
-                var cur_value = current_unacked_counts[key];
-                target_query_object[key] = defined(cur_value) ? cur_value : 0;
-            },
-            _makeQuery: function(current_unacked_counts) {
-                var self = this;
-                var query = {};
-                var threshold = self.status_container.getThresholdLevel();
-                var level;
-                if(!defined(current_unacked_counts)) {
-                    current_unacked_counts = {};
-                }
-                self._setQueryItem(query, current_unacked_counts, "total");
-                for(level = threshold - selfclass.LEVEL_MARGIN ; level <= threshold + selfclass.LEVEL_MARGIN ; level++) {
-                    self._setQueryItem(query, current_unacked_counts, level);
-                }
-                return query;
-            },
-            listenOnChange: function(callback) {
-                // @params: callback (function(unacked_counts))
-                this.on_change_listeners.push(callback);
+    selfclass.prototype = {
+        _onError: function(error_message) { console.log(error_message) },
+        _setQueryItem: function(target_query_object, current_unacked_counts, key) {
+            var cur_value = current_unacked_counts[key];
+            target_query_object[key] = defined(cur_value) ? cur_value : 0;
+        },
+        _makeQuery: function(current_unacked_counts) {
+            var self = this;
+            var query = {};
+            var threshold = self.status_container.getThresholdLevel();
+            var level;
+            if(!defined(current_unacked_counts)) {
+                current_unacked_counts = {};
             }
-        }
-    );
+            self._setQueryItem(query, current_unacked_counts, "total");
+            for(level = threshold - selfclass.LEVEL_MARGIN ; level <= threshold + selfclass.LEVEL_MARGIN ; level++) {
+                self._setQueryItem(query, current_unacked_counts, level);
+            }
+            return query;
+        },
+        listenOnChange: function(callback) {
+            // @params: callback (function(unacked_counts))
+            this.on_change_listeners.push(callback);
+        },
+        start: function() { this.poller.start() },
+    };
     return selfclass;
 })();
 
