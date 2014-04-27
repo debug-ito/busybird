@@ -478,7 +478,7 @@ bb.TimelineUnackedCountsPoller = (function() {
             onResponse: function(response_data) {
                 if(defined(response_data.error)) {
                     self._onError(response_data.error);
-                    return;
+                    return Q.reject("API error: " + response_data.error);
                 }
                 $.each(self.on_change_listeners, function(i, listener) {
                     listener(response_data.unacked_counts);
