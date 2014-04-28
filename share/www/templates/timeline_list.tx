@@ -25,7 +25,7 @@
       <: pagination() :>
       <table id="bb-timeline-list" class="table table-striped">
         <tbody>
-          <:- for $timeline_unacked_countes_json -> $timeline_entry { :>
+          <:- for $timeline_unacked_counts_json -> $timeline_entry { :>
           <tr>
             <td><a href="<: $script_name :>/timelines/<: $timeline_entry.name | uri_escape :>/"><i class="icon-list"></i> <span class="bb-timeline-name"><: $timeline_entry.name :></span></a></td>
             <td class="bb-timeline-unacked-counts-cell" data-bb-init-counts="<: $timeline_entry.counts_json :>"></td>
