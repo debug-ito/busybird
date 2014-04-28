@@ -29,6 +29,7 @@ bb.UnackedCountsRenderer = (function() {
         _showTotal : function(total_count) {
             var self = this;
             var $container_total = $(self.dom_total);
+            $container_total.empty();
             $container_total.append(
                 $('<span class="bb-unacked-counts-total badge badge-info"></span>').text(total_count)
             );
@@ -64,6 +65,7 @@ bb.UnackedCountsRenderer = (function() {
             if(leveled_counts.length > self.level_num) {
                 count_elements.push(self._renderLevel("total", total, total - sum_count));
             }
+            $container_levels.empty();
             $.each(count_elements, function(i, elem) {
                 $container_levels.append(elem);
             });

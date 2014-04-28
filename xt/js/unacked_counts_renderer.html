@@ -51,6 +51,15 @@ var getRenderedTotalCount = function() {
     return $("#test-total").find(".bb-unacked-counts-total").text();
 };
 
+test("successive show() resets the rendering", function() {
+    var ren = setupRenderer();
+    ren.show({total: 0});
+    ren.show({total: 1, 0: 1});
+    ren.show({total: 10, 0: 1, 2: 5, 3: 4});
+    is($("#test-total").find(".bb-unacked-counts-total").size(), 1, "only one 'total' count");
+    is($("#test-levels").find(".bb-unacked-counts-pair").size(), 3, "three per-level counts");
+});
+
 test("0 unacked counts", function() {
     var ren = setupRenderer();
     ren.show({total: 0});
