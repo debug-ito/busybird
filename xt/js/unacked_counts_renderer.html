@@ -21,7 +21,7 @@ var is = strictEqual;
 var LEVEL_NUM = 4;
 
 var setupRenderer = function() {
-    $("#qunit-fixture").append('<div id="test-total"></div><div id="test-levels"></div>')
+    $("#qunit-fixture").append('<div id="test-total"></div><ul id="test-levels"></ul>')
     return new bb.UnackedCountsRenderer({
         // domTarget: $("#qunit-fixture").get(0),
         domTotal: $("#test-total").get(0),

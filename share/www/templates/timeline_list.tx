@@ -32,7 +32,7 @@
           <tr data-bb-init-counts="<: $timeline_entry.counts_json :>">
             <td><a href="<: $script_name :>/timelines/<: $timeline_entry.name | uri_escape :>/"><i class="icon-list"></i> <span class="bb-timeline-name"><: $timeline_entry.name :></span></a></td>
             <td class="bb-timeline-unacked-counts-total-cell"></td>
-            <td class="bb-timeline-unacked-counts-levels-cell"></td>
+            <td class="bb-timeline-unacked-counts-levels-cell"><ul></ul></td>
           </tr>
           <:- } ## for :>
         </tbody>
@@ -58,7 +58,7 @@ $(function() {
         var $row = $(this);
         var renderer = new bb.UnackedCountsRenderer({
             domTotal:  $row.find(".bb-timeline-unacked-counts-total-cell").get(0),
-            domLevels: $row.find(".bb-timeline-unacked-counts-levels-cell").get(0),
+            domLevels: $row.find(".bb-timeline-unacked-counts-levels-cell ul").get(0),
         });
         var counts = $row.data("bbInitCounts");
         var name = $row.find(".bb-timeline-name").text();

@@ -11,7 +11,7 @@ bb.UnackedCountsRenderer = (function() {
     };
     selfclass.prototype = {
         _renderLevel: function(level, sum_count, this_count) {
-            var $pair = $('<span class="bb-unacked-counts-pair"></span>');
+            var $pair = $('<li class="bb-unacked-counts-pair"></li>');
             var $level = $('<span class="bb-unacked-counts-level"></span>');
             var $sum_count = $('<span class="bb-unacked-counts-sum-count badge badge-info"></span>').text(sum_count);
             if(level === 'total') {
@@ -68,7 +68,6 @@ bb.UnackedCountsRenderer = (function() {
             $container_levels.empty();
             $.each(count_elements, function(i, elem) {
                 $container_levels.append(elem);
-                $container_levels.append(" ");
             });
         }
     };
