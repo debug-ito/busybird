@@ -13,10 +13,10 @@
       </div>
       <div>
         <span class="bb-status-username"><: $s.user.screen_name :></span>&nbsp;&nbsp;
-        <span class="bb-status-created-at"><: link( bb_timestamp($s.created_at), href => bb_status_permalink($s) ) :></span>
+        <span class="bb-status-created-at"><: link( $bb_timestamp($s.created_at), href => $bb_status_permalink($s) ) :></span>
       </div>
     </div>
-    <div class="bb-status-text"><: bb_text($s) :></div>
+    <div class="bb-status-text"><: $bb_text($s) :></div>
     <: if $s.busybird.retweeted_by_user.screen_name { :>
     <div class="bb-status-retweeted-by">
       <i class="icon-retweet"></i> Retweeted by <span class="bb-status-retweeted-by-username"><: $s.busybird.retweeted_by_user.screen_name :></span>
