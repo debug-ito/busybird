@@ -71,6 +71,10 @@ div.bb-status-attributes {
     background-color: #e7e8ec;
 }
 
+.bb-summary-count-pair {
+    white-space: nowrap;
+}
+
 .bb-unacked-counts-pair {
     white-space: nowrap;
 }
