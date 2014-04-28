@@ -395,7 +395,7 @@ sub create_main {
         
         my ($timeline_list_table) = $tree->findnodes('//table[@id="bb-timeline-list"]');
         isnt($timeline_list_table, undef, "timeline list table exists");
-        my @timeline_rows = $timeline_list_table->findnodes('.//tr');
+        my @timeline_rows = $timeline_list_table->findnodes('.//tbody/tr');
         my $exp_timeline_num = @{$case->{exp_timelines}};
         is(scalar(@timeline_rows), $exp_timeline_num, "$exp_timeline_num timeline rows.");
         foreach my $i (0 .. ($exp_timeline_num - 1)) {
@@ -411,7 +411,7 @@ sub create_main {
 }
 
 {
-    note("response_timeline_list: timelines with names containing HTML special chars, URL special chars and Unicode chars.");
+    note("--- response_timeline_list: timelines with names containing HTML special chars, URL special chars and Unicode chars.");
     my $main = create_main();
     my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
     my @counts = (
@@ -435,7 +435,7 @@ sub create_main {
     );
     test_psgi_response($psgi_response, 200, "response OK");
     my $tree = testlib::HTTP->parse_html(join "", @{$psgi_response->[2]});
-    my @timeline_rows = $tree->findnodes('//table[@id="bb-timeline-list"]//tr');
+    my @timeline_rows = $tree->findnodes('//table[@id="bb-timeline-list"]/tbody/tr');
     is(scalar(@timeline_rows), scalar(@counts), "timeline row num OK");
     foreach my $i (0 .. $#timeline_rows) {
         my $timeline_row = $timeline_rows[$i];

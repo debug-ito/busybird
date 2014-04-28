@@ -24,11 +24,15 @@
     <div class="span8 offset2">
       <: pagination() :>
       <table id="bb-timeline-list" class="table table-striped">
+        <thead><tr>
+            <td>Name</td><td>Total</td><td>Per-Level</td>
+        </tr></thead>
         <tbody>
           <:- for $timeline_unacked_counts_json -> $timeline_entry { :>
-          <tr>
+          <tr data-bb-init-counts="<: $timeline_entry.counts_json :>">
             <td><a href="<: $script_name :>/timelines/<: $timeline_entry.name | uri_escape :>/"><i class="icon-list"></i> <span class="bb-timeline-name"><: $timeline_entry.name :></span></a></td>
-            <td class="bb-timeline-unacked-counts-cell" data-bb-init-counts="<: $timeline_entry.counts_json :>"></td>
+            <td class="bb-timeline-unacked-counts-total-cell"></td>
+            <td class="bb-timeline-unacked-counts-levels-cell"></td>
           </tr>
           <:- } ## for :>
         </tbody>
@@ -50,14 +54,16 @@ $(function() {
     var poller = new bb.UnackedCountsPoller({
         apiBase: "<: $script_name | js :>"
     });
-    $("#bb-timeline-list").find("tr").each(function() {
+    $("#bb-timeline-list tbody tr").each(function() {
         var $row = $(this);
-        var $cell = $row.find(".bb-timeline-unacked-counts-cell");
         var renderer = new bb.UnackedCountsRenderer({
-            domTarget: $cell.get(0)
+            domTotal:  $row.find(".bb-timeline-unacked-counts-total-cell").get(0),
+            domLevels: $row.find(".bb-timeline-unacked-counts-levels-cell").get(0),
         });
-        var counts = $cell.data("bbInitCounts");
+        var counts = $row.data("bbInitCounts");
         var name = $row.find(".bb-timeline-name").text();
+        console.log("counts data for " + name);
+        console.log(counts);
         renderer.show(counts);
         poller.addTimeline({
             timelineName: name,

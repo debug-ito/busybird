@@ -4,9 +4,10 @@
 
 bb.UnackedCountsRenderer = (function() {
     var selfclass = function(args) {
-        // @params: args.domTarget, args.levelNum = 2
-        this.dom_target = args.domTarget;
-        this.level_num = defined(args.levelNum) ? args.levelNum : 2;
+        // @param args.domTotal, args.domLevels, args.levelNum = 5
+        this.dom_total = args.domTotal;
+        this.dom_levels = args.domLevels;
+        this.level_num = defined(args.levelNum) ? args.levelNum : 5;
     };
     selfclass.prototype = {
         _renderLevel: function(level, sum_count, this_count) {
@@ -14,7 +15,7 @@ bb.UnackedCountsRenderer = (function() {
             var $level = $('<span class="bb-unacked-counts-level"></span>');
             var $sum_count = $('<span class="bb-unacked-counts-sum-count badge badge-info"></span>').text(sum_count);
             if(level === 'total') {
-                $level.text("Total");
+                $level.text("Other");
             }else {
                 $pair.append("Lv. ");
                 $level.text(level);
@@ -25,19 +26,22 @@ bb.UnackedCountsRenderer = (function() {
             }
             return $pair;
         },
+        _showTotal : function(total_count) {
+            var self = this;
+            var $container_total = $(self.dom_total);
+            $container_total.append(
+                $('<span class="bb-unacked-counts-total badge badge-info"></span>').text(total_count)
+            );
+        },
         show: function(unacked_counts) {
             // @returns: nothing
             var self = this;
-            var total = unacked_counts.total;
             var leveled_counts = [];
-            var $target = $(self.dom_target);
+            var $container_levels = $(self.dom_levels);
             var sum_count = null;
             var count_elements = [];
-            $target.empty();
-            if(total === 0) {
-                $target.append(self._renderLevel("total", total));
-                return;
-            }
+            var total = unacked_counts.total;
+            self._showTotal(total);
             $.each(unacked_counts, function(level, count) {
                 if(level === "total") return;
                 leveled_counts.push({level: parseInt("" + level, 10), count: count});
@@ -61,7 +65,7 @@ bb.UnackedCountsRenderer = (function() {
                 count_elements.push(self._renderLevel("total", total, total - sum_count));
             }
             $.each(count_elements, function(i, elem) {
-                $target.append(elem);
+                $container_levels.append(elem);
             });
         }
     };
