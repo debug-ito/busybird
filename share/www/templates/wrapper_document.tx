@@ -1,0 +1,18 @@
+: ## Arguments: script_name, title
+: ## Cascade Blocks: navbar, content
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><: if defined($title) { :><: $title :> - <: } :>BusyBird</title>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" href="<: $script_name :>/static/bootstrap/css/bootstrap.min.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="<: $script_name :>/static/busybird.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="<: $script_name :>/static/bootstrap/css/bootstrap-responsive.min.css" type="text/css" media="screen" />
+  </head>
+  <body>
+: block navbar -> {}
+: block content -> {}
+  </body>
+</html>
+
+    

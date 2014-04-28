@@ -1,0 +1,73 @@
+: ## Arguments: script_name, timeline_unacked_counts_json, page_list, last_page (begin with 0), cur_page (begin with 0)
+: ## WRAPPER "wrapper_document.tt" WITH script_name = script_name
+: cascade wrapper_navbar { script_name => $script_name }
+
+<: macro pagination -> { -:>
+<:- if $last_page > 0 { -:>
+<div class="pagination pagination-centered">
+  <ul class="bb-timeline-page-list">
+    <li><a href="<: $script_name :>/?page=0">&laquo;</a></li>
+    <: if $cur_page == 0 { :><li class="disabled"><a href="#"><: } else { :><li><a href="<: $script_name :>/?page=<: $cur_page -1 :>"><: } :>&lt;</a></li>
+    <:- for $page_list -> $page { :>
+    <li<: if $page == $cur_page { :> class="active"<: } :>><a href="<: $script_name :>/?page=<: $page :>"><: $page + 1 :></a></li>
+    <:- } ## for :>
+    <: if $cur_page == $last_page { :><li class="disabled"><a href="#"><: } else { :><li><a href="<: $script_name :>/?page=<: $cur_page +1 :>"><: } :>&gt;</a></li>
+    <li><a href="<: $script_name :>/?page=<: $last_page :>">&raquo;</a></li>
+  </ul>
+</div>
+<:- } ## if $last_page -:>
+<: } ## macro pagination -:>
+
+: around content -> {
+<div class="container-fluid">
+  <div class="row-fluid">
+    <div class="span8 offset2">
+      <: pagination() :>
+      <table id="bb-timeline-list" class="table table-striped">
+        <tbody>
+          <:- for $timeline_unacked_countes_json -> $timeline_entry { :>
+          <tr>
+            <td><a href="<: $script_name :>/timelines/<: $timeline_entry.name | uri_escape :>/"><i class="icon-list"></i> <span class="bb-timeline-name"><: $timeline_entry.name :></span></a></td>
+            <td class="bb-timeline-unacked-counts-cell" data-bb-init-counts="<: $timeline_entry.counts_json :>"></td>
+          </tr>
+          <:- } ## for :>
+        </tbody>
+      </table>
+      <: pagination() :>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" src="<: $script_name :>/static/jquery.js"></script>
+<script type="text/javascript" src="<: $script_name :>/static/spin.js"></script>
+<script type="text/javascript" src="<: $script_name :>/static/q.js"></script>
+<script type="text/javascript" src="<: $script_name :>/static/busybird.js"></script>
+<script type="text/javascript" src="<: $script_name :>/static/timeline_list.js"></script>
+<script type="text/javascript" src="<: $script_name :>/static/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript">
+"use strict";
+$(function() {
+    var poller = new bb.UnackedCountsPoller({
+        apiBase: "<: $script_name | js :>"
+    });
+    $("#bb-timeline-list").find("tr").each(function() {
+        var $row = $(this);
+        var $cell = $row.find(".bb-timeline-unacked-counts-cell");
+        var renderer = new bb.UnackedCountsRenderer({
+            domTarget: $cell.get(0)
+        });
+        var counts = $cell.data("bbInitCounts");
+        var name = $row.find(".bb-timeline-name").text();
+        renderer.show(counts);
+        poller.addTimeline({
+            timelineName: name,
+            initialUnackedCounts: counts,
+            callback: function(received_counts) {
+                renderer.show(received_counts);
+            }
+        });
+    });
+    poller.start();
+});
+</script>
+: } ## around content
