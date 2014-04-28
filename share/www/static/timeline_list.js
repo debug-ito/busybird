@@ -68,6 +68,7 @@ bb.UnackedCountsRenderer = (function() {
             $container_levels.empty();
             $.each(count_elements, function(i, elem) {
                 $container_levels.append(elem);
+                $container_levels.append(" ");
             });
         }
     };

@@ -72,7 +72,8 @@ div.bb-status-attributes {
 }
 
 .bb-unacked-counts-pair {
-    margin: 0 10px;
+    margin: 0 5px;
+    white-space: nowrap;
 }
 
 /****
