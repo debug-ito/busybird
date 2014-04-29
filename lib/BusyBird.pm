@@ -1,8 +1,28 @@
 package BusyBird;
 use strict;
 use warnings;
-
 use BusyBird::Version; our $VERSION = $BusyBird::Version::VERSION;
+use BusyBird::Main;
+use BusyBird::Main::PSGI qw(create_psgi_app);
+use Exporter qw(import);
+
+our @EXPORT = our @EXPORT_OK = qw(busybird timeline end);
+
+my $singleton_main;
+
+sub busybird {
+    return defined($singleton_main)
+        ? $singleton_main : ($singleton_main = BusyBird::Main->new);
+}
+
+sub timeline {
+    my ($timeline_name) = @_;
+    return busybird()->timeline($timeline_name);
+}
+
+sub end {
+    return create_psgi_app(busybird());
+}
 
 1;
 
