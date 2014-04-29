@@ -30,7 +30,7 @@ sub new {
     $self->{renderer} = Text::Xslate->new(
         path => [ File::Spec->catdir($sharedir, 'www', 'templates') ],
         cache_dir => File::Spec->tmpdir,
-        syntax => 'TTerse',
+        syntax => 'Kolon',
         function => $self->template_functions(),
         ## warn_handler => sub { ... },
     );
@@ -49,7 +49,7 @@ sub response_notfound {
 sub response_error_html {
     my ($self, $http_code, $message) = @_;
     return $self->_response_template(
-        template => 'error.tt', args => {error => $message},
+        template => 'error.tx', args => {error => $message},
         code => $http_code
     );
 }
@@ -248,7 +248,7 @@ sub _format_status_html_destructive {
         }
     }
     return $self->{renderer}->render(
-        "status.tt",
+        "status.tx",
         {s => $status, %{$self->template_functions_for_timeline($timeline_name)}}
     );
 }
@@ -299,7 +299,7 @@ sub response_timeline {
     return $self->response_notfound("Cannot find $timeline_name") if not defined($timeline);
     
     return $self->_response_template(
-        template => "timeline.tt",
+        template => "timeline.tx",
         args => {
             timeline_name => $timeline_name,
             script_name => $script_name,
@@ -334,7 +334,7 @@ sub response_timeline_list {
                                                     ? [($args{total_page_num} - $pager_entry_max) .. ($args{total_page_num} - 1)]
                                                     : [($args{cur_page} - $left_margin) .. ($args{cur_page} + $right_margin - 1)];
     return $self->_response_template(
-        template => "timeline_list.tt",
+        template => "timeline_list.tx",
         args => \%input_args,
     );
 }

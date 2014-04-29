@@ -1,0 +1,13 @@
+: ## Arguments: script_name, title
+: ## Cascade Blocks: navbar_content, content
+: cascade wrapper_document { script_name => $script_name, title => $title }
+: around navbar -> {
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container-fluid">
+      <a class="brand" href="<: $script_name :>/">BusyBird</a>
+: block navbar_content -> {}
+    </div>
+  </div>
+</div>
+: }

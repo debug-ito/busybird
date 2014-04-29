@@ -7,7 +7,7 @@ use Test::MockObject;
 use DateTime;
 use DateTime::Duration;
 use BusyBird::Main;
-use BusyBird::Main::PSGI;
+use BusyBird::Main::PSGI qw(create_psgi_app);
 use BusyBird::StatusStorage::SQLite;
 use BusyBird::DateTime::Format;
 use testlib::HTTP;

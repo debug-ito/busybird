@@ -71,8 +71,16 @@ div.bb-status-attributes {
     background-color: #e7e8ec;
 }
 
+.bb-summary-count-pair {
+    white-space: nowrap;
+}
+
 .bb-unacked-counts-pair {
-    margin: 0 10px;
+    white-space: nowrap;
+}
+
+.bb-timeline-unacked-counts-levels-cell ul {
+    list-style: none;
 }
 
 /****

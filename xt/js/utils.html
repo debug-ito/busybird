@@ -32,11 +32,15 @@ var fakeserver;
 // SlowStartServer starts slowly.
 // At first it responds with 404 for fail_num times.
 // After that it starts responding with 200.
-var SlowStartServer = function(fail_num) {
+//
+// @param fail_num Number of failed responses.
+// @param fail_code HTTP erro code. It's 404 by default.
+var SlowStartServer = function(fail_num, fail_code) {
     var self = this;
     self.fail_num = fail_num;
     self.count = 0;
     self.reqs = [];
+    self.fail_code = fail_code || 404;
     self.xhr = sinon.useFakeXMLHttpRequest();
     self.xhr.onCreate = function(req) {
         self.reqs.push(req);
@@ -50,7 +54,7 @@ SlowStartServer.prototype = {
         for(i = 0 ; i < self.reqs.length ; i++) {
             request = self.reqs[i];
             if(self.count < self.fail_num) {
-                request.respond(404, {"Content-Type": "text/plain"}, "" + self.count);
+                request.respond(self.fail_code, {"Content-Type": "text/plain"}, "" + self.count);
             }else {
                 request.respond(200, {"Content-Type": "text/plain"}, "" + self.count);
             }
@@ -180,6 +184,33 @@ asyncTest("ajaxRetry (tryMax)", function() {
         start();
     });
 });
+
+$.each([400, 401, 403, 500, 501, 503], function(i, code) {
+    asyncTest("ajaxRetry (code = "+ code +")", function() {
+        fakeserver = new SlowStartServer(100, code);
+        fakeTimer();
+        var pending = bb.ajaxRetry({url: "/", tryMax: 2});
+        is(fakeserver.pendingNum(), 1, "1 request pending");
+        fakeserver.respond();
+        is(fakeserver.pendingNum(), 0, "0 request pending");
+        faketimer.tick(1000);
+        is(fakeserver.pendingNum(), 1, "retried request pending");
+        fakeserver.respond();
+        is(fakeserver.pendingNum(), 0, "0 request pending");
+        faketimer.tick(10000);
+        is(fakeserver.pendingNum(), 0, "no more request");
+        faketimer.restore();
+        pending.promise.then(function() {
+            ok(false, "ajaxRetry should not succeed");
+        }, function() {
+            ok(true, "ajaxRetry failure expected");
+        }).then(function() {
+            fakeserver.restore();
+            start();
+        });
+    });
+});
+
 
 asyncTest("blockEach (1 block)", function() {
     var counter = 0;

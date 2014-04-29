@@ -1,9 +1,0 @@
-%% ## Arguments: script_name, content
-<div class="navbar navbar-inverse navbar-fixed-top">
-  <div class="navbar-inner">
-    <div class="container-fluid">
-      <a class="brand" href="[% script_name %]/">BusyBird</a>
-[% content %]
-    </div>
-  </div>
-</div>

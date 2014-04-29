@@ -21,7 +21,7 @@ use Future::Q;
 use POSIX qw(ceil);
 
 
-our @EXPORT = our @EXPORT_OK = qw(create_psgi_app);
+our @EXPORT_OK = qw(create_psgi_app);
 
 sub create_psgi_app {
     my ($main_obj) = @_;
@@ -331,7 +331,7 @@ BusyBird::Main::PSGI - PSGI controller for BusyBird::Main
 =head1 SYNOPSIS
 
     use BusyBird::Main;
-    use BusyBird::Main::PSGI;
+    use BusyBird::Main::PSGI qw(create_psgi_app);
     
     my $main = BusyBird::Main->new();
     my $psgi_app = create_psgi_app($main);
@@ -341,9 +341,9 @@ BusyBird::Main::PSGI - PSGI controller for BusyBird::Main
 This is the controller object for L<BusyBird::Main>.
 It creates a L<PSGI> application from a L<BusyBird::Main> object.
 
-=head1 EXPORTED FUNCTIONS
+=head1 EXPORTABLE FUNCTIONS
 
-The following functions are exported by default.
+The following functions are exported only by request.
 
 =head2 $psgi_app = create_psgi_app($main_obj)
 

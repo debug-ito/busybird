@@ -110,6 +110,7 @@ Response Body:
 =head2 POST /timelines/{timeline}/ack.json
 
 Acknowledges statuses in the specified timeline, that is, changing 'unacked' statuses into 'acked'.
+This operation is usually called "make as read".
 You should ack statuses when you load and display them for the user.
 
 You can set parameters in the request body as a JSON object.

@@ -8,7 +8,7 @@ use testlib::Timeline_Util qw(status);
 use testlib::StatusHTML;
 use Plack::Test;
 use BusyBird::Main;
-use BusyBird::Main::PSGI;
+use BusyBird::Main::PSGI qw(create_psgi_app);
 use BusyBird::StatusStorage::SQLite;
 use utf8;
 
