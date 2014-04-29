@@ -13,6 +13,10 @@ BusyBird::Tutorial - Tutorial to use BusyBird
 
 =head2 Input Statuses from Twitter
 
+=head1 View a Timeline
+
+about the terminology of "acked/unacked".
+
 =head1 Status Level
 
 =head1 Configuration

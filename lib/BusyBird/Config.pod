@@ -10,6 +10,9 @@ BusyBird::Config - list of config parameters for BusyBird
 
 =head1 DESCRIPTION
 
+TODO: we should write the documentation from the point of writing config.psgi.
+Individual modules should be mentioned but set aside.
+
 This document describes config parameters for L<BusyBird::Main> and L<BusyBird::Timeline>.
 
 =head2 How to Set/Get Config Parameters
