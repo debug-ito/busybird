@@ -6,7 +6,7 @@ use BusyBird::Log;
 use BusyBird::StatusStorage::SQLite;
 
 BEGIN {
-    use_ok("BusyBird::Main::PSGI");
+    use_ok("BusyBird::Main::PSGI", "create_psgi_app");
 }
 
 $BusyBird::Log::Logger = undef;

@@ -3,7 +3,7 @@ use warnings;
 use lib "t";
 use Test::More;
 use BusyBird::Main;
-use BusyBird::Main::PSGI;
+use BusyBird::Main::PSGI qw(create_psgi_app);
 use BusyBird::Log;
 use BusyBird::StatusStorage::SQLite;
 use Plack::Test;
