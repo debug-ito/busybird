@@ -1,41 +1,52 @@
 package BusyBird::Runner;
 use strict;
 use warnings;
-use Getopt::Long qw(:config no_ignore_case bundling);
+use Getopt::Long qw(GetOptionsFromArray :config no_ignore_case bundling);
 use BusyBird::Util qw(config_directory config_file_path);
 use File::Spec;
 use Try::Tiny;
 use Plack::Runner ();
+use Exporter qw(import);
+
+our @EXPORT_OK = qw(run);
 
 sub run {
+    my (@argv) = @_;
+    my @plack_opts = try {
+        prepare_plack_opts(@argv);
+    }catch {
+        ();
+    };
+    return 1 if !@plack_opts;
+    my $runner = Plack::Runner->new;
+    $runner->parse_options(@plack_opts);
+    $runner->run();
+    return undef;
+}
+
+sub prepare_plack_opts {
     my (@argv) = @_;
     my $need_help = 0;
     my $bind_host = "127.0.0.1";
     my $bind_port = 5000;
     my $config_script;
-    my $success = try {
-        GetOptionsFromArray(
-            \@argv,
-            "h|help=s" => \$need_help,
-            "o|host=s" => \$bind_host,
-            "p|port=i" => \$bind_port
-        ) or die "command-line error";
-        _ensure_config_dir_exists;
-        $config_script = shift @argv;
-        if(defined($config_script)) {
-            _ensure_config_file_exists($config_script);
-        }else {
-            $config_script = config_file_path("config.psgi");
-            _ensure_config_file_exists($config_script, 1);
-        }
-        1;
-    };
-    return 1 if !$success || $need_help;
-    my $runner = Plack::Runner->new;
-    $runner->parse_options("--no-default-middleware", "-o", $bind_host, "-p", $bind_port,
-                           "-s", "Twiggy");
-    $runner->run($config_script);
-    return undef;
+    GetOptionsFromArray(
+        \@argv,
+        "h|help=s" => \$need_help,
+        "o|host=s" => \$bind_host,
+        "p|port=i" => \$bind_port
+    ) or die "command-line error";
+    die "need help" if $need_help;
+    _ensure_config_dir_exists();
+    $config_script = shift @argv;
+    if(defined($config_script)) {
+        _ensure_config_file_exists($config_script);
+    }else {
+        $config_script = config_file_path("config.psgi");
+        _ensure_config_file_exists($config_script, 1);
+    }
+    return ("--no-default-middleware", "-a", $config_script,
+            "-o", $bind_host, "-p", $bind_port, "-s", "Twiggy");
 }
 
 sub _ensure_config_dir_exists {
@@ -52,7 +63,7 @@ sub _ensure_config_file_exists {
     my ($filepath, $create_default) = @_;
     if(! -f $filepath) {
         if($create_default) {
-            _create_default_config_file;
+            _create_default_config_file($filepath);
         }else  {
             warn "Cannot access config file $filepath. Maybe it does not exist.\n";
             die "_check_config_file";
@@ -62,8 +73,8 @@ sub _ensure_config_file_exists {
 
 sub _create_default_config_file {
     my ($config_filepath) = @_;
-    require "File::ShareDir";
-    require "File::Copy";
+    require File::ShareDir;
+    require File::Copy;
     my $sample = File::Spec->catfile(File::ShareDir::dist_dir("BusyBird"), "sample_config.psgi");
     File::Copy::copy($sample, $config_filepath) or do {
         warn "Error while copying $sample to $config_filepath: $!\n";
