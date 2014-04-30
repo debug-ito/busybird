@@ -27,7 +27,7 @@ TBW
 
 =head2 C<default_status_storage> => BusyBird::StatusStorage OBJECT
 
-B<Default:> L<BusyBird::StatusStorage::Memory> object.
+B<Default:> L<BusyBird::StatusStorage::SQLite> object at C<~/.busybird/statuses.sqlite3>
 
 A StatusStorage object used for Timelines by default.
 
@@ -41,6 +41,10 @@ A StatusStorage object is an implementation of L<BusyBird::StatusStorage> interf
 For example, the following modules can be used as StatusStorage.
 
 =over
+
+=item *
+
+L<BusyBird::StatusStorage::SQLite> - storage backed by SQLite database
 
 =item *
 

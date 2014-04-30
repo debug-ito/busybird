@@ -4,6 +4,7 @@ use Test::More;
 use Plack::Test;
 use lib "t";
 use testlib::HTTP;
+use BusyBird::StatusStorage::Memory;
 
 BEGIN {
     use_ok("BusyBird");
@@ -18,6 +19,8 @@ isa_ok busybird, "BusyBird::Main";
     is busybird->get_config("timeline_list_per_page"), 5, "main config preserved";
     is busybird->get_config("timeline_list_pager_entry_max"), 1, "main config new set/get ok";
 }
+
+busybird->set_config("default_status_storage" => BusyBird::StatusStorage::Memory->new);
 
 isa_ok timeline("hoge"), "BusyBird::Timeline";
 

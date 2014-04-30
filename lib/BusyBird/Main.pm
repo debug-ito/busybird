@@ -23,7 +23,8 @@ my %DEFAULT_CONFIG_GENERATOR = (
     ## ** When you change this into SQLite-based storage, make sure
     ## ** no test scripts uses default default_status_storage by writing
     ## ** a dying code in it !!
-    default_status_storage => sub { BusyBird::StatusStorage::Memory->new },
+    ## default_status_storage => sub { BusyBird::StatusStorage::Memory->new },
+    default_status_storage => sub { die "default storage not specified" },
     
     sharedir_path => sub { File::ShareDir::dist_dir("BusyBird") },
     time_zone => sub { "local" },
