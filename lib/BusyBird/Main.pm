@@ -1,9 +1,10 @@
 package BusyBird::Main;
 use strict;
 use warnings;
-use BusyBird::StatusStorage::Memory;
+use BusyBird::StatusStorage::SQLite;
 use BusyBird::Timeline;
 use BusyBird::Watcher::Aggregator;
+use BusyBird::Util qw(config_file_path);
 use Tie::IxHash;
 use Carp;
 use Scalar::Util qw(looks_like_number);
@@ -20,11 +21,9 @@ our @CARP_NOT = ('BusyBird::Timeline');
 my %DEFAULT_CONFIG_GENERATOR = (
     _item_for_test => sub { 1 },
 
-    ## ** When you change this into SQLite-based storage, make sure
-    ## ** no test scripts uses default default_status_storage by writing
-    ## ** a dying code in it !!
-    ## default_status_storage => sub { BusyBird::StatusStorage::Memory->new },
-    default_status_storage => sub { die "default storage not specified" },
+    default_status_storage => sub {
+        BusyBird::StatusStorage::SQLite->new(path => config_file_path("statuses.sqlite3"));
+    },
     
     sharedir_path => sub { File::ShareDir::dist_dir("BusyBird") },
     time_zone => sub { "local" },
