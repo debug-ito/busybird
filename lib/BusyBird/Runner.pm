@@ -1,6 +1,76 @@
 package BusyBird::Runner;
 use strict;
 use warnings;
+use Getopt::Long qw(:config no_ignore_case bundling);
+use BusyBird::Util qw(config_directory config_file_path);
+use File::Spec;
+use Try::Tiny;
+use Plack::Runner ();
+
+sub run {
+    my (@argv) = @_;
+    my $need_help = 0;
+    my $bind_host = "127.0.0.1";
+    my $bind_port = 5000;
+    my $config_script;
+    my $success = try {
+        GetOptionsFromArray(
+            \@argv,
+            "h|help=s" => \$need_help,
+            "o|host=s" => \$bind_host,
+            "p|port=i" => \$bind_port
+        ) or die "command-line error";
+        _ensure_config_dir_exists;
+        $config_script = shift @argv;
+        if(defined($config_script)) {
+            _ensure_config_file_exists($config_script);
+        }else {
+            $config_script = config_file_path("config.psgi");
+            _ensure_config_file_exists($config_script, 1);
+        }
+        1;
+    };
+    return 1 if !$success || $need_help;
+    my $runner = Plack::Runner->new;
+    $runner->parse_options("--no-default-middleware", "-o", $bind_host, "-p", $bind_port,
+                           "-s", "Twiggy");
+    $runner->run($config_script);
+    return undef;
+}
+
+sub _ensure_config_dir_exists {
+    my $dir = config_directory;
+    if(! -d $dir) {
+        if(!mkdir $dir) {
+            warn "Cannot create config directory $dir: $!\n";
+            die "_check_config_dir";
+        }
+    }
+}
+
+sub _ensure_config_file_exists {
+    my ($filepath, $create_default) = @_;
+    if(! -f $filepath) {
+        if($create_default) {
+            _create_default_config_file;
+        }else  {
+            warn "Cannot access config file $filepath. Maybe it does not exist.\n";
+            die "_check_config_file";
+        }
+    }
+}
+
+sub _create_default_config_file {
+    my ($config_filepath) = @_;
+    require "File::ShareDir";
+    require "File::Copy";
+    my $sample = File::Spec->catfile(File::ShareDir::dist_dir("BusyBird"), "sample_config.psgi");
+    File::Copy::copy($sample, $config_filepath) or do {
+        warn "Error while copying $sample to $config_filepath: $!\n";
+        die "_create_default_config_file";
+    };
+}
+
 
 1;
 __END__
@@ -36,9 +106,7 @@ Runs the L<BusyBird> process instance.
 C<@argv> is the command-line arguments. See L<busybird> for detail.
 
 Return value C<$need_help> indicates if the user might need some help.
-If C<@argv> has no problem, C<$need_help> is C<undef>.
-If C<@argv> has some problem, C<$need_help> is a string explaining what's wrong.
-If help is requested in C<@argv>, C<$need_help> is an empty string.
+If C<$need_help> is non-C<undef>, the caller should provide the user with some help.
 
 =head1 AUTHOR
 
