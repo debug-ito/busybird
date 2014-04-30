@@ -4,7 +4,8 @@ use warnings;
 use Pod::Usage;
 use BusyBird::Runner qw(run);
 
-if(run(@ARGV)) {
+my $need_help = run(@ARGV);
+if(defined $need_help) {
     pod2usage(-verbose => 2, -noperldoc => 1);
     exit 1;
 }

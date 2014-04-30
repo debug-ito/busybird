@@ -32,7 +32,7 @@ sub prepare_plack_opts {
     my $config_script;
     GetOptionsFromArray(
         \@argv,
-        "h|help=s" => \$need_help,
+        "h|help" => \$need_help,
         "o|host=s" => \$bind_host,
         "p|port=i" => \$bind_port
     ) or die "command-line error";
