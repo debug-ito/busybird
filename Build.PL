@@ -48,6 +48,7 @@ my $builder = Module::Build->new(
         'Encode'=> '0',
         'Exporter'=> '0',
         'File::ShareDir'=> '0',
+        'File::HomeDir' => '0',
         'File::Spec'=> '0',
         'JSON'=> '0',
         'List::Util'=> '1.24',

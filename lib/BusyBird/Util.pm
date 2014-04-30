@@ -11,8 +11,10 @@ use BusyBird::Version;
 our $VERSION = $BusyBird::Version::VERSION;
 use Future::Q 0.040;
 use Scalar::Util qw(blessed);
+use File::HomeDir;
+use File::Spec;
 
-our @EXPORT_OK = (qw(set_param expand_param sort_statuses split_with_entities future_of));
+our @EXPORT_OK = qw(set_param expand_param config_directory config_file_path sort_statuses split_with_entities future_of);
 our @CARP_NOT = qw(Future::Q);
 
 sub set_param {
@@ -50,6 +52,15 @@ sub expand_param {
         $result[0] = $param;
     }
     return wantarray ? @result : $result[0];
+}
+
+sub config_directory {
+    return File::Spec->catfile(File::HomeDir->my_home, ".busybird");
+}
+
+sub config_file_path {
+    my (@paths) = @_;
+    return File::Spec->catfile(config_directory, @paths);
 }
 
 sub _epoch_undef {
