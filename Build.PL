@@ -35,6 +35,7 @@ my $builder = Module::Build->new(
     },
     requires => {
         'perl' => "5.10.0",
+        'parent' => "0",
         'Async::Queue'=> '0.02',
         'Async::Selector'=> '1.03',
         'Async::Selector::Aggregator'=> '1.02',

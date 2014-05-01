@@ -18,7 +18,7 @@ Toshio Ito C<< <toshioito [at] cpan.org> >>
 package BusyBird::StatusStorage::SQLite::NaiveConnectionCache;
 use strict;
 use warnings;
-use base ('BusyBird::StatusStorage::SQLite');
+use parent ('BusyBird::StatusStorage::SQLite');
 
 sub _get_my_dbh {
     my ($self) = @_;
