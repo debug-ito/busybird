@@ -13,7 +13,7 @@ To install L<BusyBird>, type
 
 This may take time because it also installs many modules L<BusyBird> uses.
 
-Of course, you can use any CPAN client to install L<BusyBird> instead of getting cpanmin.us on the fly.
+Of course, you can use any CPAN client to install L<BusyBird> instead of getting cpanminus on the fly.
 
     # cpanm BusyBird
 
@@ -96,7 +96,7 @@ B<< API key >>, B<< API secret >>, B<< Access token >> and B<< Access token secr
 
 =back
 
-The procedure above may be out of date, but the point is to get the four OAuth tokens.
+The procedure above may be out of date. The point is to get the four OAuth tokens.
 
 B<< Make sure to keep the four tokens (especially "secret" ones) secret >>. Those are like the username-password pair of your account.
 
@@ -147,26 +147,98 @@ L<BusyBird> maintains read/unread states of individual statuses.
 If you read statuses in L<BusyBird> via a Web browser, those statuses are marked as "read".
 When new statuses are input to L<BusyBird>, it shows the number of those "unread" statuses.
 
-Throughout the document and API of L<BusyBird>, we use the terms B<< "acked/unacked" >> instead of "read/unread".
-This is because we want to distinguish verbs and adjectives.
+In the rest of the document and throughout L<BusyBird> API, we use the terms B<< "acked/unacked" >> instead of "read/unread".
+This is because we want to distinguish verbs from adjectives.
 The verb "ack" or "acknowledge" means "mark as read".
 
 =head1 Status Level
 
-Mixing "mention timeline", and set a high level to it. Modify "import.pl".
+L<BusyBird> renders statuses based on their status "levels".
+
+The status level is an integer value to indicate the importance of the status.
+The higher the level is, the more important the status is.
+By default, all statuses are on level 0.
+
+To demonstrate status levels, let's improve the "import.pl" above.
+As a friendly person, you want to reply to strangers on Twitter, right?
+To do that, you have to watch "mentions timeline", too.
+
+    ## File: import2.pl
+    
+    use strict;
+    use warnings;
+    use Net::Twitter::Lite::WithAPIv1_1;
+    use JSON;
+    
+    my $nt = Net::Twitter::Lite::WithAPIv1_1->new(
+        consumer_key        => "API_KEY",
+        consumer_secret     => "API_SECRET",
+        access_token        => "ACCESS_TOKEN",
+        access_token_secret => "ACCESS_TOKEN_SECRET",
+        ssl                 => 1,
+    );
+    my $home = $nt->home_timeline;
+    my $mentions = $nt->mentions;
+    
+    foreach my $s (@$mentions) {
+        $s->{busybird}{level} = 1;
+    }
+    
+    print encode_json [@$mentions, @$home];
+
+The above script imports "home timeline" and "mentions timeline".
+The C<busybird.level> field of "mentions" statuses is set to 1.
+Then, it outputs both kinds of statuses to STDOUT.
+
+Like we did above, mixing multiple Twitter timelines into a single L<BusyBird> timeline is OK.
+L<BusyBird> sorts those statuses and renders them in chronological order.
+
+Let's save the above script as "import2.pl" and run it.
+
+    $ perl import2.pl | curl -d @- -H 'Content-Type: application/json' http://127.0.0.1:5000/timelines/home/statuses.json
+
+If you have ever been mentioned by someone, you'll see the statuses metioning you with the status level 1.
+
+Change the B<< level threshold >> by the buttons at the top-right corner.
+If you set to the threshold to "Lv. 1", it shows the "mention" statuses only, and hides everything else.
+That way, you can quickly review the mentions and reply to them.
+
+You can use arbitrary integer values for the status level (C<busybird.level> field), including negative values.
 
 =head1 Configuration
 
-=head2 Configure Timelines
+- make sample_config.psgi more friendly
+- BusyBird is configured by ~/.busybird/config.psgi
+- This is a Perl script.
+- config is between "use BusyBird;" and "end;".
 
-=head2 Input Statuses from Inside
+=head2 Configure More Than One Timelines
+
+- Just put timeline("hoge") functions to create timelines.
+
+=head2 Configuration Parameters
+
+- busybird->set_config() and timeline(...)->set_config().
+- details => Config.pod
+- example: global time_zone setting and per-timeline time_zone setting.
+
+=head2 Input Statuses from Inside BusyBird
+
+- A bit advanced topic.
+- You can do anything in config.psgi because it's Perl.
+- timeline("...") returns Timeline, busybird() returns Main.
+- embed import.pl to config.psgi
+- caveat: to repeat loading, you need to fork anyway.
 
 =head1 Filters
 
-Exec filter. pointer to L<BusyBird::Timeline>'s C<add_filter()> method.
+- pointer to L<BusyBird::Timeline>'s C<add_filter()> method.
 
 =head1 Configure StatusStorage
 
+=head1 AUTHOR
+
+Toshio Ito C<< toshioito [at] cpan.org >>
 
 =cut
 
