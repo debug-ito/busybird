@@ -93,7 +93,7 @@ Some endpoints support real-time notification via HTTP long-polling.
 =item *
 
 L<BusyBird> maintains B<read/unread> states of individual statuses.
-You can make statuses as "read" via Web API.
+You can mark statuses as "read" via Web API.
 
 =item *
 

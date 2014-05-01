@@ -7,17 +7,153 @@ BusyBird::Tutorial - Tutorial to use BusyBird
 
 =head1 Installation
 
+To install L<BusyBird>, type
+
+    # curl -L http://cpanmin.us | perl - BusyBird
+
+This may take time because it also installs many modules L<BusyBird> uses.
+
+Of course, you can use any CPAN client to install L<BusyBird> instead of getting cpanmin.us on the fly.
+
+    # cpanm BusyBird
+
 =head1 Start BusyBird
+
+After installing L<BusyBird> successfully, type
+
+    $ busybird
+    Twiggy: Accepting connections at http://127.0.0.1:5000/
+
+Then, access the URL ( http://127.0.0.1:5000/ ) by your Web browser.
+If you can see the top page, congraturations! L<BusyBird> has successfully started.
+
+Note that if you already use the TCP port 5000, C<busybird> command fails with "Address already in use" error.
+In that case, try another port by C<-p> option.
+
+    $ busybird -p 4444
 
 =head1 Input Statuses
 
-=head2 Input Statuses from Twitter
+By default, your L<BusyBird> instance has a timeline called "home", but the timeline has no status at this time.
+It won't magically import statuses out of nowhere.
+It is you who input statuses to it.
 
-=head1 View a Timeline
+To input statuses, you can use L<BusyBird>'s Web API.
 
-about the terminology of "acked/unacked".
+    $ curl -d '{"text":"hello, world!"}' -H 'Content-Type: application/json' \
+      http://127.0.0.1:5000/timelines/home/statuses.json
+
+C<< POST /timelines/home/statuses.json >> endpoint inputs statuses to the "home" timeline.
+Statuses are in the HTTP request body, and encoded in JSON.
+
+You can input more than one statuses by posting an array of statuses. Here is a bit more complicated example.
+
+    $ curl \
+      -d '[{"text":"Hello, Bob!", "user":{"screen_name":"Alice"}}, {"text":"Hello, Alice!", "user":{"screen_name":"Bob"}}]' \
+      -H 'Content-Type: application/json' http://127.0.0.1:5000/timelines/home/statuses.json
+
+This time, the statuses have C<user.screen_name> fields.
+L<BusyBird> renders this field as the person or object that created the status.
+
+=head2 Import Statuses from Twitter
+
+You now understand how to input statuses to L<BusyBird>, but creating statuses by hand is boring.
+So let's import statuses (tweets) from L<Twitter|https://twitter.com/> and view them on L<BusyBird>.
+
+To import tweets from Twitter via its API, you have to get the B<tokens> first. Here is how to get the tokens.
+
+=over
+
+=item 1.
+
+Access L<https://apps.twitter.com/>.
+
+=item 2.
+
+"Sign in" with your Twitter account.
+
+=item 3.
+
+Click "Create New App" button.
+
+=item 4.
+
+Fill the form and click "Create your Twitter application".
+
+=item 5.
+
+Click "API Keys" tab.
+
+=item 6.
+
+Click "Create my access token" button at the bottom of the page.
+You may have to refresh the page to get the created token.
+
+=item 7.
+
+Now in "API Keys" page, you see four mysterious tokens:
+B<< API key >>, B<< API secret >>, B<< Access token >> and B<< Access token secret >>.
+
+=back
+
+The procedure above may be out of date, but the point is to get the four OAuth tokens.
+
+B<< Make sure to keep the four tokens (especially "secret" ones) secret >>. Those are like the username-password pair of your account.
+
+Now that you have access to Twitter API, let's write a script called C<"import.pl"> to import tweets.
+
+    ## File: import.pl
+    
+    use strict;
+    use warnings;
+    use Net::Twitter::Lite::WithAPIv1_1;
+    use JSON;
+    
+    my $nt = Net::Twitter::Lite::WithAPIv1_1->new(
+        consumer_key        => "API_KEY",
+        consumer_secret     => "API_SECRET",
+        access_token        => "ACCESS_TOKEN",
+        access_token_secret => "ACCESS_TOKEN_SECRET",
+        ssl                 => 1,
+    );
+    print encode_json $nt->home_timeline;
+
+Replace the four tokens above with yours.
+This simple script imports statuses from your home timeline, encodes them in JSON and prints them to STDOUT.
+
+To run the script, you need L<Net::Twitter::Lite> and L<JSON> modules, so install them.
+
+    # cpanm Net::Twitter::Lite JSON
+
+You can directly input the statuses from Twitter to L<BusyBird>. No conversion is necessary.
+
+    $ perl import.pl | curl -d @- -H 'Content-Type: application/json' http://127.0.0.1:5000/timelines/home/statuses.json
+
+After that, you can see the Twitter statuses in L<BusyBird>.
+
+Try repeating the command above.
+You will see that L<BusyBird> only accepts the new statuses that are not yet in L<BusyBird>'s timeline.
+In a L<BusyBird> timeline, all statuses must have unique C<id> field.
+If you input a status that is already in the timeline, that status is ignored.
+
+This means you can repeat the above command without worrying about duplicate statuses.
+Register the command with C<cron>, then the L<BusyBird> timeline is automatically synchronized to your Twitter timeline.
+If you are wondering how frequently you should run the command, L<Net::Twitter::Loader> may help.
+
+=head1 Acked/Unacked States of Statuses
+
+L<BusyBird> maintains read/unread states of individual statuses.
+
+If you read statuses in L<BusyBird> via a Web browser, those statuses are marked as "read".
+When new statuses are input to L<BusyBird>, it shows the number of those "unread" statuses.
+
+Throughout the document and API of L<BusyBird>, we use the terms B<< "acked/unacked" >> instead of "read/unread".
+This is because we want to distinguish verbs and adjectives.
+The verb "ack" or "acknowledge" means "mark as read".
 
 =head1 Status Level
+
+Mixing "mention timeline", and set a high level to it. Modify "import.pl".
 
 =head1 Configuration
 
