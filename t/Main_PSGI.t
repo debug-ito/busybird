@@ -22,15 +22,14 @@ sub create_main {
     my $app = create_psgi_app($main);
     is(ref($app), 'CODE', 'create_psgi_app() returns a coderef');
     my @timelines = $main->get_all_timelines();
-    is(int(@timelines), 1, 'when no timeline is configured, create_psgi_app() generates one.');
-    is($timelines[0]->name, 'home', '... the timeline is named "home"');
+    is(int(@timelines), 0, 'app can be created without any timeline.');
 
     $main = create_main();
     my $tl = $main->timeline('hoge');
     $app = create_psgi_app($main);
     is(ref($app), 'CODE', 'create_psgi_app() returns a coderef');
     @timelines = $main->get_all_timelines();
-    is_deeply(\@timelines, [$tl], 'If the main has a timeline, "home" timeline is not created by create_psgi_app()');
+    is_deeply(\@timelines, [$tl], 'app is created with a timeline.');
 }
 
 done_testing();

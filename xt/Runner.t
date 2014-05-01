@@ -23,6 +23,7 @@ my $EXP_DEFAULT_CONFIG = File::Spec->catfile($EXP_CONFIG_DIR, "config.psgi");
     my $default_config = do { local $/; <$file> };
     close $file;
     like $default_config, qr/use BusyBird;/, "default config OK";
+    like $default_config, qr/^timeline\(["']home["']\)/m, "default config creates home timeline.";
     unlink $EXP_DEFAULT_CONFIG;
 }
 

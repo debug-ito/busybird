@@ -25,10 +25,6 @@ our @EXPORT_OK = qw(create_psgi_app);
 
 sub create_psgi_app {
     my ($main_obj) = @_;
-    my @timelines = $main_obj->get_all_timelines();
-    if(!@timelines) {
-        $main_obj->timeline('home');
-    }
     my $self = __PACKAGE__->_new(main_obj => $main_obj);
     return $self->_to_app;
 }
@@ -350,7 +346,6 @@ The following functions are exported only by request.
 Creates a L<PSGI> application object.
 
 C<$main_obj> is a L<BusyBird::Main> object.
-If there is no timeline in the C<$main_obj>, it creates C<"home"> timeline.
 
 =head1 AUTHOR
 

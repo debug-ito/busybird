@@ -418,6 +418,7 @@ sub test_error_request {
 {
     note('--- For examples');
     my $main = create_main();
+    $main->timeline("home");
     my @cases = (
         {endpoint => 'POST /timelines/home/statuses.json',
          content => <<EOD,
