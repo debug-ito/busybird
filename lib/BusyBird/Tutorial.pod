@@ -57,7 +57,7 @@ L<BusyBird> renders this field as the person or object that created the status.
 
 =head2 Import Statuses from Twitter
 
-You now understand how to input statuses to L<BusyBird>, but creating statuses by hand is boring.
+You now understand how to input statuses to L<BusyBird>, but it is boring to create statuses by hand.
 So let's import statuses (tweets) from L<Twitter|https://twitter.com/> and view them on L<BusyBird>.
 
 To import tweets from Twitter via its API, you have to get the B<tokens> first. Here is how to get the tokens.
@@ -125,11 +125,11 @@ To run the script, you need L<Net::Twitter::Lite> and L<JSON> modules, so instal
 
     # cpanm Net::Twitter::Lite JSON
 
-You can directly input the statuses from Twitter to L<BusyBird>. No conversion is necessary.
+You can directly input statuses from Twitter to L<BusyBird>. No conversion is necessary.
 
     $ perl import.pl | curl -d @- -H 'Content-Type: application/json' http://127.0.0.1:5000/timelines/home/statuses.json
 
-After that, you can see the Twitter statuses in L<BusyBird>.
+After that, you can see the Twitter statuses on L<BusyBird>.
 
 Try repeating the command above.
 You will see that L<BusyBird> only accepts the new statuses that are not yet in L<BusyBird>'s timeline.
@@ -153,7 +153,7 @@ The verb "ack" or "acknowledge" means "mark as read".
 
 =head1 Status Level
 
-L<BusyBird> renders statuses based on their status "levels".
+L<BusyBird> renders statuses based on their status B<"levels">.
 
 The status level is an integer value to indicate the importance of the status.
 The higher the level is, the more important the status is.
@@ -207,10 +207,20 @@ You can use arbitrary integer values for the status level (C<busybird.level> fie
 
 =head1 Configuration
 
-- make sample_config.psgi more friendly
-- BusyBird is configured by ~/.busybird/config.psgi
-- This is a Perl script.
-- config is between "use BusyBird;" and "end;".
+So far, we use L<BusyBird> with its default configuration,
+but you can customize its behavior by writing a configuration file.
+
+L<BusyBird> configuration file is B<~/.busybird/config.psgi>.
+By default, it looks like:
+
+    use BusyBird;
+    timeline("home");
+    end;
+
+config.psgi is a Perl script, so you can write arbitrary Perl codes into it.
+However, here is the basic rule:
+B<< you must write your config between "use BusyBird;" and "end;" statements. >>
+Follow this rule unless you know what you are doing.
 
 =head2 Configure More Than One Timelines
 
@@ -233,8 +243,6 @@ You can use arbitrary integer values for the status level (C<busybird.level> fie
 =head1 Filters
 
 - pointer to L<BusyBird::Timeline>'s C<add_filter()> method.
-
-=head1 Configure StatusStorage
 
 =head1 AUTHOR
 
