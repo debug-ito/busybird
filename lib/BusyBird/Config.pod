@@ -78,6 +78,9 @@ Maximum number of page entries shown in the pagination of the timeline list page
 
 =head1 PARAMETERS FOR BusyBird::Timeline
 
+TODO: note that all params in this category can also be set in Main (global config).
+
+
 
 =head2 C<time_zone> => TIMEZONE_STR
 

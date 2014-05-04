@@ -224,13 +224,58 @@ Follow this rule unless you know what you are doing.
 
 =head2 Configure More Than One Timelines
 
-- Just put timeline("hoge") functions to create timelines.
+You can have more than one timelines in a single L<BusyBird> instance.
+
+To create a timeline, just add a line
+
+    timeline("foobar");
+
+which creates a timeline named "foobar".
+
+To input statuses to the "foobar" timeline, try
+
+    $ perl import2.pl | curl -d @- http://127.0.0.1:5000/timelines/foobar/statuses.json
+
+Timeline's names must be unique. So if you repeat calling C<timeline()> function with the same name,
+
+   timeline("foobar");
+   timeline("foobar");
+
+it creates only one timeline named "foobar".
+
 
 =head2 Configuration Parameters
 
-- busybird->set_config() and timeline(...)->set_config().
-- details => Config.pod
-- example: global time_zone setting and per-timeline time_zone setting.
+You can set various config parameters by C<set_config()> method.
+
+To set a B<< global config parameter, >> use C<< busybird->set_config(...) >>.
+
+    busybird->set_config(time_zone => "UTC");
+
+A global config parameter affects all timelines and the overall behavior of the L<BusyBird> instance.
+In the above example, status timestamps in all timelines are rendered in UTC timezone.
+
+C<set_config()> method can accept more than one key-value pairs.
+
+    busybird->set_config(
+        time_zone   => "+0900",
+        time_locale => "ja_JP"
+    );
+
+Some parameters are B<< per-timeline config parameters, >>
+which can be set to individual timelines.
+
+To set a per-timeline parameter, use C<< timeline(...)->set_config(...) >>.
+
+    busybird->set_config(time_zone => "UTC");
+    
+    timeline("foobar")->set_config(time_zone => "+0900");
+
+Per-timeline config parameters always take precedence over global ones.
+So, in the above example, statuses are renderred in "+0900" timezone only in the timeline "foobar".
+In other timelines, the timezone is "UTC".
+
+See L<BusyBird::Config> for the complete list of config parameters.
 
 =head2 Input Statuses from Inside BusyBird
 
