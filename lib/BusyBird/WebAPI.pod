@@ -387,5 +387,8 @@ The server sends back the following response because there are two unacked statu
       }
     }
 
+=head1 AUTHOR
+
+Toshio Ito C<< toshioito [at] cpan.org >>
 
 =cut
