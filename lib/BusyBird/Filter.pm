@@ -54,7 +54,8 @@ BusyBird::Filter - common utilities about status filters
         $status->{busybird}{level} = 10;
     };
     
-    ## TODO: add the filters to timeline
+    timeline("home")->add_filter($drop_low_level);
+    timeline("home")->add_filter($set_level);
 
 =head1 DESCRIPTION
 
@@ -70,10 +71,6 @@ See L<BusyBird::Timeline>'s C<add_filter()> method for details about status filt
 =item L<BusyBird::Filter::Twitter>
 
 Filters and transformations useful when you import statuses from Twitter.
-
-=item L<BusyBird::Filter::Misc>
-
-Miscellaneous filters you may find interesting.
 
 =back
 

@@ -12,6 +12,9 @@ BusyBird::Config - list of config parameters for BusyBird
 
 TODO: we should write the documentation from the point of writing config.psgi.
 Individual modules should be mentioned but set aside.
+This document should not refer to the Tutorial (it is a cyclic ref!). This document should refer to Main and Timeline.
+
+TODO: need examples. (1) Timestamp customization. (2) entity builder. (3) original share-dir. (4) status storage.
 
 This document describes config parameters for L<BusyBird::Main> and L<BusyBird::Timeline>.
 

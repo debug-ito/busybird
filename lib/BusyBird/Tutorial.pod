@@ -32,6 +32,10 @@ In that case, try another port by C<-p> option.
 
     $ busybird -p 4444
 
+You can see complete list of options by C<-h> option.
+
+    $ busybird -h
+
 =head1 Input Statuses
 
 By default, your L<BusyBird> instance has a timeline called "home", but the timeline has no status at this time.
@@ -253,9 +257,9 @@ To set a B<< global config parameter, >> use C<< busybird->set_config(...) >>.
     busybird->set_config(time_zone => "UTC");
 
 A global config parameter affects all timelines and the overall behavior of the L<BusyBird> instance.
-In the above example, status timestamps in all timelines are rendered in UTC timezone.
+In the above example, status timestamps in all timelines are rendered in UTC time zone.
 
-C<set_config()> method can accept more than one key-value pairs.
+C<set_config()> method accepts more than one key-value pairs.
 
     busybird->set_config(
         time_zone   => "+0900",
@@ -272,22 +276,102 @@ To set a per-timeline parameter, use C<< timeline(...)->set_config(...) >>.
     timeline("foobar")->set_config(time_zone => "+0900");
 
 Per-timeline config parameters always take precedence over global ones.
-So, in the above example, statuses are renderred in "+0900" timezone only in the timeline "foobar".
-In other timelines, the timezone is "UTC".
+So, in the above example, statuses are renderred in "+0900" time zone only in the timeline "foobar".
+In other timelines, the time zone is "UTC".
 
 See L<BusyBird::Config> for the complete list of config parameters.
 
-=head2 Input Statuses from Inside BusyBird
-
-- A bit advanced topic.
-- You can do anything in config.psgi because it's Perl.
-- timeline("...") returns Timeline, busybird() returns Main.
-- embed import.pl to config.psgi
-- caveat: to repeat loading, you need to fork anyway.
-
 =head1 Filters
 
-- pointer to L<BusyBird::Timeline>'s C<add_filter()> method.
+You can set B<< status filters >> to timelines.
+
+A status filter is a function that is executed when you input statuses into a timeline.
+You can modify the input statuses with the filter before they are stored into the timeline.
+
+    [ Statuses ] --HTTP POST--> [ Filter 1 ] --> [ Filter 2 ] --> ... --> [ Timeline ]
+
+By default, timelines have no filters. Statuses are directly input to them.
+
+To add a status filter to a timeline, use C<add_filter()> method.
+
+    timeline("home")->add_filter(sub {
+        my ($statuses) = @_;
+        foreach my $status (@$statuses) {
+            if($status->{text} =~ /\@my_name/) {
+                $status->{busybird}{level}++;
+            }
+        }
+        return $statuses;
+    });
+
+A status filter is just a subroutine reference in Perl.
+It is called like
+
+    $result_arrayref = $filter->($arrayref_of_statuses)
+
+where C<$arrayref_of_statuses> is an array-ref of input statuses.
+
+In the above example, the filter inspects each status's C<text> field.
+If it finds your screen name ("@my_name"), it increments the status's level, meaning that it's important.
+Then the filter returns the array of modified statuses.
+
+A timeline can have more than one filters.
+Those filters are executed in the order they are added, and the output of one filter becomes the input of the next filter.
+
+    timeline("home")->add_filter(sub {
+        my ($statuses) = @_;
+        foreach my $status (@$statuses) {
+            if($status->{text} =~ /\@my_name/) {
+                $status->{busybird}{level}++;
+            }
+        }
+        return $statuses;
+    });
+    timeline("home")->add_filter(sub {
+        my ($statuses) = @_;
+        return [grep { $_->{busybird}{level} > 4 } @$statuses];
+    });
+
+In the above example, the second filter extracts statuses whose level is higher than 4.
+
+Inspecting statuses one by one is a typical pattern in status filters.
+L<BusyBird::Filter> defines some functions useful for that purpose.
+
+See L<BusyBird::Timeline> and L<BusyBird::Filter> for more about status filters.
+
+=head1 What's Next?
+
+For advanced and more detailed topics, you may find the following documents interesting.
+
+=over
+
+=item L<BusyBird::WebAPI>
+
+Reference manual of L<BusyBird> Web API, including endpoints that get, post or ack statuses.
+
+=item L<BusyBird::Status>
+
+Object structure of L<BusyBird> statuses.
+
+=item L<BusyBird::Config>
+
+Full list of configuration items.
+
+=item L<BusyBird::Filter>
+
+Functions useful when writing status filters.
+
+=item L<BusyBird::Main>
+
+The class of the object returned by C<busybird> keyword in config.psgi.
+
+=item L<BusyBird::Timeline>
+
+The class of the object returned by C<timeline(...)> keyword in config.psgi.
+It has various methods to manipuate statuses in it.
+
+=back
+
 
 =head1 AUTHOR
 

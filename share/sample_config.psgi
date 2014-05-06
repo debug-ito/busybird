@@ -20,5 +20,5 @@ timeline("home");
 
 #### For complete list of config items, run 'perldoc BusyBird::Config'.
 
-#### configuration must be done with the 'end' function.
+#### You must finish configuration with the 'end' function.
 end;
