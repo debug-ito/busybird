@@ -190,6 +190,37 @@ sub test_error_request {
 }
 
 {
+    note('--- status filters, auto-generation of id and created_at');
+    my $main = create_main();
+    my $filter_executed = 0;
+    $main->timeline("test")->add_filter(sub {
+        my ($statuses) = @_;
+        $_->{filtered} = "yes" foreach @$statuses;
+        $filter_executed++;
+        return $statuses;
+    });
+    test_psgi create_psgi_app($main), sub {
+        my $tester = testlib::HTTP->new(requester => shift);
+        my $res_obj = $tester->post_json_ok('/timelines/test/statuses.json',
+                                            '[{"text":"one"},{"text":"two"},{"text":"three"}]',
+                                            qr/^200$/, 'POST statuses OK');
+        is_deeply $res_obj, {error => undef, count => 3}, "POST count OK";
+        cmp_ok $filter_executed, ">", 0, "filter is executed";
+        $res_obj = $tester->get_json_ok('/timelines/test/statuses.json', qr/^200$/, 'GET statuses OK');
+        is $res_obj->{error}, undef, "GET succeed";
+        my $statuses = $res_obj->{statuses};
+        my %got_texts = ();
+        foreach my $s (@$statuses) {
+            $got_texts{$s->{text}}++;
+            ok defined($s->{id}), "id is generated";
+            ok defined($s->{created_at}), "created_at is generated";
+            is $s->{filtered}, "yes", "filtered is marked";
+        }
+        is_deeply \%got_texts, {one => 1, two => 1, three => 1}, "status texts are OK. we don't care the order here";
+    };
+}
+
+{
     note('--- -- various POST ack argument patterns');
     my $f = 'BusyBird::DateTime::Format';
     foreach my $case (test_cases_for_ack(is_ordered => 0), test_cases_for_ack(is_ordered => 1)) {

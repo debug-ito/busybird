@@ -192,6 +192,9 @@ Response Body:
 
 Adds new statuses to the specified timeline.
 
+This endpoint uses L<BusyBird::Timeline>'s C<add_statuses()> method.
+Therefore, it applies the status filter to the input statuses, and it generates C<id> and C<created_at> fields if they don't exist.
+
 B<Path Parameters>
 
 =over
