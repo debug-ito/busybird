@@ -9,7 +9,7 @@
         <: if !$s.busybird.acked_at { :>
         <span class="bb-status-new-label label label-success">NEW</span>
         <: } :>
-        &nbsp;<span class="label">Lv. <: bb_level($s.busybird.level) :></span>
+        &nbsp;<span class="label label-default">Lv. <: bb_level($s.busybird.level) :></span>
       </div>
       <div>
         <span class="bb-status-username"><: $s.user.screen_name :></span>&nbsp;&nbsp;
