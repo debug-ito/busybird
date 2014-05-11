@@ -176,6 +176,8 @@ TBW. License thingy.
 
 =item Bootstrap
 
+Make sure to mention Glyphicons
+
 =item q.js
 
 =item spin.js
