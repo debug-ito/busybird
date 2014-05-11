@@ -123,6 +123,7 @@ div.bb-status-attributes {
     width: 40px;
     float: right;
     margin-left: 20px;
+    margin-top: 4px;
 }
 
 .bb-msg-error {
