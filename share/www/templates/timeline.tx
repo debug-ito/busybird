@@ -30,12 +30,12 @@
 : around content -> {
 <div class="container-fluid">
   <div class="row">
-    <div class="col-md-2">
-      <div class="sidebar-nav sidebar-nav-fixed" id="sidebar">
+    <div class="col-sm-2">
+      <div class="sidebar-nav sidebar-nav-fixed hidden-xs" id="sidebar">
         <div class="panel-group" id="bb-statuses-summary"></div>
       </div>
     </div>
-    <div class="col-md-8">
+    <div class="col-sm-8">
       <ul id="statuses" class="list-unstyled">
       </ul>
       <div id="main-footer">

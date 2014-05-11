@@ -92,15 +92,15 @@ div.bb-status-attributes {
     list-style: none;
 }
 
-/****
-  fixed sidebar
-  http://stackoverflow.com/questions/9350818/fixed-sidebar-navigation-in-fluid-twitter-bootstrap-2-0
-****/
-
 .label {
     font-size: 90%;
     padding: 2px 4px 2px 4px;
 }
+
+/****
+  fixed sidebar
+  http://stackoverflow.com/questions/9350818/fixed-sidebar-navigation-in-fluid-twitter-bootstrap-2-0
+****/
 
 .sidebar-nav {
     padding: 9px 0;
@@ -115,19 +115,6 @@ div.bb-status-attributes {
 .sidebar-detail {
     max-height: 300px;
     overflow: auto;
-}
-
-@media (max-width: 767px) {
-    .sidebar-nav-fixed {
-        position:static;
-        width:auto;
-    }
-}
-
-@media (max-width: 979px) {
-    .sidebar-nav-fixed {
-        top:70px;
-    }
 }
 
 /****************************/
