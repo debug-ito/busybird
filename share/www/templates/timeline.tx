@@ -1,49 +1,42 @@
 : ## WRAPPER "wrapper_document.tt" WITH script_name = script_name, title = timeline_name
 : cascade wrapper_navbar { script_name => $script_name, title => $timeline_name }
 : around navbar_content -> {
-<ul class="nav pull-left">
+<ul class="nav navbar-nav navbar-left hidden-xs">
   <li class="active"><a><: $timeline_name :></a></li>
-  <li class="divider-vertical"></li>
 </ul>
-<div class="navbar-form pull-right">
-  <div class="btn-group pull-right bb-nav-button-group">
-    <a class="btn btn-inverse" href="<: $post_button_url :>" target="_blank"><i class="icon-pencil icon-white"></i></a>
-  </div>
-</div>
-<div class="navbar-text pull-right">
-  <span class="label">Lv. <span class="bb-threshold-level">0</span></span>
-</div>
-<div class="navbar-form pull-right">
-  <div class="btn-group pull-right bb-nav-button-group">
-    <a id="bb-button-incriment-threshold-level" class="btn btn-inverse" href="#">
-      <i class="icon-zoom-out icon-white"></i>
+<form class="navbar-form navbar-right bb-nav-controls-container">
+  <a class="btn btn-default" href="<: $post_button_url :>" target="_blank"><span class="glyphicon glyphicon-pencil"></span></a>
+  <span class="label label-default">Lv. <span class="bb-threshold-level">0</span></span>
+  <div class="btn-group pull-right">
+    <a id="bb-button-incriment-threshold-level" class="btn btn-default" href="#">
+      <span class="glyphicon glyphicon-zoom-out"></span>
     </a>
-    <a id="bb-button-decriment-threshold-level" class="btn btn-inverse" href="#">
-      <i class="icon-zoom-in icon-white"></i>
+    <a id="bb-button-decriment-threshold-level" class="btn btn-default" href="#">
+      <span class="glyphicon glyphicon-zoom-in"></span>
     </a>
   </div>
-  <div class="btn-group pull-left bb-nav-button-group">
-    <a id="bb-new-statuses-button" class="btn btn-inverse disabled" href="#">
+  <div class="btn-group pull-left">
+    <a id="bb-new-statuses-button" class="btn btn-default disabled" href="#">
       New <span class="bb-new-statuses-num badge">0</span>
     </a>
   </div>
-</div>
-<div id="bb-spinner-placeholder"></div>
-<div id="bb-indicator" class="navbar-text pull-right">
+</form>
+<div class="hidden-xs" id="bb-spinner-placeholder"></div>
+<p id="bb-indicator" class="navbar-text navbar-right hidden-xs">
   <span id="bb-msg"></span>
-</div>
+</p>
 : }  ## around navbar_content
 
 : around content -> {
 <div class="container-fluid">
-  <div class="row-fluid">
-    <div class="span2">
+  <div class="row">
+    <div class="col-md-2">
       <div class="sidebar-nav sidebar-nav-fixed" id="sidebar">
-        <div class="accordion" id="bb-statuses-summary"></div>
+        <div class="panel-group" id="bb-statuses-summary"></div>
       </div>
     </div>
-    <div class="span8">
-      <ul id="statuses" class="unstyled">
+    <div class="col-md-8">
+      <ul id="statuses" class="list-unstyled">
       </ul>
       <div id="main-footer">
         <a class="btn btn-primary" id="bb-more-button" data-loading-text="Loading..." href="#">More...</a>

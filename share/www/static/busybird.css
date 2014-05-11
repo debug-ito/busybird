@@ -116,12 +116,7 @@ div.bb-status-attributes {
     }
 }
 
-.bb-nav-text {
-    vertical-align: middle;
-    display: inline-block;
-    margin: 4px;
-    height: 100%;
-}
+/****************************/
 
 #bb-spinner-placeholder {
     height: 40px;
@@ -140,8 +135,8 @@ div.bb-status-attributes {
     color: #faf681;
 }
 
-.bb-nav-button-group {
-    margin: 0 2px 0 2px;
+.bb-nav-controls-container div {
+    margin-left: 4px;
+    margin-right: 4px;
 }
-
 
