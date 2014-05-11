@@ -5,9 +5,12 @@
   <li class="active"><a><: $timeline_name :></a></li>
 </ul>
 <form class="navbar-form navbar-right bb-nav-controls-container">
-  <a class="btn btn-default" href="<: $post_button_url :>" target="_blank"><span class="glyphicon glyphicon-pencil"></span></a>
-  <span class="label label-default">Lv. <span class="bb-threshold-level">0</span></span>
-  <div class="btn-group pull-right">
+  <div class="btn-group">
+    <a id="bb-new-statuses-button" class="btn btn-default disabled" href="#">
+      New <span class="bb-new-statuses-num badge">0</span>
+    </a>
+  </div>
+  <div class="btn-group">
     <a id="bb-button-incriment-threshold-level" class="btn btn-default" href="#">
       <span class="glyphicon glyphicon-zoom-out"></span>
     </a>
@@ -15,11 +18,8 @@
       <span class="glyphicon glyphicon-zoom-in"></span>
     </a>
   </div>
-  <div class="btn-group pull-left">
-    <a id="bb-new-statuses-button" class="btn btn-default disabled" href="#">
-      New <span class="bb-new-statuses-num badge">0</span>
-    </a>
-  </div>
+  <span class="label label-default">Lv. <span class="bb-threshold-level">0</span></span>
+  <a class="btn btn-default" href="<: $post_button_url :>" target="_blank"><span class="glyphicon glyphicon-pencil"></span></a>
 </form>
 <div class="hidden-xs" id="bb-spinner-placeholder"></div>
 <p id="bb-indicator" class="navbar-text navbar-right hidden-xs">
