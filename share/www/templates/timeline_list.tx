@@ -30,7 +30,7 @@
           <tr data-bb-init-counts="<: $timeline_entry.counts_json :>">
             <td><a href="<: $script_name :>/timelines/<: $timeline_entry.name | uri_escape :>/"><span class="glyphicon glyphicon-list"></span> <span class="bb-timeline-name"><: $timeline_entry.name :></span></a></td>
             <td class="bb-timeline-unacked-counts-total-cell"></td>
-            <td class="bb-timeline-unacked-counts-levels-cell"><ul></ul></td>
+            <td class="bb-timeline-unacked-counts-levels-cell"><ul class="list-unstyled"></ul></td>
           </tr>
           <:- } ## for :>
         </tbody>

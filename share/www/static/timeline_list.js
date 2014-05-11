@@ -13,7 +13,7 @@ bb.UnackedCountsRenderer = (function() {
         _renderLevel: function(level, sum_count, this_count) {
             var $pair = $('<li class="bb-unacked-counts-pair"></li>');
             var $level = $('<span class="bb-unacked-counts-level"></span>');
-            var $sum_count = $('<span class="bb-unacked-counts-sum-count badge badge-info"></span>').text(sum_count);
+            var $sum_count = $('<span class="bb-unacked-counts-sum-count label label-primary"></span>').text(sum_count);
             if(level === 'total') {
                 $level.text("Other");
             }else {
@@ -22,7 +22,7 @@ bb.UnackedCountsRenderer = (function() {
             }
             $pair.append($level).append(" ").append($sum_count);
             if(defined(this_count)) {
-                $pair.append(" ").append($('<span class="bb-unacked-counts-this-count badge"></span>').text("+" + this_count));
+                $pair.append(" ").append($('<span class="bb-unacked-counts-this-count label label-default"></span>').text("+" + this_count));
             }
             return $pair;
         },
@@ -31,7 +31,7 @@ bb.UnackedCountsRenderer = (function() {
             var $container_total = $(self.dom_total);
             $container_total.empty();
             $container_total.append(
-                $('<span class="bb-unacked-counts-total badge badge-info"></span>').text(total_count)
+                $('<span class="bb-unacked-counts-total label label-primary"></span>').text(total_count)
             );
         },
         show: function(unacked_counts) {
