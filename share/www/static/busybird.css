@@ -141,6 +141,13 @@ div.bb-status-attributes {
     text-align: right;
 }
 
+@media (max-width: 767px) {
+    .bb-nav-controls-container {
+        margin-top: 0px;
+        margin-bottom: 0px;
+    }
+}
+
 .bb-nav-controls-container > * {
     margin-left: 2px;
     margin-right: 2px;
