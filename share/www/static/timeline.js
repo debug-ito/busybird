@@ -565,8 +565,8 @@ bb.StatusesSummary.prototype = {
                        + '<a data-toggle="collapse" href="#'+ accordion_body_id +'">'
                        + 'Lv. <span class="bb-summary-level">' + entry.level + '</span> &nbsp;&nbsp;'
                        + '<span class="bb-summary-count-pair">'
-                       + '<span class="badge badge-info bb-summary-count-above-level">' + count_above + '</span> '
-                       + (entry.count === count_above ? '' : '<span class="badge bb-summary-count-this-level">+' + entry.count + '</span>')
+                       + '<span class="label label-primary bb-summary-count-above-level">' + count_above + '</span> '
+                       + (entry.count === count_above ? '' : '<span class="label label-default bb-summary-count-this-level">+' + entry.count + '</span>')
                        + '</span>'
                        + '</a></div>');
         var $body = $('<div id="'+ accordion_body_id +'" class="panel-collapse collapse"></div>')

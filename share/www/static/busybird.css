@@ -88,6 +88,11 @@ div.bb-status-attributes {
   http://stackoverflow.com/questions/9350818/fixed-sidebar-navigation-in-fluid-twitter-bootstrap-2-0
 ****/
 
+.label {
+    font-size: 90%;
+    padding: 2px 4px 2px 4px;
+}
+
 .sidebar-nav {
     padding: 9px 0;
 }
