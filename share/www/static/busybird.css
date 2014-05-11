@@ -71,6 +71,15 @@ div.bb-status-attributes {
     background-color: #e7e8ec;
 }
 
+.bb-summary-heading {
+    padding: 0;
+}
+
+.bb-summary-heading > a {
+    display: block;
+    padding: 10px 15px 10px 15px;
+}
+
 .bb-summary-count-pair {
     white-space: nowrap;
 }
