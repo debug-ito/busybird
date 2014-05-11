@@ -47,7 +47,7 @@
 <script type="text/javascript" src="<: $script_name :>/static/q.js"></script>
 <script type="text/javascript" src="<: $script_name :>/static/busybird.js"></script>
 <script type="text/javascript" src="<: $script_name :>/static/timeline_list.js"></script>
-<script type="text/javascript" src="<: $script_name :>/static/bootstrap/js/bootstrap.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 <script type="text/javascript">
 "use strict";
 $(function() {
