@@ -166,6 +166,24 @@ This is supposed to be called at the end of C<config.psgi> file.
 
 This is equivalent to C<< BusyBird::Main::PSGI::create_psgi_app(busybird()) >>.
 
+=head1 TECHNOLOGIES USED
+
+TBW. License thingy.
+
+=over
+
+=item jQuery
+
+=item Bootstrap
+
+=item q.js
+
+=item spin.js
+
+=item ... and a lot of Perl modules
+
+=back
+
 =head1 AUTHOR
 
 Toshio Ito C<< <toshioito [at] cpan.org> >>
