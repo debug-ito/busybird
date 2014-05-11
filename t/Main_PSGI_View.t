@@ -375,7 +375,7 @@ sub create_main {
         test_psgi_response($psgi_response, 200, "PSGI response OK");
         my $tree = testlib::HTTP->parse_html(join "", @{$psgi_response->[2]});
         
-        my @pager_nodes = $tree->findnodes('//ul[@class="bb-timeline-page-list"]');
+        my @pager_nodes = $tree->findnodes('//ul[@class="bb-timeline-page-list pagination"]');
         is(scalar(@pager_nodes), $exp_pager_num, "$exp_pager_num pager objects should exist");
         foreach my $pager_index (0 .. ($exp_pager_num - 1)) {
             my $pager_node = $pager_nodes[$pager_index];

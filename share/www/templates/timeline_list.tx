@@ -4,7 +4,7 @@
 
 <: macro pagination -> { -:>
 <:- if $last_page > 0 { -:>
-<ul class="pagination bb-timeline-page-list">
+<ul class="bb-timeline-page-list pagination">
   <li><a href="<: $script_name :>/?page=0">&laquo;</a></li>
   <: if $cur_page == 0 { :><li class="disabled"><a href="#"><: } else { :><li><a href="<: $script_name :>/?page=<: $cur_page -1 :>"><: } :>&lt;</a></li>
   <:- for $page_list -> $page { :>
