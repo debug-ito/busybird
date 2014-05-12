@@ -45,8 +45,8 @@
   </div>
 </div>
 
-<script src="//code.jquery.com/jquery-1.9.1.min.js"></script>
-<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="<: $script_name :>/static/jquery.js"></script>
+<script type="text/javascript" src="<: $script_name :>/static/bootstrap/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="<: $script_name :>/static/spin.js"></script>
 <script type="text/javascript" src="<: $script_name :>/static/q.js"></script>
 <script type="text/javascript" src="<: $script_name :>/static/busybird.js"></script>

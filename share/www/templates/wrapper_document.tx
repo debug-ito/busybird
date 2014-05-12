@@ -6,7 +6,7 @@
     <title><: if defined($title) { :><: $title :> - <: } :>BusyBird</title>
     <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="<: $script_name :>/static/bootstrap/css/bootstrap.min.css" type="text/css" media="screen" />
     <link rel="stylesheet" href="<: $script_name :>/static/busybird.css" type="text/css" media="screen" />
   </head>
   <body>
