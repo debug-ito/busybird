@@ -562,6 +562,7 @@ bb.StatusesSummary.prototype = {
         var accordion_body_id = "bb-summary-body-level" + entry.level;
         var $heading = $('<div class="panel-heading bb-summary-heading">'
                        + '<a data-toggle="collapse" href="#'+ accordion_body_id +'">'
+                       + '<span class="caret"></span> '
                        + 'Lv. <span class="bb-summary-level">' + entry.level + '</span> &nbsp;&nbsp;'
                        + '<span class="bb-summary-count-pair">'
                        + '<span class="label label-primary bb-summary-count-above-level">' + count_above + '</span> '
