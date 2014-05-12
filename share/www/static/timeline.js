@@ -547,13 +547,12 @@ bb.StatusesSummary.prototype = {
     _renderPerUserList: function(count_per_user) {
         var peruser_entries = $.map(count_per_user, function(count, username) { return {"username": username, "count": count} })
                                .sort(function(a, b) { return b.count - a.count });
-        var $userlist = $("<ol></ol>");
+        var $userlist = $('<ul class="list-group"></ul>');
         $.each(peruser_entries, function(i, entry) {
-            var plural = (entry.count > 1) ? "es" : "";
             var $username = $('<span class="bb-summary-count-username"></span>').text(entry.username);
-            var $count    = $('<span class="bb-summary-count-per-user"></span>').text(entry.count);
-            var $li_entry = $('<li class="bb-summary-count-per-user-entry"></li>')
-                             .append($username).append(" : ").append($count).append(" status" + plural);
+            var $count    = $('<span class="bb-summary-count-per-user label label-default"></span>').text(entry.count);
+            var $li_entry = $('<li class="bb-summary-count-per-user-entry list-group-item"></li>')
+                             .append($username).append(" ").append($count);
             $userlist.append($li_entry);
         });
         return $userlist;
@@ -569,8 +568,8 @@ bb.StatusesSummary.prototype = {
                        + (entry.count === count_above ? '' : '<span class="label label-default bb-summary-count-this-level">+' + entry.count + '</span>')
                        + '</span>'
                        + '</a></div>');
-        var $body = $('<div id="'+ accordion_body_id +'" class="panel-collapse collapse"></div>')
-                     .append($('<div class="panel-body"></div>').append(self._renderPerUserList(entry.per_user)));
+        var $body = self._renderPerUserList(entry.per_user);
+        $body.attr("id", accordion_body_id).addClass("panel-collapse collapse");
         var $entry = $('<div class="panel panel-default bb-summary-level-entry">').append($heading).append($body);
         return $entry;
     },
