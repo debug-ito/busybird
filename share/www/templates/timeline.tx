@@ -23,9 +23,9 @@
   <span id="bb-msg"></span>
 </p>
 <div class="navbar-collapse collapse">
-<ul class="nav navbar-nav navbar-left">
-  <li class="active"><a><: $timeline_name :></a></li>
-</ul>
+  <ul class="nav navbar-nav navbar-left">
+    <li class="active"><a><: $timeline_name :></a></li>
+  </ul>
 </div>
 : }  ## around navbar_content
 
