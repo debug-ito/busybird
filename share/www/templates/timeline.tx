@@ -25,6 +25,7 @@
 <div class="navbar-collapse collapse">
   <ul class="nav navbar-nav navbar-left">
     <li class="active"><a><: $timeline_name :></a></li>
+    <li class="visible-xs"><a href="<: $script_name :>/"><span class="glyphicon glyphicon-arrow-left"></span> Top</a></li>
   </ul>
 </div>
 : }  ## around navbar_content
