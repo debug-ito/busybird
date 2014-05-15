@@ -4,7 +4,8 @@
 : around navbar -> {
 <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
   <div class="container-fluid">
-    <a class="navbar-brand" href="<: $script_name :>/"><span class="hidden-xs">BusyBird</span><span class="visible-xs glyphicon glyphicon-home"></span></a>
+    <a class="navbar-brand" href="<: $script_name :>/"><span class="hidden-xs">BusyBird</span></a>
+    <a class="navbar-brand visible-xs" data-toggle="collapse" data-target=".navbar-collapse" href="#"><span class="glyphicon glyphicon-home"></span></a>
 : block navbar_content -> {}
   </div>
 </nav>

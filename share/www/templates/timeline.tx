@@ -1,9 +1,6 @@
 : ## WRAPPER "wrapper_document.tt" WITH script_name = script_name, title = timeline_name
 : cascade wrapper_navbar { script_name => $script_name, title => $timeline_name }
 : around navbar_content -> {
-<ul class="nav navbar-nav navbar-left hidden-xs">
-  <li class="active"><a><: $timeline_name :></a></li>
-</ul>
 <form class="navbar-form navbar-right bb-nav-controls-container">
   <div class="btn-group">
     <a id="bb-new-statuses-button" class="btn btn-default disabled" href="#">
@@ -25,6 +22,11 @@
 <p id="bb-indicator" class="navbar-text navbar-right hidden-xs">
   <span id="bb-msg"></span>
 </p>
+<div class="navbar-collapse collapse">
+<ul class="nav navbar-nav navbar-left">
+  <li class="active"><a><: $timeline_name :></a></li>
+</ul>
+</div>
 : }  ## around navbar_content
 
 : around content -> {
