@@ -22,6 +22,7 @@
 <p id="bb-indicator" class="navbar-text navbar-right hidden-xs">
   <span id="bb-msg"></span>
 </p>
+<!-- a menu collapsed in small screens -->
 <div class="navbar-collapse collapse">
   <ul class="nav navbar-nav navbar-left">
     <li class="active"><a><: $timeline_name :></a></li>

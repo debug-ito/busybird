@@ -5,7 +5,9 @@
 <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
   <div class="container-fluid">
     <a class="navbar-brand hidden-xs" href="<: $script_name :>/"><span>BusyBird</span></a>
-    <a class="navbar-brand visible-xs" data-toggle="collapse" data-target=".navbar-collapse" href="#"><span class="glyphicon glyphicon-home"></span></a>
+    <button type="button" class="navbar-brand btn btn-link visible-xs" data-toggle="collapse" data-target=".navbar-collapse">
+      <span class="glyphicon glyphicon-home"></span>
+    </button>
 : block navbar_content -> {}
   </div>
 </nav>
