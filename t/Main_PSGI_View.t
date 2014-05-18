@@ -196,11 +196,11 @@ sub create_main {
         
         {label => "URL and HTML special char, no entity",
          args => [{id => "hoge", text => 'this contains URL http://hogehoge.com/?a=foo+bar&b=%2Fhoge here :->'}],
-         exp => q{this contains URL <a href="http://hogehoge.com/?a=foo+bar&b=%2Fhoge">http://hogehoge.com/?a=foo+bar&amp;b=%2Fhoge</a> here :-&gt;}},
+         exp => q{this contains URL <a href="http://hogehoge.com/?a=foo+bar&b=%2Fhoge" target="_blank">http://hogehoge.com/?a=foo+bar&amp;b=%2Fhoge</a> here :-&gt;}},
         
         {label => "URL at the top and bottom",
          args => [{text => q{http://hoge.com/toc.html#item5 hogehoge http://foobar.co.jp/q=hoge&page=5}}],
-         exp => q{<a href="http://hoge.com/toc.html#item5">http://hoge.com/toc.html#item5</a> hogehoge <a href="http://foobar.co.jp/q=hoge&page=5">http://foobar.co.jp/q=hoge&amp;page=5</a>}},
+         exp => q{<a href="http://hoge.com/toc.html#item5" target="_blank">http://hoge.com/toc.html#item5</a> hogehoge <a href="http://foobar.co.jp/q=hoge&page=5" target="_blank">http://foobar.co.jp/q=hoge&amp;page=5</a>}},
         
         {label => "Twitter Entities",
          args => [{
@@ -223,7 +223,7 @@ sub create_main {
                  } ]
              }
          }],
-         exp => q{てすと &amp;lt;&quot;&amp;amp;hearts;&amp;amp;&amp;amp;hearts;&quot;&amp;gt; <a href="http://t.co/dNlPhACDcS">google.co.jp</a> &amp;gt;&quot;&amp;lt; <a href="https://twitter.com/debug_ito">@debug_ito</a> &amp;amp; &amp;amp; &amp;amp; <a href="https://twitter.com/search?q=%23test&src=hash">#test</a>}},
+         exp => q{てすと &amp;lt;&quot;&amp;amp;hearts;&amp;amp;&amp;amp;hearts;&quot;&amp;gt; <a href="http://t.co/dNlPhACDcS" target="_blank">google.co.jp</a> &amp;gt;&quot;&amp;lt; <a href="https://twitter.com/debug_ito" target="_blank">@debug_ito</a> &amp;amp; &amp;amp; &amp;amp; <a href="https://twitter.com/search?q=%23test&src=hash" target="_blank">#test</a>}},
 
         {label => "2 urls entities",
          args => [{
@@ -248,7 +248,7 @@ sub create_main {
                  ]
              }
          }],
-         exp => q{<a href="http://t.co/0u6Ki0bOYQ">office.com</a> - plain,  <a href="http://t.co/0u6Ki0bOYQ">office.com</a> - with scheme}},
+         exp => q{<a href="http://t.co/0u6Ki0bOYQ" target="_blank">office.com</a> - plain,  <a href="http://t.co/0u6Ki0bOYQ" target="_blank">office.com</a> - with scheme}},
 
         {label => "Unicode hashtags and media entities",
          args => [{
@@ -290,7 +290,7 @@ sub create_main {
                  ]
              }
          }],
-         exp => q{ドコモ「docomo Wi-Fi」、南海/阪急/JR 九州でサービス エリア拡大 <a href="http://t.co/mvgqG5v3mQ">bit.ly/14jappE</a> <a href="https://twitter.com/search?q=%23%E5%8D%97%E6%B5%B7&src=hash">#南海</a> <a href="https://twitter.com/search?q=%23%E9%98%AA%E6%80%A5&src=hash">#阪急</a> <a href="https://twitter.com/search?q=%23JR%E4%B9%9D%E5%B7%9E&src=hash">#JR九州</a> <a href="http://t.co/U3h7lEDZKT">pic.twitter.com/U3h7lEDZKT</a>}}
+         exp => q{ドコモ「docomo Wi-Fi」、南海/阪急/JR 九州でサービス エリア拡大 <a href="http://t.co/mvgqG5v3mQ" target="_blank">bit.ly/14jappE</a> <a href="https://twitter.com/search?q=%23%E5%8D%97%E6%B5%B7&src=hash" target="_blank">#南海</a> <a href="https://twitter.com/search?q=%23%E9%98%AA%E6%80%A5&src=hash" target="_blank">#阪急</a> <a href="https://twitter.com/search?q=%23JR%E4%B9%9D%E5%B7%9E&src=hash" target="_blank">#JR九州</a> <a href="http://t.co/U3h7lEDZKT" target="_blank">pic.twitter.com/U3h7lEDZKT</a>}}
     ) {
         is($funcs->{bb_text}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
     }

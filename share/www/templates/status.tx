@@ -13,7 +13,7 @@
       </div>
       <div>
         <span class="bb-status-username"><: $s.user.screen_name :></span>&nbsp;&nbsp;
-        <span class="bb-status-created-at"><: link( $bb_timestamp($s.created_at), href => $bb_status_permalink($s) ) :></span>
+        <span class="bb-status-created-at"><: link( $bb_timestamp($s.created_at), href => $bb_status_permalink($s), target => "_blank" ) :></span>
       </div>
     </div>
     <div class="bb-status-text"><: $bb_text($s) :></div>

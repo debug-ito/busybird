@@ -138,6 +138,11 @@ sub _html_link {
     };
 }
 
+sub _html_link_status_text {
+    my ($text, $url) = @_;
+    return _html_link($text, href => $url, target => "_blank");
+}
+
 sub template_functions {
     return {
         js => \&JavaScript::Value::Escape::js,
@@ -194,10 +199,9 @@ sub template_functions_for_timeline {
                     die "invalid URL" if !_is_valid_link_url($url_str);
                     my $text_str = $text_builder->($segment->{text}, $segment->{entity}, $status);
                     $text_str = "" if not defined $text_str;
-                    $text_str = html_escape($text_str);
-                    return qq{<a href="$url_str">$text_str</a>};
+                    return _html_link_status_text($text_str, $url_str);
                 }catch {
-                    return _escape_and_linkify($segment->{text});
+                    return _escape_and_linkify_status_text($segment->{text});
                 };
             }
             return $result_text;
@@ -223,14 +227,14 @@ sub template_functions_for_timeline {
     }
 }
 
-sub _escape_and_linkify {
+sub _escape_and_linkify_status_text {
     my ($text) = @_;
     my $result_text = "";
     my $remaining_index = 0;
     while($text =~ m/\G(.*?)($REGEXP_HTTP_URL)/sg) {
         my ($other_text, $url) = ($1, $2);
         $result_text .= html_escape($other_text);
-        $result_text .= _html_link($url, href => $url);
+        $result_text .= _html_link_status_text($url, $url);
         $remaining_index = pos($text);
     }
     $result_text .= html_escape(substr($text, $remaining_index));
