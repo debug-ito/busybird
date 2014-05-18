@@ -48,7 +48,7 @@ To input statuses, you can use L<BusyBird>'s Web API.
       http://127.0.0.1:5000/timelines/home/statuses.json
 
 C<< POST /timelines/home/statuses.json >> endpoint inputs statuses to the "home" timeline.
-Statuses are in the HTTP request body, and encoded in JSON.
+Statuses are in the HTTP request body, encoded in JSON.
 
 You can input more than one statuses by posting an array of statuses. Here is a bit more complicated example.
 
@@ -128,6 +128,8 @@ This simple script imports statuses from your home timeline, encodes them in JSO
 To run the script, you need L<Net::Twitter::Lite> and L<JSON> modules, so install them.
 
     # cpanm Net::Twitter::Lite JSON
+
+OK, now you can run it.
 
 You can directly input statuses from Twitter to L<BusyBird>. No conversion is necessary.
 

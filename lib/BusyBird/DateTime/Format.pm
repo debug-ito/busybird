@@ -74,7 +74,7 @@ BusyBird::DateTime::Format - DateTime::Format for BusyBird
 
 =head1 DESCRIPTION
 
-This class is the standard DateTime::Format in BusyBird.
+This class is the standard DateTime::Format in L<BusyBird>.
 
 It can parse the following format.
 

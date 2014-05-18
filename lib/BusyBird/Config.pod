@@ -6,27 +6,61 @@ BusyBird::Config - list of config parameters for BusyBird
 
 =head1 SYNOPSIS
 
-    Write synopsis(?)
+In your ~/.busybird/config.psgi
+
+    use BusyBird;
+    
+    busybird->set_config(
+        timeline_list_per_page => 100,
+        time_zone => "UTC",
+        time_locale => "en_US",
+    );
+    
+    timeline("home")->set_config(
+        time_zone => "+0900"
+    );
+
+    end;
 
 =head1 DESCRIPTION
 
-TODO: we should write the documentation from the point of writing config.psgi.
-Individual modules should be mentioned but set aside.
-This document should not refer to the Tutorial (it is a cyclic ref!). This document should refer to Main and Timeline.
+This document describes how to configure L<BusyBird>.
 
-TODO: need examples. (1) Timestamp customization. (2) entity builder. (3) original share-dir. (4) status storage.
+=head2 Config File
 
-This document describes config parameters for L<BusyBird::Main> and L<BusyBird::Timeline>.
+By default, L<BusyBird> reads the file C<~/.busybird/config.psgi> as the configuration file.
+If it doesn't exist, L<busybird> command automatically generates it.
 
-=head2 How to Set/Get Config Parameters
+You can use an arbitrary config file by specifying it to L<busybird> command.
 
-TBW. Keep in mind that users usually write configuration through L<BusyBird> interface.
+    $ busybird another_config.psgi
 
-=head2 Config Precedence
+The configuration file is just a Perl script (actually it's L<PSGI> application script).
+Its basic structure is:
 
-TBW
+    use BusyBird;
 
-=head1 PARAMETERS FOR BusyBird::Main
+    ## Your configuration here
+
+    end;
+
+Leave every statement L<busybird> command generated unless you know what you're doing.
+
+
+=head2 Create/Get Timelines
+
+- timeline() function.
+
+=head2 Global and Per-Timeline Configurations
+
+- busybird->set_config() and timeline(...)->set_config()
+- need not to be so verbose. this is covered by Tutorial already.
+
+=head1 GLOBAL CONFIG PARAMETERS
+
+Below is the complete list of the global config parameters.
+
+Internally, those config parameters are accepted by L<BusyBird::Main>.
 
 =head2 C<default_status_storage> => BusyBird::StatusStorage OBJECT
 
@@ -60,7 +94,7 @@ See each module's documentation for details.
 
 =head2 C<sharedir_path> => PATH
 
-B<Default:> sharedir in your installation directory
+B<Default:> sharedir in your BusyBird installation directory
 
 File path to "share" directory.
 
@@ -79,11 +113,13 @@ B<Default:> 7
 
 Maximum number of page entries shown in the pagination of the timeline list page.
 
-=head1 PARAMETERS FOR BusyBird::Timeline
+=head1 PER-TIMELINE CONFIG PARAMETERS
 
-TODO: note that all params in this category can also be set in Main (global config).
+Below is the complete list of the per-timeline config parameters.
 
+Note that any of the per-timeline config parameters can be used as a global config parameter, too.
 
+Internally, those config parameters are accepted by L<BusyBird::Main> and L<BusyBird::Timeline>.
 
 =head2 C<time_zone> => TIMEZONE_STR
 
@@ -187,6 +223,18 @@ If C<$text_to_be_displayed> is C<undef>, the original C<$text> is used for displ
 
 If a C<*_entity_url_builder> subroutine reference returns non-URL for the C<$entity>,
 the text is not linked and the corresponding C<*_entity_text_builder> is not called.
+
+=head1 EXAMPLES
+
+TODO: write examples
+
+=head2 Customize Timestamps
+
+=head2 Entity Builders
+
+=head2 Customize Share-dir
+
+=head2 StatusStorage
 
 =head1 AUTHOR
 

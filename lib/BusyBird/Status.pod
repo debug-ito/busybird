@@ -29,7 +29,7 @@ BusyBird::Status - Status object specification
 
 =head1 DESCRIPTION
 
-This the specification of a status object that is handled by L<BusyBird> (especially L<BusyBird::StatusStorage> and
+This is the specification of a status object that is handled by L<BusyBird> (especially L<BusyBird::StatusStorage> and
 L<BusyBird::Timeline>).
 
 A status object is just a hash reference (or an Object in JSON format). It should be serializable to
