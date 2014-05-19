@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BusyBird::Config - list of config parameters for BusyBird
+BusyBird::Config - how to configure BusyBird
 
 =head1 SYNOPSIS
 
@@ -24,11 +24,10 @@ In your ~/.busybird/config.psgi
 
 =head1 DESCRIPTION
 
-This document describes how to configure L<BusyBird>.
 
 =head2 Config File
 
-By default, L<BusyBird> reads the file C<~/.busybird/config.psgi> as the configuration file.
+By default, L<BusyBird> reads the file C<~/.busybird/config.psgi> for configuration.
 If it doesn't exist, L<busybird> command automatically generates it.
 
 You can use an arbitrary config file by specifying it to L<busybird> command.
@@ -49,12 +48,49 @@ Leave every statement L<busybird> command generated unless you know what you're 
 
 =head2 Create/Get Timelines
 
-- timeline() function.
+To create a timeline, call C<timeline()> function.
+
+    timeline("timeline A");
+    timeline("timeline B");
+
+C<timeline()> function returns a L<BusyBird::Timeline> object.
+You can call its methods to manipulate the timeline.
+
+    my $timeline = timeline("timeline A");
+    $timeline->add({text => "Hello."});
+
+Timeline names are unique.
+If you call C<timeline()> the second time with the same timeline name,
+it just returns the existing timeline.
 
 =head2 Global and Per-Timeline Configurations
 
-- busybird->set_config() and timeline(...)->set_config()
-- need not to be so verbose. this is covered by Tutorial already.
+Global config parameters are set by C<< busybird->set_config() >> method.
+
+    busybird->set_config(time_zone => "UTC");
+
+A global config parameter affects all timelines and the overall
+behavior of the BusyBird instance.
+
+Per-timeline config parameters are set by C<< timeline(...)->set_config() >> method.
+
+    busybird->set_config(time_zone => "UTC");
+    
+    timeline("foobar")->set_config(time_zone => "+0900");
+
+Per-timeline config parameters always take precedence over global ones. 
+Any per-timeline config parameter can be set as a global config parameter.
+
+
+=head2 Under the Hood
+
+Config parameters are stored in L<BusyBird::Main> and L<BusyBird::Timeline> objects.
+The keyword C<busybird> is a function that returns the singleton object of L<BusyBird::Main> class.
+See L<BusyBird/AS A MODULE> for detail.
+
+When L<BusyBird> needs some config parameters, it reads them by calling C<get_config()> and C<get_timeline_config()> methods
+on L<BusyBird::Main>.
+
 
 =head1 GLOBAL CONFIG PARAMETERS
 
@@ -127,6 +163,7 @@ B<Default:> C<"local">
 
 Timezone used to render status timestamps.
 C<TIMEZONE_STR> accepts various timezone names such as C<"UTC">, C<"America/Chicago">, C<"+0900">, C<"-0300">.
+See L<DateTime::TimeZone> and L<DateTime::TimeZone::Catalog> for the list of valid timezone names.
 
 You can set special value C<"local"> to C<TIMEZONE_STR>.
 This means the timezone of the local environment is used.
@@ -226,11 +263,35 @@ the text is not linked and the corresponding C<*_entity_text_builder> is not cal
 
 =head1 EXAMPLES
 
-TODO: write examples
-
 =head2 Customize Timestamps
 
+Status timestamps are rendered using C<time_zone>, C<time_format>, C<time_locale> parameters.
+By default L<BusyBird> guesses the "correct" config for your system.
+
+    busybird->set_config(
+        time_zone => 'America/Los_Angeles',
+        time_format => '%Y-%m-%d %A %H:%M:%S %Z',
+        time_locale => 'en_US',
+    );
+
 =head2 Entity Builders
+
+By default L<BusyBird> renders Twitter Entities in status objects just like Twitter does,
+but you can customize this behavior by changing C<*_entity_url_builder> and C<*_entity_text_builder> parameters.
+
+For example, Twitter truncates the displayed text for C<urls> and C<media> entites.
+If you want to see fully expanded URLs in statuses, do the following.
+
+    my $builder_expanded_url = sub {
+        my ($text, $entity) = @_;
+        return $entity->{expanded_url};
+    };
+    
+    busybird->set_config(
+        urls_entity_text_builder => $builder_expanded_url,
+        media_entity_text_builder => $builder_expanded_url,
+    );
+
 
 =head2 Customize Share-dir
 
