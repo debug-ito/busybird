@@ -43,7 +43,7 @@ C<busybird> command runs a L<BusyBird> process instance.
 
 =item CONFIG_FILE (default: ~/.busybird/config.psgi)
 
-The L<BusyBird> configuration file. See L<BusyBird::Tutorial> and L<BusyBird::Config> for how to write this file.
+The L<BusyBird> configuration file. See L<BusyBird::Manual::Tutorial> and L<BusyBird::Manual::Config> for how to write this file.
 
 If omitted, C<~/.busybird/config.psgi> is used. If this file does not exist, it is automatically created.
 
