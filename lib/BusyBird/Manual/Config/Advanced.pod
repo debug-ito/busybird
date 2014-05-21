@@ -1,0 +1,20 @@
+=pod
+
+=head1 NAME
+
+BusyBird::Manual::Config::Advanced - advanced topic about configuring BusyBird
+
+=head1 DESCRIPTION
+
+=head2 Use plackup to Start BusyBird
+
+=head2 Plack Middlewares
+
+=head2 Multiple BusyBird Instances
+
+=head1 AUTHOR
+
+Toshio Ito C<< toshioito [at] cpan.org >>
+
+=cut
+
