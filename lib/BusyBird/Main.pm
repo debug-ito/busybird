@@ -217,7 +217,7 @@ Creates a L<BusyBird::Main> object.
 
 Users usually don't have to call this method.
 The singleton instance of L<BusyBird::Main> object is maintained by L<BusyBird> module.
-See L<BusyBird> and L<BusyBird::Tutorial> for detail.
+See L<BusyBird> and L<BusyBird::Manual::Tutorial> for detail.
 
 =head1 OBJECT METHODS
 
@@ -231,7 +231,7 @@ If there is no timeline named C<$name> in C<$main>, a new timeline is created, i
 
 If a new timeline is created by this method, it uses the StatusStorage object
 given by C<< $main->get_config("default_status_storage") >> for that timeline.
-See L<BusyBird::Config> for defail.
+See L<BusyBird::Manual::Config> for defail.
 
 
 =head2 $timeline = $main->get_timeline($name)
@@ -267,7 +267,7 @@ Sets config parameters to the C<$main>.
 C<$key1>, C<$key2>, ... are the keys for the config parameters, and
 C<$value1>, C<$value2>, ... are the values for them.
 
-See L<BusyBird::Config> for the list of config parameters.
+See L<BusyBird::Manual::Config> for the list of config parameters.
 
 =head2 $value = $main->get_config($key)
 

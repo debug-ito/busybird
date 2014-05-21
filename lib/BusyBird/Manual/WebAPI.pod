@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-BusyBird::WebAPI - Web API reference
+BusyBird::Manual::WebAPI - Web API reference
 
 =head1 DESCRIPTION
 
@@ -24,7 +24,7 @@ of endpoint paths. Text responses are always encoded by UTF-8.
 =head2 GET /timelines/{timeline}/statuses.{format}
 
 Fetches an array of statuses from the specified timeline.
-See L<BusyBird::Status> for the structure of a status object.
+See L<BusyBird::Manual::Status> for the structure of a status object.
 
 
 B<Path Parameters>
@@ -209,7 +209,7 @@ B<Request Body>
 
 A status object or an array of status objects in JSON format.
 
-See L<BusyBird::Status> for the structure of status objects.
+See L<BusyBird::Manual::Status> for the structure of status objects.
 
 B<Response>
 

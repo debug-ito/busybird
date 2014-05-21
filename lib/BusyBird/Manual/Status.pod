@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BusyBird::Status - Status object specification
+BusyBird::Manual::Status - Status object specification
 
 =head1 SYNOPSIS
 
@@ -68,7 +68,7 @@ If this field is set, L<BusyBird> uses this field if necessary, e.g., when it bu
 
 If set, this string is used for the permalink URL of the status.
 
-To further customize status permalinks, see C<status_permalink_builder> of L<BusyBird::Config>.
+To further customize status permalinks, see C<status_permalink_builder> of L<BusyBird::Manual::Config>.
 
 =head2 C<created_at>
 
@@ -77,7 +77,7 @@ The timestamp string at which the status is created.
 The timestamp string must be parsable by L<BusyBird::DateTime::Format>.
 
 To customize the way L<BusyBird> renders this timestamp,
-see C<time_zone>, C<time_format>, C<time_locale> of L<BusyBird::Config>.
+see C<time_zone>, C<time_format>, C<time_locale> of L<BusyBird::Manual::Config>.
 
 =head2 C<entities>
 
@@ -107,7 +107,7 @@ C<entities.user_mentions>
 =back
 
 To customize the way it renders those hyperlinks and annotated texts,
-see C<*_entitiy_url_builder> and C<*_entity_text_builder> of L<BusyBird::Config>.
+see C<*_entitiy_url_builder> and C<*_entity_text_builder> of L<BusyBird::Manual::Config>.
 
 =head2 C<id>
 

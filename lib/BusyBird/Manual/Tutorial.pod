@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-BusyBird::Tutorial - Tutorial to use BusyBird
+BusyBird::Manual::Tutorial - Tutorial to use BusyBird
 
 =head1 Installation
 
@@ -281,7 +281,7 @@ Per-timeline config parameters always take precedence over global ones.
 So, in the above example, statuses are renderred in "+0900" time zone only in the timeline "foobar".
 In other timelines, the time zone is "UTC".
 
-See L<BusyBird::Config> for the complete list of config parameters.
+See L<BusyBird::Manual::Config> for the complete list of config parameters.
 
 =head1 Filters
 
@@ -347,15 +347,15 @@ For advanced and more detailed topics, you may find the following documents inte
 
 =over
 
-=item L<BusyBird::WebAPI>
+=item L<BusyBird::Manual::WebAPI>
 
 Reference manual of L<BusyBird> Web API, including endpoints that get, post or ack statuses.
 
-=item L<BusyBird::Status>
+=item L<BusyBird::Manual::Status>
 
 Object structure of L<BusyBird> statuses.
 
-=item L<BusyBird::Config>
+=item L<BusyBird::Manual::Config>
 
 Full list of configuration items.
 

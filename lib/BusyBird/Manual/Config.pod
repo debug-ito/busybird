@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BusyBird::Config - how to configure BusyBird
+BusyBird::Manual::Config - how to configure BusyBird
 
 =head1 SYNOPSIS
 

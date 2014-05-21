@@ -381,7 +381,7 @@ Fields in C<%args> are as follows.
 =item C<statuses> => {STATUS, ARRAYREF_OF_STATUSES} (mandatory)
 
 Specifies a status object or an array-ref of status objects to be added.
-See L<BusyBird::Status> about what status objects look like.
+See L<BusyBird::Manual::Status> about what status objects look like.
 
 =item C<callback> => CODEREF($error, $added_num) (optional, default: C<undef>)
 
@@ -540,7 +540,7 @@ If C<< $status->{id} >> includes Unicode characters, it should be a character st
 The statuses to be saved in the C<$timeline>.  It is either a status object
 or an array-ref of status objects.
 
-See L<BusyBird::Status> for specification of status objects.
+See L<BusyBird::Manual::Status> for specification of status objects.
 
 
 =item C<callback> => CODEREF($error, $put_num) (optional, default: C<undef>)
@@ -618,7 +618,7 @@ LEVEL is an integer key that represents the status level.
 The value is the number of unacked statuses in the level.
 
 A status's level is the C<< $status->{busybird}{level} >> field.
-See L<BusyBird::Status> for detail.
+See L<BusyBird::Manual::Status> for detail.
 
 LEVEL key-value pair is present for each level in which
 there are some unacked statuses.
@@ -726,7 +726,7 @@ Sets config parameters to the C<$timeline>.
 C<$key1>, C<$key2>, ... are the keys for the config parameters, and
 C<$value1>, C<$value2>, ... are the values for them.
 
-See L<BusyBird::Config> for the list of config parameters.
+See L<BusyBird::Manual::Config> for the list of config parameters.
 
 =head2 $value = $timeline->get_config($key)
 

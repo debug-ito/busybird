@@ -112,19 +112,19 @@ TBW.
 
 =over
 
-=item L<BusyBird::Tutorial>
+=item L<BusyBird::Manual::Tutorial>
 
 If you are new to L<BusyBird>, you should read this first.
 
-=item L<BusyBird::WebAPI>
+=item L<BusyBird::Manual::WebAPI>
 
 Reference manual of L<BusyBird> Web API.
 
-=item L<BusyBird::Status>
+=item L<BusyBird::Manual::Status>
 
 Object structure of L<BusyBird> statuses.
 
-=item L<BusyBird::Config>
+=item L<BusyBird::Manual::Config>
 
 How to configure L<BusyBird>.
 

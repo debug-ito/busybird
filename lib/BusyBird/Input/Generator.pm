@@ -110,7 +110,7 @@ The C<screen_name> field of the statuses to be generated.
 =head2 $status = $gen->generate(%args)
 
 Generates a status object.
-See L<BusyBird::Status> for format of the status object.
+See L<BusyBird::Manual::Status> for format of the status object.
 
 Fields in C<%args> are:
 

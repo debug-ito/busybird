@@ -115,7 +115,7 @@ Even if you modify C<$status> in C<$func>, the original status is intact.
 
 =item *
 
-L<BusyBird::Status>
+L<BusyBird::Manual::Status>
 
 =item *
 
