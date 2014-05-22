@@ -128,6 +128,10 @@ Object structure of L<BusyBird> statuses.
 
 How to configure L<BusyBird>.
 
+=item L<BusyBird::Manual::Config::Advanced>
+
+Advanced topics about configuring L<BusyBird>.
+
 =item ...and others.
 
 Documentation for various L<BusyBird> modules may be helpful when you customize

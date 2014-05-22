@@ -2,13 +2,32 @@
 
 =head1 NAME
 
-BusyBird::Manual::Config::Advanced - advanced topic about configuring BusyBird
+BusyBird::Manual::Config::Advanced - advanced topics about configuring BusyBird
 
 =head1 DESCRIPTION
 
 =head2 Use plackup to Start BusyBird
 
+L<BusyBird> configuration file C<~/.busybird/config.psgi> is just a L<PSGI> application script,
+so you can directly use L<plackup> command to start L<BusyBird>.
+
+    $ plackup -s Twiggy ~/.busybird/config.psgi
+
+L<BusyBird> needs a L<PSGI> server that supports the non-blocking "delayed response" feature.
+We recommend to use L<Twiggy>.
+
+In fact, L<busybird> command is a simple front-end for L<Plack::Runner>.
+L<plackup> command accepts more options than L<busybird> command.
+
 =head2 Plack Middlewares
+
+Because C<~/.busybird/config.psgi> is just a L<PSGI> application script,
+you can use any L<Plack> middlewares as you like.
+
+To use L<Plack::Builder> with L<BusyBird>,
+enclose the C<end> statement at the bottom with C<builder> block.
+
+TODO: example.
 
 =head2 Multiple BusyBird Instances
 
