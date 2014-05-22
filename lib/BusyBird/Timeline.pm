@@ -130,17 +130,12 @@ sub add_statuses {
     if(!defined($args{statuses})) {
         croak "statuses argument is mandatory";
     }
-    my %switch = (
-        ARRAY => sub {},
-        HASH => sub {
-            $args{statuses} = [ $args{statuses} ];
-        },
-    );
-    my $case_do = $switch{ref($args{statuses}) || ""};
-    if(!$case_do) {
+    my $ref = ref($args{statuses});
+    if($ref eq "HASH") {
+        $args{statuses} = [ $args{statuses} ];
+    }elsif($ref ne "ARRAY") {
         croak "statuses argument must be a status or an array-ref of statuses";
     }
-    $case_do->();
     my $statuses = dclone($args{statuses});
     my $final_callback = $args{callback};
     $self->{filter_flow}->execute($statuses, sub {

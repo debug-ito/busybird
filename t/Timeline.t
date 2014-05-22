@@ -450,6 +450,57 @@ sub test_timeline {
     }
 
     {
+        note('--- if a filter dies, it aborts that filter and continues');
+        my @logs = ();
+        local $BusyBird::Log::Logger = sub {
+            push @logs, \@_;
+        };
+        my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
+        my $DIE_AT = 2;
+        $timeline->add_filter(sub {
+            my ($statuses) = @_;
+            $_->{filter1} = "ok" foreach @$statuses;
+            return $statuses;
+        });
+        $timeline->add_filter(sub {
+            my ($statuses) = @_;
+            foreach my $i (0 .. $#$statuses) {
+                my $s = $statuses->[$i];
+                die "boom!" if $DIE_AT == $i;
+                $s->{filter2} = "ok";
+            }
+            return $statuses;
+        });
+        $timeline->add_filter_async(sub {
+            my ($statuses, $done) = @_;
+            $_->{filter3} = "ok" foreach @$statuses;
+            $done->($statuses);
+        });
+        my ($error, $num) = sync($timeline, "add_statuses",
+                                 statuses => [map { status($_) } 0..5]);
+        is $error, undef, "add_statuses should succeed even if a filter dies";
+        is $num, 6, "6 statuses added";
+        cmp_ok scalar(grep { $_->[0] =~ /err/ } @logs), ">", 0, "error message is logged";
+        ($error, my $results) = sync($timeline, 'get_statuses', count => "all");
+        is scalar(@$results), 6, "6 statuses got";
+        @$results = sort { $a->{id} <=> $b->{id} } @$results;
+        foreach my $i (0 .. $#$results) {
+            my $s = $results->[$i];
+            is $s->{filter1}, "ok", "status $i: filter1 is always ok";
+            if($i < $DIE_AT) {
+                is $s->{filter2}, "ok", "status $i: filter2 is ok for status ID < $DIE_AT";
+            }else {
+                ok !exists($s->{filter2}), "status $i: filter2 does not exist for status ID >= $DIE_AT";
+            }
+            is $s->{filter3}, "ok", "status $i: filter3 is always ok";
+        }
+        ($error, $num) = sync($timeline, "add_statuses",
+                              statuses => status(6));
+        is $error, undef, "able to add a status again. Async::Queue is empty";
+        is $num, 1, "1 status added";
+    }
+
+    {
         note('--- watch_unacked_counts');
         my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
         sync($timeline, 'get_statuses', count => 1); ## go into event loop

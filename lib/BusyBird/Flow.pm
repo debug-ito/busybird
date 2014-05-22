@@ -6,6 +6,7 @@ use BusyBird::Log;
 use CPS qw(kforeach);
 use Carp;
 use Scalar::Util qw(weaken);
+use Try::Tiny;
 use BusyBird::Version;
 our $VERSION = $BusyBird::Version::VERSION;
 
@@ -26,15 +27,21 @@ sub _create_queue {
         my ($data, $done) = @_;
         kforeach $self->{filters}, sub {
             my ($filter, $knext) = @_;
-            $filter->($data, sub {
-                my ($result) = @_;
-                if(ref($result) && ref($result) eq 'ARRAY') {
-                    $data = $result;
-                }else {
-                    bblog('warn', 'The filter did not return an array-ref. Ignored.');
-                }
+            try {
+                $filter->($data, sub {
+                    my ($result) = @_;
+                    if(ref($result) && ref($result) eq 'ARRAY') {
+                        $data = $result;
+                    }else {
+                        bblog('warn', 'The filter did not return an array-ref. Ignored.');
+                    }
+                    $knext->();
+                });
+            }catch {
+                my ($e) = @_;
+                bblog('error', "Filter dies: $e");
                 $knext->();
-            });
+            };
         }, sub {
             $done->($data);
         };
@@ -101,6 +108,8 @@ If additional data is pushed to the flow, it will be delayed in a queue that is 
 
 This module is a part of L<BusyBird::Timeline>.
 For now, it is not meant to be used individually.
+
+This module use L<BusyBird::Log> for logging.
 
 =head1 CLASS METHODS
 
