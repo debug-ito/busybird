@@ -274,7 +274,7 @@ By default L<BusyBird> guesses the "correct" config for your system.
         time_locale => 'en_US',
     );
 
-=head2 Entity Builders
+=head2 Expand URLs for Links in Statuses
 
 By default L<BusyBird> renders Twitter Entities in status objects just like Twitter does,
 but you can customize this behavior by changing C<*_entity_url_builder> and C<*_entity_text_builder> parameters.
@@ -293,9 +293,33 @@ If you want to see fully expanded URLs in statuses, do the following.
     );
 
 
-=head2 Customize Share-dir
+=head2 Storage File Location
 
-=head2 StatusStorage
+By default, L<BusyBird> stores statuses in the file C<~/.busybird/statuses.sqlite3>.
+
+To change the storage file location, change C<default_status_storage> global config parameter.
+
+    use BusyBird::StatusStorage::SQLite;
+    busybird->set_config(
+        default_status_storage => BusyBird::StatusStorage::SQLite->new(
+            path => "$ENV{HOME}/.busybird/another_statuses.sqlite3"
+        )
+    );
+
+The example uses C<~/.busybird/another_statuses.sqlite3> for the status storage.
+See L<BusyBird::StatusStorage::SQLite> for detail.
+
+Note that you should change C<default_status_storage> parameter B<< before you call C<timeline()> function. >>
+
+=head1 SEE ALSO
+
+=over
+
+=item L<BusyBird::Manual::Config::Advanced>
+
+Advanced topics about configuring L<BusyBird>.
+
+=back
 
 =head1 AUTHOR
 

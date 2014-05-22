@@ -12,6 +12,8 @@ BusyBird::Manual::Config::Advanced - advanced topic about configuring BusyBird
 
 =head2 Multiple BusyBird Instances
 
+=head2 Customize View Completely
+
 =head1 AUTHOR
 
 Toshio Ito C<< toshioito [at] cpan.org >>
