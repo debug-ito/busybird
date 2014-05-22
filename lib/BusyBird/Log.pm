@@ -12,7 +12,9 @@ our $Logger = \&default_logger;
 sub default_logger {
     my ($level, $msg) = @_;
     my ($caller_package) = caller(1);
-    print STDERR ("$caller_package: $level: $msg\n");
+    my $output = "$caller_package: $level: $msg";
+    $output .= "\n" if $output !~ /[\n\r]$/;
+    print STDERR $output;
 }
 
 sub bblog {
