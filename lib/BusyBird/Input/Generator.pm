@@ -65,8 +65,9 @@ BusyBird::Input::Generator - status generator
 
 =head1 SYNOPSIS
 
-    my $gen = BusyBird::Input::Generator->new(screen_name => "toshio_ito");
+    use BusyBird::Input::Generator;
     
+    my $gen = BusyBird::Input::Generator->new(screen_name => "toshio_ito");
     my $status = $gen->generate(text => "Hello, world!");
 
 =head1 DESCRIPTION
@@ -101,7 +102,7 @@ Fields in C<%args> are:
 
 =item C<screen_name> => STR (optional, default: "")
 
-The C<screen_name> field of the statuses to be generated.
+The C<user.screen_name> field of the statuses to be generated.
 
 =back
 
