@@ -776,6 +776,7 @@ Therefore, if some updates happen in levels that are not in C<assumed>, C<callba
 
 If C<assumed> is an empty hash-ref, C<callback> is always called immediately.
 
+B<< TODO: Add example, and the fact that the callback is persistent. >>
 
 
 =head1 AUTHOR

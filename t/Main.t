@@ -28,7 +28,6 @@ sub test_watcher_basic {
     can_ok($watcher, 'active', 'cancel');
 }
 
-
 {
     my $main = new_ok('BusyBird::Main');
     my $storage = $CREATE_STORAGE->();
@@ -246,6 +245,52 @@ sub test_watcher_basic {
     );
     ok($callbacked, "callbacked");
     ok(!$watcher->active, "watcher is inactive now");
+}
+
+{
+    note("--- synopsis");
+    my $main = BusyBird::Main->new;
+    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+
+    my $foo = $main->timeline("foo");
+    my $bar = $main->timeline("bar");
+
+    my @all_timelines = $main->get_all_timelines;
+    is $all_timelines[0]->name, "foo", "name foo ok";
+    is $all_timelines[1]->name, "bar", "name bar ok";
+
+    $main->set_config(time_zone => "UTC");
+    $foo->set_config(time_zone => "+0900");
+
+    is $main->get_timeline_config("foo", "time_zone"), "+0900", "foo time_zone ok";
+    is $main->get_timeline_config("bar", "time_zone"), "UTC", "bar time_zone ok";
+}
+
+{
+    note("--- example: watch_unacked_counts");
+    my $main = BusyBird::Main->new;
+    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+    
+    sync $main->timeline("TL1"), "add_statuses", statuses => [status(0, 0), status(1, 2)];
+    $main->timeline("TL2");
+    sync $main->timeline("TL3"), "add_statuses", statuses => [map { status($_ + 100) } 1..5];
+
+    my $watcher = $main->watch_unacked_counts(
+        level => "total",
+        assumed => { TL1 => 0, TL2 => 0, TL3 => 5 },
+        callback => sub {
+            my ($error, $w, $tl_unacked_counts) = @_;
+            $w->cancel();
+            is_deeply $tl_unacked_counts, {
+                TL1 => {
+                    total => 2,
+                    0     => 1,
+                    2     => 1,
+                },
+            }, "watch result ok";
+        }
+    );
+    sync $main->timeline("TL1"), "get_statuses", count => 1; ## go into event loop
 }
 
 done_testing();

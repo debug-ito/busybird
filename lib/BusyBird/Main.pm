@@ -199,7 +199,23 @@ BusyBird::Main - main application object of BusyBird
 
 =head1 SYNOPSIS
 
-    Write synopsis!!
+    use BusyBird::Main;
+    
+    my $main = BusyBird::Main->new;
+    
+    my $foo = $main->timeline("foo");
+    my $bar = $main->timeline("bar");
+    
+    my @all_timelines = $main->get_all_timelines;
+    $all_timelines[0]->name; ## => "foo"
+    $all_timelines[1]->name; ## => "bar"
+    
+    $main->set_config(time_zone => "UTC");
+    $foo->set_config(time_zone => "+0900");
+    
+    $main->get_timeline_config("foo", "time_zone"); ## => "+0900"
+    $main->get_timeline_config("bar", "time_zone"); ## => "UTC"
+
 
 =head1 DESCRIPTION
 
@@ -327,16 +343,28 @@ C<$error> is C<undef>.
 C<$w> is an L<BusyBird::Watcher> object representing the watch.
 C<$tl_unacked_counts> is a hash-ref describing the current unacked counts for watched timelines.
 
-For example, if you call this method with the following arguments,
+In failure, the argument C<$error> is defined, and it describes the error. C<$w> is an inactive L<BusyBird::Watcher>.
 
-    level => 'total',
-    assumed => {
-        TL1 => 0, TL2 => 0, TL3 => 5
-    },
+For example,
 
-This means the caller assumes there is no unacked statuses in TL1 and TL2,
+    use Data::Dumper;
+    
+    my $watcher = $main->watch_unacked_counts(
+        level => "total",
+        assumed => { TL1 => 0, TL2 => 0, TL3 => 5 },
+        callback => sub {
+            my ($error, $w, $tl_unacked_counts) = @_;
+            $w->cancel();
+            print Dumper $tl_unacked_counts;
+        }
+    );
+
+The C<level> and C<assumed> parameters in the above example mean that
+the caller assumes there is no unacked statuses in TL1 and TL2,
 and there are 5 unacked statuses in TL3.
-Then, the C<callback> may be called with C<$tl_unacked_counts> like,
+
+C<$tl_unacked_counts> represents the current unacked counts.
+It's something like
 
     $tl_unacked_counts = {
         TL1 => {
@@ -352,10 +380,8 @@ one of which is in level 0 and the other is in level 2.
 Note that although you can specify multiple timelines in C<assumed>,
 the returned C<$tl_unacked_counts> may not contain all the specified timelines.
 
-In failure, the argument C<$error> is defined, and it describes the error. C<$w> is an inactive L<BusyBird::Watcher>.
-
 The return value of this method (C<$watcher>) is the same instance as C<$w>.
-You can use C<< $watcher->cancel() >> or C<< $w->cancel() >> method to cancel the watch.
+You can use C<< $watcher->cancel() >> or C<< $w->cancel() >> method to cancel the watch, like we did in the above example.
 Otherwise, the C<callback> is repeatedly called whenever some updates in unacked counts happen and
 the current and assumed unacked counts are different.
 
