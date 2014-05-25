@@ -172,21 +172,27 @@ This is equivalent to C<< BusyBird::Main::PSGI::create_psgi_app(busybird()) >>.
 
 =head1 TECHNOLOGIES USED
 
-TBW. License thingy.
-
 =over
 
-=item jQuery
+=item *
 
-=item Bootstrap
+L<jQuery|http://jquery.com/>
 
-Make sure to mention Glyphicons
+=item *
 
-=item q.js
+L<Bootstrap|http://getbootstrap.com/>, which includes L<Glyphicon|http://glyphicons.com/>
 
-=item spin.js
+=item *
 
-=item ... and a lot of Perl modules
+L<q.js|https://github.com/kriskowal/q>
+
+=item *
+
+L<spin.js|http://fgnass.github.io/spin.js/>
+
+=item *
+
+... and a lot of Perl modules
 
 =back
 
