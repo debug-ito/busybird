@@ -66,6 +66,8 @@ See L<BusyBird::Timeline>'s C<add_filter()> method for details about status filt
 
 =head2 Pre-defined Filters
 
+Some modules provide pre-defined filters for you.
+
 =over
 
 =item L<BusyBird::Filter::Twitter>

@@ -130,7 +130,18 @@ BusyBird::Filter::Twitter - filters for statuses imported from Twitter
 
 =head1 SYNOPSIS
 
-    write synopsis (using 'BusyBird' module)
+    use BusyBird;
+    use BusyBird::Filter::Twitter qw(:all);
+    use BusyBird::Filter qw(filter_each);
+        
+    timeline("home")->add_filter(filter_twitter_all);
+    
+    ## or alternatively,
+    
+    timeline("home")->add_filter(filter_each sub {
+        my ($status) = @_;
+        trans_twitter_all($status);
+    });
 
 =head1 DESCRIPTION
 
@@ -154,7 +165,7 @@ Normalize status objects from Search API v1.0.
 
 =item *
 
-Transform text content so that L<BusyBird> can render it appropriately.
+HTML-unescape text content so that L<BusyBird> can render it appropriately.
 
 =back
 
@@ -221,6 +232,10 @@ All filters are non-destructive. That is, they won't modify input statuses. Tran
 =head1 SEE ALSO
 
 =over
+
+=item *
+
+L<BusyBird::Filter>
 
 =item *
 
