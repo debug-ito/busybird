@@ -137,6 +137,8 @@ File path to "share" directory.
 "share" directory contains static files used by L<BusyBird>,
 which include HTML templates, JavaScript files and image files.
 
+See L<BusyBird::Manual::Config::Advanced> for an example to use this parameter.
+
 =head2 C<timeline_list_per_page> => INT
 
 B<Default:> 30
