@@ -76,6 +76,33 @@ Here is an example of the complete C<~/.busybird/config.psgi> file.
 
 See L<BusyBird>, L<BusyBird::Main> and L<BusyBird::Main::PSGI> for detail.
 
+=head2 Customize Logging
+
+Sometimes L<BusyBird> components write log messages when it's necessary.
+
+By default the log messages are printed to STDERR, but you can customize this behavior
+by setting C<$BusyBird::Log::Logger> variable in C<~/.busybird/config.psgi>.
+
+    use BusyBird::Log;
+    use Log::Dispatch;
+    
+    my $log = Log::Dispatch->new(
+        outputs => [
+            [
+                'Syslog',
+                min_level => 'info',
+                ident     => 'BusyBird'
+            ]
+        ]
+    );
+    $BusyBird::Log::Logger = sub {
+        my ($level, $msg) = @_;
+        $log->log(level => $level, message => $msg);
+    };
+
+See L<BusyBird::Log> for detail.
+
+
 =head2 Customize User Interface Completely
 
 C<~/.busybird/config.psgi> let you configure various aspects of L<BusyBird>,
