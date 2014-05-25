@@ -5,7 +5,7 @@ use Test::More;
 use Test::Warn;
 
 BEGIN {
-    use_ok('BusyBird::Log');
+    use_ok('BusyBird::Log', "bblog");
 }
 
 {

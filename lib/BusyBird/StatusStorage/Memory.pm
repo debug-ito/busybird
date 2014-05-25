@@ -4,7 +4,7 @@ use warnings;
 use parent ('BusyBird::StatusStorage');
 use BusyBird::Util qw(set_param sort_statuses);
 use BusyBird::DateTime::Format;
-use BusyBird::Log;
+use BusyBird::Log qw(bblog);
 use DateTime;
 use Storable qw(dclone);
 use Carp;

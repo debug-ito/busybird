@@ -5,8 +5,7 @@ use Exporter qw(import);
 use BusyBird::Version;
 our $VERSION = $BusyBird::Version::VERSION;
 
-our @EXPORT = qw(bblog);
-our @EXPORT_OK = @EXPORT;
+our @EXPORT_OK = qw(bblog);
 our $Logger = \&default_logger;
 
 sub default_logger {
@@ -33,7 +32,7 @@ BusyBird::Log - simple logging infrastructure for BusyBird
 =head1 SYNOPSIS
 
 
-    use BusyBird::Log;
+    use BusyBird::Log qw(bblog);
     
     bblog('error', 'Something bad happens');
     
@@ -53,18 +52,22 @@ BusyBird::Log - simple logging infrastructure for BusyBird
 =head1 DESCRIPTION
 
 L<BusyBird::Log> manages the logger singleton used in L<BusyBird>.
-By default, C<bblog()> function of L<BusyBird::Log> prints the log to STDERR.
+
+This module is used by some of the L<BusyBird> component modules to log warning/error messages.
 
 
-=head1 EXPORTED FUNCTIONS
+=head1 EXPORTABLE FUNCTIONS
+
+The following functions are exported only by request.
 
 =head2 bblog($level, $msg)
 
-C<bblog()> function is exported by default.
-This function logs the given message.
+Logs the given message.
 
 C<$level> is a string of log level such as 'info', 'warn', 'error', 'critical' etc.
 C<$msg> is the log message body.
+
+By default, it prints the log to STDERR.
 
 
 =head1 PACKAGE VARIABLES
@@ -75,8 +78,6 @@ A subroutine reference that is called when C<bblog()> is called.
 The subroutine is supposed to do the logging.
 
 Setting this to C<undef> disables logging at all.
-
-
 
 =head1 AUTHOR
 

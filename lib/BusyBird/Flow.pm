@@ -2,7 +2,7 @@ package BusyBird::Flow;
 use strict;
 use warnings;
 use Async::Queue;
-use BusyBird::Log;
+use BusyBird::Log qw(bblog);
 use CPS qw(kforeach);
 use Carp;
 use Scalar::Util qw(weaken);

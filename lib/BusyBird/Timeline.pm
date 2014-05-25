@@ -2,7 +2,7 @@ package BusyBird::Timeline;
 use strict;
 use warnings;
 use BusyBird::Util qw(set_param);
-use BusyBird::Log;
+use BusyBird::Log qw(bblog);
 use BusyBird::Flow;
 use BusyBird::Watcher::Aggregator;
 use BusyBird::DateTime::Format;
