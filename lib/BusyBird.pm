@@ -106,7 +106,7 @@ Status levels are set by you, not by L<BusyBird>.
 
 =head1 SCREENSHOTS
 
-TBW.
+L<https://github.com/debug-ito/busybird/wiki/Screenshots>
 
 =head1 DOCUMENTATION
 
