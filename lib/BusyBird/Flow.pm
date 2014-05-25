@@ -99,17 +99,17 @@ BusyBird::Flow - CPS data flow with concurrency regulation
 
 =head1 DESCRIPTION
 
-This module takes CPS (continuation-passing style) subroutines as 'filters'
+B<< This module is a part of L<BusyBird::Timeline>. For now, it is not meant to be used individually. >>
+
+This module takes CPS (continuation-passing style) subroutines as "filters"
 and executes them sequentially to a given data.
-The result of a filter is given to the next filter, so the data flow is in
-so-called 'waterfall' model.
+The result of a filter is given to the next filter, so the data flow is
+so-called "waterfall" model.
+
 In the data flow, the number of data flowing simultaneously is limited.
 If additional data is pushed to the flow, it will be delayed in a queue that is built in the flow.
 
-This module is a part of L<BusyBird::Timeline>.
-For now, it is not meant to be used individually.
-
-This module use L<BusyBird::Log> for logging.
+This module uses L<BusyBird::Log> for logging.
 
 =head1 CLASS METHODS
 
@@ -119,14 +119,25 @@ Creates the flow object.
 
 =head1 OBJECT METHODS
 
-=head2 $flow->add($filter->($data, $done))
+=head2 $flow->add($filter)
 
 Add a filter to the C<$flow>.
 
-=head2 $flow->execute($data, $finish_callback->($result))
+When C<$flow> is C<execute>d, C<$filter> is called like
+
+    $filter->($data, $done)
+
+When C<$filter> finishes its job, it is supposed to call C<$done> with the result of the filter.
+
+    $done->($result)
+
+=head2 $flow->execute($data, $finish_callback)
 
 Execute the flow on the C<$data>.
-The result will given to C<$finish_callback>.
+
+When the flow ends, the result will be given to C<$finish_callback> as in
+
+    $finish_callback->($result)
 
 =head1 AUTHOR
 
