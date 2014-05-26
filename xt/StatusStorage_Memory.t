@@ -15,7 +15,7 @@ sub test_log_contains {
     my ($logs_arrayref, $msg_pattern, $test_msg) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     ok(
-        scalar(grep { $_->[1] ~~ $msg_pattern } @$logs_arrayref),
+        scalar(grep { $_->[1] =~ $msg_pattern } @$logs_arrayref),
         $test_msg
     );
 }
