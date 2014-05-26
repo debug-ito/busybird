@@ -109,19 +109,25 @@ CREATE TABLE IF NOT EXISTS delete_counts (
   delete_count INTEGER NOT NULL
 )
 EOD
-    my ($sql, @bind) = $self->{maker}->insert('delete_counts', {
+    my ($sql, @bind) = $self->{maker}->insert('delete_counts', [
         delete_count_id => $DELETE_COUNT_ID, delete_count => 0
-    }, {prefix => 'INSERT OR IGNORE INTO'});
+    ], {prefix => 'INSERT OR IGNORE INTO'});
     $dbh->do($sql, undef, @bind);
+}
+
+sub _record_hash_to_array {
+    my ($record) = @_;
+    return [ map { $_, $record->{$_} } sort { $a cmp $b } keys %$record ];
 }
 
 sub _put_update {
     my ($self, $dbh, $record, $prev_sth) = @_;
     my $sth = $prev_sth;
-    my ($sql, @bind) = $self->{maker}->update('statuses', $record, [
+    my ($sql, @bind) = $self->{maker}->update('statuses', _record_hash_to_array($record), [
         'timeline_id' => "$record->{timeline_id}", status_id => "$record->{status_id}"
     ]);
     if(!$sth) {
+        ## Or, should we check $sql is not changed...?
         $sth = $dbh->prepare($sql);
     }
     return ($sth->execute(@bind), $sth);
@@ -130,7 +136,9 @@ sub _put_update {
 sub _put_insert {
     my ($self, $dbh, $record, $prev_sth) = @_;
     my $sth = $prev_sth;
-    my ($sql, @bind) = $self->{maker}->insert('statuses', $record, {prefix => 'INSERT OR IGNORE INTO'});
+    my ($sql, @bind) = $self->{maker}->insert('statuses', _record_hash_to_array($record), {
+        prefix => 'INSERT OR IGNORE INTO'
+    });
     if(!$sth) {
         $sth = $dbh->prepare($sql);
     }
@@ -220,7 +228,7 @@ sub _get_timeline_id {
 
 sub _create_timeline {
     my ($self, $dbh, $timeline_name) = @_;
-    my ($sql, @bind) = $self->{maker}->insert('timelines', {name => "$timeline_name"});
+    my ($sql, @bind) = $self->{maker}->insert('timelines', [name => "$timeline_name"]);
     $dbh->do($sql, undef, @bind);
     return $self->_get_timeline_id($dbh, $timeline_name);
 }
@@ -427,7 +435,7 @@ sub ack_statuses {
 sub _ack_all {
     my ($self, $dbh, $timeline_id, $ack_utc_timestamp) = @_;
     my ($sql, @bind) = $self->{maker}->update(
-        'statuses', {utc_acked_at => $ack_utc_timestamp},
+        'statuses', [utc_acked_at => $ack_utc_timestamp],
         [timeline_id => $timeline_id, utc_acked_at => $UNDEF_TIMESTAMP]
     );
     return $dbh->do($sql, undef, @bind);
@@ -441,7 +449,7 @@ sub _ack_max_id {
     }
     my $cond = $self->_create_base_condition($timeline_id, 'unacked');
     my ($sql, @bind) = $self->{maker}->update(
-        'statuses', {utc_acked_at => $ack_utc_timestamp}, ($cond & $max_id_cond)
+        'statuses', [utc_acked_at => $ack_utc_timestamp], ($cond & $max_id_cond)
     );
     return $dbh->do($sql, undef, @bind);
 }
@@ -457,7 +465,7 @@ sub _ack_ids {
         my $cond = $self->_create_base_condition($timeline_id, 'unacked');
         $cond->add(status_id => "$id");
         my ($sql, @bind) = $self->{maker}->update(
-            'statuses', {utc_acked_at => $ack_utc_timestamp}, $cond
+            'statuses', [utc_acked_at => $ack_utc_timestamp], $cond
         );
         if(!$sth) {
             $sth = $dbh->prepare($sql);
