@@ -27,6 +27,7 @@ you can use any L<Plack> middlewares as you like.
 To use L<Plack::Builder> with L<BusyBird>,
 enclose the C<end> statement at the bottom with C<builder> block.
 
+    use BusyBird;
     use Plack::Builder;
     
     Plack::Builder::builder {

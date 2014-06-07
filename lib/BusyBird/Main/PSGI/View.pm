@@ -357,8 +357,9 @@ BusyBird::Main::PSGI::View - view renderer for BusyBird::Main
 
 This is a view renderer object for L<BusyBird::Main>.
 
+B<< This module is rather for internal use.
 End-users should not use this module directly.
-Specification in this document may be changed in the future.
+Specification in this document may be changed in the future. >>
 
 
 =head1 CLASS METHODS
@@ -454,7 +455,7 @@ C<$timeline_name> is a string of timeline name to be rendered.
 If the timeline does not exist in C<$view>'s L<BusyBird::Main> object, it returns "404 Not Found" response.
 
 C<$script_name> is the base path for internal hyperlinks.
-It should be C<SCRIPT_NAME> of the C<PSGI> environment.
+It should be C<SCRIPT_NAME> of the L<PSGI> environment.
 
 =head2 $psgi_response = $view->response_timeline_list(%args)
 

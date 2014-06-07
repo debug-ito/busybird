@@ -38,7 +38,7 @@ You can see complete list of options by C<-h> option.
 
 =head1 Input Statuses
 
-By default, your L<BusyBird> instance has a timeline called "home", but the timeline has no status at this time.
+By default, your L<BusyBird> instance has a timeline called "home", but the timeline has no status yet.
 It won't magically import statuses out of nowhere.
 It is you who input statuses to it.
 

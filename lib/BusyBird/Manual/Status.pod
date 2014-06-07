@@ -29,7 +29,7 @@ BusyBird::Manual::Status - Status object specification
 
 =head1 DESCRIPTION
 
-This is the specification of a status object that is handled by L<BusyBird> (especially L<BusyBird::StatusStorage> and
+This is the specification of a status object handled by L<BusyBird> (especially L<BusyBird::StatusStorage> and
 L<BusyBird::Timeline>).
 
 A status object is just a hash reference (or an Object in JSON format). It should be serializable to
@@ -39,6 +39,11 @@ JSON and deserializable from JSON.
 =head1 FIELDS
 
 The following fields in a status object is used by BusyBird.
+
+Note that the following list uses JSON for key notation.
+For example, C<busybird.acked_at> field is C<< $status->{busybird}{acked_at} >> in Perl
+(NOT C<< $status->{"busybird.acked_at"} >>).
+
 
 =head2 C<busybird.acked_at>
 
