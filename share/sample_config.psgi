@@ -18,7 +18,7 @@ timeline("home");
 #### It overrides global config.
 ## timeline("hoge")->set_config(time_zone => "America/Chicago");
 
-#### For complete list of config items, run 'perldoc BusyBird::Config'.
+#### For complete list of config items, run 'perldoc BusyBird::Manual::Config'.
 
 #### You must finish configuration with the 'end' function.
 end;
