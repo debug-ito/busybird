@@ -43,6 +43,7 @@ sub test_sqlite {
         test_storage_ordered($storage);
         test_storage_missing_arguments($storage);
         test_storage_requires_status_ids($storage);
+        test_storage_undef_in_array($storage);
     }
     {
         my $path = $STORAGE_PATH_BUILDER{$storage_type}->();

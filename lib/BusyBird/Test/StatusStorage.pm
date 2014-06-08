@@ -19,7 +19,7 @@ our $VERSION = $BusyBird::Version::VERSION;
 our %EXPORT_TAGS = (
     storage => [
         qw(test_storage_common test_storage_ordered test_storage_truncation test_storage_missing_arguments),
-        qw(test_storage_requires_status_ids),
+        qw(test_storage_requires_status_ids test_storage_undef_in_array),
     ],
     status => [qw(test_status_id_set test_status_id_list)],
 );
@@ -1541,7 +1541,7 @@ sub test_storage_requires_status_ids {
     my $ok_status = status(3);
     delete $cases{no_id}{id};
     $cases{undef_id}{id} = undef;
-    my %base = (timeline => '_test_tl_requires_status_ids');
+    my %base = (timeline => '_test_tl_requires_status_ids', callback => sub { fail("callbacked") });
     my $callbacked = 0;
     $storage->delete_statuses(%base, ids => undef, callback => sub {
         my $error = shift;
@@ -1559,11 +1559,22 @@ sub test_storage_requires_status_ids {
         dies_ok { $storage->put_statuses(%base, mode => 'insert', statuses => [$ok_status, $s]) } "case: $case, insert, array: dies OK";
         dies_ok { $storage->put_statuses(%base, mode => 'update', statuses => [$ok_status, $s]) } "case: $case, update, array: dies OK";
         dies_ok { $storage->put_statuses(%base, mode => 'upsert', statuses => [$ok_status, $s]) } "case: $case, upsert, array: dies OK";
-        my $statuses = sync_get($storage, $loop, $unloop, %base, count => 'all');
+        my $statuses = sync_get($storage, $loop, $unloop, timeline => $base{timeline}, count => 'all');
         is(int(@$statuses), 0, 'storage is empty');
         dies_ok { $storage->contains(%base, query => $s) } "case: $case, contains, single: dies OK";
         dies_ok { $storage->contains(%base, query => [$ok_status, $s, 10]) } "case: $case, contains, array: dies OK";
     }
+}
+
+sub test_storage_undef_in_array {
+    my ($storage, $loop, $unloop) = @_;
+    my %base = (timeline => '_timeline_undef_in_array', callback => sub { fail("callbacked") });
+    dies_ok { $storage->ack_statuses(%base, ids => [1, 10, undef]) } "ack dies OK";
+    foreach my $mode (qw(insert update upsert)) {
+        dies_ok { $storage->put_statuses(%base, mode => $mode, statuses => [undef, {id => 10}]) } "$mode dies OK";
+    }
+    dies_ok { $storage->delete_statuses(%base, ids => [undef, undef, 9]) } "delete dies OK";
+    dies_ok { $storage->contains(%base, query => [undef, 10, {id => 8}]) } "contains dies OK";
 }
 
 
@@ -1667,6 +1678,12 @@ The arguments are the same as C<test_storage_common> function.
 
 Test if the C<$storage> throws an exception when some statuses given to C<put_statuses()> and C<contains()> methods
 do not have their C<id> fields.
+
+The arguments are the same as C<test_storage_common> function.
+
+=head2 test_storage_undef_in_array($storage, [$loop, $unloop])
+
+Test if the C<$storage> throws an exception when array arguments for various methods contain C<undef>.
 
 The arguments are the same as C<test_storage_common> function.
 
