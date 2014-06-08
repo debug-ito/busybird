@@ -20,7 +20,7 @@ This document is mainly for implementors of BusyBird::StatusStorage::* modules.
 An L<BusyBird::StatusStorage> implementation stores and serves status objects for multiple timelines.
 End-users usually access the status storage via L<BusyBird::Timeline> objects.
 
-This class does not implement anything.
+This class implements nothing.
 An implementation of L<BusyBird::StatusStorage> must be a subclass of L<BusyBird::StatusStorage>
 and implement the following methods.
 
@@ -39,6 +39,8 @@ you can use functions provided by L<BusyBird::Test::StatusStorage>.
 =head2 $storage->delete_statuses(%args)
 
 =head2 $storage->get_unacked_counts(%args)
+
+=head2 $storage->contains(%args)
 
 The above methods are the basis of L<BusyBird::Timeline>'s methods of the same names.
 See L<BusyBird::Timeline> for the specification.

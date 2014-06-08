@@ -19,7 +19,7 @@ our $VERSION = $BusyBird::Version::VERSION;
 our %EXPORT_TAGS = (
     storage => [
         qw(test_storage_common test_storage_ordered test_storage_truncation test_storage_missing_arguments),
-        qw(test_storage_put_requires_ids),
+        qw(test_storage_requires_status_ids),
     ],
     status => [qw(test_status_id_set test_status_id_list)],
 );
@@ -278,6 +278,21 @@ sub test_cases_for_ack {
              exp_unacked => [reverse 11..20], exp_acked => [reverse 1..10]},
         );
     }
+}
+
+sub check_contains {
+    my ($storage, $loop, $unloop, $input, $exp_out, $msg) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my %args = %$input;
+    my $callbacked = 0;
+    $args{callback} = sub {
+        is_deeply \@_, $exp_out, $msg;
+        $callbacked++;
+        $unloop->();
+    };
+    $storage->contains(%args);
+    $loop->();
+    is $callbacked, 1, "callbacked once";
 }
 
 
@@ -627,6 +642,22 @@ sub test_storage_common {
             };    
         }
     }
+    note('--- contains');
+    foreach my $case (
+        { label => 'single status (in)',
+          input => {query => status(3)}, exp => [undef, [status(3)], []]},
+        { label => 'single status (out)',
+          input => {query => status(90)}, exp => [undef, [], [status(90)]]},
+        { label => 'single id (in)', input => {query => 5}, exp => [undef, [5], []]},
+        { label => 'single id (out)', input => {query => 8}, exp => [undef, [], [8]]},
+        { label => 'mixed array',
+          input => {query => [ 1, status(10), status(5), 10, 10, 3, 2, status(2), 4, 3, status(0), 8 ]},
+          exp => [undef, [1, status(5), 3, 2, status(2), 4, 3, status(0)], [status(10), 10, 10, 8]]},
+        { label => 'empty array', input => {query => []}, exp => [undef, [], []]},
+    ) {
+        my %args = (%{$case->{input}}, timeline => '_test_tl1');
+        check_contains $storage, $loop, $unloop, \%args, $case->{exp}, $case->{label};
+    }
     note('--- timeline is independent of each other');
     on_statuses $storage, $loop, $unloop, {
         timeline => "_test_tl1", count => "all"
@@ -640,6 +671,9 @@ sub test_storage_common {
         my $statuses = shift;
         test_status_id_set($statuses, [1..10], "10 statuses in _test_tl2");
     };
+    check_contains($storage, $loop, $unloop,
+                   {timeline => '_test_tl2', query => [5, 7, 9, 11]}, [undef, [5,7,9], [11]],
+                   'contains() for _test_tl2 timeline');
     note('--- access to non-existent statuses');
     foreach my $test_set (
         {mode => 'update', target => [map { status($_) } (11..15) ]},
@@ -672,6 +706,10 @@ sub test_storage_common {
             exp_change => 0, exp_unacked => [], exp_acked => []
         );
     }
+    check_contains($storage, $loop, $unloop,
+                   {timeline => "_non_existent timeline", query => [0..20]},
+                   [undef, [], [0..20]],
+                   'contains() for non-existent timeline returns all queries as not_contained');
     note('--- changes done to obtained statuses do not affect storage.');
     on_statuses $storage, $loop, $unloop, {
         timeline => '_test_tl2', count => 'all'
@@ -801,6 +839,10 @@ sub test_storage_common {
                 $storage, $loop, $unloop, timeline => $timeline_name, mode => 'insert', target => \@statuses,
                 exp_change => 2, exp_acked => [], exp_unacked => [qw(0 いち)]
             );
+            check_contains($storage, $loop, $unloop,
+                           {timeline => $timeline_name, query => [$statuses[1], 'に', 'いち', 0]},
+                           [undef, [$statuses[1], 'いち', 0], ['に']],
+                           encode_utf8("contains() works fine with Unicode timeline $timeline_name and Unicode status IDs"));
             $storage->get_unacked_counts(timeline => $timeline_name, callback => sub {
                 my ($e, $unacked_counts) = @_;
                 is($e, undef, "get unacked counts succeed");
@@ -1482,11 +1524,14 @@ sub test_storage_missing_arguments {
     dies_ok { $storage->delete_statuses(timeline => 'tl') } 'delete: ids is missing';
     dies_ok { $storage->get_unacked_counts(callback => sub {}) } 'get_unacked: timeline is missing';
     dies_ok { $storage->get_unacked_counts(timeline => 'tl') } 'get_unacked: callback is missing';
+    dies_ok { $storage->contains(query => 10, callback => sub {}) } 'contains: timeline is missing';
+    dies_ok { $storage->contains(timeline => 'tl', callback => sub {}) } 'contains: query is missing';
+    dies_ok { $storage->contains(timeline => 'tl', query => 10) } 'contains: callback is missing';
 }
 
-sub test_storage_put_requires_ids {
+sub test_storage_requires_status_ids {
     my ($storage, $loop, $unloop) = @_;
-    note("-------- test_storage_put_requires_ids");
+    note("-------- test_storage_requires_status_ids");
     $loop ||= sub {};
     $unloop ||= sub {};
     my %cases = (
@@ -1496,7 +1541,7 @@ sub test_storage_put_requires_ids {
     my $ok_status = status(3);
     delete $cases{no_id}{id};
     $cases{undef_id}{id} = undef;
-    my %base = (timeline => '_test_tl_put_requires_ids');
+    my %base = (timeline => '_test_tl_requires_status_ids');
     my $callbacked = 0;
     $storage->delete_statuses(%base, ids => undef, callback => sub {
         my $error = shift;
@@ -1516,8 +1561,11 @@ sub test_storage_put_requires_ids {
         dies_ok { $storage->put_statuses(%base, mode => 'upsert', statuses => [$ok_status, $s]) } "case: $case, upsert, array: dies OK";
         my $statuses = sync_get($storage, $loop, $unloop, %base, count => 'all');
         is(int(@$statuses), 0, 'storage is empty');
+        dies_ok { $storage->contains(%base, query => $s) } "case: $case, contains, single: dies OK";
+        dies_ok { $storage->contains(%base, query => [$ok_status, $s, 10]) } "case: $case, contains, array: dies OK";
     }
 }
+
 
 1;
 
@@ -1615,12 +1663,13 @@ Test if the C<$storage> throws an exception when a mandatory argument is missing
 
 The arguments are the same as C<test_storage_common> function.
 
-=head2 test_storage_put_requires_ids($storage, [$loop, $unloop])
+=head2 test_storage_requires_status_ids($storage, [$loop, $unloop])
 
-Test if the C<$storage> throws an exception when some C<statuses> given to C<put_statuses()> method
+Test if the C<$storage> throws an exception when some statuses given to C<put_statuses()> and C<contains()> methods
 do not have their C<id> fields.
 
 The arguments are the same as C<test_storage_common> function.
+
 
 =head1 :status TAG FUNCTIONS
 

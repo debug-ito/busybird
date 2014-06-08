@@ -233,7 +233,7 @@ sub test_timeline {
     {
         note('--- in case status storage returns errors.');
         my $mock = Test::MockObject->new();
-        foreach my $method ('get_unacked_counts', map {"${_}_statuses"} qw(get put ack delete)) {
+        foreach my $method ('get_unacked_counts', 'contains', map {"${_}_statuses"} qw(get put ack delete)) {
             $mock->mock($method, sub {
                 my ($self, %args) = @_;
                 if(defined($args{callback})) {
@@ -255,7 +255,7 @@ sub test_timeline {
         test_error_back(%t, method => 'get_unacked_counts', args => {}, label => "get_unacked_counts",
                         exp_error => qr/get_unacked_counts/);
         test_error_back(%t, method => 'contains', args => {query => [10,11,12]}, label => "contains",
-                        exp_error => qr/get_statuses/);
+                        exp_error => qr/contains/);
     }
 
     {
