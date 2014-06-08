@@ -27,6 +27,8 @@ and implement the following methods.
 To test if an implementation of L<BusyBird::StatusStorage> meets the specification,
 you can use functions provided by L<BusyBird::Test::StatusStorage>.
 
+Some methods are already implemented in L<BusyBird::StatusStorage::Common>.
+You can import those implementations or implement them from scratch for better performance.
 
 =head1 OBJECT METHODS
 

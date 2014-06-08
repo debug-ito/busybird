@@ -9,7 +9,6 @@ use BusyBird::DateTime::Format;
 use Async::Selector 1.0;
 use Data::UUID;
 use Carp;
-use CPS qw(kforeach);
 use Storable qw(dclone);
 use Scalar::Util qw(weaken looks_like_number);
 use DateTime;
@@ -85,18 +84,21 @@ sub name {
     return shift->{name};
 }
 
+sub _get_from_storage {
+    my ($self, $method, $args_ref) = @_;
+    $args_ref->{timeline} = $self->name;
+    local @CARP_NOT = (ref($self->{storage}));
+    $self->{storage}->$method(%$args_ref);
+}
+
 sub get_statuses {
     my ($self, %args) = @_;
-    $args{timeline} = $self->name;
-    local @CARP_NOT = (ref($self->{storage}));
-    $self->{storage}->get_statuses(%args);
+    $self->_get_from_storage("get_statuses", \%args);
 }
 
 sub get_unacked_counts {
     my ($self, %args) = @_;
-    $args{timeline} = $self->name;
-    local @CARP_NOT = (ref($self->{storage}));
-    $self->{storage}->get_unacked_counts(%args);
+    $self->_get_from_storage("get_unacked_counts", \%args);
 }
 
 sub _write_statuses {
@@ -165,46 +167,7 @@ sub add {
 
 sub contains {
     my ($self, %args) = @_;
-    my $query = $args{query};
-    my $callback = $args{callback};
-    croak 'query argument is mandatory' if not defined($query);
-    croak 'callback argument is mandatory' if not defined($callback);
-    if(ref($query) eq 'ARRAY') {
-        ;
-    }elsif(ref($query) eq 'HASH' || !ref($query)) {
-        $query = [$query];
-    }else {
-        croak 'query argument must be either STATUS, ID or ARRAYREF_OF_STATUSES_OR_IDS';
-    }
-    my @contained = ();
-    my @not_contained = ();
-    my $error_occurred = 0;
-    my $error;
-    kforeach $query, sub {
-        my ($query_elem, $knext, $klast) = @_;
-        my $id = ref($query_elem) ? $query_elem->{id} : $query_elem;
-        $self->get_statuses(count => 1, max_id => $id, callback => sub {
-            $error = shift;
-            my $statuses = shift;
-            if(defined($error)) {
-                $error_occurred = 1;
-                $klast->();
-                return;
-            }
-            if(@$statuses) {
-                push(@contained, $query_elem);
-            }else {
-                push(@not_contained, $query_elem);
-            }
-            $knext->();
-        });
-    }, sub {
-        if($error_occurred) {
-            $callback->("get_statuses error: $error");
-            return;
-        }
-        $callback->(undef, \@contained, \@not_contained);
-    };
+    $self->_get_from_storage("contains", \%args);
 }
 
 sub add_filter {

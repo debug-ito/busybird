@@ -1568,6 +1568,7 @@ sub test_storage_requires_status_ids {
 
 sub test_storage_undef_in_array {
     my ($storage, $loop, $unloop) = @_;
+    note("-------- test_storage_undef_in_array");
     my %base = (timeline => '_timeline_undef_in_array', callback => sub { fail("callbacked") });
     dies_ok { $storage->ack_statuses(%base, ids => [1, 10, undef]) } "ack dies OK";
     foreach my $mode (qw(insert update upsert)) {

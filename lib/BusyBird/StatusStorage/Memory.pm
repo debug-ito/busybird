@@ -5,6 +5,7 @@ use parent ('BusyBird::StatusStorage');
 use BusyBird::Util qw(set_param sort_statuses);
 use BusyBird::DateTime::Format;
 use BusyBird::Log qw(bblog);
+use BusyBird::StatusStorage::Common qw(contains);
 use DateTime;
 use Storable qw(dclone);
 use Carp;
