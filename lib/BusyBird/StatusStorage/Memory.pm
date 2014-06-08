@@ -154,22 +154,22 @@ sub delete_statuses {
     croak 'timeline arg is mandatory' if not defined $args{timeline};
     croak 'ids arg is mandatory' if not exists $args{ids};
     my $timeline = $args{timeline};
+    my $ids = $args{ids};
+    if(defined($ids)) {
+        if(!ref($ids)) {
+            $ids = [$ids];
+        }elsif(ref($ids) eq 'ARRAY') {
+            croak "ids arg array must not contain undef" if grep { !defined($_) } @$ids;
+        }else {
+            croak "ids must be undef/ID/ARRAYREF_OF_IDS";
+        }
+    }
     if(!$self->{timelines}{$timeline}) {
         if($args{callback}) {
             @_ = (undef, 0);
             goto $args{callback};
         }
         return;
-    }
-    my $ids = $args{ids};
-    if(defined($ids)) {
-        if(!ref($ids)) {
-            $ids = [$ids];
-        }elsif(ref($ids) eq 'ARRAY') {
-            ;
-        }else {
-            croak "ids must be undef/ID/ARRAYREF_OF_IDS";
-        }
     }
     my $delete_num = 0;
     if(defined($ids)) {
@@ -304,6 +304,7 @@ sub ack_statuses {
             $ids = [$args{ids}];
         }elsif(ref($args{ids}) eq 'ARRAY') {
             $ids = $args{ids};
+            croak "ids arg array must not contain undef" if grep { !defined($_) } @$ids;
         }else {
             croak "ids arg must be either undef, status ID or array-ref of IDs";
         }

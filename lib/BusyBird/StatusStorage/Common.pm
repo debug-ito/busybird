@@ -22,6 +22,9 @@ sub contains {
     }else {
         croak 'query argument must be either STATUS, ID or ARRAYREF_OF_STATUSES_OR_IDS';
     }
+    if(grep { !defined($_) || ( ref($_) eq "HASH" && !defined($_->{id}) ) } @$query) {
+        croak 'query argument must specify ID';
+    }
     my @contained = ();
     my @not_contained = ();
     my $error_occurred = 0;

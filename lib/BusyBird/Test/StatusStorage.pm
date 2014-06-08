@@ -652,7 +652,7 @@ sub test_storage_common {
         { label => 'single id (out)', input => {query => 8}, exp => [undef, [], [8]]},
         { label => 'mixed array',
           input => {query => [ 1, status(10), status(5), 10, 10, 3, 2, status(2), 4, 3, status(0), 8 ]},
-          exp => [undef, [1, status(5), 3, 2, status(2), 4, 3, status(0)], [status(10), 10, 10, 8]]},
+          exp => [undef, [1, status(5), 3, 2, status(2), 4, 3], [status(10), 10, 10, status(0), 8]]},
         { label => 'empty array', input => {query => []}, exp => [undef, [], []]},
     ) {
         my %args = (%{$case->{input}}, timeline => '_test_tl1');
