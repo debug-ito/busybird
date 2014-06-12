@@ -4,7 +4,7 @@ use warnings;
 use parent ('BusyBird::StatusStorage');
 use BusyBird::Util qw(set_param sort_statuses);
 use BusyBird::Log qw(bblog);
-use BusyBird::StatusStorage::Common qw(contains ack_statuses);
+use BusyBird::StatusStorage::Common qw(contains ack_statuses get_unacked_counts);
 use Storable qw(dclone);
 use Carp;
 use List::Util qw(min);
@@ -234,30 +234,6 @@ sub get_statuses {
     } @indice[0 .. ($count-1)] ];
 
     @_ = (undef, $result_statuses);
-    goto $args{callback};
-}
-
-sub get_unacked_counts {
-    my ($self, %args) = @_;
-    croak 'timeline arg is mandatory' if not defined $args{timeline};
-    croak 'callback arg is mandatory' if not defined $args{callback};
-    my $timeline = $args{timeline};
-    if(!$self->{timelines}{$timeline}) {
-        @_ = (undef, {total => 0});
-        goto $args{callback};
-    }
-    my @statuses = grep {
-        !$self->_acked($_)
-    } @{$self->{timelines}{$timeline}};
-    my %count = (total => int(@statuses));
-    foreach my $status (@statuses) {
-        my $level = do {
-            no autovivification;
-            $status->{busybird}{level} || 0;
-        };
-        $count{$level}++;
-    }
-    @_ = (undef, \%count);
     goto $args{callback};
 }
 

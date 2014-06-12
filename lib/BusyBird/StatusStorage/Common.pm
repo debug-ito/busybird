@@ -9,7 +9,7 @@ use BusyBird::DateTime::Format;
 use DateTime;
 use Try::Tiny;
 
-our @EXPORT_OK = qw(contains ack_statuses);
+our @EXPORT_OK = qw(contains ack_statuses get_unacked_counts);
 
 sub ack_statuses {
     my ($self, %args) = @_;
@@ -189,6 +189,35 @@ sub contains {
         $callback->(undef, \@contained, \@not_contained);
     };
 }
+
+sub get_unacked_counts {
+    my ($self, %args) = @_;
+    croak 'timeline arg is mandatory' if not defined $args{timeline};
+    croak 'callback arg is mandatory' if not defined $args{callback};
+    my $timeline = $args{timeline};
+    my $callback = $args{callback};
+    $self->get_statuses(
+        timeline => $timeline, ack_state => "unacked", count => "all",
+        callback => sub {
+            my ($error, $statuses) = @_;
+            if(defined($error)) {
+                @_ = ("get error: $error");
+                goto $callback;
+            }
+            my %count = (total => int(@$statuses));
+            foreach my $status (@$statuses) {
+                my $level = do {
+                    no autovivification;
+                    $status->{busybird}{level} || 0;
+                };
+                $count{$level}++;
+            }
+            @_ = (undef, \%count);
+            goto $callback;
+        }
+    );
+}
+
 
 1;
 __END__
