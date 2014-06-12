@@ -30,6 +30,7 @@ sub put_statuses { my $self = shift; $self->_delayed_call(@_) }
 sub ack_statuses { my $self = shift; $self->_delayed_call(@_) }
 sub delete_statuses { my $self = shift; $self->_delayed_call(@_) }
 sub get_unacked_counts { my $self = shift; $self->_delayed_call(@_) }
+sub contains { my $self = shift; $self->_delayed_call(@_) }
 
 
 1;

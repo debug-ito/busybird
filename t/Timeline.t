@@ -181,8 +181,6 @@ sub test_timeline {
         ($error, $ret) = sync($timeline, 'delete_statuses', ids => undef);
         is($error, undef, "delete_statuses succeed");
         is($ret, 22, 'delete all');
-        dies_ok { $timeline->contains(callback => sub {}) } 'contains: query is missing';
-        dies_ok { $timeline->contains(query => 5) } 'contains: callback is missing';
         test_content($timeline, {count => 'all'}, [], 'all deleted');
         test_unacked_counts($timeline, {total => 0});
     }

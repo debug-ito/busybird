@@ -398,6 +398,9 @@ sub ack_statuses {
     if(defined($ids) && !ref($ids)) {
         $ids = [$ids];
     }
+    if(defined($ids) && grep { !defined($_) } @$ids) {
+        croak "ids parameter array must not contain undef.";
+    }
     my $max_id = $args{max_id};
     my $dbh;
     my @results = try {
@@ -490,6 +493,9 @@ sub delete_statuses {
     }
     if(defined($ids) && !ref($ids)) {
         $ids = [$ids];
+    }
+    if(defined($ids) && grep { !defined($_) } @$ids) {
+        croak "ids parameter array must not contain undef.";
     }
     my $callback = defined($args{callback}) ? $args{callback} : sub {};
     croak 'callback parameter must be a CODEREF' if ref($callback) ne 'CODE';
