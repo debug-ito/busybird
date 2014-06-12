@@ -2,10 +2,144 @@ package BusyBird::StatusStorage::Common;
 use strict;
 use warnings;
 use Carp;
-use CPS qw(kforeach);
+use CPS qw(kforeach kpar);
+use CPS::Functional qw(kmap);
 use Exporter qw(import);
+use BusyBird::DateTime::Format;
+use DateTime;
+use Try::Tiny;
 
-our @EXPORT_OK = qw(contains);
+our @EXPORT_OK = qw(contains ack_statuses);
+
+sub ack_statuses {
+    my ($self, %args) = @_;
+    croak 'timeline arg is mandatory' if not defined $args{timeline};
+    my $ids;
+    if(defined($args{ids})) {
+        if(!ref($args{ids})) {
+            $ids = [$args{ids}];
+        }elsif(ref($args{ids}) eq 'ARRAY') {
+            $ids = $args{ids};
+            croak "ids arg array must not contain undef" if grep { !defined($_) } @$ids;
+        }else {
+            croak "ids arg must be either undef, status ID or array-ref of IDs";
+        }
+    }
+    my $max_id = $args{max_id};
+    my $timeline = $args{timeline};
+    my $callback = $args{callback} || sub {};
+    my $ack_str = BusyBird::DateTime::Format->format_datetime(
+        DateTime->now(time_zone => 'UTC')
+    );
+    my @target_statuses = ();
+    my $method_error;
+    kpar sub {
+        my $done = shift;
+        _get_unacked_statuses_by_ids($self, $timeline, $ids, sub {
+            my ($error, $statuses) = @_;
+            if(defined $error) {
+                $method_error = $error;
+                goto $done;
+            }
+            push(@target_statuses, @$statuses);
+            goto $done;
+        });
+    }, (defined($ids) && !defined($max_id) ? () : sub {
+        my $done = shift;
+        $self->get_statuses(
+            timeline => $timeline,
+            max_id => $max_id, count => 'all',
+            ack_state => 'unacked',
+            callback => sub {
+                my ($error, $statuses) = @_;
+                if(defined($error)) {
+                    $method_error = "get error: $error";
+                    goto $done;
+                }
+                push(@target_statuses, @$statuses);
+                goto $done;
+            }
+        );
+    }), sub {
+        ## ** final function for kpar
+        if(defined $method_error) {
+            @_ = ($method_error);
+            goto $callback;
+        }
+        @target_statuses = _uniq_statuses(@target_statuses);
+        if(!@target_statuses) {
+            @_ = (undef, 0);
+            goto $callback;
+        }
+        $_->{busybird}{acked_at} = $ack_str foreach @target_statuses;
+        $self->put_statuses(
+            timeline => $timeline, mode => 'update',
+            statuses => \@target_statuses, callback => sub {
+                my ($error, $changed) = @_;
+                if(defined($error)) {
+                    @_ = ("put error: $error");
+                    goto $callback;
+                }
+                @_ = (undef, $changed);
+                goto $callback;
+            }
+        );
+    };
+}
+
+sub _get_unacked_statuses_by_ids {
+    my ($self, $timeline, $ids, $callback) = @_;
+    if(not defined $ids) {
+        @_ = (undef, []);
+        goto $callback;
+    }
+    kmap($ids, sub {
+        my ($id, $done) = @_;
+        try {
+            $self->get_statuses(
+                timeline => $timeline, max_id => $id, ack_state => 'unacked', count => 1,
+                callback => sub {
+                    my ($error, $statuses) = @_;
+                    if(defined($error)) {
+                        @_ = ({error => $error});
+                        goto $done;
+                    }elsif(defined($statuses->[0])) {
+                        @_ = ({status => $statuses->[0]});
+                        goto $done;
+                    }else {
+                        @_ = ();
+                        goto $done;
+                    }
+                }
+            );
+        }catch {
+            my $e = shift;
+            @_ = ({error => $e});
+            goto $done;
+        };
+    }, sub {
+        my @results = @_;
+        my @statuses = ();
+        foreach my $result (@results) {
+            if(defined $result->{error}) {
+                @_ = ($result->{error});
+                goto $callback;
+            }
+            if(not defined $result->{status}) {
+                confess "undefined status in _get_unacked_statuses_by_ids.";
+            }
+            push(@statuses, $result->{status});
+        }
+        @_ = (undef, \@statuses);
+        goto $callback;
+    });
+}
+
+sub _uniq_statuses {
+    my (@statuses) = @_;
+    my %id_to_s = map { $_->{id} => $_ } @statuses;
+    return values %id_to_s;
+}
 
 sub contains {
     my ($self, %args) = @_;
@@ -55,7 +189,6 @@ sub contains {
         $callback->(undef, \@contained, \@not_contained);
     };
 }
-
 
 1;
 __END__
