@@ -1054,5 +1054,30 @@ sub test_timeline {
     );
 }
 
+{
+    note("--- watch_unacked_counts example");
+    my $storage = BusyBird::StatusStorage::SQLite->new(path => ':memory:');
+    my $timeline = BusyBird::Timeline->new(
+        name => "test_watch", storage => $storage
+    );
+    $timeline->add([status(0, 0), status(1, 0), status(2, 1), status(3, -1)]);
+
+    my $watcher = $timeline->watch_unacked_counts(
+        assumed => { total => 4, 1 => 2 },
+        callback => sub {
+            my ($error, $w, $unacked_counts) = @_;
+            $w->cancel();
+            is_deeply $unacked_counts, {
+                total => 4,
+                -1 => 1,
+                0 => 2,
+                1 => 1,
+            };
+        }
+    );
+
+    ok !$watcher->active, "callback is called already";
+}
+
 done_testing();
 

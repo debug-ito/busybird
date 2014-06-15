@@ -388,7 +388,8 @@ the current and assumed unacked counts are different.
 In C<assumed> argument, the timeline names that are not in C<$main> are ignored.
 If there is no existent timeline name in C<assumed>, this method croaks.
 
-
+Never apply C<future_of()> function from L<BusyBird::Util> to this method.
+This is because this method can execute the callback more than once.
 
 =head1 AUTHOR
 

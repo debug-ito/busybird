@@ -758,7 +758,23 @@ C<$filter> must pass the result array-ref of statuses to the C<$done> callback.
 
 B<< Examples >>
 
-TODO: examples
+    ## Synchronous filter
+    $timeline->add_filter(sub {
+        my ($statuses) = @_;
+        return [ grep { some_predicate($_) } @$statuses ];
+    });
+    
+    ## Asynchronous filter
+    $timeline->add_filter(sub {
+        my ($statuses, $done) = @_;
+        some_async_processing(
+            statuses => $statuses,
+            callback => sub {
+                my ($results) = @_;
+                $done->($results);
+            }
+        );
+    }, 1);
 
 =head2 $timeline->add_filter_async($filter)
 
@@ -808,6 +824,7 @@ If the assumed unacked counts is the same as the current unacked counts, executi
 until there is some difference between them.
 
 Format of C<assumed> argument and C<%$unacked_counts> is the same as C<%$unacked_counts> returned by C<get_unacked_counts()> method.
+See also the following example.
 
 In success, the C<callback> is called with three arguments (C<$error>, C<$w>, C<$unacked_counts>).
 C<$error> is C<undef>.
@@ -816,10 +833,40 @@ C<$unacked_counts> is a hash-ref describing the current unacked counts of the C<
 
 In failure, C<$error> is a truthy value describing the error. C<$w> is an inactive L<BusyBird::Watcher>.
 
+For example, 
+
+    use Data::Dumper;
+    
+    my $watcher = $timeline->watch_unacked_counts(
+        assumed => { total => 4, 1 => 2 },
+        callback => sub {
+            my ($error, $w, $unacked_counts) = @_;
+            $w->cancel();
+            print Dumper $unacked_counts;
+        }
+    );
+
+In the above example, the caller assumes that the C<$timeline> has 4 unacked statuses in total,
+and 2 of them are in level 1.
+
+The callback is called when the assumption breaks. The C<$unacked_counts> describes the current unacked counts.
+
+    $unacked_counts = {
+        total => 4,
+        -1 => 1,
+        0 => 2,
+        1 => 1,
+    };
+
+In the above, the counts in 'total' is the same as the assumption (4),
+but the unacked count for level 1 is 1 instead of 2.
+So the callback is executed.
+
+
 The return value of this method (C<$watcher>) is an L<BusyBird::Watcher> object.
 It is the same instance as C<$w> given in the C<callback> function.
-You can call C<< $watcher->cancel() >> or C<< $w->cancel() >> to cancel the watcher.
-Otherwise, the C<callback> function can be called repeatedly.
+You can call C<< $watcher->cancel() >> or C<< $w->cancel() >> to cancel the watcher, like we did in the above example.
+Otherwise, the C<callback> function is called repeatedly.
 
 Caller does not have to specify the complete set of unacked counts in C<assumed> argument.
 Updates are checked only for levels (or 'total') that are explicitly specified in C<assumed>.
@@ -827,7 +874,8 @@ Therefore, if some updates happen in levels that are not in C<assumed>, C<callba
 
 If C<assumed> is an empty hash-ref, C<callback> is always called immediately.
 
-B<< TODO: Add example, and the fact that the callback is persistent. NOT use future_of() with this method. >>
+Never apply C<future_of()> function from L<BusyBird::Util> to this method.
+This is because this method can execute the callback more than once.
 
 
 =head1 AUTHOR
