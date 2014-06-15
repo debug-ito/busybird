@@ -979,5 +979,81 @@ sub test_timeline {
     }
 }
 
+{
+    note("--- synopsis example");
+    
+    my $storage = BusyBird::StatusStorage::SQLite->new(
+        path => ':memory:'
+    );
+    my $timeline = BusyBird::Timeline->new(
+        name => "sample", storage => $storage
+    );
+
+    $timeline->set_config(
+        time_zone => "+0900"
+    );
+
+    ## Add some statuses
+    $timeline->add_statuses(
+        statuses => [{text => "foo"}, {text => "bar"}],
+        callback => sub {
+            my ($error, $num) = @_;
+            if($error) {
+                fail("error: $error");
+                return;
+            }
+            is $num, 2, "Added 2 statuses.";
+        }
+    );
+
+    ## Ack all statuses
+    $timeline->ack_statuses(callback => sub {
+        my ($error, $num) = @_;
+        if($error) {
+            fail("error: $error");
+            return;
+        }
+        is $num, 2, "Acked 2 statuses.";
+    });
+
+    ## Change acked statuses into unacked.
+    $timeline->get_statuses(
+        ack_state => 'acked', count => 10,
+        callback => sub {
+            my ($error, $statuses) = @_;
+            if($error) {
+                fail("error: $error");
+                return;
+            }
+            foreach my $s (@$statuses) {
+                $s->{busybird}{acked_at} = undef;
+            }
+            $timeline->put_statuses(
+                mode => "update", statuses => $statuses,
+                callback => sub {
+                    my ($error, $num) = @_;
+                    if($error) {
+                        fail("error: $error");
+                        return;
+                    }
+                    is $num, 2, "Updated 2 statuses.";
+                }
+            );
+        }
+    );
+
+    ## Delete all statuses
+    $timeline->delete_statuses(
+        ids => undef, callback => sub {
+            my ($error, $num) = @_;
+            if($error) {
+                fail("error: $error");
+                return;
+            }
+            is $num, 2, "Delete 2 statuses";
+        }
+    );
+}
+
 done_testing();
 

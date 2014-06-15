@@ -257,8 +257,80 @@ BusyBird::Timeline - a timeline object in BusyBird
 =head1 SYNOPSIS
 
 
-    Write synopsis!!
+    use BusyBird::Timeline;
+    use BusyBird::StatusStorage::SQLite;
+    
+    my $storage = BusyBird::StatusStorage::SQLite->new(
+        path => ':memory:'
+    );
+    my $timeline = BusyBird::Timeline->new(
+        name => "sample", storage => $storage
+    );
 
+    $timeline->set_config(
+        time_zone => "+0900"
+    );
+
+    ## Add some statuses
+    $timeline->add_statuses(
+        statuses => [{text => "foo"}, {text => "bar"}],
+        callback => sub {
+            my ($error, $num) = @_;
+            if($error) {
+                warn("error: $error");
+                return;
+            }
+            print "Added $num statuses.\n";
+        }
+    );
+
+    ## Ack all statuses
+    $timeline->ack_statuses(callback => sub {
+        my ($error, $num) = @_;
+        if($error) {
+            warn("error: $error");
+            return;
+        }
+        print "Acked $num statuses.\n";
+    });
+
+    ## Change acked statuses into unacked.
+    $timeline->get_statuses(
+        ack_state => 'acked', count => 10,
+        callback => sub {
+            my ($error, $statuses) = @_;
+            if($error) {
+                warn("error: $error");
+                return;
+            }
+            foreach my $s (@$statuses) {
+                $s->{busybird}{acked_at} = undef;
+            }
+            $timeline->put_statuses(
+                mode => "update", statuses => $statuses,
+                callback => sub {
+                    my ($error, $num) = @_;
+                    if($error) {
+                        warn("error: $error");
+                        return;
+                    }
+                    print "Updated $num statuses.\n";
+                }
+            );
+        }
+    );
+
+    ## Delete all statuses
+    $timeline->delete_statuses(
+        ids => undef, callback => sub {
+            my ($error, $num) = @_;
+            if($error) {
+                warn("error: $error");
+                return;
+            }
+            print "Delete $num statuses.\n";
+        }
+    );
 
 =head1 DESCRIPTION
 
@@ -275,7 +347,7 @@ via C<add_statuses()> method.
 
 Using status filters, you can modify or even drop the added statuses before they are
 actually inserted to the timeline.
-Statuse filters are executed in the same order as they are added.
+Status filters are executed in the same order as they are added.
 
 L<BusyBird> comes with some pre-defined status filters. See L<BusyBird::Filter> for detail.
 
@@ -291,8 +363,7 @@ When you create a timeline via C<new()> method, you have to specify a L<BusyBird
 
 Creates a new timeline.
 
-You can create a timeline via L<BusyBird::Main>'s C<timeline()> method,
-but C<new()> method allows for more detailed customization.
+You can also create a timeline via L<BusyBird::Main>'s C<timeline()> method.
 
 Fields in C<%args> are as follows.
 
