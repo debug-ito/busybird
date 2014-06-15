@@ -333,6 +333,6 @@ In success, it returns true. In failure, it returns false and the error will be 
 
 =head1 AUTHOR
 
-Toshio Ito C<< toshioito [at] cpan.org >>
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut

@@ -1721,6 +1721,6 @@ Almost the same as the C<test_status_id_set> function, but this test DOES care t
 
 =head1 AUTHOR
 
-Toshio Ito C<< toshioito [at] cpan.org >>
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut

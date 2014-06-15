@@ -391,7 +391,7 @@ It has various methods to manipuate statuses in it.
 
 =head1 AUTHOR
 
-Toshio Ito C<< toshioito [at] cpan.org >>
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut
 

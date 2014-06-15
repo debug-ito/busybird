@@ -219,6 +219,6 @@ See L<BusyBird::StatusStorage>.
 
 =head1 AUTHOR
 
-Toshio Ito C<< <toshioito@cpan [at] org> >>
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut

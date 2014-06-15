@@ -121,7 +121,7 @@ If C<$need_help> is non-C<undef>, the caller should provide the user with some h
 
 =head1 AUTHOR
 
-Toshio Ito C<< toshioito [at] cpan.org >>
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut
 

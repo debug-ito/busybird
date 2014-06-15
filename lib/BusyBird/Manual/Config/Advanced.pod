@@ -145,7 +145,7 @@ Set C<sharedir_path> parameter in C<~/.busybird/config.psgi>.
 
 =head1 AUTHOR
 
-Toshio Ito C<< toshioito [at] cpan.org >>
+Toshio Ito C<< <toshioito [at] cpan.org> >>
 
 =cut
 
