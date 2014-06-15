@@ -356,6 +356,20 @@ L<BusyBird> comes with some pre-defined status filters. See L<BusyBird::Filter> 
 A timeline's statuses are actually saved in a L<BusyBird::StatusStorage> object.
 When you create a timeline via C<new()> method, you have to specify a L<BusyBird::StatusStorage> object explicitly.
 
+=head2 Callback-Style Methods
+
+Some methods of L<BusyBird::Timeline> are callback-style, that is,
+their results are not returned but given to the callback function you specify.
+
+It depends on the underlying L<BusyBird::StatusStorage> object 
+whether the callback-style methods are synchronous or asynchronous.
+L<BusyBird::StatusStorage::SQLite>, for example, is synchronous.
+If the status storage is synchronous, the callback is always called before the method returns.
+If the status storage is asynchronous, it is possible for the method to return without calling the callback.
+The callback will be called at a certain point later.
+
+To handle callback-style methods, I recommend C<future_of()> function in L<BusyBird::Util>.
+C<future_of()> function transforms callback-style methods into Future-style methods.
 
 =head1 CLASS METHODS
 
@@ -810,7 +824,7 @@ Therefore, if some updates happen in levels that are not in C<assumed>, C<callba
 
 If C<assumed> is an empty hash-ref, C<callback> is always called immediately.
 
-B<< TODO: Add example, and the fact that the callback is persistent. >>
+B<< TODO: Add example, and the fact that the callback is persistent. NOT use future_of() with this method. >>
 
 
 =head1 AUTHOR
