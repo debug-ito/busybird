@@ -2,12 +2,12 @@ package BusyBird::StatusStorage::Common;
 use strict;
 use warnings;
 use Carp;
-use CPS qw(kforeach kpar);
-use CPS::Functional qw(kmap);
 use Exporter qw(import);
+use BusyBird::Util qw(future_of);
 use BusyBird::DateTime::Format;
 use DateTime;
 use Try::Tiny;
+use Future::Q;
 
 our @EXPORT_OK = qw(contains ack_statuses get_unacked_counts);
 
@@ -31,107 +31,57 @@ sub ack_statuses {
     my $ack_str = BusyBird::DateTime::Format->format_datetime(
         DateTime->now(time_zone => 'UTC')
     );
-    my @target_statuses = ();
-    my $method_error;
-    kpar sub {
-        my $done = shift;
-        _get_unacked_statuses_by_ids($self, $timeline, $ids, sub {
-            my ($error, $statuses) = @_;
-            if(defined $error) {
-                $method_error = $error;
-                goto $done;
-            }
-            push(@target_statuses, @$statuses);
-            goto $done;
-        });
-    }, (defined($ids) && !defined($max_id) ? () : sub {
-        my $done = shift;
-        $self->get_statuses(
+    my @subfutures = (_get_unacked_statuses_by_ids_future($self, $timeline, $ids));
+    if(!defined($ids) || defined($max_id)) {
+        push @subfutures, future_of(
+            $self, 'get_statuses',
             timeline => $timeline,
             max_id => $max_id, count => 'all',
-            ack_state => 'unacked',
-            callback => sub {
-                my ($error, $statuses) = @_;
-                if(defined($error)) {
-                    $method_error = "get error: $error";
-                    goto $done;
-                }
-                push(@target_statuses, @$statuses);
-                goto $done;
-            }
+            ack_state => 'unacked'
         );
-    }), sub {
-        ## ** final function for kpar
-        if(defined $method_error) {
-            @_ = ($method_error);
-            goto $callback;
-        }
-        @target_statuses = _uniq_statuses(@target_statuses);
+    }
+    Future::Q->needs_all(@subfutures)->then(sub {
+        my @statuses_list = @_;
+        my @target_statuses = _uniq_statuses(map { @$_ } @statuses_list);
         if(!@target_statuses) {
-            @_ = (undef, 0);
-            goto $callback;
+            return 0;
         }
         $_->{busybird}{acked_at} = $ack_str foreach @target_statuses;
-        $self->put_statuses(
+        return future_of(
+            $self, 'put_statuses',
             timeline => $timeline, mode => 'update',
-            statuses => \@target_statuses, callback => sub {
-                my ($error, $changed) = @_;
-                if(defined($error)) {
-                    @_ = ("put error: $error");
-                    goto $callback;
-                }
-                @_ = (undef, $changed);
-                goto $callback;
-            }
+            statuses => \@target_statuses,
         );
-    };
+    })->then(sub {
+        ## invocations of $callback should be at the same level of
+        ## then() chain, because $callback might throw exception and
+        ## we should not catch that exception.
+        
+        my ($changed) = @_;
+        @_ = (undef, $changed);
+        goto $callback;
+    }, sub {
+        my ($error) = @_;
+        @_ = ($error);
+        goto $callback;
+    });
 }
 
-sub _get_unacked_statuses_by_ids {
-    my ($self, $timeline, $ids, $callback) = @_;
-    if(not defined $ids) {
-        @_ = (undef, []);
-        goto $callback;
+sub _get_unacked_statuses_by_ids_future {
+    my ($self, $timeline, $ids) = @_;
+    if(!defined($ids) || !@$ids) {
+        return Future::Q->new->fulfill([]);
     }
-    kmap($ids, sub {
-        my ($id, $done) = @_;
-        try {
-            $self->get_statuses(
-                timeline => $timeline, max_id => $id, ack_state => 'unacked', count => 1,
-                callback => sub {
-                    my ($error, $statuses) = @_;
-                    if(defined($error)) {
-                        @_ = ({error => $error});
-                        goto $done;
-                    }elsif(defined($statuses->[0])) {
-                        @_ = ({status => $statuses->[0]});
-                        goto $done;
-                    }else {
-                        @_ = ();
-                        goto $done;
-                    }
-                }
-            );
-        }catch {
-            my $e = shift;
-            @_ = ({error => $e});
-            goto $done;
-        };
-    }, sub {
-        my @results = @_;
-        my @statuses = ();
-        foreach my $result (@results) {
-            if(defined $result->{error}) {
-                @_ = ($result->{error});
-                goto $callback;
-            }
-            if(not defined $result->{status}) {
-                confess "undefined status in _get_unacked_statuses_by_ids.";
-            }
-            push(@statuses, $result->{status});
-        }
-        @_ = (undef, \@statuses);
-        goto $callback;
+    my @status_futures = map {
+        my $id = $_;
+        future_of(
+            $self, 'get_statuses', 
+            timeline => $timeline, max_id => $id, ack_state => 'unacked', count => 1
+        );
+    } @$ids;
+    return Future::Q->needs_all(@status_futures)->then(sub {
+        my @statuses_list = @_;
+        return [ map { defined($_->[0]) ? ($_->[0]) : () } @statuses_list ];
     });
 }
 
@@ -159,35 +109,39 @@ sub contains {
     if(grep { !defined($_) || ( ref($_) eq "HASH" && !defined($_->{id}) ) } @$query) {
         croak 'query argument must specify ID';
     }
-    my @contained = ();
-    my @not_contained = ();
-    my $error_occurred = 0;
-    my $error;
-    kforeach $query, sub {
-        my ($query_elem, $knext, $klast) = @_;
+    if(!@$query) {
+        @_ = (undef, [], []);
+        goto $callback;
+    }
+    my @subfutures = map {
+        my $query_elem = $_;
         my $id = ref($query_elem) ? $query_elem->{id} : $query_elem;
-        $self->get_statuses(timeline => $timeline, count => 1, max_id => $id, callback => sub {
-            $error = shift;
-            my $statuses = shift;
-            if(defined($error)) {
-                $error_occurred = 1;
-                $klast->();
-                return;
-            }
-            if(@$statuses) {
-                push(@contained, $query_elem);
-            }else {
-                push(@not_contained, $query_elem);
-            }
-            $knext->();
-        });
-    }, sub {
-        if($error_occurred) {
-            $callback->("get_statuses error: $error");
-            return;
+        future_of($self, "get_statuses", timeline => $timeline, count => 1, max_id => $id)
+    } @$query;
+    Future::Q->needs_all(@subfutures)->then(sub {
+        my (@statuses_list) = @_;
+        if(@statuses_list != @$query) {
+            confess("fatal error: number of statuses_list does not match the number of query");
         }
-        $callback->(undef, \@contained, \@not_contained);
-    };
+        my @contained = ();
+        my @not_contained = ();
+        foreach my $i (0 .. $#statuses_list) {
+            if(@{$statuses_list[$i]}) {
+                push @contained, $query->[$i];
+            }else {
+                push @not_contained, $query->[$i];
+            }
+        }
+        return (\@contained, \@not_contained);
+    })->then(sub {
+        my ($contained, $not_contained) = @_;
+        @_ = (undef, $contained, $not_contained);
+        goto $callback;
+    }, sub {
+        my ($error) = @_;
+        @_ = ($error);
+        goto $callback;
+    });
 }
 
 sub get_unacked_counts {
@@ -196,6 +150,8 @@ sub get_unacked_counts {
     croak 'callback arg is mandatory' if not defined $args{callback};
     my $timeline = $args{timeline};
     my $callback = $args{callback};
+    
+    ## get_statuses() called plainly. its exception propagates to the caller.
     $self->get_statuses(
         timeline => $timeline, ack_state => "unacked", count => "all",
         callback => sub {
