@@ -83,13 +83,13 @@ the user is to blame.
 
 =item 2.
 
-Never throw an exception but call C<callback> with C<$error> defined if you
+Never throw an exception but call C<callback> with truthy C<$error> if you
 fail to complete the request, i.e. if you is to blame.
 
 =item 3.
 
 If some statuses given to C<put_statuses()> method do not have their C<id> fields,
-the method either throws an exception or automatically generates IDs for them and proceeds.
+the method may either throw an exception or automatically generate IDs for them and proceed.
 
 =back
 
@@ -98,7 +98,7 @@ the method either throws an exception or automatically generates IDs for them an
 
 C<ack_statuses()> method should update C<< $status->{busybird}{acked_at} >> field
 of the target statuses to the date/time string of the current time.
-The date/fime format should be parsable by L<BusyBird::DateTime::Format> class.
+The date/time format should be parsable by L<BusyBird::DateTime::Format> class.
 
 
 =head2 Order of Statuses

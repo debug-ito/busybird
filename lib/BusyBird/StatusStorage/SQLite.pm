@@ -672,14 +672,25 @@ BusyBird::StatusStorage::SQLite - status storage in SQLite database
 
 =head1 SYNOPSIS
 
-    write synopsis!!
+    use BusyBird;
+    use BusyBird::StatusStorage::SQLite;
+    
+    my $storage = BusyBird::StatusStorage::SQLite->new(
+        path => 'path/to/storage.sqlite3',
+        max_status_num => 5000
+    );
+    
+    busybird->set_config(
+        default_status_storage => $storage
+    );
 
 =head1 DESCRIPTION
 
 This is an implementation of L<BusyBird::StatusStorage> interface.
 It stores statuses in an SQLite database.
 
-This storage is synchronous, i.e., all operations block the thread.
+This storage is synchronous, i.e., all operations block the thread
+and the callback is called before the method returns.
 
 =head1 CLASS METHOD
 

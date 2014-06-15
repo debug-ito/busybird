@@ -1591,22 +1591,35 @@ BusyBird::Test::StatusStorage - Test routines for StatusStorage
 
 =head1 SYNOPSIS
 
+:storage tag functions
 
     use Test::More;
     use BusyBird::Test::StatusStorage qw(:storage);
     
-    my $storage = My::Storage->new();
+    my $storage = My::StatusStorage->new();
     test_storage_common($storage);
     test_storage_ordered($storage);
     test_storage_truncation($storage, {soft_max => 25, hard_max => 50});
     done_testing();
 
+:status tag functions
+
+    use Test::More;
+    use BusyBird::Test::StatusStorage qw(:status);
+    
+    $storage->get_statuses(
+        timeline => "hoge", count => 10, callback => sub {
+            my ($error, $got_statuses) = @_;
+            is $error, undef, "it should succeed";
+            test_status_id_set $got_statuses, ["id1", "id2", "id3"], "got status IDs OK";
+        }
+    );
 
 =head1 DESCRIPTION
 
 This module provides some functions mainly for testing StatusStorage objects.
 
-This module exports nothing by default, but the following functions can be imported explicitly.
+This module exports the following functions only by request.
 The functions are categorized by tags.
 
 If you want to import all functions, import C<:all> tag.
@@ -1633,8 +1646,7 @@ In addition, statuses are tested unordered.
 
 Test the order of statuses obtained by C<get_statuses()> method.
 
-This test assumes the C<$storage> conforms to the "Order of Statuses" guideline
-documented in L<BusyBird::StatusStorage>.
+This test assumes the C<$storage> conforms to the L<BusyBird::StatusStorage/Order of Statuses> guideline.
 StatusStorage that does not conform to the guideline should not run this test.
 
 The arguments are the same as C<test_storage_common> function.

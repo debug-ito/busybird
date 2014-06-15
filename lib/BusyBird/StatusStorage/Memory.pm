@@ -273,7 +273,8 @@ This storage is rather for testing purposes.
 If you want a light-weight in-memory status storage,
 I recommend L<BusyBird::StatusStorage::SQLite>.
 
-This storage is synchronous, i.e., all operations block the thread.
+This storage is synchronous, i.e., all operations block the thread
+and the callback is called before the method returns.
 
 This module uses L<BusyBird::Log> for logging.
 
