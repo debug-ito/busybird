@@ -10,9 +10,13 @@ note('tests for BusyBird::Util::future_of()');
 sub create_futurizable_mock {
     my $mock = Test::MockObject->new();
     my $pending_callback;
-    $mock->mock('success_result', sub {
+    $mock->mock('success_undef', sub {
         my ($self, %args) = @_;
         $args{callback}->(undef, 1, 2, 3);
+    });
+    $mock->mock('success_false', sub {
+        my ($self, %args) = @_;
+        $args{callback}->(0);
     });
     $mock->mock('failure_result', sub {
         my ($self, %args) = @_;
@@ -40,8 +44,10 @@ sub keys_from_list {
     note('--- immediate cases');
     my $mock = create_futurizable_mock();
     foreach my $case (
-        {label => "success result", method => 'success_result', in_args => [foo => 'bar'],
+        {label => "success undef", method => 'success_undef', in_args => [foo => 'bar'],
          exp_result_type => 'fulfill', exp_result => [1,2,3]},
+        {label => "success false", method => 'success_false', in_args => [hoge => 'fuga'],
+         exp_result_type => 'fulfill', exp_result => []},
         {label => 'failure result', method => 'failure_result', in_args => [],
          exp_result_type => 'reject', exp_result => ['failure', 1]},
         {label => 'die', method => 'die', in_args => [hoge => 10],
@@ -109,6 +115,7 @@ sub keys_from_list {
     foreach my $case (
         {label => "fulfill empty", fire => [undef], exp_result_type => 'fulfill', exp_result => []},
         {label => "fulfill with 0", fire => [0, 'a', 'b'], exp_result_type => 'fulfill', exp_result => ['a', 'b']},
+        {label => "fulfill with empty string", fire => ['', 100], exp_result_type => 'fulfill', exp_result => [100]},
         {label => "really empty callback", fire => [], exp_result_type => 'fulfill', exp_result => []},
         {label => "reject", fire => ["hoge"], exp_result_type => 'reject', exp_result => ["hoge", 1]}
     ) {

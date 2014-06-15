@@ -186,40 +186,32 @@ __END__
 
 BusyBird::Util - utility functions for BusyBird
 
-
-=for test_synopsis
-my $timeline;
-
 =head1 SYNOPSIS
 
     use BusyBird::Util qw(sort_statuses split_with_entities future_of);
     
-    my @statuses;
     future_of($timeline, "get_statuses", count => 100)->then(sub {
         my ($statuses) = @_;
-        @statuses = @$statuses;
+        my @sorted_statuses = sort_statuses(@$statuses);
+        my $status = $sorted_statuses[0];
+        my $segments_arrayref = split_with_entities($status->{text}, $status->{entities});
+        return $segments_arrayref;
     })->catch(sub {
         my ($error, $is_normal_error) = @_;
         warn $error;
     });
-    
-    my @sorted_statuses = sort_statuses(@statuses);
-    
-    my $status = $sorted_statuses[0];
-    my $segments_arrayref = split_with_entities($status->{text}, $status->{entities});
-
 
 =head1 DESCRIPTION
 
 This module provides some utility functions useful in L<BusyBird>.
 
-By default, this module exports nothing.
-
 =head1 EXPORTABLE FUNCTIONS
+
+The following functions are exported only by request.
 
 =head2 @sorted = sort_statuses(@statuses)
 
-Sorts an array of status object appropriately.
+Sorts an array of status objects appropriately.
 
 The sort refers to C<< $status->{created_at} >> and C<< $status->{busybird}{acked_at} >> fields.
 See L<BusyBird::StatusStorage/Order_of_Statuses> section.
@@ -317,7 +309,7 @@ It croaks if C<$text> is C<undef>.
 Wraps a callback-style method call with a L<Future::Q> object.
 
 This function executes C<< $invocant->$method(%args) >>, which is supposed to be a callback-style method.
-Before the execution, C<callback> field in C<%args> is overwritten, so that the result of the callback can be
+Before the execution, C<callback> field in C<%args> is overwritten, so that the result of the C<$method> can be
 obtained from C<$future>.
 
 To use C<future_of()>, the C<$method> must conform to the following specification.
