@@ -16,7 +16,10 @@ my ($timeline); sub callback {}
 
 =head1 SYNOPSIS
 
-    my $watcher = $timeline->watch_unacked_counts(total => 0, \&callback);
+    my $watcher = $timeline->watch_unacked_counts(
+        assumed => { total => 0 },
+        callback => sub { ... }
+    );
     
     $watcher->active;   ## returns true if the $watcher is active
     $watcher->cancel(); ## cancels the $watcher
@@ -25,7 +28,7 @@ my ($timeline); sub callback {}
 
 This is an interface (or role) class for watcher objects.
 A watcher is something that represents a callback registered somewhere.
-Users can use a watcher to cancel (or unregister) the callback.
+Users can use a watcher to cancel (i.e. unregister) the callback.
 
 L<BusyBird::Watcher> does not implement any method.
 Implementations of L<BusyBird::Watcher> must be a subclass of L<BusyBird::Watcher>
