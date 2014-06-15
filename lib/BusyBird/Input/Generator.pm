@@ -3,8 +3,6 @@ use strict;
 use warnings;
 use DateTime;
 use BusyBird::DateTime::Format;
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
 use Data::UUID;
 
 sub new {

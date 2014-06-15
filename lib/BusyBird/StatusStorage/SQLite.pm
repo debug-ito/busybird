@@ -2,8 +2,6 @@ package BusyBird::StatusStorage::SQLite;
 use strict;
 use warnings;
 use parent ("BusyBird::StatusStorage");
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
 use DBI;
 use Carp;
 use Try::Tiny;

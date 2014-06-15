@@ -11,10 +11,8 @@ use BusyBird::DateTime::Format;
 use BusyBird::StatusStorage;
 use BusyBird::Util ();
 use Carp;
-use BusyBird::Version;
 use utf8;
 use Encode qw(encode_utf8);
-our $VERSION = $BusyBird::Version::VERSION;
 
 our %EXPORT_TAGS = (
     storage => [

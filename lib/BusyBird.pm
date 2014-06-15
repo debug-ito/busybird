@@ -1,10 +1,11 @@
 package BusyBird;
 use strict;
 use warnings;
-use BusyBird::Version; our $VERSION = $BusyBird::Version::VERSION;
 use BusyBird::Main;
 use BusyBird::Main::PSGI qw(create_psgi_app);
 use Exporter qw(import);
+
+our $VERSION = '0.01';
 
 our @EXPORT = our @EXPORT_OK = qw(busybird timeline end);
 

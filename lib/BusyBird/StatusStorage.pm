@@ -1,6 +1,4 @@
 package BusyBird::StatusStorage;
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
 
 1;
 

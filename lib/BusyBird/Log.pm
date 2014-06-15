@@ -2,8 +2,6 @@ package BusyBird::Log;
 use strict;
 use warnings;
 use Exporter qw(import);
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
 
 our @EXPORT_OK = qw(bblog);
 our $Logger = \&default_logger;

@@ -12,8 +12,6 @@ use Carp;
 use Storable qw(dclone);
 use Scalar::Util qw(weaken looks_like_number);
 use DateTime;
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
 
 our @CARP_NOT = ();
 

@@ -15,8 +15,6 @@ use Carp;
 use Exporter qw(import);
 use URI::Escape qw(uri_unescape);
 use Encode qw(decode_utf8);
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
 use Future::Q;
 use POSIX qw(ceil);
 

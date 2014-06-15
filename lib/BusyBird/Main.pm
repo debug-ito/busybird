@@ -12,10 +12,6 @@ use File::ShareDir;
 use URI::Escape qw(uri_escape);
 use Encode ();
 
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
-
-
 our @CARP_NOT = ('BusyBird::Timeline');
 
 my %DEFAULT_CONFIG_GENERATOR = (

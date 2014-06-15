@@ -15,8 +15,6 @@ use BusyBird::DateTime::Format;
 use Cache::Memory::Simple;
 use Plack::Util ();
 use Tie::IxHash;
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
 
 sub new {
     my ($class, %args) = @_;

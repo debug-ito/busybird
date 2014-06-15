@@ -10,8 +10,6 @@ use Carp;
 use List::Util qw(min);
 use JSON;
 use Try::Tiny;
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
 
 sub new {
     my ($class, %options) = @_;

@@ -3,8 +3,6 @@ use strict;
 use warnings;
 use DateTime::Format::Strptime;
 use Try::Tiny;
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
 
 our $preferred = 0;
 

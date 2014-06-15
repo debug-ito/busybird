@@ -7,8 +7,6 @@ use Exporter qw(import);
 use BusyBird::DateTime::Format;
 use DateTime;
 use 5.10.0;
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
 use Future::Q 0.040;
 use Scalar::Util qw(blessed);
 use File::HomeDir;

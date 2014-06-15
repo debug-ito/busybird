@@ -1,7 +1,4 @@
 package BusyBird::Watcher;
-use BusyBird::Version;
-our $VERSION = $BusyBird::Version::VERSION;
-
 
 1;
 
