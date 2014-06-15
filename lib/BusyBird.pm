@@ -197,19 +197,34 @@ L<spin.js|http://fgnass.github.io/spin.js/>
 
 =back
 
+=head1 REPOSITORY
+
+L<https://github.com/debug-ito/busybird>
+
+=head1 BUGS AND FEATURE REQUESTS
+
+Please report bugs and feature requests to my Github issues
+L<https://github.com/debug-ito/busybird/issues>.
+
+Although I prefer Github, non-Github users can use CPAN RT
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=BusyBird>.
+Please send email to C<bug-BusyBird at rt.cpan.org> to report bugs
+if you do not have CPAN RT account.
+
+
 =head1 AUTHOR
+ 
+Toshio Ito, C<< <toshioito at cpan.org> >>
 
-Toshio Ito C<< <toshioito [at] cpan.org> >>
 
-=head1 LICENSE
+=head1 LICENSE AND COPYRIGHT
 
-Copyright 2013 Toshio Ito.
+Copyright 2014 Toshio Ito.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published
 by the Free Software Foundation; or the Artistic License.
 
-See http://dev.perl.org/licenses/ for more information.
-
+See L<http://dev.perl.org/licenses/> for more information.
 
 =cut
