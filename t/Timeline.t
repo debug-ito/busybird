@@ -47,11 +47,10 @@ sub test_error_back {
     my $timeline = $args{timeline};
     my $method = $args{method};
     my $args = $args{args};
-    ## my $error_index = $args{error_index};
     my $exp_error = $args{exp_error};
     my $label = $args{label} || '';
     my ($got_error) = sync($timeline, $method, %$args);
-    ok(defined($got_error), "$label: error expected.");
+    ok($got_error, "$label: error expected.");
     like($got_error, $exp_error, "$label: error message is as expected.");
 }
 

@@ -343,7 +343,7 @@ C<$error> is C<undef>.
 C<$w> is an L<BusyBird::Watcher> object representing the watch.
 C<$tl_unacked_counts> is a hash-ref describing the current unacked counts for watched timelines.
 
-In failure, the argument C<$error> is defined, and it describes the error. C<$w> is an inactive L<BusyBird::Watcher>.
+In failure, the argument C<$error> is a truthy value describing the error. C<$w> is an inactive L<BusyBird::Watcher>.
 
 For example,
 

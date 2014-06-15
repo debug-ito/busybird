@@ -433,7 +433,7 @@ Specifies a subroutine reference that is called when the operation has completed
 In success, C<callback> is called with two arguments (C<$error> and C<$added_num>).
 C<$error> is C<undef>, and C<$added_num> is the number of statuses actually added to the C<$timeline>.
 
-In failure, C<$error> is defined and it describes the error.
+In failure, C<$error> is a truthy value describing the error.
 
 =back
 
@@ -484,7 +484,7 @@ Specifies a subroutine reference that is called when the operation completes.
 In success, the C<callback> is called with two arguments (C<$error> and C<$acked_num>).
 C<$error> is C<undef>, and C<$acked_num> is the number of acked statuses.
 
-In failure, C<$error> is defined and it describes the error.
+In failure, C<$error> is a truthy value describing the error.
 
 =back
 
@@ -509,7 +509,7 @@ In success, C<callback> is called with two arguments
 C<$error> is C<undef>, and C<$arrayref_of_statuses> is an array-ref of fetched status
 objects.  The array-ref can be empty.
 
-In failure, C<$error> is defined and it describes the error.
+In failure, C<$error> is a truthy value describing the error.
 
 
 =item C<ack_state> => {'any', 'unacked', 'acked'} (optional, default: 'any')
@@ -593,7 +593,7 @@ Specifies a subroutine reference that is called when the operation completes.
 In success, C<callback> is called with two arguments (C<$error> and C<$put_num>).
 C<$error> is C<undef>, and C<$put_num> is the number of statuses inserted or updated.
 
-In failure, C<$error> is defined and it describes the error.
+In failure, C<$error> is a truthy value describing the error.
 
 
 =back
@@ -614,7 +614,7 @@ statuses to be deleted.
 
 If it is a defined scalar, the status with the specified ID is
 deleted.  If it is an array-ref of IDs, the statuses with those IDs
-are deleted.  If it is C<undef>, all statuses in the C<$timeline> are deleted.
+are deleted.  If it is explicitly set to C<undef>, all statuses in the C<$timeline> are deleted.
 
 If Status IDs include Unicode characters, they should be character strings (decoded strings), not binary strings (encoded strings).
 
@@ -626,7 +626,7 @@ Specifies a subroutine reference that is called when the operation completes.
 In success, the C<callback> is called with two arguments (C<$error> and C<$deleted_num>).
 C<$error> is C<undef>, and C<$deleted_num> is the number of deleted statuses.
 
-In failure, C<$error> is defined and it describes the error.
+In failure, C<$error> is a truthy value describing the error.
 
 
 =back
@@ -647,7 +647,7 @@ Specifies a subroutine reference that is called when the operation completes.
 In success, the C<callback> is called with two arguments (C<$error> and C<$unacked_counts>).
 C<$error> is C<undef>, and C<$unacked_counts> is a hash-ref describing numbers of unacked statuses in each level.
 
-In failure, C<$error> is defined and it describes the error.
+In failure, C<$error> is a truthy value describing the error.
 
 =back
 
@@ -688,7 +688,7 @@ and the rest is in level 2.
 
 =head2 $timeline->contains(%args)
 
-Checks whether the given statuses (or IDs) are contained in the C<$timeline>.
+Checks if the given statuses (or IDs) are contained in the C<$timeline>.
 
 Fields in C<%args> are as follows.
 
@@ -716,7 +716,7 @@ C<$error> is C<undef>.
 C<$contained> is an array-ref of given statuses or IDs that are contained in the C<$timeline>.
 C<$not_contained> is an array-ref of given statuses or IDs that are NOT contained in the C<$timeline>.
 
-In failure, C<$error> is defined and it describes the error.
+In failure, C<$error> is a truthy value describing the error.
 
 =back
 
@@ -756,6 +756,9 @@ C<$filter> must pass the result array-ref of statuses to the C<$done> callback.
 
     $done->($result_arrayref)
 
+B<< Examples >>
+
+TODO: examples
 
 =head2 $timeline->add_filter_async($filter)
 
@@ -811,7 +814,7 @@ C<$error> is C<undef>.
 C<$w> is an L<BusyBird::Watcher> object representing this watch.
 C<$unacked_counts> is a hash-ref describing the current unacked counts of the C<$timeline>.
 
-In failure, C<$error> is defined and it describes the error. C<$w> is an inactive L<BusyBird::Watcher>.
+In failure, C<$error> is a truthy value describing the error. C<$w> is an inactive L<BusyBird::Watcher>.
 
 The return value of this method (C<$watcher>) is an L<BusyBird::Watcher> object.
 It is the same instance as C<$w> given in the C<callback> function.
