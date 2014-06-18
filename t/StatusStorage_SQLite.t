@@ -3,7 +3,7 @@ use warnings;
 use Test::More;
 use Test::Exception;
 use BusyBird::Test::StatusStorage qw(:storage :status);
-use File::Temp;
+use File::Temp 0.19;
 use Test::MockObject::Extends;
 use lib "t";
 use testlib::Timeline_Util qw(sync status);
@@ -14,7 +14,7 @@ BEGIN {
 }
 
 my %STORAGE_PATH_BUILDER = (
-    file => sub { File::Temp->new },
+    file => sub { File::Temp->new(EXLOCK => 0) },
     memory => sub { ":memory:" },
 );
 
