@@ -1,5 +1,15 @@
 Revision history for BusyBird
 
+0.02    2014-06-18
+        [BUG FIX]
+        - Fix test (t/StatusStorage_SQLite.t) so BSD systems can pass it.
+        - Drop dependency on CPS::Functional from cpanfile.
+        [UI CHANGE]
+        - All controls in timeline navbar should now fit in 320px width screen.
+        - Now it doesn't set the status permalink to Twitter if the status's ID is not an integer.
+        [DOCUMENTATION]
+        - Add "QUICK START" section.
+        - Install BusyBird under user's home directory.
+
 0.01    2014-06-15
         First version, released on an unsuspecting world.
-
