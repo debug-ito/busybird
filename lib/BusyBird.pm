@@ -35,23 +35,6 @@ __END__
 
 BusyBird - a multi-level Web-based timeline viewer
 
-=head1 SYNOPSIS
-
-In your C<~/.busybird/config.psgi> file...
-
-    use BusyBird;
-    
-    busybird->set_config(
-        time_zone => "+0900",
-    );
-    
-    timeline("twitter_work")->set_config(
-        time_zone => "America/Chicago"
-    );
-    timeline("twitter_private");
-    
-    end;
-
 =head1 DESCRIPTION
 
 L<BusyBird> is a personal Web-based timeline viewer application.
@@ -109,6 +92,49 @@ Status levels are set by you, not by L<BusyBird>.
 
 L<https://github.com/debug-ito/busybird/wiki/Screenshots>
 
+=head1 QUICK START
+
+Example in Ubuntu Linux.
+
+=over
+
+=item *
+
+Install prerequisites
+
+    $ sudo apt-get install build-essential cpanminus
+
+=item *
+
+Install
+
+    $ cpanm -n BusyBird
+    $ export PERL5LIB="$HOME/perl5/lib/perl5:$PERL5LIB"
+    $ export PATH="$HOME/perl5/bin:$PATH"
+
+=item *
+
+Run
+
+    $ busybird
+    Twiggy: Accepting connections at http://127.0.0.1:5000/
+
+=item *
+
+Open timelines
+
+    $ firefox http://localhost:5000/
+
+=item *
+
+Post a status
+
+    $ wget -q -O- --post-data '{"text":"hello, world!"}' http://localhost:5000/timelines/home/statuses.json
+
+=back
+
+See L<BusyBird::Manual::Tutorial> for detail.
+
 =head1 DOCUMENTATION
 
 =over
@@ -148,6 +174,24 @@ Casual users need not to read it.
 As a module, L<BusyBird> maintains a singleton L<BusyBird::Main> object,
 and exports some functions to manipulate the singleton.
 That way, L<BusyBird> makes it easy for users to write their C<config.psgi> file.
+
+=head1 SYNOPSIS
+
+In your C<~/.busybird/config.psgi> file...
+
+    use BusyBird;
+    
+    busybird->set_config(
+        time_zone => "+0900",
+    );
+    
+    timeline("twitter_work")->set_config(
+        time_zone => "America/Chicago"
+    );
+    timeline("twitter_private");
+    
+    end;
+
 
 =head1 EXPORTED FUNCTIONS
 

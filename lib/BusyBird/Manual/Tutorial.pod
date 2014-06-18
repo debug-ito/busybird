@@ -7,15 +7,28 @@ BusyBird::Manual::Tutorial - Tutorial to use BusyBird
 
 =head1 Installation
 
+First you need C compiler tool-chains and L<cpanm> command.
+In Ubuntu Linux, for example, you can install them by
+
+    $ sudo apt-get install build-essential cpanminus
+
 To install L<BusyBird>, type
 
-    # curl -L http://cpanmin.us | perl - BusyBird
+    $ cpanm BusyBird
 
-This may take time because it also installs many modules L<BusyBird> uses.
+This may take time because it also installs many modules L<BusyBird> depends on.
 
-Of course, you can use any CPAN client to install L<BusyBird> instead of getting cpanminus on the fly.
+If you don't have much time and don't want it to run tests, set C<-n> option to skip tests.
 
-    # cpanm BusyBird
+    $ cpanm -n BusyBird
+
+If you are new to L<cpanm>, set the following environment variables.
+
+    $ export PERL5LIB="$HOME/perl5/lib/perl5:$PERL5LIB"
+    $ export PATH="$HOME/perl5/bin:$PATH"
+
+These are necessary for perl to find the modules installed in C<~/perl5> directory.
+Be sure to write them in C<~/.profile>, too.
 
 =head1 Start BusyBird
 
