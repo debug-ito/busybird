@@ -184,6 +184,12 @@ sub create_main {
         {label => "invalid status_permalink",
          args => [{id => "191", busybird => {status_permalink => "javascript: alert('hoge')"}}],
          exp => ""},
+        {label => "non-integral status ID",
+         args => [{id => 'busybird://110131', user => {screen_name => "foobar"}, text => "HOGE HOGE"}],
+         exp => ""},
+        {label => "original ID",
+         args => [{id => "converted ID", user => {screen_name => '_hoge_'}, busybird => {original => {id => '119302'}}}],
+         exp => 'https://twitter.com/_hoge_/status/119302'}
     ) {
         is($funcs->{bb_status_permalink}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
     }

@@ -38,7 +38,7 @@ my %DEFAULT_CONFIG_GENERATOR = (
                 || $status->{id}
                 || $status->{id_str};
         my $username = $status->{user}{screen_name};
-        if(defined($id) && defined($username)) {
+        if(defined($id) && defined($username) && $id =~ /^\d+$/) {
             return qq{https://twitter.com/$username/status/$id};
         }
         return undef;
