@@ -83,6 +83,14 @@
         poller.listenOnChange(function(unacked_counts) {
             self.cur_unacked_counts = unacked_counts;
             self._updateUnackedCountView();
+            var visible_count = Number($(".bb-new-statuses-num").text());
+            if (visible_count > 0 && window.Notification && window.Notification.permission === 'granted') {
+                var n = new Notification('BusyBird', {body: visible_count + ' new statuses!', tag: 'notifyNewStatus'});
+                n.onclick = function() {
+                    this.close();
+                    self.trigger();
+                }
+            }
         });
         self.status_container.listenOnThresholdLevelChanged(function() {
             self._updateUnackedCountView();
@@ -251,6 +259,9 @@
         }).then(function() {
             spinner.end();
             unacked_counts_poller.start();
+            if (window.Notification && window.Notification.permission === 'default') {
+                window.Notification.requestPermission();
+            }
         });
     });
 })();
