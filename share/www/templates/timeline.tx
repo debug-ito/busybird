@@ -110,7 +110,7 @@
                     onClick: function() { self.trigger(); }
                 });
             }
-            document.title = (visible_count > 0 ? '('+ visible_count +') ' : "") + document.title.replace(/^\([0-9]*\) */, "");
+            self.notification.setTitleNotification(visible_count > 0 ? '('+ visible_count +')' : null);
             $(".bb-new-statuses-num").text(visible_count);
             if(visible_count > 0 && !self.now_loading) {
                 self._setEnabled(true);
