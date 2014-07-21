@@ -12,6 +12,7 @@
     <script src="qunit.js"></script>
     <script src="sinon.js"></script>
     <script src="../../share/www/static/jquery.js"></script>
+    <script src="../../share/www/static/q.js"></script>
     <script src="../../share/www/static/busybird.js"></script>
     <script type="text/javascript">
 "use strict";
@@ -19,15 +20,16 @@
 var is = strictEqual;
 
 var notification;
+var setup = function() {
+    document.title = "Notification tests";
+    notification = new bb.Notification();
+};
+var teardown = function() {
+    notification = null;
+};
 
 module("setTitleNotification()", {
-    setup: function() {
-        document.title = "Notification tests";
-        notification = new bb.Notification();
-    },
-    teardown: function() {
-        notification = null;
-    }
+    setup: setup, teardown: teardown
 });
 
 test("set empty", function() {
@@ -47,6 +49,36 @@ test("set several times", function() {
     is(document.title, "Notification tests");
     notification.setTitleNotification("HOGE -");
     is(document.title, "HOGE - Notification tests");
+});
+
+module("Web Notification", { setup: setup, teardown: teardown });
+
+asyncTest("Web Notification clicked", function() {
+    notification.initWebNotification().then(function() {
+        var defer_click = Q.defer();
+        var bomb = setTimeout(function() { defer_click.reject("you are too slow"); }, 5000);
+        notification.showWebNotification({message: "THIS MESSAGE IS OK! CLICK ME!", onClick: function(message) {
+            defer_click.resolve(message);
+            clearTimeout(bomb);
+        }});
+        return defer_click.promise;
+    }).then(function(message) {
+        is(message, "THIS MESSAGE IS OK! CLICK ME!", "notification is clicked.");
+    }).fail(function(error) {
+        ok(false, "error: " + error);
+    }).fin(function() {
+        start();
+    });
+});
+
+asyncTest("calling showWebNotification() without init is OK", function() {
+    notification.showWebNotification({message: "THIS SHOULD NOT BE APPEARED.", onClick: function() {
+        ok(false, "onClick should not be executed.");
+    }});
+    setTimeout(function() {
+        ok(true, "ok");
+        start();
+    }, 300);
 });
 
     </script>

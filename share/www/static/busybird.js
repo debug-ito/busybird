@@ -208,27 +208,55 @@ bb.EventPoller.prototype = {
 };
 
 bb.Notification = function(args) {
-    // @params: enableWebNotification (default: false)
-    //          titleBase (default: current value of <title>)
+    // @params: titleBase (default: current value of <title>)
     if(!defined(args)) args = {};
-    this.enable_web_notification = defined(args.enableWebNotification) ? args.enableWebNotification : false;
-    if (this.enable_web_notification && window.Notification && window.Notification.permission === 'default') {
-        window.Notification.requestPermission();
-    }
+    this.init_web_notifications_done = false;
     this.title_base = defined(args.titleBase) ? args.titleBase : document.title;
 };
 bb.Notification.prototype = {
-    _isNotificationEnabled: function() {
-        return this.enable_web_notification && window.Notification && window.Notification.permission === 'granted';
+    _isWebNotificationEnabled: function() {
+        return this.init_web_notifications_done && window.Notification && window.Notification.permission === 'granted';
+    },
+    initWebNotification: function() {
+        // @returns a promise resolved when initialization is done. If
+        // Web Notification is permitted, the promise
+        // fulfills. Otherwise it rejects.
+        var self = this;
+        var init_defer = Q.defer();
+        var resolve_init = function(permission) {
+            if(permission === 'granted') {
+                init_defer.resolve();
+            }else {
+                init_defer.reject("Web Notification is denied (perhaps by the user)");
+            }
+            self.init_web_notifications_done = true;
+        };
+        if(window.Notification) {
+            if(window.Notification.permission === 'default') {
+                window.Notification.requestPermission(resolve_init);
+            }else {
+                resolve_init(window.Notification.permission);
+            }
+        }else {
+            init_defer.reject("Web Notification is not supported in this environment.");
+        }
+        return init_defer.promise;
     },
     setIconAlert: function(is_alert) {
         ;
     },
     showWebNotification: function(args) {
-        // @params: args.message,
-        //          args.onClick (optional) (function () returning nothing)
+        // @params: args.message, args.tag
+        //          args.onClick (optional) (function (message) returning nothing)
         var self = this;
-        if(!self._isNotificationEnabled()) return;
+        if(!self._isWebNotificationEnabled()) return;
+        var message = args.message;
+        var onclick = args.onClick;
+        var notification = new Notification('BusyBird', {body: message, tag: args.tag});
+        notification.onclick = function() {
+            this.close();
+            if(defined(onclick)) onclick(message);
+        };
     },
     setTitleNotification: function(message) {
         if(defined(message) && message !== "") {
