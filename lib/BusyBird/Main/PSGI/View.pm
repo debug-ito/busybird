@@ -295,6 +295,21 @@ sub response_statuses {
                                               : {error => undef, statuses => $args{statuses}});
 }
 
+my %TIMELINE_CONFIG_FILTER_FOR = (
+    enable_timeline_web_notifications => sub { $_[0] ? JSON::true : JSON::false },
+);
+
+sub _create_timeline_config_json {
+    my ($self, $timeline_name) = @_;
+    my %config = ();
+    foreach my $key (keys %TIMELINE_CONFIG_FILTER_FOR) {
+        my $config_filter = $TIMELINE_CONFIG_FILTER_FOR{$key};
+        my $orig_value = $self->{main_obj}->get_timeline_config($timeline_name, $key);
+        $config{$key} = $config_filter->($orig_value);
+    }
+    return to_json(\%config);
+}
+
 sub response_timeline {
     my ($self, $timeline_name, $script_name) = @_;
     my $timeline = $self->{main_obj}->get_timeline($timeline_name);
@@ -305,7 +320,8 @@ sub response_timeline {
         args => {
             timeline_name => $timeline_name,
             script_name => $script_name,
-            post_button_url => $self->{main_obj}->get_timeline_config($timeline_name, "post_button_url")
+            post_button_url => $self->{main_obj}->get_timeline_config($timeline_name, "post_button_url"),
+            timeline_config_json => $self->_create_timeline_config_json($timeline_name),
         }
     );
 }

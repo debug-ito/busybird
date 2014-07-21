@@ -263,6 +263,12 @@ If C<$text_to_be_displayed> is C<undef>, the original C<$text> is used for displ
 If a C<*_entity_url_builder> subroutine reference returns non-URL for the C<$entity>,
 the text is not linked and the corresponding C<*_entity_text_builder> is not called.
 
+=head2 C<enable_timeline_web_notifications> => BOOL
+
+B<Default:> 1 (enabled)
+
+Enable L<Web Notifications|http://www.w3.org/TR/notifications/> in timeline views.
+
 =head1 EXAMPLES
 
 =head2 Customize Timestamps

@@ -1,4 +1,4 @@
-: ## WRAPPER "wrapper_document.tt" WITH script_name = script_name, title = timeline_name
+: ## Arguments: script_name, timeline_name, post_button_url, timeline_config_json
 : cascade wrapper_navbar { script_name => $script_name, title => $timeline_name }
 : around navbar_content -> {
 <form class="navbar-form navbar-right bb-nav-controls-container">
@@ -225,8 +225,20 @@
     $(function() {
         var spinner = new bb.Spinner("#bb-spinner-placeholder");
         var message_banner = new bb.MessageBanner("#bb-msg");
+        var timeline_config;
+        try {
+            timeline_config = JSON.parse("<: $timeline_config_json | js :>");
+        }catch(e) {
+            var error_message = "Error while parsing timeline config.";
+            console.error(error_message);
+            console.error(e);
+            message_banner.show(error_message, "error");
+            timeline_config = {};
+        }
         var notification = new bb.Notification();
-        notification.initWebNotification();
+        if(timeline_config.enable_timeline_web_notifications) {
+            notification.initWebNotification();
+        }
         var status_container = new bb.StatusContainer({
             selectorContainer: "#statuses", timeline: '<: $timeline_name | js :>',
             apiBase: '<: $script_name | js :>'

@@ -1,5 +1,4 @@
 : ## Arguments: script_name, timeline_unacked_counts_json, page_list, last_page (begin with 0), cur_page (begin with 0)
-: ## WRAPPER "wrapper_document.tt" WITH script_name = script_name
 : cascade wrapper_navbar { script_name => $script_name }
 
 <: macro pagination -> { -:>
