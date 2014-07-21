@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Notification tests</title>
+    <link rel="stylesheet" href="qunit.css">
+  </head>
+  <body>
+    <div id="mb"></div>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <script src="qunit.js"></script>
+    <script src="sinon.js"></script>
+    <script src="../../share/www/static/jquery.js"></script>
+    <script src="../../share/www/static/busybird.js"></script>
+    <script type="text/javascript">
+"use strict";
+
+var is = strictEqual;
+
+var notification;
+
+module("setTitleNotification()", {
+    setup: function() {
+        document.title = "Notification tests";
+        notification = new bb.Notification();
+    },
+    teardown: function() {
+        notification = null;
+    }
+});
+
+test("set empty", function() {
+    notification.setTitleNotification("");
+    is(document.title, "Notification tests");
+});
+
+test("set with no arg", function() {
+    notification.setTitleNotification();
+    is(document.title, "Notification tests");
+});
+
+test("set several times", function() {
+    notification.setTitleNotification("(10)");
+    is(document.title, "(10) Notification tests");
+    notification.setTitleNotification();
+    is(document.title, "Notification tests");
+    notification.setTitleNotification("HOGE -");
+    is(document.title, "HOGE - Notification tests");
+});
+
+    </script>
+  </body>
+</html>

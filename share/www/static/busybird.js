@@ -207,4 +207,36 @@ bb.EventPoller.prototype = {
     },
 };
 
+bb.Notification = function(args) {
+    // @params: enableWebNotification (default: false)
+    //          titleBase (default: current value of <title>)
+    if(!defined(args)) args = {};
+    this.enable_web_notification = defined(args.enableWebNotification) ? args.enableWebNotification : false;
+    if (this.enable_web_notification && window.Notification && window.Notification.permission === 'default') {
+        window.Notification.requestPermission();
+    }
+    this.title_base = defined(args.titleBase) ? args.titleBase : document.title;
+};
+bb.Notification.prototype = {
+    _isNotificationEnabled: function() {
+        return this.enable_web_notification && window.Notification && window.Notification.permission === 'granted';
+    },
+    setIconAlert: function(is_alert) {
+        ;
+    },
+    showWebNotification: function(args) {
+        // @params: args.message,
+        //          args.onClick (optional) (function () returning nothing)
+        var self = this;
+        if(!self._isNotificationEnabled()) return;
+    },
+    setTitleNotification: function(message) {
+        if(defined(message) && message !== "") {
+            document.title = message + " " + this.title_base;
+        }else {
+            document.title = this.title_base;
+        }
+        
+    },
+};
 
