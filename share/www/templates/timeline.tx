@@ -112,6 +112,7 @@
                     onClick: function() { self.trigger(); }
                 });
             }
+            self.notification.setFaviconAlert(visible_count > 0);
             self.notification.setTitleNotification(visible_count > 0 ? '('+ visible_count +')' : null);
             $(".bb-new-statuses-num").text(visible_count);
             if(visible_count > 0 && !self.now_loading) {
@@ -237,7 +238,7 @@
             message_banner.show(error_message, "error");
             timeline_config = {};
         }
-        var notification = new bb.Notification();
+        var notification = new bb.Notification({scriptName: "<: $script_name | js :>"});
         if(timeline_config.enable_timeline_web_notifications) {
             notification.initWebNotification();
         }

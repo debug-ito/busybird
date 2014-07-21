@@ -81,6 +81,19 @@ asyncTest("calling showWebNotification() without init is OK", function() {
     }, 300);
 });
 
+module("Favicon", {teardown: teardown, setup: function() {
+    document.title = "Notification tests";
+    notification = new bb.Notification({scriptName: "/foo/bar"});
+}});
+
+test("setFaviconAlert()", function() {
+    notification.setFaviconAlert(true);
+    is($("link[rel='shortcut icon']").attr("href"), "/foo/bar/static/favicon_alert.ico");
+    notification.setFaviconAlert(false);
+    is($("link[rel='shortcut icon']").attr("href"), "/foo/bar/static/favicon_normal.ico");
+});
+
+
     </script>
   </body>
 </html>

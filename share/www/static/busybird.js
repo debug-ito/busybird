@@ -208,10 +208,12 @@ bb.EventPoller.prototype = {
 };
 
 bb.Notification = function(args) {
-    // @params: titleBase (default: current value of <title>)
+    // @params: args.titleBase (default: current value of <title>)
+    //          args.scriptName (default: "")
     if(!defined(args)) args = {};
     this.init_web_notifications_done = false;
     this.title_base = defined(args.titleBase) ? args.titleBase : document.title;
+    this.script_name = defined(args.scriptName) ? args.scriptName : "";
 };
 bb.Notification.prototype = {
     _isWebNotificationEnabled: function() {
@@ -242,8 +244,14 @@ bb.Notification.prototype = {
         }
         return init_defer.promise;
     },
-    setIconAlert: function(is_alert) {
-        ;
+    setFaviconAlert: function(is_alert) {
+        var self = this;
+        var favicon_path =
+            self.script_name + "/static/" + 
+            (is_alert ? "favicon_alert.ico" : "favicon_normal.ico");
+        $("link[rel='shortcut icon']").remove();
+        
+        $("head").append( $('<link rel="shortcut icon"></link>').attr('href', favicon_path) );
     },
     showWebNotification: function(args) {
         // @params: args.message, args.tag, subtitle,
