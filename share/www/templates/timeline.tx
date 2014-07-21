@@ -67,7 +67,8 @@
     };
     
     var NewStatusesButton = function(args) {
-        // @params: args.unackedCountsPoller, args.spinner, args.statusContainer, args.messageBanner, args.statusesSummary
+        // @params: args.unackedCountsPoller, args.spinner, args.statusContainer,
+        //          args.messageBanner, args.statusesSummary, args.notification
         var self = this;
         var poller = args.unackedCountsPoller;
         self.enabled = false;
@@ -76,24 +77,17 @@
         self.status_container = args.statusContainer;
         self.message_banner = args.messageBanner;
         self.statuses_summary = args.statusesSummary;
+        self.notification = args.notification;
         self.cur_unacked_counts = {total: 0};
 
         self._setEnabled(false);
         $("#bb-new-statuses-button").on("click", function() { self.trigger(); return false; });
         poller.listenOnChange(function(unacked_counts) {
             self.cur_unacked_counts = unacked_counts;
-            self._updateUnackedCountView();
-            var visible_count = Number($(".bb-new-statuses-num").text());
-            if (visible_count > 0 && window.Notification && window.Notification.permission === 'granted') {
-                var n = new Notification('BusyBird', {body: visible_count + ' new statuses!', tag: 'notifyNewStatus'});
-                n.onclick = function() {
-                    this.close();
-                    self.trigger();
-                }
-            }
+            self._updateUnackedCountView(true);
         });
         self.status_container.listenOnThresholdLevelChanged(function() {
-            self._updateUnackedCountView();
+            self._updateUnackedCountView(false);
         });
     };
     NewStatusesButton.prototype = {
@@ -107,9 +101,15 @@
                 $button.addClass("disabled");
             }
         },
-        _updateUnackedCountView: function() {
+        _updateUnackedCountView: function(show_web_notification) {
             var self = this;
             var visible_count = self._visibleUnackedCount();
+            if(show_web_notification && visible_count > 0) {
+                self.notification.showWebNotification({
+                    message: visible_count + ' new statuses!', tag: 'notifyNewStatuses',
+                    onClick: function() { self.trigger(); }
+                });
+            }
             document.title = (visible_count > 0 ? '('+ visible_count +') ' : "") + document.title.replace(/^\([0-9]*\) */, "");
             $(".bb-new-statuses-num").text(visible_count);
             if(visible_count > 0 && !self.now_loading) {
@@ -146,7 +146,7 @@
             }).then(function() {
                 self.spinner.end();
                 self.now_loading = false;
-                self._updateUnackedCountView();
+                self._updateUnackedCountView(false);
             });
         }
     };
@@ -225,6 +225,8 @@
     $(function() {
         var spinner = new bb.Spinner("#bb-spinner-placeholder");
         var message_banner = new bb.MessageBanner("#bb-msg");
+        var notification = new bb.Notification();
+        notification.initWebNotification();
         var status_container = new bb.StatusContainer({
             selectorContainer: "#statuses", timeline: '<: $timeline_name | js :>',
             apiBase: '<: $script_name | js :>'
@@ -238,7 +240,8 @@
         var new_statuses_button = new NewStatusesButton({
             unackedCountsPoller: unacked_counts_poller,
             spinner: spinner, statusContainer: status_container,
-            messageBanner: message_banner, statusesSummary: statuses_summary
+            messageBanner: message_banner, statusesSummary: statuses_summary,
+            notification: notification
         });
         var more_statuses_button = new MoreStatusesButton({
             spinner: spinner, messageBanner: message_banner,
@@ -259,9 +262,6 @@
         }).then(function() {
             spinner.end();
             unacked_counts_poller.start();
-            if (window.Notification && window.Notification.permission === 'default') {
-                window.Notification.requestPermission();
-            }
         });
     });
 })();
