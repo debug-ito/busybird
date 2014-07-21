@@ -244,14 +244,16 @@ bb.Notification.prototype = {
         }
         return init_defer.promise;
     },
+    _getFaviconPath: function(type) {
+        // @param type either "normal" or "alert".
+        return this.script_name + "/static/favicon_" + type + ".ico";
+    },
     setFaviconAlert: function(is_alert) {
         var self = this;
-        var favicon_path =
-            self.script_name + "/static/" + 
-            (is_alert ? "favicon_alert.ico" : "favicon_normal.ico");
+        var favicon_type = is_alert ? "alert" : "normal";
         $("link[rel='shortcut icon']").remove();
         
-        $("head").append( $('<link rel="shortcut icon"></link>').attr('href', favicon_path) );
+        $("head").append( $('<link rel="shortcut icon"></link>').attr('href', self._getFaviconPath(favicon_type)) );
     },
     showWebNotification: function(args) {
         // @params: args.message, args.tag, subtitle,
@@ -261,7 +263,9 @@ bb.Notification.prototype = {
         var message = args.message;
         var onclick = args.onClick;
         var title = defined(args.subtitle) ? args.subtitle + ' - BusyBird' : 'BusyBird';
-        var notification = new Notification(title, {body: message, tag: args.tag});
+        var notification = new Notification(title, {
+            body: message, tag: args.tag, icon: self._getFaviconPath("alert")
+        });
         notification.onclick = function() {
             this.close();
             if(defined(onclick)) onclick(message);
