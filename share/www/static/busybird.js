@@ -246,13 +246,14 @@ bb.Notification.prototype = {
         ;
     },
     showWebNotification: function(args) {
-        // @params: args.message, args.tag
+        // @params: args.message, args.tag, subtitle,
         //          args.onClick (optional) (function (message) returning nothing)
         var self = this;
         if(!self._isWebNotificationEnabled()) return;
         var message = args.message;
         var onclick = args.onClick;
-        var notification = new Notification('BusyBird', {body: message, tag: args.tag});
+        var title = defined(args.subtitle) ? args.subtitle + ' - BusyBird' : 'BusyBird';
+        var notification = new Notification(title, {body: message, tag: args.tag});
         notification.onclick = function() {
             this.close();
             if(defined(onclick)) onclick(message);

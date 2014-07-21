@@ -103,10 +103,12 @@
         },
         _updateUnackedCountView: function(show_web_notification) {
             var self = this;
+            var timeline_name = self.status_container.getTimelineName();
             var visible_count = self._visibleUnackedCount();
             if(show_web_notification && visible_count > 0) {
                 self.notification.showWebNotification({
-                    message: visible_count + ' new statuses!', tag: 'notifyNewStatuses',
+                    message: visible_count + ' new statuses!', tag: timeline_name + '/notifyNewStatuses',
+                    subtitle: timeline_name,
                     onClick: function() { self.trigger(); }
                 });
             }
