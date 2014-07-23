@@ -140,7 +140,7 @@ This simple script imports statuses from your home timeline, encodes them in JSO
 
 To run the script, you need L<Net::Twitter::Lite> and L<JSON> modules, so install them.
 
-    # cpanm Net::Twitter::Lite JSON
+    $ cpanm Net::Twitter::Lite JSON
 
 OK, now you can run it.
 

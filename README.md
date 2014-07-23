@@ -12,16 +12,37 @@ You can view those statuses in a timeline by a Web browser.
 
 For more information, visit https://metacpan.org/pod/BusyBird
 
+SCREENSHOTS
+-----------
+
+https://github.com/debug-ito/busybird/wiki/Screenshots
 
 INSTALLATION
 ------------
 
-To install this module, run the following commands:
+Install it from CPAN!
 
+    $ cpanm BusyBird
+
+See https://metacpan.org/pod/BusyBird for detail.
+
+
+TRY WITHOUT INSTALLATION
+------------------------
+
+You can try BusyBird without installing it. This is recommended if you
+try a development version.
+
+    $ git clone https://github.com/debug-ito/busybird.git
+    $ cd busybird
+    $ cpanm --installdeps .
     $ perl Build.PL
     $ ./Build
     $ ./Build test
-    $ ./Build install
+
+...and to start BusyBird, type
+
+    $ perl -Iblib/lib blib/script/busybird
 
 
 AUTHOR

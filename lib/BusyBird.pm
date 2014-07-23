@@ -260,6 +260,15 @@ if you do not have CPAN RT account.
  
 Toshio Ito, C<< <toshioito at cpan.org> >>
 
+=head1 CONTRIBUTORS
+
+=over
+
+=item *
+
+Keisuke Minami
+
+=back
 
 =head1 LICENSE AND COPYRIGHT
 
