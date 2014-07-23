@@ -59,8 +59,6 @@ $(function() {
         });
         var counts = $row.data("bbInitCounts");
         var name = $row.find(".bb-timeline-name").text();
-        console.log("counts data for " + name);
-        console.log(counts);
         renderer.show(counts);
         poller.addTimeline({
             timelineName: name,
