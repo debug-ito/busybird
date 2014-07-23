@@ -2,9 +2,16 @@ body {
     padding: 50px 0 0 0;
 }
 
+@media (max-width: 767px) {
+    .bb-main-column {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+}
+
 ul#statuses {
     margin: 0;
-    padding: 5px 20px;
+    padding: 5px 0px;
     width: auto;
 }
 
