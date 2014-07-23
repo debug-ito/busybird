@@ -47,10 +47,25 @@
 <script type="text/javascript" src="<: $script_name :>/static/timeline_list.js"></script>
 <script type="text/javascript">
 "use strict";
+
+var getTotalUnackedCount = function() {
+    var total = 0;
+    $("td.bb-timeline-unacked-counts-total-cell").each(function() {
+        total += parseInt($(this).text(), 10);
+    });
+    return total;
+};
+
 $(function() {
     var poller = new bb.UnackedCountsPoller({
         apiBase: "<: $script_name | js :>"
     });
+    var notification = new bb.Notification({
+        scriptName: "<: $script_name | js :>"
+    });
+    var updateFavicon = function() {
+        notification.setFaviconAlert(getTotalUnackedCount() > 0);
+    };
     $("#bb-timeline-list tbody tr").each(function() {
         var $row = $(this);
         var renderer = new bb.UnackedCountsRenderer({
@@ -65,10 +80,12 @@ $(function() {
             initialUnackedCounts: counts,
             callback: function(received_counts) {
                 renderer.show(received_counts);
+                updateFavicon();
             }
         });
     });
     poller.start();
+    updateFavicon();
 });
 </script>
 : } ## around content
