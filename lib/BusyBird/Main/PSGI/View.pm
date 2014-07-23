@@ -296,7 +296,7 @@ sub response_statuses {
 }
 
 my %TIMELINE_CONFIG_FILTER_FOR = (
-    enable_timeline_web_notifications => sub { $_[0] ? JSON::true : JSON::false },
+    timeline_web_notifications => sub { defined($_[0]) ? "$_[0]" : ""},
 );
 
 sub _create_timeline_config_json {

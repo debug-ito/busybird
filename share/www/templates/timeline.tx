@@ -239,7 +239,7 @@
             timeline_config = {};
         }
         var notification = new bb.Notification({scriptName: "<: $script_name | js :>"});
-        if(timeline_config.enable_timeline_web_notifications) {
+        if(timeline_config.timeline_web_notifications === "simple") {
             notification.initWebNotification();
         }
         var status_container = new bb.StatusContainer({
