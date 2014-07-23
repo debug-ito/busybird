@@ -21,10 +21,7 @@ my $builder = Module::Build::Pluggable->new(
     meta_add => {
         resources => {
             bugtracker => 'https://github.com/debug-ito/busybird/issues',
-            repository => {
-                web => 'https://github.com/debug-ito/busybird',
-                url => 'git://github.com/debug-ito/busybird.git',
-            }
+            repository => 'https://github.com/debug-ito/busybird',
         }
     }
 );
