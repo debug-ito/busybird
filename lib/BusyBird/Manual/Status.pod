@@ -44,6 +44,8 @@ Note that the following list uses JSON for key notation.
 For example, C<busybird.acked_at> field is C<< $status->{busybird}{acked_at} >> in Perl
 (NOT C<< $status->{"busybird.acked_at"} >>).
 
+Status object can have fields that are not listed in this page.
+L<BusyBird> tries to keep such fields untouched.
 
 =head2 C<busybird.acked_at>
 
