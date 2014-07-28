@@ -190,8 +190,8 @@ BusyBird::Util - utility functions for BusyBird
     
     future_of($timeline, "get_statuses", count => 100)->then(sub {
         my ($statuses) = @_;
-        my @sorted_statuses = sort_statuses(@$statuses);
-        my $status = $sorted_statuses[0];
+        my $sorted_statuses = sort_statuses($statuses);
+        my $status = $sorted_statuses->[0];
         my $segments_arrayref = split_with_entities($status->{text}, $status->{entities});
         return $segments_arrayref;
     })->catch(sub {
@@ -207,9 +207,11 @@ This module provides some utility functions useful in L<BusyBird>.
 
 The following functions are exported only by request.
 
-=head2 @sorted = sort_statuses(@statuses)
+=head2 $sorted = sort_statuses($statuses)
 
-Sorts an array of status objects appropriately.
+Sorts an array of status objects appropriately. Argument C<$statuses> is an array-ref of statuses.
+
+Return value C<$sorted> is an array-ref of sorted statuses.
 
 The sort refers to C<< $status->{created_at} >> and C<< $status->{busybird}{acked_at} >> fields.
 See L<BusyBird::StatusStorage/Order_of_Statuses> section.
