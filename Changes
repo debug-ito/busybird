@@ -1,5 +1,16 @@
 Revision history for BusyBird
 
+0.04    2014-07-28
+        [BUG FIX]
+        - Timelines whose name contains "/" could be created and installed, but were not accessible
+          via HTTP. Now those timelines can be created, but cannot be installed in Main object.
+          (gh #3)
+        [ENHANCEMENT]
+        - Add create_timeline() method to BusyBird::Main.
+        [PACKAGING]
+        - BusyBird::DateTime::Format now has a separate distribution. This makes it easier
+          to develop and release input/filter modules that use the Format module.
+
 0.03    2014-07-24
         [UI CHANGE]
         - Use Web Notifications to notify new statuses.
