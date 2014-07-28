@@ -248,6 +248,30 @@ sub test_watcher_basic {
 }
 
 {
+    note('--- timeline names with slashes');
+    my $main = BusyBird::Main->new();
+    my @logs = ();
+    local $BusyBird::Log::Logger = sub { push @logs, \@_ };
+    my $storage = $CREATE_STORAGE->();
+    $main->set_config(default_status_storage => $storage);
+    foreach my $ng_name ("/", "/hoge", "foo/bar", "///", " / ") {
+        @logs = ();
+        my $timeline = $main->timeline($ng_name);
+        is scalar($main->get_all_timelines), 0, "timeline $ng_name: timeline(): no timeline installed";
+        is $timeline->name, $ng_name, "timeline $ng_name: timeline is created and returned";
+        like $logs[0][0], qr/^warn/, "timeline $ng_name: warning is logged";
+        like $logs[0][1], qr/invalid.*name/i, "timeline $ng_name: warning message OK";
+
+        @logs = ();
+        $timeline = BusyBird::Timeline->new(name => $ng_name, storage => $storage);
+        $main->install_timeline($timeline);
+        is scalar($main->get_all_timelines), 0, "timeline $ng_name: install_timeline(): no timeline installed";
+        like $logs[0][0], qr/^warn/, "timeline $ng_name: warning is logged";
+        like $logs[0][1], qr/invalid.*name/i, "timeline $ng_name: warning message OK";
+    }
+}
+
+{
     note("--- synopsis");
     my $main = BusyBird::Main->new;
     $main->set_config(default_status_storage => $CREATE_STORAGE->());

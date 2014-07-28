@@ -5,6 +5,7 @@ use BusyBird::StatusStorage::SQLite;
 use BusyBird::Timeline;
 use BusyBird::Watcher::Aggregator;
 use BusyBird::Util qw(config_file_path);
+use BusyBird::Log qw(bblog);
 use Tie::IxHash;
 use Carp;
 use Scalar::Util qw(looks_like_number);
@@ -102,6 +103,14 @@ sub get_all_timelines {
 
 sub install_timeline {
     my ($self, $timeline) = @_;
+    if($timeline->name eq "") {
+        bblog("warn", "Invalid timeline name (it's empty)");
+        return;
+    }
+    if($timeline->name =~ qr{/}) {
+        bblog("warn", "Invalid timeline name (it contains /)");
+        return;
+    }
     $self->{timelines}{$timeline->name} = $timeline;
 }
 
@@ -222,6 +231,8 @@ It keeps application configuration and timelines (L<BusyBird::Timeline> objects)
 L<BusyBird::Main> does not depend on L<PSGI> or any other controller mechanism.
 If you want to create L<PSGI> application from L<BusyBird::Main>, check out L<BusyBird::Main::PSGI> class.
 
+This module uses L<BusyBird::Log> for logging.
+
 =head1 CLASS METHODS
 
 =head2 $main = BusyBird::Main->new()
@@ -241,6 +252,10 @@ C<$timeline> is a L<BusyBird::Timeline> object.
 If C<$name> includes Unicode characters, it must be a character string (decoded string), not a binary string (encoded string).
 
 If there is no timeline named C<$name> in C<$main>, a new timeline is created, installed and returned.
+
+In L<BusyBird::Main>, timeline names must not contain a slash "/", because it confuses Web API.
+If C<$name> contains a slash, the timeline IS created and returned, but it's NOT installed in the C<$main> object.
+In that case, it logs a warning message.
 
 If a new timeline is created by this method, it uses the StatusStorage object
 given by C<< $main->get_config("default_status_storage") >> for that timeline.
@@ -264,6 +279,9 @@ Installs the given C<$timeline> to the C<$main>.
 
 If a timeline with the same name as the given C<$timeline> is already installed in the C<$main>,
 the old timeline is replaced by the given C<$timeline>.
+
+You cannot install C<$timeline> whose name contains a slash "/".
+In this case, the C<$timeline> is ignored and it logs a warning message.
 
 =head2 $timeline = $main->uninstall_timeline($name)
 
