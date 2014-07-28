@@ -19,9 +19,18 @@ my $builder = Module::Build::Pluggable->new(
     },
     share_dir => "share",
     meta_add => {
+        'meta-spec' => {
+            version => 2,
+            url => 'https://metacpan.org/pod/CPAN::Meta::Spec',
+        },
         resources => {
-            bugtracker => 'https://github.com/debug-ito/busybird/issues',
-            repository => 'https://github.com/debug-ito/busybird',
+            bugtracker => {
+                web => 'https://github.com/debug-ito/busybird/issues',
+            },
+            repository => {
+                url => 'git://github.com/debug-ito/busybird.git',
+                web => 'https://github.com/debug-ito/busybird',
+            },
         }
     }
 );
