@@ -85,10 +85,15 @@ sub timeline {
     my ($self, $name) = @_;
     my $timeline = $self->get_timeline($name);
     if(not defined $timeline) {
-        $timeline = BusyBird::Timeline->new(name => $name, storage => $self->get_config("default_status_storage"));
+        $timeline = $self->create_timeline($name);
         $self->install_timeline($timeline);
     }
     return $timeline;
+}
+
+sub create_timeline {
+    my ($self, $name) = @_;
+    return BusyBird::Timeline->new(name => $name, storage => $self->get_config("default_status_storage"));
 }
 
 sub get_timeline {
@@ -261,6 +266,11 @@ If a new timeline is created by this method, it uses the StatusStorage object
 given by C<< $main->get_config("default_status_storage") >> for that timeline.
 See L<BusyBird::Manual::Config> for defail.
 
+=head2 $timeline = $main->create_timeline($name)
+
+Creates and returns a C<$timeline> like C<timeline()> method does, but not install it.
+
+This method always creates a new L<BusyBird::Timeline> object.
 
 =head2 $timeline = $main->get_timeline($name)
 

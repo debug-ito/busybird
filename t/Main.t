@@ -272,6 +272,19 @@ sub test_watcher_basic {
 }
 
 {
+    note('--- create_timeline');
+    my $main = BusyBird::Main->new();
+    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+    my $timeline = $main->create_timeline("hoge");
+    is $timeline->name, "hoge", "create a timeline named hoge";
+    is scalar($main->get_all_timelines), 0, "no timeline installed";
+    
+    my $another_timeline = $main->create_timeline("hoge");
+    is $timeline->name, "hoge", "create another hoge";
+    isnt $another_timeline, $timeline, "create_timeline() creates different Timeline objects";
+}
+
+{
     note("--- synopsis");
     my $main = BusyBird::Main->new;
     $main->set_config(default_status_storage => $CREATE_STORAGE->());
