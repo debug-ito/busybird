@@ -1,4 +1,5 @@
 requires 'perl' => "5.10.0";
+requires 'BusyBird::DateTime::Format' => "0.04";
 requires 'parent' => "0";
 requires 'Async::Queue'=> '0.02';
 requires 'Async::Selector'=> '1.03';
@@ -55,6 +56,7 @@ on 'test' => sub {
     requires 'Test::Warn'=> '0.24';
     requires 'DateTime' => 0;
     requires 'DateTime::Duration' => 0;
+    requires 'BusyBird::DateTime::Format' => "0.04";
     requires 'FindBin'=> '0';
     requires 'File::Temp' => '0.19';
     requires 'HTTP::Request'=> '6.00';

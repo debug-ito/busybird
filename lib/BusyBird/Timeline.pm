@@ -5,7 +5,7 @@ use BusyBird::Util qw(set_param);
 use BusyBird::Log qw(bblog);
 use BusyBird::Flow;
 use BusyBird::Watcher::Aggregator;
-use BusyBird::DateTime::Format;
+use BusyBird::DateTime::Format 0.04;
 use Async::Selector 1.0;
 use Data::UUID;
 use Carp;
