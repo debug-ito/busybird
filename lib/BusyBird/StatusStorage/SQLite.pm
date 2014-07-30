@@ -6,7 +6,7 @@ use DBI;
 use Carp;
 use Try::Tiny;
 use SQL::Maker 1.19;
-use SQL::QueryMaker 0.03 qw(sql_and sql_eq sql_ne sql_or sql_lt sql_le);
+use SQL::QueryMaker 0.03 qw(sql_and sql_eq sql_ne sql_or sql_lt sql_le sql_raw);
 use BusyBird::DateTime::Format;
 use BusyBird::Util qw(set_param);
 use BusyBird::StatusStorage::Common qw(contains);
@@ -345,7 +345,7 @@ sub _create_base_condition {
     $ack_state ||= 'any';
     my $cond = sql_eq(timeline_id => $timeline_id);
     if($ack_state eq 'acked') {
-        $cond = sql_and([$cond, sql_ne(utc_acked_at => $UNDEF_TIMESTAMP)]); ## sql_ne is not documented as of SQL::QueryMaker 0.02
+        $cond = sql_and([$cond, sql_ne(utc_acked_at => $UNDEF_TIMESTAMP)]);
     }elsif($ack_state eq 'unacked') {
         $cond = sql_and([$cond, sql_eq(utc_acked_at => $UNDEF_TIMESTAMP)]);
     }
@@ -377,9 +377,6 @@ sub _create_max_id_condition {
 
 sub _create_max_time_condition {
     my ($self, $max_acked_at, $max_created_at, $max_id) = @_;
-    ## my $cond = $self->{maker}->new_condition();
-    ## $cond->add_raw(q{utc_acked_at < ? OR ( utc_acked_at = ? AND ( utc_created_at < ? OR ( utc_created_at = ? AND status_id <= ?)))},
-    ##                [("$max_acked_at") x 2, ("$max_created_at") x 2, "$max_id"]);
     my $cond = sql_or([
         sql_lt(utc_acked_at => $max_acked_at),
         sql_and([
@@ -637,9 +634,10 @@ sub _add_to_delete_count {
     my ($self, $dbh, $add_count) = @_;
     return if $self->{vacuum_on_delete} <= 0;
     return if $add_count <= 0;
-    my ($sql, @bind) = $self->{maker}->update('delete_counts', [
-        delete_count => \ ['delete_count + ?', $add_count]  ## trick to insert unquoted value
-    ], sql_eq(delete_count_id => $DELETE_COUNT_ID));
+    my ($sql, @bind) = $self->{maker}->update(
+        'delete_counts',
+        [delete_count => sql_raw('delete_count + ?', $add_count)],
+        sql_eq(delete_count_id => $DELETE_COUNT_ID));
     $dbh->do($sql, undef, @bind);
     
     ($sql, @bind) = $self->{maker}->select('delete_counts', ["delete_count"], sql_eq(delete_count_id => $DELETE_COUNT_ID));
