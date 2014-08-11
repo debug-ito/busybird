@@ -6,7 +6,7 @@ use Test::Builder;
 use Test::Exception;
 use Test::MockObject;
 use BusyBird::Test::StatusStorage qw(:status test_cases_for_ack);
-use testlib::Timeline_Util qw(sync status *LOOP *UNLOOP);
+use testlib::Timeline_Util qw(sync status test_sets *LOOP *UNLOOP);
 use Test::Memory::Cycle;
 use BusyBird::DateTime::Format;
 use BusyBird::Log;
@@ -64,18 +64,6 @@ sub filter {
             $done->($sync_filter->($statuses));
         }, 1);
     }
-}
-
-sub test_sets {
-    my ($got_set_array, $exp_set_array, $msg) = @_;
-    local $Test::Builder::Level = $Test::Builder::Level + 1;
-    my ($got_set_hash, $exp_set_hash) = map {
-        my $a = $_;
-        my $h = {};
-        $h->{$_}++ foreach @$a;
-        $h;
-    } ($got_set_array, $exp_set_array);
-    is_deeply($got_set_hash, $exp_set_hash, $msg);
 }
 
 sub test_watcher_basic {

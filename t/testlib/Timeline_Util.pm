@@ -9,7 +9,7 @@ use DateTime;
 
 ## We have to export typeglobs when we want to allow users
 ## to localize the LOOP and UNLOOP. See 'perlmod' for details.
-our @EXPORT_OK = qw(sync status *LOOP *UNLOOP);
+our @EXPORT_OK = qw(sync status test_sets *LOOP *UNLOOP);
 our $LOOP   = sub {};
 our $UNLOOP = sub {};
 
@@ -42,5 +42,16 @@ sub status {
     };
 }
 
+sub test_sets {
+    my ($got_set_array, $exp_set_array, $msg) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my ($got_set_hash, $exp_set_hash) = map {
+        my $a = $_;
+        my $h = {};
+        $h->{$_}++ foreach @$a;
+        $h;
+    } ($got_set_array, $exp_set_array);
+    is_deeply($got_set_hash, $exp_set_hash, $msg);
+}
 
 1;

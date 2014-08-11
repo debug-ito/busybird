@@ -6,7 +6,7 @@ use BusyBird::Test::StatusStorage qw(:storage :status);
 use File::Temp 0.19;
 use Test::MockObject::Extends;
 use lib "t";
-use testlib::Timeline_Util qw(sync status);
+use testlib::Timeline_Util qw(sync status test_sets);
 use DBI;
 
 BEGIN {
@@ -211,6 +211,22 @@ sub test_sqlite {
         is(scalar(@$statuses), 1, "1 status obtained");
         is($statuses->[0]{created_at}, 'Tue Jun 04 14:08:33 +0900 2013', 'created_at maintained');
         is($statuses->[0]{busybird}{acked_at}, 'Fri May 31 21:42:00 -0400 2013', 'acked_at maintained');
+    }
+    {
+        note("--- get_timeline_names()");
+        my ($path, $storage) = create_storage($storage_type);
+        is_deeply [$storage->get_timeline_names], [], "at first, no timeline";
+        sync($storage, 'put_statuses', timeline => 'tl1', mode => "insert", statuses => status(0));
+        is_deeply [$storage->get_timeline_names], ["tl1"], "timeline tl1 is created";
+        sync($storage, 'put_statuses', timeline => 'tl2', mode => "insert", statuses => status(0));
+        test_sets [$storage->get_timeline_names], ["tl1", "tl2"],
+            "get_timeline_names() returns unordered set of tl1 and tl2";
+        sync($storage, 'put_statuses', timeline => 'tl3', mode => "insert", statuses => status(0));
+        test_sets [$storage->get_timeline_names], ["tl1", "tl2", "tl3"],
+            "get_timeline_names() returns unordered set of tl1, tl2 and tl3";
+        sync($storage, "delete_statuses", timeline => "tl2", ids => undef);
+        test_sets [$storage->get_timeline_names], ["tl1", "tl3"],
+            "delete_timelines(ids => undef) should delete the timeline altogether";
     }
 }
 

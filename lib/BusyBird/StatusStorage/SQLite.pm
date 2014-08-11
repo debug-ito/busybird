@@ -801,6 +801,10 @@ In addition to it, it has the following methods.
 
 Executes SQL C<VACUUM> on the database.
 
+=head2 @timeline_names = $storage->get_timeline_names()
+
+Returns all timeline names in the C<$storage>.
+
 
 =head1 AUTHOR
 
