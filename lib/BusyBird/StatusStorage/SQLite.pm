@@ -9,7 +9,6 @@ use SQL::Maker 1.19;
 use SQL::QueryMaker 0.03 qw(sql_and sql_eq sql_ne sql_or sql_lt sql_le sql_raw);
 use BusyBird::DateTime::Format;
 use BusyBird::Util qw(set_param);
-use BusyBird::StatusStorage::Common qw(contains);
 use JSON;
 use Scalar::Util qw(looks_like_number);
 use DateTime::Format::Strptime;
@@ -662,6 +661,67 @@ sub _do_vacuum {
 sub vacuum {
     my ($self) = @_;
     $self->_do_vacuum($self->_get_my_dbh());
+}
+
+sub contains {
+    my ($self, %args) = @_;
+    my $timeline = $args{timeline};
+    croak 'timeline parameter is mandatory' if not defined $timeline;
+    my $callback = $args{callback};
+    croak 'callback parameter is mandatory' if not defined $callback;
+    my $query = $args{query};
+    croak 'query parameter is mandatory' if not defined $query;
+    my $ref_query = ref($query);
+    if(!$ref_query || $ref_query eq 'HASH') {
+        $query = [$query];
+    }elsif($ref_query eq 'ARRAY') {
+        ;
+    }else {
+        croak 'query parameter must be either a status, status ID or array-ref';
+    }
+    foreach my $query_elem (@$query) {
+        croak "query element must be defined" if not defined $query_elem;
+        if(ref($query_elem) eq 'HASH' && !defined($query_elem->{id})) {
+            croak "id field must be set in query statuses";
+        }
+    }
+    my @method_result = try {
+        my $dbh = $self->_get_my_dbh();
+        my $timeline_id = $self->_get_timeline_id($dbh, $timeline);
+        my @ret_contained = ();
+        my @ret_not_contained = ();
+        if(!defined($timeline_id)) {
+            @ret_not_contained = @$query;
+            return (undef, \@ret_contained, \@ret_not_contained);
+        }
+        my $sth;
+        foreach my $query_elem (@$query) {
+            my $status_id = (ref($query_elem) eq 'HASH') ? $query_elem->{id} : $query_elem;
+            my ($sql, @bind) = $self->{maker}->select(
+                'statuses', ['timeline_id', 'status_id'],
+                sql_and([sql_eq(timeline_id => $timeline_id), sql_eq(status_id => $status_id)])
+            );
+            if(!$sth) {
+                $sth = $dbh->prepare($sql);
+            }
+            $sth->execute(@bind);
+            my $result = $sth->fetchall_arrayref();
+            if(!defined($result)) {
+                confess "Statement handle is inactive. Something is wrong.";
+            }
+            if(@$result) {
+                push @ret_contained, $query_elem;
+            }else {
+                push @ret_not_contained, $query_elem;
+            }
+        }
+        return (undef, \@ret_contained, \@ret_not_contained);
+    }catch {
+        my $e = shift;
+        return ($e);
+    };
+    @_ = @method_result;
+    goto $callback;
 }
 
 1;
