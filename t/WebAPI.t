@@ -94,6 +94,26 @@ sub test_error_request {
     $tester->request_ok($method, $request_url, $content, qr/^[45]/, $msg);
 }
 
+## success if $got matches one of the choices.
+sub test_list_choice {
+    my ($got_list, $exp_choices, $msg) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    CHOICE_LOOP: foreach my $exp_list (@$exp_choices) {
+        next CHOICE_LOOP if @$got_list != @$exp_list;
+        foreach my $i (0 .. $#$got_list) {
+            next CHOICE_LOOP if $got_list->[$i] ne $exp_list->[$i];
+        }
+        pass $msg;
+        return 1;
+    }
+    fail $msg;
+    diag("got:");
+    diag(explain $got_list);
+    diag("expected either:");
+    diag(join "\n  or\n", map { explain($_) } @$exp_choices);
+    return 0;
+}
+
 {
     note('--- normal functionalities');
     my $main = create_main();
@@ -401,7 +421,11 @@ sub test_error_request {
             qr/^200$/, "GET acked statuses OK"
         );
         is($res_obj->{error}, undef, "GET acked statuses succeed");
-        test_status_id_list($res_obj->{statuses}, [reverse @ids], "acked statuse ID OK");
+        test_list_choice(
+            [map { $_->{id} } @{$res_obj->{statuses}}],
+            [ [reverse @ids], [map { $ids[$_] } (4,2,0,3,1)] ],
+            "acked statuse IDs OK. The order depends on the times when the test actually acked the statuses"
+        );
     };
 }
 
