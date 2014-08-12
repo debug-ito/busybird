@@ -724,6 +724,17 @@ sub contains {
     goto $callback;
 }
 
+sub get_timeline_names {
+    my ($self) = @_;
+    my $dbh = $self->_get_my_dbh();
+    my ($sql, @bind) = $self->{maker}->select(
+        'timelines', ['name']
+    );
+    my $result = $dbh->selectall_arrayref($sql, undef, @bind);
+    my @return = map { $_->[0] } @$result;
+    return @return;
+}
+
 1;
 
 __END__
