@@ -24,6 +24,12 @@ sub get_title {
     return $title_text;
 }
 
+sub get_timeline_name_list {
+    my ($html_tree) = @_;
+    my @name_nodes = $html_tree->findnodes('//table[@id="bb-timeline-list"]//span[@class="bb-timeline-name"]');
+    return map { ($_->content_list)[0] } @name_nodes;
+}
+
 note("----- static HTML view tests");
 
 {
@@ -38,7 +44,7 @@ note("----- static HTML view tests");
             {path => '/timelines/foo/', exp_timeline => 'foo'},
             {path => '/timelines/foo/index.html', exp_timeline => 'foo'},
             {path => '/timelines/foo/index.htm', exp_timeline => 'foo'},
-            {path => '/timelines/bar/', exp_timeline => 'bar'}
+            {path => '/timelines/bar/', exp_timeline => 'bar'},
         ) {
             my $tree = $tester->request_htmltree_ok('GET', $case->{path}, undef, qr/^200$/, "$case->{path}: GET OK");
             like(get_title($tree), qr/$case->{exp_timeline}/, '... View title OK');
@@ -98,11 +104,7 @@ note("----- static HTML view tests");
         ) {
             note("--- -- case $case->{label}");
             my $tree = $tester->request_htmltree_ok('GET', $case->{path}, undef, qr/^200$/, "GET OK");
-            ## my $plain_res = $tester->request_ok('GET', $case->{path}, undef, qr/^200$/, "GET OK");
-            ## note("RES: $plain_res");
-            ## my $tree = testlib::HTTP->parse_html($plain_res);
-            my @name_nodes = $tree->findnodes('//table[@id="bb-timeline-list"]//span[@class="bb-timeline-name"]');
-            my @names = map { ($_->content_list)[0] } @name_nodes;
+            my @names = get_timeline_name_list($tree);
             is_deeply(\@names, $case->{exp_timelines}, "timeline names OK");
         };
 
@@ -116,6 +118,21 @@ note("----- static HTML view tests");
             note("--- -- case $case->{label}");
             $tester->request_ok("GET", $case->{path}, undef, qr/^[45]/, "GET fails OK");
         }
+    };
+}
+
+{
+    note("-- hidden timelines in list view");
+    my $main = create_main();
+    $main->timeline("hidden1")->set_config(hidden => 1);
+    $main->timeline("visible1");
+    $main->timeline("hidden2")->set_config(hidden => 1);
+    $main->timeline("visible2");
+    test_psgi create_psgi_app($main), sub {
+        my $tester = testlib::HTTP->new(requester => shift);
+        my $tree = $tester->request_htmltree_ok('GET', "/", undef, qr/^200$/, "GET OK");
+        my @got_names = get_timeline_name_list($tree);
+        is_deeply \@got_names, [qw(visible1 visible2)], "hidden timelines are hidden from the list";
     };
 }
 

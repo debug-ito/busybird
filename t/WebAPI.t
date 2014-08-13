@@ -471,6 +471,21 @@ sub test_list_choice {
 }
 
 {
+    note('--- hidden timelines are accessible');
+    my $main = create_main();
+    $main->timeline("hidden")->set_config(hidden => 1);
+    test_psgi create_psgi_app($main), sub {
+        my $tester = testlib::HTTP->new(requester => shift);
+        my $res_obj = $tester->post_json_ok('/timelines/hidden/statuses.json',
+                                            create_json_status(1), qr/^200$/, 'POST statuses to hidden OK');
+        is_deeply($res_obj, {error => undef, count => 1}, "POST statuses response OK");
+        $res_obj = $tester->get_json_ok('/timelines/hidden/statuses.json',
+                                        qr/^200$/, 'GET statuses from hidden OK');
+        is $res_obj->{error}, undef, "GET statuses no error OK";
+    };
+}
+
+{
     note('--- For examples');
     my $main = create_main();
     $main->timeline("home");

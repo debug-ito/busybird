@@ -276,9 +276,11 @@ sub _handle_get_timeline_list {
         my $responder = shift;
         Future::Q->try(sub {
             my $num_per_page = $self->{main_obj}->get_config('timeline_list_per_page');
-            my @timelines = $self->{main_obj}->get_all_timelines();
+            my @timelines = grep {
+                !$self->{main_obj}->get_timeline_config($_->name, "hidden")
+            } $self->{main_obj}->get_all_timelines();
             if(@timelines == 0) {
-                die "No timeline. Something is wrong.";
+                die "No visible timeline. Probably you must configure config.psgi to create a timeline.";
             }
             my $page_num = ceil(scalar(@timelines) / $num_per_page);
             my $cur_page = 0;

@@ -272,6 +272,14 @@ Specifies how L<Web Notifications|http://www.w3.org/TR/notifications/> are used 
 If set to C<"simple">, number of new statuses are notified using Web Notifications.
 Setting it to any other value stops Web Notifications.
 
+=head2 C<hidden> => BOOL
+
+B<Default:> 0 (false)
+
+If set to true, the timeline is hidden from the timeline list.
+Hidden timelines are still accessible via Web API.
+
+
 =head1 EXAMPLES
 
 =head2 Customize Timestamps

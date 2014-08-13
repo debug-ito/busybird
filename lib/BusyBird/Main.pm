@@ -66,6 +66,7 @@ my %DEFAULT_CONFIG_GENERATOR = (
     }},
     hashtags_entity_text_builder => sub { sub { my $text = shift; return $text }},
     timeline_web_notifications => sub { 'simple' },
+    hidden => sub { 0 },
 
     timeline_list_pager_entry_max => sub { 7 },
     timeline_list_per_page => sub { 30 },
