@@ -70,5 +70,25 @@ use BusyBird::Filter ":all";
     ], "input is left intact";
 }
 
+{
+    note("--- filter_grep");
+    my @input = ({id => 1}, {id => "b"}, {id => 3}, {id => "d"});
+    foreach my $case (
+        {label => "filter out all", func => sub { 0 }, exp => [] },
+        {label => "filter nothing", func => sub { 1 },
+         exp => [{id => 1}, {id => "b"}, {id => 3}, {id => "d"}]},
+        {label => "filter alpha",
+         func => sub { $_[0]->{id} !~ /^[a-zA-Z]+$/ },
+         exp => [{id => 1}, {id => 3}]},
+        {label => "filter num",
+         func => sub { $_[0]->{id} =~ /^[a-zA-Z]+$/ },
+         exp => [{id => "b"}, {id => "d"}]},
+    ) {
+        my $filter = filter_grep($case->{func});
+        my $got = $filter->(\@input);
+        is_deeply $got, $case->{exp}, "$case->{label}: result OK" or diag(explain $got);
+    }
+}
+
 done_testing;
 

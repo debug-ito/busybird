@@ -5,7 +5,7 @@ use Exporter qw(import);
 use Carp;
 use Storable qw(dclone);
 
-our @EXPORT = our @EXPORT_OK = qw(filter_map filter_each);
+our @EXPORT = our @EXPORT_OK = qw(filter_map filter_each filter_grep);
 our %EXPORT_TAGS = (all => \@EXPORT_OK);
 
 sub filter_each {
@@ -26,6 +26,16 @@ sub filter_map {
     return sub {
         my $statuses = shift;
         return [ map { $func->(dclone($_)) } @$statuses ];
+    };
+}
+
+sub filter_grep {
+    my ($func) = @_;
+    croak "func parameter is mandatory" if not defined $func;
+    croak "func parameter must be a code-ref" if ref($func) ne "CODE";
+    return sub {
+        my ($statuses) = @_;
+        return [ grep { $func->($_) } @$statuses ];
     };
 }
 
@@ -110,6 +120,21 @@ The result of the C<$filter> is all statuses collected from the C<$func>.
 
 Note that the C<$status> given to C<$func> is a deep clone of the original status.
 Even if you modify C<$status> in C<$func>, the original status is intact.
+
+=head2 $filter = filter_grep($func)
+
+Creates a synchronous status filter that picks up statuses by C<$func>
+This is simalar to Perl's built-in C<grep()> function.
+
+C<$func> is a subroutine reference that is called for each input status.
+C<$func> is called in scalar context as in:
+
+    $result = $func->($status)
+
+If C<$result> is true, that C<$status> is passed to the next.
+If C<$result> is false, the C<$status> is filtered out.
+
+You should not modify C<$status> within C<$func>.
 
 =head1 SEE ALSO
 
