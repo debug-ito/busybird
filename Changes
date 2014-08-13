@@ -1,5 +1,18 @@
 Revision history for BusyBird
 
+0.05    2014-08-13
+        [BUG FIX]
+        - Fix test t/WebAPI.t. It failed when consecutive acks occurred at different timestamps.
+        [ENHANCEMENT]
+        - StatusStorage::SQLite enhancements.
+        - Add get_timeline_names() method.
+        - Re-implement contains() method. This boosts its performance at about 350%.
+        - Use SQL::Maker's strict mode with SQL::QueryMaker. This prevents unexpected query
+          injection in form of complex data structure (often as JSON strings).
+          This also improves performance a little.
+        [DOCUMENTATION]
+        - Fix Util.pm: sort_statuses() signature was wrong.
+
 0.04    2014-07-28
         [BUG FIX]
         - Timelines whose name contains "/" could be created and installed, but were not accessible

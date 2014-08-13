@@ -5,7 +5,7 @@ use BusyBird::Main;
 use BusyBird::Main::PSGI qw(create_psgi_app);
 use Exporter qw(import);
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 our @EXPORT = our @EXPORT_OK = qw(busybird timeline end);
 
