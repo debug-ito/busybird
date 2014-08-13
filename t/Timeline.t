@@ -6,7 +6,7 @@ use Test::Builder;
 use Test::Exception;
 use Test::MockObject;
 use BusyBird::Test::StatusStorage qw(:status test_cases_for_ack);
-use testlib::Timeline_Util qw(sync status test_sets *LOOP *UNLOOP);
+use testlib::Timeline_Util qw(sync status test_sets test_content *LOOP *UNLOOP);
 use Test::Memory::Cycle;
 use BusyBird::DateTime::Format;
 use BusyBird::Log;
@@ -24,14 +24,6 @@ BEGIN {
 $BusyBird::Log::Logger = undef;
 
 our $CREATE_STORAGE;
-
-sub test_content {
-    my ($timeline, $args_ref, $exp, $msg) = @_;
-    local $Test::Builder::Level = $Test::Builder::Level + 1;
-    my ($error, $statuses) = sync($timeline, 'get_statuses', %$args_ref);
-    is($error, undef, "get_statuses succeed");
-    test_status_id_list($statuses, $exp, $msg);
-}
 
 sub test_unacked_counts {
     my ($timeline, $exp, $msg) = @_;

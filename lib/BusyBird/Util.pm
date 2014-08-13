@@ -12,7 +12,8 @@ use Scalar::Util qw(blessed);
 use File::HomeDir;
 use File::Spec;
 
-our @EXPORT_OK = qw(set_param expand_param config_directory config_file_path sort_statuses split_with_entities future_of);
+our @EXPORT_OK =
+    qw(set_param expand_param config_directory config_file_path sort_statuses split_with_entities future_of make_tracking);
 our @CARP_NOT = qw(Future::Q);
 
 sub set_param {
@@ -173,6 +174,9 @@ sub future_of {
     });
 }
 
+sub make_tracking {
+    ## TODO: implement it.
+}
 
 1;
 
@@ -363,6 +367,61 @@ In failure, C<$future> is rejected with the error and a flag.
 If C<$error> is the error passed to the callback, C<$is_normal_error> is true.
 If C<$error> is the exception the method throws, C<$is_normal_error> does not even exist.
 
+=head2 $tracking_timeline = make_tracking($tracking_timeline, $main_timeline)
+
+Makes C<$tracking_timeline> a tracking timeline for a certain source of statuses,
+which is then input to C<$main_timeline>.
+C<$tracking_timeline> and C<$main_timeline> must be L<BusyBird::Timeline> objects.
+
+Return value is the given C<$tracking_timeline> object.
+
+A "tracking timeline" is a timeline dedicated to tracking status history of a single source.
+You might need it when you import statuses from various sources into a single "main" timeline.
+
+For example,
+
+    use BusyBird;
+    
+    my $main_timeline = timeline("main");
+    $main_timeline->add( get_statuses_from_source1() );
+    $main_timeline->add( get_statuses_from_source2() );
+    $main_timeline->add( get_statuses_from_source3() );
+
+In the above example, statuses are imported from three different sources.
+Suppose C<get_statuses_from_source*()> functions import the latest 20 statuses from each source, like RSS/Atom feeds.
+Because L<BusyBird::Timeline> rejects duplicate statuses,
+the above code adds only new and unread statuses to C<$main_timeline>.
+
+However, if update rates of the three sources are different,
+it's possible for old statuses to re-appear in C<$main_timeline> as new statuses.
+This is because L<BusyBird::Timeline> has limited capacity for storing statuses.
+
+Suppose the source1 and source2 update quickly whereas source3's update rate is very slow.
+At first, C<$main_timeline> keeps all statuses from the three sources.
+After a while, the C<$main_timeline> will be filled with statuses from source1 and source2,
+and at some point, statuses from source3 will be discarded because they are too old.
+After that, C<< $main_timeline->add( get_statuses_from_source3() ) >> imports the
+same statuses just discarded, but C<$main_timeline> now recognizes them as new
+because they are no longer in C<$main_timeline>.
+So those old statuses from source3 will be re-appeared as unread.
+
+To prevent that tragedy, you should create tracking timelines.
+
+    use BusyBird;
+    use BusyBird::Util qw(make_tracking);
+    
+    my $main_timeline = timeline("main");
+    make_tracking(timeline("source1"), $main_timeline);
+    make_tracking(timeline("source2"), $main_timeline);
+    make_tracking(timeline("source3"), $main_timeline);
+    
+    timeline("source1")->add( get_statuses_from_source1() );
+    timeline("source2")->add( get_statuses_from_source2() );
+    timeline("source3")->add( get_statuses_from_source3() );
+
+You should add statuses into tracking timelines instead of directly into C<$main_timeline>.
+Each tracking timeline keeps statuses from its source,
+and it forwards only new statuses to the C<$main_statuses>.
 
 =head1 AUTHOR
 
