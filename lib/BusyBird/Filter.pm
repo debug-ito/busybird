@@ -5,7 +5,7 @@ use Exporter qw(import);
 use Carp;
 use Storable qw(dclone);
 
-our @EXPORT = our @EXPORT_OK = qw(filter_map filter_each filter_grep);
+our @EXPORT_OK = qw(filter_map filter_each filter_grep);
 our %EXPORT_TAGS = (all => \@EXPORT_OK);
 
 sub filter_each {
