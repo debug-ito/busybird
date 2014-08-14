@@ -1,14 +1,14 @@
 package BusyBird::Util;
 use strict;
 use warnings;
-use Scalar::Util ('blessed');
+use Scalar::Util qw(blessed weaken);
 use Carp;
 use Exporter qw(import);
 use BusyBird::DateTime::Format;
+use BusyBird::Log qw(bblog);
 use DateTime;
 use 5.10.0;
 use Future::Q 0.040;
-use Scalar::Util qw(blessed);
 use File::HomeDir;
 use File::Spec;
 
@@ -175,7 +175,42 @@ sub future_of {
 }
 
 sub make_tracking {
-    ## TODO: implement it.
+    my ($tracking_timeline, $main_timeline) = @_;
+    if(!blessed($tracking_timeline) || !$tracking_timeline->isa("BusyBird::Timeline")) {
+        croak "tracking_timeline must be a BusyBird::Timeline.";
+    }
+    if(!blessed($main_timeline) || !$main_timeline->isa("BusyBird::Timeline")) {
+        croak "main_timeline must be a BusyBird::Timeline.";
+    }
+    my $name_tracking = $tracking_timeline->name;
+    my $name_main = $main_timeline->name;
+    if($name_tracking eq $name_main) {
+        croak "tracking_timeline and main_timeline must be different timelines.";
+    }
+    weaken(my $track = $tracking_timeline);
+    $tracking_timeline->add_filter_async(sub {
+        my ($statuses, $done) = @_;
+        if(!defined($track)) {
+            $done->($statuses);
+            return;
+        }
+        $track->contains(query => $statuses, callback => sub {
+            my ($error, $contained, $not_contained) = @_;
+            if(defined($error)) {
+                bblog("error", "tracking timeline '$name_tracking' contains() error: $error");
+                $done->($statuses);
+                return;
+            }
+            $main_timeline->add($not_contained, sub {
+                my ($error, $count) = @_;
+                if(defined($error)) {
+                    bblog("error", "main timeline '$name_main' add() error: $error");
+                }
+                $done->($statuses);
+            });
+        });
+    });
+    return $tracking_timeline;
 }
 
 1;
@@ -375,6 +410,8 @@ C<$tracking_timeline> and C<$main_timeline> must be L<BusyBird::Timeline> object
 
 Return value is the given C<$tracking_timeline> object.
 
+This method uses L<BusyBird::Log> to log error messages when something is wrong.
+
 A "tracking timeline" is a timeline dedicated to tracking status history of a single source.
 You might need it when you import statuses from various sources into a single "main" timeline.
 
@@ -399,7 +436,7 @@ This is because L<BusyBird::Timeline> has limited capacity for storing statuses.
 Suppose the source1 and source2 update quickly whereas source3's update rate is very slow.
 At first, C<$main_timeline> keeps all statuses from the three sources.
 After a while, the C<$main_timeline> will be filled with statuses from source1 and source2,
-and at some point, statuses from source3 will be discarded because they are too old.
+and at a certain point, statuses from source3 will be discarded because they are too old.
 After that, C<< $main_timeline->add( get_statuses_from_source3() ) >> imports the
 same statuses just discarded, but C<$main_timeline> now recognizes them as new
 because they are no longer in C<$main_timeline>.

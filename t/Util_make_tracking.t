@@ -23,6 +23,7 @@ sub setup_tracking {
     $main->add_filter(sub {
         my ($statuses) = @_;
         push @main_filter_log, $statuses;
+        return $statuses;
     });
     return ($main, $tracking, \@main_filter_log);
 }
