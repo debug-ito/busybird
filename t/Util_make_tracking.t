@@ -22,7 +22,7 @@ sub setup_tracking {
     my @main_filter_log = ();
     $main->add_filter(sub {
         my ($statuses) = @_;
-        push @main_filter_log, $statuses;
+        push @main_filter_log, [map { +{%$_} } @$statuses];
         return $statuses;
     });
     return ($main, $tracking, \@main_filter_log);
@@ -60,8 +60,31 @@ sub setup_tracking {
     is $count, 1, "1 status add OK";
     is scalar(@$main_filter_log), 1, "status forwarded to main filter";
     is scalar(@{$main_filter_log->[0]}), 1, "1 status forwarded";
-    is $main_filter_log->[0]{id}, undef, "the status is forwarded with its id being undef";
-    is $main_filter_log->[0]{text}, "hogehoge", "forwarded status text is OK";
+    is $main_filter_log->[0][0]{id}, undef, "the status is forwarded with its id being undef";
+    is $main_filter_log->[0][0]{text}, "hogehoge", "forwarded status text is OK";
+}
+
+{
+    note("--- mixed input");
+    my ($main, $tracking, $main_filter_log) = setup_tracking();
+    my ($error, $count) = sync($tracking, "add_statuses",
+                               statuses => [map { status($_) } 1..10]);
+    is $error, undef, "add OK";
+    is $count, 10, "add count OK";
+
+    @$main_filter_log = ();
+    my @input_ids = (1, 11, 2, 12, 3, 13, 4, 14);
+    my @input = map { my $s = status($_); $s->{text} = "id $_"; $s } @input_ids;
+    delete $_->{id} foreach @input[0,1,4];
+    ($error, $count) = sync($tracking, "add_statuses",
+                            statuses => \@input);
+    is $error, undef, "add to tracking OK";
+    is $count, 6, "6 statuses added";
+    is scalar(@$main_filter_log), 1, "statuses are forwarded to main";
+    is scalar(@{$main_filter_log->[0]}), 6, "6 new statuses are forwarded to main";
+    is_deeply([map { $_->{text} } @{$main_filter_log->[0]}],
+              [map { "id $_" } (1, 11, 12, 3, 13, 14)],
+              "ID-less statuses and not-contained-ID statuses are forwarded to main");
 }
 
 done_testing;
