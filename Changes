@@ -1,5 +1,17 @@
 Revision history for BusyBird
 
+0.06    2014-08-14
+        [API CHANGE]
+        - Timeline and StatusStorage: now contains() method accepts status objects with no "id" field.
+          They are always treated as "not contained". Previously the contains() method croaked when
+          ID-less statuses were passed. This behavior has been changed.
+        [BUG FIX]
+        - Now BusyBird::Filter exports functions only by request. Previously they were automatically exported.
+        [ENHANCEMENT]
+        - Add "hidden" per-timeline config parameter.
+        - Add filter_grep() function to BusyBird::Filter.
+        - Add make_tracking() function to BusyBird::Util.
+
 0.05    2014-08-13
         [BUG FIX]
         - Fix test t/WebAPI.t. It failed when consecutive acks occurred at different timestamps.
