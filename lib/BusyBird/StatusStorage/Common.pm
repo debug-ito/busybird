@@ -106,8 +106,8 @@ sub contains {
     }else {
         croak 'query argument must be either STATUS, ID or ARRAYREF_OF_STATUSES_OR_IDS';
     }
-    if(grep { !defined($_) || ( ref($_) eq "HASH" && !defined($_->{id}) ) } @$query) {
-        croak 'query argument must specify ID';
+    if(grep { !defined($_) } @$query) {
+        croak 'query argument must not contain undef';
     }
     if(!@$query) {
         @_ = (undef, [], []);
@@ -116,7 +116,8 @@ sub contains {
     my @subfutures = map {
         my $query_elem = $_;
         my $id = ref($query_elem) ? $query_elem->{id} : $query_elem;
-        future_of($self, "get_statuses", timeline => $timeline, count => 1, max_id => $id)
+        defined($id) ? future_of($self, "get_statuses", timeline => $timeline, count => 1, max_id => $id)
+                     : Future::Q->new->fulfill([]); ## ID-less status is always 'not contained'.
     } @$query;
     Future::Q->needs_all(@subfutures)->then(sub {
         my (@statuses_list) = @_;

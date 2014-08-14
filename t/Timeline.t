@@ -157,6 +157,10 @@ sub test_timeline {
         is($error, undef, "contains succeed");
         is_deeply($con, [1..5, (reverse map {status($_)} 20..22)], 'contained IDs and statuses OK');
         is_deeply($ncon, [-5..0, (reverse map {status($_)} 23..25)], 'not contained IDs and statuses OK');
+        ($error, $con, $ncon) = sync($timeline, 'contains', query => {text => 'no ID'});
+        is($error, undef, 'contains succeed');
+        is_deeply($con, [], 'ID-less status is not contained');
+        is_deeply($ncon, [{text => 'no ID'}], 'ID-less status is not contained');
         ($error, $ret) = sync($timeline, 'delete_statuses', ids => undef);
         is($error, undef, "delete_statuses succeed");
         is($ret, 22, 'delete all');

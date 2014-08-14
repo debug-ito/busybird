@@ -652,6 +652,10 @@ sub test_storage_common {
           input => {query => [ 1, status(10), status(5), 10, 10, 3, 2, status(2), 4, 3, status(0), 8 ]},
           exp => [undef, [1, status(5), 3, 2, status(2), 4, 3], [status(10), 10, 10, status(0), 8]]},
         { label => 'empty array', input => {query => []}, exp => [undef, [], []]},
+        { label => 'ID-less status', input => {query => {text => 'hoge'}}, exp => [undef, [], [{text => 'hoge'}]] },
+        { label => 'mixed ID-less statuses',
+          input => {query => [ {text => "foo"}, status(4), 11, {text => 'bar'}, status(9), 3 ]},
+          exp => [undef, [status(4), 3], [{text => "foo"}, 11, {text => 'bar'}, status(9)]]},
     ) {
         my %args = (%{$case->{input}}, timeline => '_test_tl1');
         check_contains $storage, $loop, $unloop, \%args, $case->{exp}, $case->{label};
@@ -1559,8 +1563,6 @@ sub test_storage_requires_status_ids {
         dies_ok { $storage->put_statuses(%base, mode => 'upsert', statuses => [$ok_status, $s]) } "case: $case, upsert, array: dies OK";
         my $statuses = sync_get($storage, $loop, $unloop, timeline => $base{timeline}, count => 'all');
         is(int(@$statuses), 0, 'storage is empty');
-        dies_ok { $storage->contains(%base, query => $s) } "case: $case, contains, single: dies OK";
-        dies_ok { $storage->contains(%base, query => [$ok_status, $s, 10]) } "case: $case, contains, array: dies OK";
     }
 }
 
@@ -1687,7 +1689,7 @@ The arguments are the same as C<test_storage_common> function.
 
 =head2 test_storage_requires_status_ids($storage, [$loop, $unloop])
 
-Test if the C<$storage> throws an exception when some statuses given to C<put_statuses()> and C<contains()> methods
+Test if the C<$storage> throws an exception when some statuses given to C<put_statuses()> methods
 do not have their C<id> fields.
 
 The arguments are the same as C<test_storage_common> function.

@@ -679,11 +679,8 @@ sub contains {
     }else {
         croak 'query parameter must be either a status, status ID or array-ref';
     }
-    foreach my $query_elem (@$query) {
-        croak "query element must be defined" if not defined $query_elem;
-        if(ref($query_elem) eq 'HASH' && !defined($query_elem->{id})) {
-            croak "id field must be set in query statuses";
-        }
+    if(grep { !defined($_) } @$query) {
+        croak "query element must be defined";
     }
     my @method_result = try {
         my $dbh = $self->_get_my_dbh();
@@ -697,6 +694,11 @@ sub contains {
         my $sth;
         foreach my $query_elem (@$query) {
             my $status_id = (ref($query_elem) eq 'HASH') ? $query_elem->{id} : $query_elem;
+            if(!defined($status_id)) {
+                ## ID-less statuses are always 'not contained'.
+                push @ret_not_contained, $query_elem;
+                next;
+            }
             my ($sql, @bind) = $self->{maker}->select(
                 'statuses', ['timeline_id', 'status_id'],
                 sql_and([sql_eq(timeline_id => $timeline_id), sql_eq(status_id => $status_id)])

@@ -702,6 +702,8 @@ If it is an array-ref,
 elements in the array-ref are treated as status objects or IDs.
 Status objects and IDs can be mixed in a single array-ref.
 
+If some statuses in C<query> don't have their C<id> field, those statuses are always treated as "not contained" in the C<$timeline>.
+
 If Status IDs include Unicode characters, they should be character strings (decoded strings), not binary strings (encoded strings).
 
 
