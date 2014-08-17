@@ -1,5 +1,9 @@
 Revision history for BusyBird
 
+0.07    2014-08-17
+        [PACKAGING]
+        - Migrate to Module::Build::Prereqs::FromCPANfile.
+
 0.06    2014-08-14
         [API CHANGE]
         - Timeline and StatusStorage: now contains() method accepts status objects with no "id" field.
