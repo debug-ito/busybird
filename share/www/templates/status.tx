@@ -7,9 +7,9 @@
   <div class="bb-status-main">
     <div class="bb-status-header">
       <div class="bb-status-attributes">
-        <: if !$s.busybird.acked_at { :>
+: if !$s.busybird.acked_at {
         <span class="bb-status-new-label label label-success">NEW</span>
-        <: } :>
+: }
         &nbsp;<span class="label label-default">Lv. <: bb_level($s.busybird.level) :></span>
       </div>
       <div>
@@ -18,23 +18,23 @@
       </div>
     </div>
     <div class="bb-status-text"><: $bb_text($s) :></div>
-    <: if $s.busybird.retweeted_by_user.screen_name { :>
+: if $s.busybird.retweeted_by_user.screen_name {
     <div class="bb-status-retweeted-by">
       <i class="glyphicon glyphicon-retweet"></i> Retweeted by <span class="bb-status-retweeted-by-username"><: $s.busybird.retweeted_by_user.screen_name :></span>
     </div>
-    <: } :>
-    <: my $extension_exists = $ext_image_urls && $ext_image_urls.size() > 0; :>
-    <: if $extension_exists { :>
+: }
+: my $extension_exists = $ext_image_urls && $ext_image_urls.size() > 0;
+: if $extension_exists {
     <div class="bb-status-extension-pane">
-      <: for $ext_image_urls -> $image_url { :>
+: for $ext_image_urls -> $image_url {
       <: image(class => "bb-status-extension-image", src => $image_url) :>
-      <: } :>
+: } ## for
     </div>
-    <: } :>
+: } ## if
   </div>
-  <: if $extension_exists { :>
+: if $extension_exists {
   <div class="bb-status-extension-handle">
     ▲
   </div>
-  <: } :>
+: }
 </li>
