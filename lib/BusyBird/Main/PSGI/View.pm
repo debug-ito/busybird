@@ -239,6 +239,25 @@ sub _escape_and_linkify_status_text {
     return $result_text;
 }
 
+sub _collect_media_urls {
+    my ($entities_array) = @_;
+    return try {
+        grep { _is_valid_link_url($_) } map { $_->{media_url} } @$entities_array;
+    }catch {
+        ()
+    };
+}
+
+sub _get_media_images_from_status_destructive {
+    my ($status) = @_;
+    tie my %url_set, "Tie::IxHash";
+    foreach my $url (_collect_media_urls($status->{entities}{media}),
+                     _collect_media_urls($status->{extended_entities}{media})) {
+        $url_set{$url} = 1;
+    }
+    return keys %url_set;
+}
+
 sub _format_status_html_destructive {
     my ($self, $status, $timeline_name) = @_;
     $timeline_name = "" if not defined $timeline_name;
@@ -249,14 +268,9 @@ sub _format_status_html_destructive {
             $status->{$key} = $retweet->{$key};
         }
     }
-    my @ext_images = try {
-        grep { _is_valid_link_url($_) } map { $_->{media_url} } @{$status->{entities}{media}};
-    }catch {
-        ()
-    };
     return $self->{renderer}->render(
         "status.tx",
-        {s => $status, ext_image_urls => \@ext_images,
+        {s => $status, ext_image_urls => [_get_media_images_from_status_destructive($status)],
          %{$self->template_functions_for_timeline($timeline_name)}}
     );
 }
