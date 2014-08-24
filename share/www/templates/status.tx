@@ -34,8 +34,8 @@
 : } ## if
   </div>
 : if $extension_exists {
-  <a href="#" class="bb-status-extension-handle">
+  <div class="bb-status-extension-handle">
     <i class="glyphicon glyphicon-chevron-down"></i>
-  </a>
+  </div>
 : }
 </li>
