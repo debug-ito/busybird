@@ -162,6 +162,15 @@ sub template_functions {
     };
 }
 
+sub _collect_media_urls {
+    my ($entities_array) = @_;
+    return try {
+        grep { _is_valid_link_url($_) } map { $_->{media_url} } @$entities_array;
+    }catch {
+        ()
+    };
+}
+
 sub template_functions_for_timeline {
     my ($self, $timeline_name) = @_;
     weaken $self;  ## in case the functions are kept by $self
@@ -203,7 +212,16 @@ sub template_functions_for_timeline {
                 };
             }
             return $result_text;
-        }
+        },
+        bb_media_image_urls => sub {
+            my ($status) = @_;
+            tie my %url_set, "Tie::IxHash";
+            foreach my $url (_collect_media_urls($status->{entities}{media}),
+                             _collect_media_urls($status->{extended_entities}{media})) {
+                $url_set{$url} = 1;
+            }
+            return [keys %url_set];
+        },
     };
 }
 
@@ -239,25 +257,6 @@ sub _escape_and_linkify_status_text {
     return $result_text;
 }
 
-sub _collect_media_urls {
-    my ($entities_array) = @_;
-    return try {
-        grep { _is_valid_link_url($_) } map { $_->{media_url} } @$entities_array;
-    }catch {
-        ()
-    };
-}
-
-sub _get_media_images_from_status_destructive {
-    my ($status) = @_;
-    tie my %url_set, "Tie::IxHash";
-    foreach my $url (_collect_media_urls($status->{entities}{media}),
-                     _collect_media_urls($status->{extended_entities}{media})) {
-        $url_set{$url} = 1;
-    }
-    return keys %url_set;
-}
-
 sub _format_status_html_destructive {
     my ($self, $status, $timeline_name) = @_;
     $timeline_name = "" if not defined $timeline_name;
@@ -270,7 +269,7 @@ sub _format_status_html_destructive {
     }
     return $self->{renderer}->render(
         "status.tx",
-        {s => $status, ext_image_urls => [_get_media_images_from_status_destructive($status)],
+        {s => $status,
          %{$self->template_functions_for_timeline($timeline_name)}}
     );
 }
@@ -584,6 +583,13 @@ Returns the permalink URL for the status.
 =item C<bb_text> => CODEREF($status)
 
 Returns the HTML text for the status.
+
+=item C<bb_media_image_urls> => CODEREF($status)
+
+Returns an array-ref of image URLs attached to the C<$status>.
+These images are rendered together with the status text.
+
+If C<$status> doesn't have any attached images, it returns an empty array-ref.
 
 =back
 
