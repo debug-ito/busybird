@@ -79,6 +79,7 @@ div.bb-status-attributes {
 }
 
 .bb-status-extension-pane {
+    display: none;
     padding: 3px 0px;
 }
 
@@ -89,7 +90,7 @@ div.bb-status-attributes {
 
 .bb-status-extension-handle {
     display: block;
-    text-align: right;
+    text-align: center;
     padding: 0 4px 0 0;
 }
 
