@@ -462,7 +462,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     _getAnchorForExtensionToggle: function($toggling_status) {
         var self = this;
         var $candidate = $toggling_status.next(".bb-status");
-        while(true) {
+        while($candidate.size() > 0) {
             if(self._isValidForCursor($candidate)) {
                 return $candidate;
             }
