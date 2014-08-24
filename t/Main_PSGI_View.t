@@ -300,6 +300,36 @@ sub create_main {
     ) {
         is($funcs->{bb_text}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
     }
+
+    note("-- bb_media_image_urls");
+    foreach my $case (
+        {label => "no entities at all", args => [{text => "hogehoge"}], exp => []},
+        {label => "media entities",
+         args => [{
+             text => "foobar",
+             entities => { media => [
+                 { media_url => "http://example.com/media1.png" },
+                 { media_url => "http://example.com/media2.png" }
+             ] }
+         }],
+         exp => ["http://example.com/media1.png", "http://example.com/media2.png"]},
+        {label => "mixed entities and extended_entities. URLs in entities are rendered first.",
+         args => [{
+             text => "FOO",
+             entities => { media => [
+                 {media_url => "http://example.com/media1.png"},
+                 {media_url => "http://example.com/media2.png"},
+             ] },
+             extended_entities => { media => [
+                 {media_url => "http://example.com/media3.png"},
+                 {media_url => "http://example.com/media2.png"},
+                 {media_url => "http://example.com/media1.png"},
+             ] }
+         }],
+         exp => [map { "http://example.com/media$_.png" } (1, 2, 3)]},
+    ) {
+        is_deeply $funcs->{bb_media_image_urls}(@{$case->{args}}), $case->{exp}, "$case->{label}: OK";
+    }
 }
 
 {
