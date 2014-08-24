@@ -116,6 +116,15 @@ C<entities.user_mentions>
 To customize the way it renders those hyperlinks and annotated texts,
 see C<*_entitiy_url_builder> and C<*_entity_text_builder> of L<BusyBird::Manual::Config>.
 
+In addition to annotating the text, L<BusyBird> renders images specified in C<entities.media>.
+
+=head2 C<extended_entities.media>
+
+Twitter embeds additional media entities under C<extended_entities.media> field.
+The structure of this field is basically the same as C<entities.media>.
+
+L<BusyBird> renders images specified C<extended_entities.media> field, too.
+
 =head2 C<id>
 
 ID of the status. ID may be an arbitrary string.
