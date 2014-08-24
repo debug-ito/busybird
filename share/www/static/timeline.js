@@ -20,6 +20,8 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     self.on_threshold_level_changed_callbacks = [];
     $(self.sel_container).on("click", ".bb-status", function() {
         self.setCursor(this);
+    }).on("click", ".bb-status-extension-handle", function() {
+        self.toggleExtensionPane(this);
     });
 }, {
     ADD_STATUSES_BLOCK_SIZE: 100,
@@ -457,6 +459,22 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     listenOnThresholdLevelChanged: function(callback) {
         // @params: callback (function(new_threshold) returning anything)
         this.on_threshold_level_changed_callbacks.push(callback);
+    },
+    toggleExtensionPane: function(extension_handle_dom) {
+        // @returns: nothing
+        var $pane = $(extension_handle_dom).parent().find(".bb-status-extension-pane");
+        var $handle_icon = $(extension_handle_dom).find("i");
+        if($pane.size() === 0 || $handle_icon === 0) {
+            console.log("toggleExtensionPane: bail out");
+            return;
+        }
+        if($pane.css("display") === "none") {
+            $pane.slideDown();
+            $handle_icon.removeClass("glyphicon-chevron-up").addClass("glyphicon-chevron-down");
+        }else {
+            $pane.slideUp();
+            $handle_icon.removeClass("glyphicon-chevron-down").addClass("glyphicon-chevron-up");
+        }
     },
 }; return selfclass;})();
 
