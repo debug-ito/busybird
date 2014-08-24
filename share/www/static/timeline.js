@@ -466,7 +466,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
             if(self._isValidForCursor($candidate)) {
                 return $candidate;
             }
-            $candidate = $candidiate.next(".bb-status");
+            $candidate = $candidate.next(".bb-status");
         }
         return null;
     },
