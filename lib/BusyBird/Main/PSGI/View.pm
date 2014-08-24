@@ -249,9 +249,15 @@ sub _format_status_html_destructive {
             $status->{$key} = $retweet->{$key};
         }
     }
+    my @ext_images = try {
+        grep { _is_valid_link_url($_) } map { $_->{media_url} } @{$status->{entities}{media}};
+    }catch {
+        ()
+    };
     return $self->{renderer}->render(
         "status.tx",
-        {s => $status, %{$self->template_functions_for_timeline($timeline_name)}}
+        {s => $status, ext_image_urls => \@ext_images,
+         %{$self->template_functions_for_timeline($timeline_name)}}
     );
 }
 

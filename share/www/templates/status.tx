@@ -1,3 +1,4 @@
+: ## Arguments: s (status), ext_image_urls (array) and template functions
 <li class="bb-status" data-bb-status-level="<: bb_level($s.busybird.level) :>">
   <span class="bb-status-id"><: $s.id :></span>
   <div class="bb-status-profile-image">
@@ -22,5 +23,18 @@
       <i class="glyphicon glyphicon-retweet"></i> Retweeted by <span class="bb-status-retweeted-by-username"><: $s.busybird.retweeted_by_user.screen_name :></span>
     </div>
     <: } :>
+    <: my $extension_exists = $ext_image_urls && $ext_image_urls.size() > 0; :>
+    <: if $extension_exists { :>
+    <div class="bb-status-extension-pane">
+      <: for $ext_image_urls -> $image_url { :>
+      <: image(class => "bb-status-extension-image", src => $image_url) :>
+      <: } :>
+    </div>
+    <: } :>
   </div>
+  <: if $extension_exists { :>
+  <div class="bb-status-extension-handle">
+    ▲
+  </div>
+  <: } :>
 </li>
