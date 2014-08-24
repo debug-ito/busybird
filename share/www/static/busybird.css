@@ -78,6 +78,20 @@ div.bb-status-attributes {
     background-color: #e7e8ec;
 }
 
+.bb-status-extension-pane {
+    padding: 3px 0px;
+}
+
+.bb-status-extension-pane img {
+    max-width: 100%;
+    margin: 2px;
+}
+
+.bb-status-extension-handle {
+    text-align: right;
+    padding: 0 4px 0 0;
+}
+
 .bb-summary-heading {
     padding: 0;
 }

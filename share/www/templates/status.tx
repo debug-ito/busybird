@@ -27,14 +27,14 @@
 : if $extension_exists {
     <div class="bb-status-extension-pane">
 : for $ext_image_urls -> $image_url {
-      <: image(class => "bb-status-extension-image", src => $image_url) :>
+      <: image(src => $image_url) :>
 : } ## for
     </div>
 : } ## if
   </div>
 : if $extension_exists {
   <div class="bb-status-extension-handle">
-    ▲
+    <i class="glyphicon glyphicon-chevron-up"></i>
   </div>
 : }
 </li>
