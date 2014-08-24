@@ -472,10 +472,10 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         }
         if($pane.css("display") === "none") {
             $pane.slideDown();
-            $handle_icon.removeClass("glyphicon-chevron-up").addClass("glyphicon-chevron-down");
+            $handle_icon.removeClass("glyphicon-chevron-down").addClass("glyphicon-chevron-up");
         }else {
             $pane.slideUp();
-            $handle_icon.removeClass("glyphicon-chevron-down").addClass("glyphicon-chevron-up");
+            $handle_icon.removeClass("glyphicon-chevron-up").addClass("glyphicon-chevron-down");
         }
     },
 }; return selfclass;})();
