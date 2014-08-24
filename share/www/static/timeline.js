@@ -459,21 +459,38 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         // @params: callback (function(new_threshold) returning anything)
         this.on_threshold_level_changed_callbacks.push(callback);
     },
+    _getAnchorForExtensionToggle: function($toggling_status) {
+        var self = this;
+        var $candidate = $toggling_status.next(".bb-status");
+        while(true) {
+            if(self._isValidForCursor($candidate)) {
+                return $candidate;
+            }
+            $candidate = $candidiate.next(".bb-status");
+        }
+        return null;
+    },
     toggleExtensionPane: function(status_dom) {
         // @returns: nothing
-        var $pane = $(status_dom).find(".bb-status-extension-pane");
-        var $handle_icon = $(status_dom).find(".bb-status-extension-handle").find("i");
+        var self = this;
+        var $status = $(status_dom);
+        var $pane = $status.find(".bb-status-extension-pane");
+        var $handle_icon = $status.find(".bb-status-extension-handle").find("i");
+        var $anchor = null;
+        var window_adjuster = null;
         if($pane.size() === 0 || $handle_icon === 0) {
-            // console.log("toggleExtensionPane: bail out");
             return;
         }
         if($pane.css("display") === "none") {
-            $pane.slideDown();
             $handle_icon.removeClass("glyphicon-chevron-down").addClass("glyphicon-chevron-up");
         }else {
-            $pane.slideUp();
+            $anchor = self._getAnchorForExtensionToggle($status);
+            if(defined($anchor)) {
+                window_adjuster = selfclass._createWindowAdjuster(function() { return $anchor.offset().top; });
+            }
             $handle_icon.removeClass("glyphicon-chevron-up").addClass("glyphicon-chevron-down");
         }
+        bb.slideToggleElements($pane, selfclass.ANIMATE_STATUS_DURATION, window_adjuster);
     },
 }; return selfclass;})();
 
