@@ -22,6 +22,8 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         self.setCursor(this);
     }).on("click", ".bb-status-extension-handle", function() {
         self.toggleExtensionPane(this);
+        self.setCursor($(this).parent().get(0));
+        return false;
     });
 }, {
     ADD_STATUSES_BLOCK_SIZE: 100,
