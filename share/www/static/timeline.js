@@ -72,7 +72,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
             hiddenHeaderList: [],
             domsAnimateToggle: [],
             domsImmediateToggle: [],
-            domAnchorElem: null,
+            domAnchorElem: null
         };
         var metrics_list = [];
         var next_seq_invisible_entries = [];

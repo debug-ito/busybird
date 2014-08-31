@@ -132,7 +132,7 @@ bb.Spinner = function(sel_target) {
         speed: 1.0,
         color: "#CCC",
         className: 'bb-spinner',
-        left: 0,
+        left: 0
     });
 };
 bb.Spinner.prototype = {
