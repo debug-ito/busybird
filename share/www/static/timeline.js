@@ -20,6 +20,8 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     self.on_threshold_level_changed_callbacks = [];
     $(self.sel_container).on("click", ".bb-status", function() {
         self.setCursor(this);
+    });
+    $(self.sel_container).on("click", ".bb-status-extension-container", function() {
         self.toggleExtensionPane(this);
     });
 }, {
@@ -470,12 +472,12 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         }
         return null;
     },
-    toggleExtensionPane: function(status_dom) {
+    toggleExtensionPane: function(extension_container_dom) {
         // @returns: nothing
         var self = this;
-        var $status = $(status_dom);
-        var $pane = $status.find(".bb-status-extension-pane");
-        var $handle_icon = $status.find(".bb-status-extension-handle").find("i");
+        var $container = $(extension_container_dom);
+        var $pane = $container.find(".bb-status-extension-pane");
+        var $handle_icon = $container.find(".bb-status-extension-handle").find("i");
         var $anchor = null;
         var window_adjuster = null;
         if($pane.size() === 0 || $handle_icon === 0) {
@@ -484,7 +486,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         if($pane.css("display") === "none") {
             $handle_icon.removeClass("glyphicon-chevron-down").addClass("glyphicon-chevron-up");
         }else {
-            $anchor = self._getAnchorForExtensionToggle($status);
+            $anchor = self._getAnchorForExtensionToggle($container.parent());
             if(defined($anchor)) {
                 window_adjuster = selfclass._createWindowAdjuster(function() { return $anchor.offset().top; });
             }

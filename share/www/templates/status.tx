@@ -23,19 +23,19 @@
       <i class="glyphicon glyphicon-retweet"></i> Retweeted by <span class="bb-status-retweeted-by-username"><: $s.busybird.retweeted_by_user.screen_name :></span>
     </div>
 : }
+  </div>
 : my $ext_image_urls = $bb_media_image_urls($s);
 : my $extension_exists = $ext_image_urls && $ext_image_urls.size() > 0;
 : if $extension_exists {
+  <div class="bb-status-extension-container">
     <div class="bb-status-extension-pane">
 : for $ext_image_urls -> $image_url {
       <: image(src => $image_url) :>
 : } ## for
     </div>
+    <div class="bb-status-extension-handle">
+      <i class="glyphicon glyphicon-chevron-down"></i>
+    </div>
+  </div>
 : } ## if
-  </div>
-: if $extension_exists {
-  <div class="bb-status-extension-handle">
-    <i class="glyphicon glyphicon-chevron-down"></i>
-  </div>
-: }
 </li>
