@@ -95,6 +95,7 @@ div.bb-status-attributes {
 
 .bb-status-extension-pane img {
     max-width: 100%;
+    max-height: 500px;
     margin: 2px;
 }
 
