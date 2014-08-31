@@ -20,7 +20,7 @@ ul#statuses li{
     border-color: black;
     border-style: solid;
     margin: 2px 0;
-    padding: 3px 0 3px 3px;
+    padding: 3px 0 3px 0;
     list-style-type: none;
     overflow: hidden;
 }
