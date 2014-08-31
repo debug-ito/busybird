@@ -104,6 +104,11 @@ div.bb-status-attributes {
     padding: 3px 0;
 }
 
+.bb-status-extension-handle button {
+    padding: 0;
+    margin: 0;
+}
+
 .bb-summary-heading {
     padding: 0;
 }

@@ -36,7 +36,7 @@
 : } ## for
     </div>
     <div class="bb-status-extension-handle">
-      <i class="glyphicon glyphicon-chevron-down"></i>
+      <button type="button" class="btn btn-link"><i class="glyphicon glyphicon-chevron-down"></i></button>
     </div>
   </div>
 : } ## if
