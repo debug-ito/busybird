@@ -48,6 +48,7 @@ div.bb-status-header {
     border-color: #999;
     border-style: solid;
     padding: 0 3px 3px 3px;
+    overflow: hidden;
 }
 
 div.bb-status-text {
