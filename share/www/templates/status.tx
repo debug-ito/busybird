@@ -1,28 +1,30 @@
 : ## Arguments: s (status), and template functions
 <li class="bb-status" data-bb-status-level="<: bb_level($s.busybird.level) :>">
   <span class="bb-status-id"><: $s.id :></span>
-  <div class="bb-status-profile-image">
-    <: image(src => $s.user.profile_image_url, width => 48, height => 48) :>
-  </div>
-  <div class="bb-status-main">
-    <div class="bb-status-header">
-      <div class="bb-status-attributes">
+  <div class="bb-status-columns-container">
+    <div class="bb-status-profile-image">
+      <: image(src => $s.user.profile_image_url, width => 48, height => 48) :>
+    </div>
+    <div class="bb-status-main">
+      <div class="bb-status-header">
+        <div class="bb-status-attributes">
 : if !$s.busybird.acked_at {
-        <span class="bb-status-new-label label label-success">NEW</span>
+          <span class="bb-status-new-label label label-success">NEW</span>
 : }
-        &nbsp;<span class="label label-default">Lv. <: bb_level($s.busybird.level) :></span>
+          &nbsp;<span class="label label-default">Lv. <: bb_level($s.busybird.level) :></span>
+        </div>
+        <div>
+          <span class="bb-status-username"><: $s.user.screen_name :></span>&nbsp;&nbsp;
+          <span class="bb-status-created-at"><: link( $bb_timestamp($s.created_at), href => $bb_status_permalink($s), target => "_blank" ) :></span>
+        </div>
       </div>
-      <div>
-        <span class="bb-status-username"><: $s.user.screen_name :></span>&nbsp;&nbsp;
-        <span class="bb-status-created-at"><: link( $bb_timestamp($s.created_at), href => $bb_status_permalink($s), target => "_blank" ) :></span>
-      </div>
-    </div>
-    <div class="bb-status-text"><: $bb_text($s) :></div>
+      <div class="bb-status-text"><: $bb_text($s) :></div>
 : if $s.busybird.retweeted_by_user.screen_name {
-    <div class="bb-status-retweeted-by">
-      <i class="glyphicon glyphicon-retweet"></i> Retweeted by <span class="bb-status-retweeted-by-username"><: $s.busybird.retweeted_by_user.screen_name :></span>
-    </div>
+      <div class="bb-status-retweeted-by">
+        <i class="glyphicon glyphicon-retweet"></i> Retweeted by <span class="bb-status-retweeted-by-username"><: $s.busybird.retweeted_by_user.screen_name :></span>
+      </div>
 : }
+    </div>
   </div>
 : my $ext_image_urls = $bb_media_image_urls($s);
 : my $extension_exists = $ext_image_urls && $ext_image_urls.size() > 0;
@@ -30,7 +32,7 @@
   <div class="bb-status-extension-container">
     <div class="bb-status-extension-pane">
 : for $ext_image_urls -> $image_url {
-      <: image(src => $image_url) :>
+        <: image(src => $image_url) :>
 : } ## for
     </div>
     <div class="bb-status-extension-handle">

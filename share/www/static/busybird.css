@@ -22,11 +22,14 @@ ul#statuses li{
     margin: 2px 0;
     padding: 3px 0 3px 0;
     list-style-type: none;
-    overflow: hidden;
 }
 
 .bb-status-id {
     display: none;
+}
+
+div.bb-status-columns-container {
+    overflow: hidden;
 }
 
 div.bb-status-profile-image {
