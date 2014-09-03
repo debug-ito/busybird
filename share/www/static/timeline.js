@@ -461,16 +461,26 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         // @params: callback (function(new_threshold) returning anything)
         this.on_threshold_level_changed_callbacks.push(callback);
     },
-    _getAnchorForExtensionToggle: function($toggling_status) {
+    _getWindowAdjusterForExtensionPane: function($pane) {
+        // @return: a window adjuster function that keeps the closing
+        // extension pane near the center of the screen as mush as
+        // possible.
         var self = this;
-        var $candidate = $toggling_status.next(".bb-status");
-        while($candidate.size() > 0) {
-            if(self._isValidForCursor($candidate)) {
-                return $candidate;
-            }
-            $candidate = $candidate.next(".bb-status");
+        var pane_init_height = $pane.height();
+        if(pane_init_height <= 0) {
+            return null;
         }
-        return null;
+        var screen_center = $(window).scrollTop() + $(window).height() / 2;
+        var pos_ratio = (screen_center - $pane.offset().top) / pane_init_height;
+        if(pos_ratio <= 0) {
+            return null;
+        }
+        if(pos_ratio > 1) {
+            pos_ratio = 1;
+        }
+        return selfclass._createWindowAdjuster(function() {
+            return $pane.offset().top + pos_ratio * $pane.height();
+        });
     },
     toggleExtensionPane: function(extension_container_dom) {
         // @returns: nothing
@@ -486,10 +496,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         if($pane.css("display") === "none") {
             $handle_icon.removeClass("glyphicon-chevron-down").addClass("glyphicon-chevron-up");
         }else {
-            $anchor = self._getAnchorForExtensionToggle($container.parent());
-            if(defined($anchor)) {
-                window_adjuster = selfclass._createWindowAdjuster(function() { return $anchor.offset().top; });
-            }
+            window_adjuster = self._getWindowAdjusterForExtensionPane($pane);
             $handle_icon.removeClass("glyphicon-chevron-up").addClass("glyphicon-chevron-down");
         }
         bb.slideToggleElements($pane, selfclass.ANIMATE_STATUS_DURATION, window_adjuster);
