@@ -86,10 +86,7 @@ div.bb-status-attributes {
 }
 
 .bb-status-extension-container {
-    border-style: dashed;
-    border-color: #444;
-    border-width: 1px 0 0 0;
-    padding: 3px 0 3px 0;
+    padding: 0;
 }
 
 .bb-status-extension-container:hover {
@@ -98,7 +95,10 @@ div.bb-status-attributes {
 
 .bb-status-extension-pane {
     display: none;
-    padding: 0 0 3px 0;
+    padding: 3px 0 3px 0;
+    border-width: 1px 0 0 0;
+    border-color: #444;
+    border-style: dashed;
 }
 
 .bb-status-extension-pane img {
@@ -108,11 +108,12 @@ div.bb-status-attributes {
 }
 
 .bb-status-extension-handle {
-    text-align: center;
-    padding: 0;
+    padding: 0 0 0 3px;
 }
 
 .bb-status-extension-handle button {
+    font-weight: normal;
+    border-width: 0;
     padding: 0;
     margin: 0;
 }
