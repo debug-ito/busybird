@@ -36,7 +36,8 @@
 : } ## for
     </div>
     <div class="bb-status-extension-handle">
-      <button type="button" class="btn btn-link"><i class="glyphicon glyphicon-chevron-down"></i> <i class="glyphicon glyphicon-picture"></i></button>
+      <button type="button"><i class="glyphicon glyphicon-chevron-down"></i> <i class="glyphicon glyphicon-picture"></i></button>
+      | <i class="glyphicon glyphicon-envelope"></i> Send Mail
     </div>
   </div>
 : } ## if

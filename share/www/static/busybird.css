@@ -109,10 +109,13 @@ div.bb-status-attributes {
 
 .bb-status-extension-handle {
     padding: 0 0 0 3px;
+    line-height: 1;
 }
 
 .bb-status-extension-handle button {
     font-weight: normal;
+    background-color: transparent;
+    line-height: 1;
     border-width: 0;
     padding: 0;
     margin: 0;
