@@ -67,11 +67,6 @@ div.bb-status-attributes {
     padding: 0 8px 0 12px;
 }
 
-.bb-status-retweeted-by i {
-    vertical-align: middle;
-    padding: 8px 0 0 0;
-}
-
 .bb-status-username {
     font-weight: bold;
     padding: 2px 0 3px 0;
