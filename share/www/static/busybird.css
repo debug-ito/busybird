@@ -30,7 +30,7 @@ ul#statuses li{
 
 div.bb-status-columns-container {
     overflow: hidden;
-    padding: 3px 0 4px 0;
+    padding: 3px 0 5px 0;
 }
 
 div.bb-status-profile-image {
@@ -81,7 +81,7 @@ div.bb-status-attributes {
 }
 
 .bb-status-extension-container {
-    padding: 0 0 4px 0;
+    padding: 0 0 5px 0;
 }
 
 .bb-status-extension-toggler:hover {
@@ -90,7 +90,7 @@ div.bb-status-attributes {
 
 .bb-status-extension-pane {
     display: none;
-    padding: 4px 0 0 0;
+    padding: 5px 0 0 0;
     border-width: 1px 0 0 0;
     border-color: #444;
     border-style: dashed;
@@ -103,7 +103,7 @@ div.bb-status-attributes {
 }
 
 .bb-status-extension-handle {
-    padding: 4px 0 0 3px;
+    padding: 5px 0 0 3px;
     line-height: 1;
     font-size: 90%;
 }
