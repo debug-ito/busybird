@@ -21,7 +21,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     $(self.sel_container).on("click", ".bb-status", function() {
         self.setCursor(this);
     });
-    $(self.sel_container).on("click", ".bb-status-extension-container", function() {
+    $(self.sel_container).on("click", ".bb-status-extension-toggler", function() {
         self.toggleExtensionPane(this);
     });
 }, {

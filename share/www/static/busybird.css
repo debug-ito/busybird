@@ -89,7 +89,7 @@ div.bb-status-attributes {
     padding: 0 0 4px 0;
 }
 
-.bb-status-extension-container:hover {
+.bb-status-extension-toggler:hover {
     background-color: #f4f5f9;
 }
 
