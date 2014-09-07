@@ -487,17 +487,20 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         var self = this;
         var $container = $(extension_container_dom);
         var $pane = $container.find(".bb-status-extension-pane");
-        var $handle_icon = $container.find(".bb-status-extension-handle").find("i");
+        var $icon_expander = $container.find(".bb-status-extension-expander");
+        var $icon_collapser = $container.find(".bb-status-extension-collapser");
         var $anchor = null;
         var window_adjuster = null;
-        if($pane.size() === 0 || $handle_icon === 0) {
+        if($pane.size() === 0) {
             return;
         }
         if($pane.css("display") === "none") {
-            $handle_icon.removeClass("glyphicon-chevron-down").addClass("glyphicon-chevron-up");
+            $icon_expander.hide();
+            $icon_collapser.show();
         }else {
             window_adjuster = self._getWindowAdjusterForExtensionPane($pane);
-            $handle_icon.removeClass("glyphicon-chevron-up").addClass("glyphicon-chevron-down");
+            $icon_expander.show();
+            $icon_collapser.hide();
         }
         bb.slideToggleElements($pane, selfclass.ANIMATE_STATUS_DURATION, window_adjuster);
     },
