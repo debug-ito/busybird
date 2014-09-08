@@ -50,5 +50,24 @@ note("Tests of View related to configuration parameters");
     like $got_style, qr|bb-status-extension-expander\s*\{\s*display\s*:\s*none|, "... expander is hidden";
 }
 
+{
+    my $main = create_main();
+    $main->timeline("test")->set_config(
+        attached_image_urls_builder => sub { "http://hogehoge.com/image.png" }
+    );
+    my $status = {
+        id => 0,
+        text => "hoge",
+        entities => {
+            media => [
+                { media_url => "http://this.shouldnt.be.shown.com/hoge.png" }
+            ]
+        }
+    };
+    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
+    my $funcs = $view->template_functions_for_timeline("test");
+    is_deeply $funcs->{bb_attached_image_urls}($status), ["http://hogehoge.com/image.png"], "attached_image_urls_builder customization OK";
+}
+
 done_testing;
 

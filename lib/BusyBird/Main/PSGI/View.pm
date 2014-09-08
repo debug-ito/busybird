@@ -162,15 +162,6 @@ sub template_functions {
     };
 }
 
-sub _collect_media_urls {
-    my ($entities_array) = @_;
-    return try {
-        grep { _is_valid_link_url($_) } map { $_->{media_url} } @$entities_array;
-    }catch {
-        ()
-    };
-}
-
 sub template_functions_for_timeline {
     my ($self, $timeline_name) = @_;
     weaken $self;  ## in case the functions are kept by $self
@@ -215,12 +206,8 @@ sub template_functions_for_timeline {
         },
         bb_attached_image_urls => sub {
             my ($status) = @_;
-            tie my %url_set, "Tie::IxHash";
-            foreach my $url (_collect_media_urls($status->{entities}{media}),
-                             _collect_media_urls($status->{extended_entities}{media})) {
-                $url_set{$url} = 1;
-            }
-            return [keys %url_set];
+            my $urls_builder = $self->{main_obj}->get_timeline_config($timeline_name, "attached_image_urls_builder");
+            return [grep { _is_valid_link_url($_) } $urls_builder->($status)];
         },
     };
 }

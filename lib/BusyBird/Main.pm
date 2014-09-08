@@ -12,6 +12,7 @@ use Scalar::Util qw(looks_like_number);
 use File::ShareDir;
 use URI::Escape qw(uri_escape);
 use Encode ();
+use Try::Tiny;
 
 our @CARP_NOT = ('BusyBird::Timeline');
 
@@ -69,6 +70,27 @@ my %DEFAULT_CONFIG_GENERATOR = (
     timeline_web_notifications => sub { 'simple' },
     hidden => sub { 0 },
 
+    attached_image_urls_builder => sub {
+        no autovivification;
+        my $get_media_urls = sub {
+            my ($entities_obj) = @_;
+            return try {
+                grep { defined($_) } map {
+                    $_->{media_url}
+                } @{$entities_obj->{media}};
+            }catch {
+                ()
+            };
+        };
+        return sub {
+            my ($status) = @_;
+            tie my %url_set, "Tie::IxHash";
+            foreach my $url (map { $get_media_urls->($status->{$_}) } qw(entities extended_entities)) {
+                $url_set{$url} = 1;
+            }
+            return keys %url_set;
+        };
+    },
     attached_image_max_height => sub { 360 },
     attached_image_show_default => sub { "hidden" },
 

@@ -335,6 +335,17 @@ sub create_main {
              ] }
          }],
          exp => [map { "http://example.com/media$_.png" } (1, 2, 3)]},
+        {label => "invalid input for media URLs",
+         args => [{
+             text => "hoge",
+             entities => { media => [
+                 {media_url => "javascript: alert('boom!')"},
+                 {media_url => 100},
+                 {},
+                 {media_url => 'http://this.is.ok.com/hoge.png'}
+             ] }
+         }],
+         exp => ["http://this.is.ok.com/hoge.png"]}
     ) {
         is_deeply $funcs->{bb_attached_image_urls}(@{$case->{args}}), $case->{exp}, "$case->{label}: OK";
     }
