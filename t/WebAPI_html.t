@@ -6,6 +6,7 @@ use BusyBird::Log;
 use testlib::HTTP;
 use testlib::Timeline_Util qw(status);
 use testlib::StatusHTML;
+use testlib::Main_Util;
 use Plack::Test;
 use BusyBird::Main;
 use BusyBird::Main::PSGI qw(create_psgi_app);
@@ -15,8 +16,7 @@ use utf8;
 $BusyBird::Log::Logger = undef;
 
 sub create_main {
-    my $main = BusyBird::Main->new;
-    $main->set_config(default_status_storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:'));
+    my $main = testlib::Main_Util::create_main();
     $main->timeline('test');
     return $main;
 }

@@ -8,14 +8,9 @@ use BusyBird::Log;
 use BusyBird::StatusStorage::SQLite;
 use Plack::Test;
 use testlib::HTTP;
+use testlib::Main_Util qw(create_main);
 
 $BusyBird::Log::Logger = undef;
-
-sub create_main {
-    my $main = BusyBird::Main->new;
-    $main->set_config(default_status_storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:'));
-    return $main;
-}
 
 sub get_title {
     my ($html_tree) = @_;

@@ -5,6 +5,7 @@ use Test::Exception;
 use Test::Memory::Cycle;
 use lib "t";
 use testlib::Timeline_Util qw(status sync);
+use testlib::Main_Util qw(create_main);
 use BusyBird::Test::StatusStorage qw(:status);
 use BusyBird::StatusStorage::SQLite;
 use BusyBird::Timeline;
@@ -17,10 +18,6 @@ BEGIN {
 
 $BusyBird::Log::Logger = undef;
 
-our $CREATE_STORAGE = sub {
-    return BusyBird::StatusStorage::SQLite->new(path => ':memory:');
-};
-
 sub test_watcher_basic {
     my ($watcher) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
@@ -28,11 +25,19 @@ sub test_watcher_basic {
     can_ok($watcher, 'active', 'cancel');
 }
 
+sub create_memory_storage {
+    return BusyBird::StatusStorage::SQLite->new(path => ':memory:');
+}
+
 {
     my $main = new_ok('BusyBird::Main');
-    my $storage = $CREATE_STORAGE->();
+    my $storage = create_memory_storage();
     $main->set_config(default_status_storage => $storage);
     is($main->get_config("default_status_storage"), $storage, 'setting default_status_storage OK');
+}
+
+{
+    my $main = create_main();
     is_deeply([$main->get_all_timelines], [], 'at first, no timelines');
 
     my $tl1 = $main->timeline('test1');
@@ -43,7 +48,7 @@ sub test_watcher_basic {
     is($main->get_timeline('test1'), $tl1, 'get_timeline() returns the installed timeline');
 
     is($main->get_timeline('foobar'), undef, 'get_timeline() returns undef if the timeline is not installed.');
-    my $tl2 = BusyBird::Timeline->new(name => 'foobar', storage => $CREATE_STORAGE->());
+    my $tl2 = BusyBird::Timeline->new(name => 'foobar', storage => create_memory_storage());
     $main->install_timeline($tl2);
     is($main->get_timeline('foobar'), $tl2, 'install_timeline() installs a timeline');
     is($main->timeline('foobar'), $tl2, 'timeline() returns the installed timeline');
@@ -54,15 +59,14 @@ sub test_watcher_basic {
     is($main->get_timeline('test1'), undef, 'now test1 is not installed');
     is_deeply([$main->get_all_timelines], [$tl2], 'now only foobar is installed.');
 
-    my $tl3 = BusyBird::Timeline->new(name => 'foobar', storage => $CREATE_STORAGE->());
+    my $tl3 = BusyBird::Timeline->new(name => 'foobar', storage => create_memory_storage());
     $main->install_timeline($tl3);
     is($main->get_timeline('foobar'), $tl3, 'install_timeline() replaces the old timeline with the same name');
     is($main->timeline('foobar'), $tl3, 'timeline() returns the installed timeline');
 }
 
 {
-    my $main = BusyBird::Main->new();
-    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+    my $main = create_main();
     $main->timeline($_) foreach reverse 1..20;
     is_deeply(
         [map { $_->name } $main->get_all_timelines],
@@ -72,10 +76,9 @@ sub test_watcher_basic {
 }
 
 {
-    my $main = BusyBird::Main->new();
-    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+    my $main = create_main();
     my $storage1 = $main->get_config("default_status_storage");
-    my $storage2 = $CREATE_STORAGE->();
+    my $storage2 = create_memory_storage();
 
     my $tl1 = $main->timeline('1');
     $main->set_config(default_status_storage => $storage2);
@@ -95,9 +98,8 @@ sub test_watcher_basic {
 
 {
     note('--- -- watch_unacked_counts');
-    my $main = BusyBird::Main->new();
+    my $main = create_main();
     memory_cycle_ok($main, 'no cyclic ref in main');
-    $main->set_config(default_status_storage => $CREATE_STORAGE->());
     $main->timeline('a');
     sync($main->timeline('b'), 'add_statuses', statuses => [status(1), status(2, 2)]);
     sync($main->timeline('c'), 'add_statuses', statuses => [status(3, -3), status(4,0), status(5)]);
@@ -196,8 +198,7 @@ sub test_watcher_basic {
 
 {
     note('--- watch_unacked_counts: junk input');
-    my $main = BusyBird::Main->new();
-    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+    my $main = create_main();
     $main->timeline('a');
     my %a = (assumed => {a => 1});
     foreach my $case (
@@ -224,8 +225,7 @@ sub test_watcher_basic {
 
 {
     note('--- Unicode timeline names');
-    my $main = BusyBird::Main->new();
-    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+    my $main = create_main();
     my $tl_name = 'ほげ タイムライン';
     isa_ok($main->timeline($tl_name), "BusyBird::Timeline", "returned from timeline()");
     isa_ok($main->get_timeline($tl_name), "BusyBird::Timeline", "returned from get_timeline()");
@@ -249,11 +249,10 @@ sub test_watcher_basic {
 
 {
     note('--- timeline names with slashes');
-    my $main = BusyBird::Main->new();
+    my $main = create_main();
     my @logs = ();
     local $BusyBird::Log::Logger = sub { push @logs, \@_ };
-    my $storage = $CREATE_STORAGE->();
-    $main->set_config(default_status_storage => $storage);
+    my $storage = $main->get_config("default_status_storage");
     foreach my $ng_name ("/", "/hoge", "foo/bar", "///", " / ") {
         @logs = ();
         my $timeline = $main->timeline($ng_name);
@@ -273,8 +272,7 @@ sub test_watcher_basic {
 
 {
     note('--- create_timeline');
-    my $main = BusyBird::Main->new();
-    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+    my $main = create_main();
     my $timeline = $main->create_timeline("hoge");
     is $timeline->name, "hoge", "create a timeline named hoge";
     is scalar($main->get_all_timelines), 0, "no timeline installed";
@@ -286,8 +284,7 @@ sub test_watcher_basic {
 
 {
     note("--- synopsis");
-    my $main = BusyBird::Main->new;
-    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+    my $main = create_main();
 
     my $foo = $main->timeline("foo");
     my $bar = $main->timeline("bar");
@@ -305,8 +302,7 @@ sub test_watcher_basic {
 
 {
     note("--- example: watch_unacked_counts");
-    my $main = BusyBird::Main->new;
-    $main->set_config(default_status_storage => $CREATE_STORAGE->());
+    my $main = create_main();
     
     sync $main->timeline("TL1"), "add_statuses", statuses => [status(0, 0), status(1, 2)];
     $main->timeline("TL2");

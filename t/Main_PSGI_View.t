@@ -10,6 +10,7 @@ use utf8;
 use Encode qw(encode_utf8);
 use lib "t";
 use testlib::HTTP;
+use testlib::Main_Util;
 
 BEGIN {
     use_ok("BusyBird::Main::PSGI::View");
@@ -35,10 +36,7 @@ sub test_json_response {
 }
 
 sub create_main {
-    my $main = BusyBird::Main->new;
-    $main->set_config(
-        default_status_storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:')
-    );
+    my $main = testlib::Main_Util::create_main();
     $main->timeline('test');
     return $main;
 }

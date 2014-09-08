@@ -4,18 +4,14 @@ use Test::More;
 use BusyBird::Main;
 use BusyBird::Log;
 use BusyBird::StatusStorage::SQLite;
+use lib "t";
+use testlib::Main_Util qw(create_main);
 
 BEGIN {
     use_ok("BusyBird::Main::PSGI", "create_psgi_app");
 }
 
 $BusyBird::Log::Logger = undef;
-
-sub create_main {
-    my $main = BusyBird::Main->new;
-    $main->set_config(default_status_storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:'));
-    return $main;
-}
 
 {
     my $main = create_main();

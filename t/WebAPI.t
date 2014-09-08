@@ -13,6 +13,7 @@ use BusyBird::DateTime::Format;
 use testlib::HTTP;
 use BusyBird::Test::StatusStorage qw(:status test_cases_for_ack);
 use testlib::Timeline_Util qw(status);
+use testlib::Main_Util qw(create_main);
 use BusyBird::Log ();
 use Plack::Test;
 use Encode ();
@@ -20,12 +21,6 @@ use JSON qw(encode_json decode_json);
 use Try::Tiny;
 
 $BusyBird::Log::Logger = undef;
-
-sub create_main {
-    my $main = BusyBird::Main->new();
-    $main->set_config(default_status_storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:'));
-    return $main;
-}
 
 sub create_dying_status_storage {
     my $mock = Test::MockObject->new();

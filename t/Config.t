@@ -5,16 +5,14 @@ use BusyBird::Main;
 use BusyBird::Timeline;
 use BusyBird::StatusStorage::SQLite;
 use BusyBird::Log;
+use lib "t";
+use testlib::Main_Util qw(create_main);
 
 $BusyBird::Log::Logger = undef;
 
 sub create_main_and_timeline {
-    my $main = BusyBird::Main->new();
-    my $timeline = BusyBird::Timeline->new(
-        name => "test",
-        storage => BusyBird::StatusStorage::SQLite->new(path => ':memory:'),
-    );
-    $main->install_timeline($timeline);
+    my $main = create_main();
+    my $timeline = $main->timeline("test");
     return ($main, $timeline);
 }
 
