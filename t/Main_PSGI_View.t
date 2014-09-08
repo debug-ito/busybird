@@ -141,6 +141,16 @@ sub create_main {
         is($funcs->{image}->(@{$case->{args}}), $case->{exp}, "$case->{label} OK");
     }
 
+    note("--- -- link to image");
+    foreach my $case (
+        {label => "valid url", url => 'http://hoge.com/img.png',
+         exp => '<a href="http://hoge.com/img.png"><img src="http://hoge.com/img.png" /></a>'},
+        {label => "invalid url", url => 'javascript: return false;',
+         exp => ''}
+    ) {
+        is($funcs->{link}($funcs->{image}(src => $case->{url}), href => $case->{url}), $case->{exp}, "$case->{label}: OK");
+    }
+
     note("--- -- bb_level");
     foreach my $case (
         {label => "positive level", args => [10], exp => "10"},

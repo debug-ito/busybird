@@ -21,8 +21,10 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     $(self.sel_container).on("click", ".bb-status", function() {
         self.setCursor(this);
     });
-    $(self.sel_container).on("click", ".bb-status-extension-toggler", function() {
-        self.toggleExtensionPane(this);
+    $(self.sel_container).on("click", ".bb-status-extension-toggler", function(event) {
+        if($(event.target).closest("a").size() === 0) {
+            self.toggleExtensionPane(this);
+        }
     });
 }, {
     ADD_STATUSES_BLOCK_SIZE: 100,
