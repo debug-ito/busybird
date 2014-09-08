@@ -29,7 +29,15 @@ var createStatusHTMLDetail = function(status) {
     var html = '<li class="bb-status" data-bb-status-level="'+status.busybird.level+'">' + "\n" +
                '<span class="bb-status-id">'+status.id+"</span>\n";
     html += '<span class="bb-status-username">' + status.user.screen_name + "</span>\n";
-    html += "</li>\n";
+    html += '<div class="bb-status-extension-container">'
+    if(status.extended_entities) {
+        html += '<div class="bb-status-extension-pane"></div>';
+        html += '<div class="bb-status-extension-handle">';
+        html += '<span class="bb-status-extension-expander">expand</span>';
+        html += '<span class="bb-status-extension-collapser">collapse</span>';
+        html += '</div>';
+    }
+    html += "</div></li>\n";
     return html;
 };
 
@@ -43,6 +51,10 @@ var createStatus = function(id, level) {
 
 var createStatusDOM = function(id, level) {
     return createStatus(id, level).get(0);
+};
+
+var createStatusDOMDetail = function(status) {
+    return $(createStatusHTMLDetail(status)).get(0);
 };
 
 var setupContainer = function() {
@@ -349,6 +361,77 @@ asyncTest("set/getThresholdLevel", function() {
         is(con.getThresholdLevel(), -10, "getThresholdLevel -10 OK");
         deepEqual(getContent(), ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
                   "threshold -1 -> -10 display OK");
+    }).fail(function(reason) {
+        ok(false, "should not fail");
+        ok(true, "failure reason: " + reason);
+    }).then(function() {
+        bb.StatusContainer.ANIMATE_STATUS_DURATION = old_duration;
+        bb.StatusContainer.ANIMATE_STATUS_MAX_NUM = old_animate_max;
+        start();
+    });
+});
+
+asyncTest("toggleExtensionPane", function() {
+    var con = setupContainer();
+    var statuses = [
+        {id: 1, extended_entities: {}},
+        {id: 2},
+        {id: 3, extended_entities: {}},
+        {id: 4},
+    ];
+    var getExtensionContainerDOM = function(index) {
+        return $("#bb-status-container li.bb-status").eq(index).find(".bb-status-extension-container").get(0);
+    };
+    var getExtensionStates = function() {
+        var result = [];
+        $("#bb-status-container li.bb-status").each(function() {
+            var state = {};
+            var $status = $(this);
+            $.each(["pane", "expander", "collapser"], function(i, elem_name) {
+                var $elem = $status.find(".bb-status-extension-" + elem_name);
+                if($elem.size() === 1) {
+                    state[elem_name] = ($elem.css("display") !== "none");
+                }
+            });
+            result.push(state);
+        });
+        return result;
+    };
+    var old_duration = bb.StatusContainer.ANIMATE_STATUS_DURATION;
+    var old_animate_max = bb.StatusContainer.ANIMATE_STATUS_MAX_NUM;
+    bb.StatusContainer.ANIMATE_STATUS_DURATION = 5;
+    bb.StatusContainer.ANIMATE_STATUS_MAX_NUM = 5;
+    Q.fcall(function() {
+        return con.appendStatuses($.map(statuses, createStatusDOMDetail));
+    }).then(function() {
+        deepEqual(getExtensionStates(),
+                  [{pane:true, expander:true, collapser:true}, {},
+                   {pane:true, expander:true, collapser:true}, {}],
+                  "initial extension state OK");
+        return con.toggleExtensionPane(getExtensionContainerDOM(0));
+    }).then(function() {
+        deepEqual(getExtensionStates(),
+                  [{pane:false, expander:true, collapser:false}, {},
+                   {pane:true,  expander:true, collapser:true}, {}],
+                  "1st pane collapsed OK");
+        return con.toggleExtensionPane(getExtensionContainerDOM(2));
+    }).then(function() {
+        deepEqual(getExtensionStates(),
+                  [{pane:false, expander:true, collapser:false}, {},
+                   {pane:false, expander:true, collapser:false}, {}],
+                  "2nd pane collapsed OK");
+        return con.toggleExtensionPane(getExtensionContainerDOM(0));
+    }).then(function() {
+        deepEqual(getExtensionStates(),
+                  [{pane:true, expander:false, collapser:true}, {},
+                   {pane:false, expander:true, collapser:false}, {}],
+                  "1st pane expanded OK");
+        return con.toggleExtensionPane(getExtensionContainerDOM(0));
+    }).then(function() {
+        deepEqual(getExtensionStates(),
+                  [{pane:false, expander:true, collapser:false}, {},
+                   {pane:false,  expander:true, collapser:false}, {}],
+                  "1st pane collapsed again OK");
     }).fail(function(reason) {
         ok(false, "should not fail");
         ok(true, "failure reason: " + reason);

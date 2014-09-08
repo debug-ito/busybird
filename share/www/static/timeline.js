@@ -485,7 +485,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         });
     },
     toggleExtensionPane: function(extension_container_dom) {
-        // @returns: nothing
+        // @returns: promise that resolves when it finishes toggling.
         var self = this;
         var $container = $(extension_container_dom);
         var $pane = $container.find(".bb-status-extension-pane");
@@ -504,7 +504,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
             $icon_expander.show();
             $icon_collapser.hide();
         }
-        bb.slideToggleElements($pane, selfclass.ANIMATE_STATUS_DURATION, window_adjuster);
+        return bb.slideToggleElements($pane, selfclass.ANIMATE_STATUS_DURATION, window_adjuster);
     },
 }; return selfclass;})();
 
