@@ -57,8 +57,7 @@ It is you who input statuses to it.
 
 To input statuses, you can use L<BusyBird>'s Web API.
 
-    $ curl -d '{"text":"hello, world!"}' -H 'Content-Type: application/json' \
-      http://127.0.0.1:5000/timelines/home/statuses.json
+    $ curl -d '{"text":"hello, world!"}' http://127.0.0.1:5000/timelines/home/statuses.json
 
 C<< POST /timelines/home/statuses.json >> endpoint inputs statuses to the "home" timeline.
 Statuses are in the HTTP request body, encoded in JSON.
@@ -67,7 +66,7 @@ You can input more than one statuses by posting an array of statuses. Here is a 
 
     $ curl \
       -d '[{"text":"Hello, Bob!", "user":{"screen_name":"Alice"}}, {"text":"Hello, Alice!", "user":{"screen_name":"Bob"}}]' \
-      -H 'Content-Type: application/json' http://127.0.0.1:5000/timelines/home/statuses.json
+      http://127.0.0.1:5000/timelines/home/statuses.json
 
 This time, the statuses have C<user.screen_name> fields.
 L<BusyBird> renders this field as the person or object that created the status.
@@ -146,7 +145,7 @@ OK, now you can run it.
 
 You can directly input statuses from Twitter to L<BusyBird>. No conversion is necessary.
 
-    $ perl import.pl | curl -d @- -H 'Content-Type: application/json' http://127.0.0.1:5000/timelines/home/statuses.json
+    $ perl import.pl | curl -d @- http://127.0.0.1:5000/timelines/home/statuses.json
 
 After that, you can see the Twitter statuses on L<BusyBird>.
 
@@ -214,7 +213,7 @@ L<BusyBird> sorts those statuses and renders them in chronological order.
 
 Let's save the above script as "import2.pl" and run it.
 
-    $ perl import2.pl | curl -d @- -H 'Content-Type: application/json' http://127.0.0.1:5000/timelines/home/statuses.json
+    $ perl import2.pl | curl -d @- http://127.0.0.1:5000/timelines/home/statuses.json
 
 If you have ever been mentioned by someone, you'll see the statuses metioning you with the status level 1.
 
