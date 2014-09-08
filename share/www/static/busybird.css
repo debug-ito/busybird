@@ -24,6 +24,10 @@ ul#statuses li{
     list-style-type: none;
 }
 
+ul#statuses li.bb-hidden-statuses-header {
+    padding: 0 3px;
+}
+
 .bb-status-id {
     display: none;
 }
