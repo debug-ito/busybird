@@ -837,19 +837,23 @@ sub test_timeline {
         note('--- junk to watch_unacked_counts');
         my $timeline = new_ok($CLASS, [name => 'test', storage => $CREATE_STORAGE->()]);
         foreach my $assumed_case (
-            {label => "omit"}, {label => "undef", arg => undef}, {label => "string", arg => "hoge"},
-            {label => "array-ref", arg => []}, {label => "code-ref", arg => sub {}}
+            {label => "omit"},
+            {label => "undef", arg => undef},
+            {label => "string", arg => "hoge"},
+            {label => "array-ref", arg => []},
+            {label => "code-ref", arg => sub {}},
         ) {
-            foreach my $callback_case (
-                {label => "omit"}, {label => "undef", arg => undef}, {label => "string", arg => "foobar"},
-                {label => "array-ref", arg => []}, {label => "hash-ref", arg => {}}
-            ) {
-                my %args = ();
-                $args{assumed} = $assumed_case->{arg} if exists $assumed_case->{arg};
-                $args{callback} = $callback_case->{arg} if exists $callback_case->{arg};
-                my $label = "assumed: $assumed_case->{label}, callback: $callback_case->{label}";
-                dies_ok { $timeline->watch_unacked_counts(%args) } "$label: watch_unacked_counts throws an exception.";
-            }
+            my %args = (callback => sub { fail("should not be called") });
+            $args{assumed} = $assumed_case->{arg} if exists $assumed_case->{arg};
+            dies_ok { $timeline->watch_unacked_counts(%args) } "'assumed': $assumed_case->{label}: watch_unacked_counts throws an exception";
+        }
+        foreach my $callback_case (
+            {label => "omit"}, {label => "undef", arg => undef}, {label => "string", arg => "foobar"},
+            {label => "array-ref", arg => []}, {label => "hash-ref", arg => {}}
+        ) {
+            my %args = (assumed => {});
+            $args{callback} = $callback_case->{arg} if exists $callback_case->{arg};
+            dies_ok { $timeline->watch_unacked_counts(%args) } "'callback': $callback_case->{label}: watch_unacked_counts throws an exception.";
         }
     }
     
