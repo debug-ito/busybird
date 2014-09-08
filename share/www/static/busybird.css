@@ -82,6 +82,7 @@ div.bb-status-attributes {
 
 .bb-status-extension-container {
     padding: 0 0 5px 0;
+    cursor: pointer;
 }
 
 .bb-status-extension-toggler:hover {
@@ -115,6 +116,7 @@ div.bb-status-attributes {
     border-width: 0;
     padding: 0;
     margin: 0;
+    white-space: nowrap;
 }
 
 .bb-status-extension-collapser {

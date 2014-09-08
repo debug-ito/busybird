@@ -36,12 +36,11 @@
 : } ## for
     </div>
     <div class="bb-status-extension-handle">
-      <button type="button">
+      <button type="button" class="btn-link">
         <span class="bb-status-extension-expander"><i class="glyphicon glyphicon-chevron-down"></i> Expand</span>
         <span class="bb-status-extension-collapser"><i class="glyphicon glyphicon-chevron-up"></i> Collapse</span>
         <i class="glyphicon glyphicon-picture"></i>
       </button>
-      | <span style="color: #ccc;"><i class="glyphicon glyphicon-envelope"></i> Send Mail</span>
     </div>
 : } ## if
   </div>
