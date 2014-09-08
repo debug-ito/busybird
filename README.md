@@ -35,6 +35,7 @@ try a development version.
 
     $ git clone https://github.com/debug-ito/busybird.git
     $ cd busybird
+    $ cpanm Module::Build::Prereqs::FromCPANfile
     $ cpanm --installdeps .
     $ perl Build.PL
     $ ./Build
