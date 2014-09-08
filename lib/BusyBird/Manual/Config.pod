@@ -279,6 +279,30 @@ B<Default:> 0 (false)
 If set to true, the timeline is hidden from the timeline list.
 Hidden timelines are still accessible via Web API.
 
+=head2 C<attached_image_urls_builder> => CODEREF($status)
+
+B<Default:> return C<media_url> fields in Twitter Entities in C<< $status->{entities}{media} >> and C<< $status->{extended_entities}{media} >>.
+
+Subroutine reference that is supposed to return a list of URL strings to the images attached to the C<$status>.
+
+If it returns a string that doesn't look like a valid URL, that particular string is ignored.
+
+=head2 C<attached_image_max_height> => INT
+
+B<Default:> 360
+
+The maximum height of images attached to statuses (in pixels).
+If the original height is larger than this value, it shrinks the image and renders it.
+
+=head2 C<attached_image_show_default> => STRING
+
+B<Default:> C<"hidden">
+
+Specifies how attached images are rendered in a timeline.
+
+If set to C<"visible">, the attached images are visible by default.
+Setting it to any other value hides the attached images.
+
 
 =head1 EXAMPLES
 
