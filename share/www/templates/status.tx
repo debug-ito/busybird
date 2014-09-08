@@ -26,12 +26,12 @@
 : }
     </div>
   </div>
-: my $ext_image_urls = $bb_media_image_urls($s);
-: my $extension_exists = $ext_image_urls && $ext_image_urls.size() > 0;
+: my $image_urls = $bb_attached_image_urls($s);
+: my $extension_exists = $image_urls && $image_urls.size() > 0;
   <div class="bb-status-extension-container<: if $extension_exists { :> bb-status-extension-toggler <: }:>">
 : if $extension_exists {
     <div class="bb-status-extension-pane">
-: for $ext_image_urls -> $image_url {
+: for $image_urls -> $image_url {
         <: link(image(src => $image_url), href => $image_url, target => "_blank") :>
 : } ## for
     </div>

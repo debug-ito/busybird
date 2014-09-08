@@ -213,7 +213,7 @@ sub template_functions_for_timeline {
             }
             return $result_text;
         },
-        bb_media_image_urls => sub {
+        bb_attached_image_urls => sub {
             my ($status) = @_;
             tie my %url_set, "Tie::IxHash";
             foreach my $url (_collect_media_urls($status->{entities}{media}),
@@ -584,7 +584,7 @@ Returns the permalink URL for the status.
 
 Returns the HTML text for the status.
 
-=item C<bb_media_image_urls> => CODEREF($status)
+=item C<bb_attached_image_urls> => CODEREF($status)
 
 Returns an array-ref of image URLs attached to the C<$status>.
 These images are rendered together with the status text.

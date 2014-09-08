@@ -311,7 +311,7 @@ sub create_main {
         is($funcs->{bb_text}->(@{$case->{args}}), $case->{exp}, "$case->{label}: OK");
     }
 
-    note("-- bb_media_image_urls");
+    note("-- bb_attached_image_urls");
     foreach my $case (
         {label => "no entities at all", args => [{text => "hogehoge"}], exp => []},
         {label => "media entities",
@@ -338,7 +338,7 @@ sub create_main {
          }],
          exp => [map { "http://example.com/media$_.png" } (1, 2, 3)]},
     ) {
-        is_deeply $funcs->{bb_media_image_urls}(@{$case->{args}}), $case->{exp}, "$case->{label}: OK";
+        is_deeply $funcs->{bb_attached_image_urls}(@{$case->{args}}), $case->{exp}, "$case->{label}: OK";
     }
 }
 
