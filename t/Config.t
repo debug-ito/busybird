@@ -57,7 +57,7 @@ sub create_main_and_timeline {
     is($main->get_config("timeline_web_notifications"), "simple", "default timeline_web_notifications OK");
     ok(!$main->get_config("hidden"), "hidden param is false by default");
     is($main->get_config("attached_image_max_height"), 360, "default attached_image_max_height OK");
-    is($main->get_config("attached_image_show_default"), "visible", "default attached_image_show_default OK");
+    is($main->get_config("attached_image_show_default"), "hidden", "default attached_image_show_default OK");
 }
 
 done_testing();

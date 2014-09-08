@@ -70,7 +70,7 @@ my %DEFAULT_CONFIG_GENERATOR = (
     hidden => sub { 0 },
 
     attached_image_max_height => sub { 360 },
-    attached_image_show_default => sub { "visible" },
+    attached_image_show_default => sub { "hidden" },
 
     timeline_list_pager_entry_max => sub { 7 },
     timeline_list_per_page => sub { 30 },
