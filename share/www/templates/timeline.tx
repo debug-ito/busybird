@@ -1,4 +1,5 @@
-: ## Arguments: script_name, timeline_name, post_button_url, timeline_config_json
+: ## Arguments: script_name, timeline_name, timeline_config_json,
+: ##            post_button_url, attached_image_max_height, attached_image_show_default_bool
 : cascade wrapper_navbar { script_name => $script_name, title => $timeline_name }
 : around navbar_content -> {
 <form class="navbar-form navbar-right bb-nav-controls-container">
@@ -30,6 +31,14 @@
   </ul>
 </div>
 : }  ## around navbar_content
+
+: around head -> {
+<style type="text/css">
+.bb-status-extension-pane { display: <: $attached_image_show_default_bool ? "block" : "none" :>; }
+.bb-status-extension-<: $attached_image_show_default_bool ? "expander" : "collapser" :> { display: none; }
+.bb-status-extension-pane img { max-height: <: $attached_image_max_height :>px; }
+</style>
+: } ## around head
 
 : around content -> {
 <div class="container-fluid">

@@ -65,8 +65,12 @@ my %DEFAULT_CONFIG_GENERATOR = (
         return qq{https://twitter.com/search?q=$query_hashtag&src=hash};
     }},
     hashtags_entity_text_builder => sub { sub { my $text = shift; return $text }},
+    
     timeline_web_notifications => sub { 'simple' },
     hidden => sub { 0 },
+
+    attached_image_max_height => sub { 360 },
+    attached_image_show_default => sub { "visible" },
 
     timeline_list_pager_entry_max => sub { 7 },
     timeline_list_per_page => sub { 30 },

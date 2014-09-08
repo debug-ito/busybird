@@ -1,5 +1,5 @@
 : ## Arguments: script_name, title
-: ## Cascade Blocks: navbar_content, content
+: ## Cascade Blocks: head, navbar_content, content
 : cascade wrapper_document { script_name => $script_name, title => $title }
 : around navbar -> {
 <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">

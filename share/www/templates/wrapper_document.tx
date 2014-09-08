@@ -1,5 +1,5 @@
 : ## Arguments: script_name, title
-: ## Cascade Blocks: navbar, content
+: ## Cascade Blocks: head, navbar, content
 <!DOCTYPE html>
 <html>
   <head>
@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="<: $script_name :>/static/bootstrap/css/bootstrap.min.css" type="text/css" media="screen" />
     <link rel="stylesheet" href="<: $script_name :>/static/busybird.css" type="text/css" media="screen" />
     <link rel="shortcut icon" href="<: $script_name :>/static/favicon_normal.ico" />
+: block head -> {}
   </head>
   <body>
 : block navbar -> {}

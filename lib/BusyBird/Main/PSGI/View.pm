@@ -339,8 +339,11 @@ sub response_timeline {
         args => {
             timeline_name => $timeline_name,
             script_name => $script_name,
-            post_button_url => $self->{main_obj}->get_timeline_config($timeline_name, "post_button_url"),
             timeline_config_json => $self->_create_timeline_config_json($timeline_name),
+            post_button_url => $self->{main_obj}->get_timeline_config($timeline_name, "post_button_url"),
+            attached_image_max_height => $self->{main_obj}->get_timeline_config($timeline_name, "attached_image_max_height"),
+            attached_image_show_default_bool =>
+            ($self->{main_obj}->get_timeline_config($timeline_name, "attached_image_show_default") eq "visible")
         }
     );
 }
