@@ -179,17 +179,11 @@ sub get_timeline_config {
 }
 
 sub watch_unacked_counts {
-    ## my ($self, $level, $watch_spec, $callback) = @_;
     my ($self, %watch_args) = @_;
     my $level = $watch_args{level};
     $level = 'total' if not defined $level;
     my $assumed = $watch_args{assumed};
     my $callback = $watch_args{callback};
-    ## if(looks_like_number($level)) {
-    ##     croak "level must be an integer or 'total'" if int($level) != $level;
-    ## }else {
-    ##     croak "level must be an integer or 'total'" if $level ne 'total';
-    ## }
     if(!defined($assumed) || ref($assumed) ne 'HASH') {
         croak 'assumed must be a hash-ref';
     }
