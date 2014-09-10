@@ -107,10 +107,6 @@ div.bb-status-attributes {
     border-color: transparent;
 }
 
-.bb-status-extension-pane img:hover {
-    border-color: #2a6496;  /* borrowed from the bootstrap style */
-}
-
 .bb-status-extension-handle {
     padding: 5px 0 0 3px;
     line-height: 1;

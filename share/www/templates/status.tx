@@ -32,7 +32,7 @@
 : if $extension_exists {
     <div class="bb-status-extension-pane">
 : for $image_urls -> $image_url {
-        <: link(image(src => $image_url), href => $image_url, target => "_blank") :>
+        <: image(src => $image_url) :>
 : } ## for
     </div>
     <div class="bb-status-extension-handle">
