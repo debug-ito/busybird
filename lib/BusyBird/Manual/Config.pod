@@ -285,7 +285,9 @@ B<Default:> return C<media_url> fields in Twitter Entities in C<< $status->{enti
 
 Subroutine reference that is supposed to return a list of URL strings to the images attached to the C<$status>.
 
-If it returns a string that doesn't look like a valid URL, that particular string is ignored.
+    @image_urls = $builder->($status)
+
+If it returns a string that doesn't look like a valid URL, that string is ignored.
 
 =head2 C<attached_image_max_height> => INT
 
