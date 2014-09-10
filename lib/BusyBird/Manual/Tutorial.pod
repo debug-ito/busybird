@@ -71,10 +71,43 @@ You can input more than one statuses by posting an array of statuses. Here is a 
 This time, the statuses have C<user.screen_name> fields.
 L<BusyBird> renders this field as the person or object that created the status.
 
-=head2 Import Statuses from Twitter
+=head2 Import RSS/Atom Feeds
 
 You now understand how to input statuses to L<BusyBird>, but it is boring to create statuses by hand.
-So let's import statuses (tweets) from L<Twitter|https://twitter.com/> and view them on L<BusyBird>.
+So let's import RSS/Atom feeds into L<BusyBird>. It's very easy!
+
+=over
+
+=item 1.
+
+Install another module L<BusyBird::Input::Feed>.
+
+    $ cpanm BusyBird::Input::Feed
+
+=item 2.
+
+Then, run L<busybird_input_feed> command bundled with the module.
+
+    $ busybird_input_feed https://metacpan.org/feed/recent -p http://127.0.0.1:5000/timelines/home/statuses.json
+
+=back
+
+After that, you can see the imported feed items (in this case, CPAN modules recently uploaded) on L<BusyBird>.
+
+Try repeating the command above.
+You will see that L<BusyBird> only accepts the new statuses that are not yet in L<BusyBird>'s timeline.
+In a L<BusyBird> timeline, all statuses must have unique C<id> field.
+If you input a status that is already in the timeline, that status is ignored.
+
+This means you can repeat the above command without worrying about duplicate statuses.
+Register the command with C<cron>, then the L<BusyBird> timeline is automatically synchronized to
+the latest state of the feed.
+
+
+=head2 Import Statuses from Twitter
+
+Next, let's import statuses (tweets) from L<Twitter|https://twitter.com/> and view them on L<BusyBird>.
+That's a bit more tricky than importing feeds because it requires authentication.
 
 To import tweets from Twitter via its API, you have to get the B<tokens> first. Here is how to get the tokens.
 
@@ -147,16 +180,11 @@ You can directly input statuses from Twitter to L<BusyBird>. No conversion is ne
 
     $ perl import.pl | curl -d @- http://127.0.0.1:5000/timelines/home/statuses.json
 
-After that, you can see the Twitter statuses on L<BusyBird>.
+Now you see the Twitter statuses on "home" timeline, don't you?
 
-Try repeating the command above.
-You will see that L<BusyBird> only accepts the new statuses that are not yet in L<BusyBird>'s timeline.
-In a L<BusyBird> timeline, all statuses must have unique C<id> field.
-If you input a status that is already in the timeline, that status is ignored.
-
-This means you can repeat the above command without worrying about duplicate statuses.
-Register the command with C<cron>, then the L<BusyBird> timeline is automatically synchronized to your Twitter timeline.
+Just like RSS/Atom feeds, you can repeat the above command without worrying about duplicate statuses.
 If you are wondering how frequently you should run the command, L<Net::Twitter::Loader> may help.
+
 
 =head1 Acked/Unacked States of Statuses
 
