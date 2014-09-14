@@ -410,7 +410,7 @@ C<$tracking_timeline> and C<$main_timeline> must be L<BusyBird::Timeline> object
 
 Return value is the given C<$tracking_timeline> object.
 
-This method uses L<BusyBird::Log> to log error messages when something is wrong.
+This method uses L<BusyBird::Log> to log error messages when something goes wrong.
 
 A "tracking timeline" is a timeline dedicated to tracking status history of a single source.
 You might need it when you import statuses from various sources into a single "main" timeline.
@@ -418,47 +418,50 @@ You might need it when you import statuses from various sources into a single "m
 For example,
 
     use BusyBird;
+    use BusyBird::Input::Feed;
     
+    my $input = BusyBird::Input::Feed->new();
     my $main_timeline = timeline("main");
-    $main_timeline->add( get_statuses_from_source1() );
-    $main_timeline->add( get_statuses_from_source2() );
-    $main_timeline->add( get_statuses_from_source3() );
+    $main_timeline->add( $input->parse_url('http://example1.com/feed.rss') );
+    $main_timeline->add( $input->parse_url('http://example2.com/feed.rss') );
+    $main_timeline->add( $input->parse_url('http://example3.com/feed.rss') );
 
-In the above example, statuses are imported from three different sources.
-Suppose C<get_statuses_from_source*()> functions import the latest 20 statuses from each source, like RSS/Atom feeds.
+In the above example, statuses are imported from three different RSS feeds using L<BusyBird::Input::Feed>.
 Because L<BusyBird::Timeline> rejects duplicate statuses,
 the above code adds only new and unread statuses to C<$main_timeline>.
 
-However, if update rates of the three sources are different,
+However, if update rates of the three feeds are different,
 it's possible for old statuses to re-appear in C<$main_timeline> as new statuses.
 This is because L<BusyBird::Timeline> has limited capacity for storing statuses.
 
-Suppose the source1 and source2 update quickly whereas source3's update rate is very slow.
-At first, C<$main_timeline> keeps all statuses from the three sources.
-After a while, the C<$main_timeline> will be filled with statuses from source1 and source2,
-and at a certain point, statuses from source3 will be discarded because they are too old.
-After that, C<< $main_timeline->add( get_statuses_from_source3() ) >> imports the
+Suppose the example1 and example2 update quickly whereas example3's update rate is very slow.
+At first, C<$main_timeline> keeps all statuses from the three feeds.
+After a while, the C<$main_timeline> will be filled with statuses from example1 and example2,
+and at a certain point, statuses from example3 will be discarded because they are too old.
+After that, C<< $main_timeline->add( $input->parse_url('http://example3.com/feed.rss') ) >> imports the
 same statuses just discarded, but C<$main_timeline> now recognizes them as new
 because they are no longer in C<$main_timeline>.
-So those old statuses from source3 will be re-appeared as unread.
+So those old statuses from example3 will re-appear as unread.
 
 To prevent that tragedy, you should create tracking timelines.
 
     use BusyBird;
+    use BusyBird::Input::Feed;
     use BusyBird::Util qw(make_tracking);
     
+    my $input = BusyBird::Input::Feed->new();
     my $main_timeline = timeline("main");
-    make_tracking(timeline("source1"), $main_timeline);
-    make_tracking(timeline("source2"), $main_timeline);
-    make_tracking(timeline("source3"), $main_timeline);
+    make_tracking(timeline("example1"), $main_timeline);
+    make_tracking(timeline("example2"), $main_timeline);
+    make_tracking(timeline("example3"), $main_timeline);
     
-    timeline("source1")->add( get_statuses_from_source1() );
-    timeline("source2")->add( get_statuses_from_source2() );
-    timeline("source3")->add( get_statuses_from_source3() );
+    timeline("example1")->add( $input->parse_url('http://example1.com/feed.rss') );
+    timeline("example2")->add( $input->parse_url('http://example2.com/feed.rss') );
+    timeline("example3")->add( $input->parse_url('http://example3.com/feed.rss') );
 
 You should add statuses into tracking timelines instead of directly into C<$main_timeline>.
 Each tracking timeline keeps statuses from its source,
-and it forwards only new statuses to the C<$main_statuses>.
+and it forwards only new statuses to the C<$main_timeline>.
 
 =head1 AUTHOR
 
