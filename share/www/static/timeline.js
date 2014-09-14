@@ -6,6 +6,7 @@
 bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     // @params: args.selectorContainer, args.timeline, args.apiBase = ""
     var self = this;
+    var now_toggling_extension = false;
     if(!defined(args.selectorContainer)) {
         throw "selectorContainer param is mandatory";
     }
@@ -18,12 +19,16 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
     self.threshold_level = 0;
     self.$cursor = null;
     self.on_threshold_level_changed_callbacks = [];
+    
     $(self.sel_container).on("click", ".bb-status", function() {
         self.setCursor(this);
     });
     $(self.sel_container).on("click", ".bb-status-extension-toggler", function(event) {
-        if($(event.target).closest("a").size() === 0) {
-            self.toggleExtensionPane(this);
+        if(!now_toggling_extension && $(event.target).closest("a").size() === 0) {
+            now_toggling_extension = true;
+            self.toggleExtensionPane(this).fin(function() {
+                now_toggling_extension = false;
+            });
         }
     });
 }, {
