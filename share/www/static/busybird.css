@@ -86,6 +86,9 @@ div.bb-status-attributes {
 
 .bb-status-extension-container {
     padding: 0 0 5px 0;
+}
+
+.bb-status-extension-toggler {
     cursor: pointer;
 }
 
