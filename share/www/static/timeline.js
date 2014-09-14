@@ -477,7 +477,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         if(pane_init_height <= 0) {
             return null;
         }
-        var screen_center = $(window).scrollTop() + $(window).height() / 2;
+        var screen_center = $(window).scrollTop() + $(window).height() * 0.4; // a little above the center, actually
         var pos_ratio = (screen_center - $pane.offset().top) / pane_init_height;
         if(pos_ratio <= 0) {
             return null;
