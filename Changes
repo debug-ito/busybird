@@ -1,5 +1,15 @@
 Revision history for BusyBird
 
+0.08    2014-09-15
+        [ENHANCEMENT]
+        - Now it renders image URLs attached to statuses.
+          To configure how the attached images should be rendered,
+          set "attached_image_*" config parameters.
+        [UI CHANGE]
+        - Revise HTML mark-ups and CSS. Visually it makes little difference.
+        [DOCUMENTATION]
+        - Make it a little more friendly to non-Perl users.
+
 0.07    2014-08-17
         [PACKAGING]
         - Migrate to Module::Build::Prereqs::FromCPANfile.
