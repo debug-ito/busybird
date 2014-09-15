@@ -7,22 +7,21 @@ BusyBird::Manual::Tutorial - Tutorial to use BusyBird
 
 =head1 Installation
 
-First you need C compiler tool-chains and L<cpanm> command.
+First you need C<gcc>, C<make>, C<curl> and C<cpanm> command.
 In Ubuntu Linux, for example, you can install them by
 
-    $ sudo apt-get install build-essential cpanminus
+    $ sudo apt-get install build-essential curl cpanminus
+
+These commands should be available in most other platforms, too.
+If you have trouble installing C<cpanm>, see L<App::cpanminus>.
 
 To install L<BusyBird>, type
 
-    $ cpanm BusyBird
+    $ cpanm -n BusyBird
 
 This may take time because it also installs many modules L<BusyBird> depends on.
 
-If you don't have much time and don't want it to run tests, set C<-n> option to skip tests.
-
-    $ cpanm -n BusyBird
-
-If you are new to L<cpanm>, set the following environment variables.
+If you are new to C<cpanm>, set the following environment variables.
 
     $ export PERL5LIB="$HOME/perl5/lib/perl5:$PERL5LIB"
     $ export PATH="$HOME/perl5/bin:$PATH"
@@ -53,7 +52,7 @@ You can see complete list of options by C<-h> option.
 
 By default, your L<BusyBird> instance has a timeline called "home", but the timeline has no status yet.
 It won't magically import statuses out of nowhere.
-It is you who input statuses to it.
+You must input statuses to it.
 
 To input statuses, you can use L<BusyBird>'s Web API.
 
@@ -92,7 +91,7 @@ Then, run L<busybird_input_feed> command bundled with the module.
 
 =back
 
-After that, you can see the imported feed items (in this case, CPAN modules recently uploaded) on L<BusyBird>.
+After that, you can see the imported feed items (in this case, Perl modules recently uploaded) on L<BusyBird>.
 
 Try repeating the command above.
 You will see that L<BusyBird> only accepts the new statuses that are not yet in L<BusyBird>'s timeline.
@@ -147,7 +146,7 @@ B<< API key >>, B<< API secret >>, B<< Access token >> and B<< Access token secr
 
 The procedure above may be out of date. The point is to get the four OAuth tokens.
 
-B<< Make sure to keep the four tokens (especially "secret" ones) secret >>. Those are like the username-password pair of your account.
+B<< Make sure to keep the four tokens (especially the "secret" ones) secret >>. Those are like the username-password pair of your account.
 
 Now that you have access to Twitter API, let's write a script called C<"import.pl"> to import tweets.
 
@@ -180,7 +179,7 @@ You can directly input statuses from Twitter to L<BusyBird>. No conversion is ne
 
     $ perl import.pl | curl -d @- http://127.0.0.1:5000/timelines/home/statuses.json
 
-Now you see the Twitter statuses on "home" timeline, don't you?
+You'll see the Twitter statuses on "home" timeline.
 
 Just like RSS/Atom feeds, you can repeat the above command without worrying about duplicate statuses.
 If you are wondering how frequently you should run the command, L<Net::Twitter::Loader> may help.
@@ -397,7 +396,7 @@ For detail, see L<BusyBird::Filter::Twitter>.
 
 =head1 What's Next?
 
-For advanced and more detailed topics, you may find the following documents interesting.
+For advanced and more detailed topics, see also the following documents.
 
 =over
 

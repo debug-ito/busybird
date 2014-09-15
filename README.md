@@ -17,21 +17,49 @@ SCREENSHOTS
 
 https://github.com/debug-ito/busybird/wiki/Screenshots
 
-INSTALLATION
-------------
+QUICK START
+-----------
 
-Install it from CPAN!
+Example in Ubuntu Linux.
 
-    $ cpanm BusyBird
+- Install `make` and `curl`
+
+        $ sudo apt-get install build-essential curl
+
+- Install
+
+        $ curl -L http://cpanmin.us/ | perl - -n BusyBird
+        $ export PERL5LIB="$HOME/perl5/lib/perl5:$PERL5LIB"
+        $ export PATH="$HOME/perl5/bin:$PATH"
+
+- Run
+
+        $ busybird
+        Twiggy: Accepting connections at http://127.0.0.1:5000/
+
+- Open timelines
+
+        $ firefox http://localhost:5000/
+
+- Post a status
+
+        $ curl -d '{"text":"hello, world!"}' http://localhost:5000/timelines/home/statuses.json
 
 See https://metacpan.org/pod/BusyBird for detail.
+
+
+TUTORIAL
+--------
+
+See https://metacpan.org/pod/BusyBird::Manual::Tutorial
 
 
 TRY WITHOUT INSTALLATION
 ------------------------
 
 You can try BusyBird without installing it. This is recommended if you
-try a development version.
+try a development version. (You need `cpanm` command. See
+[App::cpanminus](https://metacpan.org/pod/App::cpanminus) for detail).
 
     $ git clone https://github.com/debug-ito/busybird.git
     $ cd busybird

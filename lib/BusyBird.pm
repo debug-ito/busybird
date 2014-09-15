@@ -100,15 +100,15 @@ Example in Ubuntu Linux.
 
 =item *
 
-Install prerequisites
+Install C<gcc>, C<make> and C<curl>
 
-    $ sudo apt-get install build-essential cpanminus
+    $ sudo apt-get install build-essential curl
 
 =item *
 
 Install
 
-    $ cpanm -n BusyBird
+    $ curl -L http://cpanmin.us/ | perl - -n BusyBird
     $ export PERL5LIB="$HOME/perl5/lib/perl5:$PERL5LIB"
     $ export PATH="$HOME/perl5/bin:$PATH"
 
@@ -129,7 +129,7 @@ Open timelines
 
 Post a status
 
-    $ wget -q -O- --post-data '{"text":"hello, world!"}' http://localhost:5000/timelines/home/statuses.json
+    $ curl -d '{"text":"hello, world!"}' http://localhost:5000/timelines/home/statuses.json
 
 =back
 
