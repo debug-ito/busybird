@@ -2,9 +2,12 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Builder;
+use Test::Exception;
 use DateTime;
 use BusyBird::DateTime::Format;
 use Storable qw(dclone);
+use lib "t";
+use testlib::CrazyStatus qw(crazy_statuses);
 
 BEGIN {
     use_ok('BusyBird::Util', 'sort_statuses');
@@ -49,6 +52,16 @@ sub test_sort {
         {id => 14, created_at => "", busybird => { acked_at => dtstr(55432) }},
     );
     test_sort(dclone(\@orig), [@orig[5,11,13, 9,3,10,6, 8,2, 14,7, 4,0,12, 1]], "sort ok");
+}
+
+{
+    note("--- sort crazy statuses");
+    my @input = crazy_statuses();
+    my $got;
+    lives_ok { $got = sort_statuses(\@input) } "sort_statuses() lives";
+    my %got_ids = map { $_->{id} => 1 } @$got;
+    my %exp_ids = map { $_->{id} => 1 } @input;
+    is_deeply \%got_ids, \%exp_ids, "set of statuses preserved.";
 }
 
 
