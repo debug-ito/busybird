@@ -119,15 +119,24 @@ sub split_with_entities {
     if(!defined($text)) {
         croak "text must not be undef";
     }
-    $entities_hashref = {} if not defined $entities_hashref;
+    if(ref($entities_hashref) ne "HASH") {
+        return [_create_text_segment($text, 0, length($text))];
+    }
 
     ## create entity segments
     my @entity_segments = ();
     foreach my $entity_type (keys %$entities_hashref) {
-        foreach my $entity (@{$entities_hashref->{$entity_type}}) {
-            push(@entity_segments, _create_text_segment(
-                $text, $entity->{indices}[0], $entity->{indices}[1], $entity_type, $entity
-            ));
+        my $entities = $entities_hashref->{$entity_type};
+        next if ref($entities) ne "ARRAY";
+        foreach my $entity (@$entities) {
+            my $se = safed($entity);
+            my $start = $se->val("indices", 0);
+            my $end = $se->val("indices", 1);
+            if(defined($start) && defined($end) && $start <= $end) {
+                push(@entity_segments, _create_text_segment(
+                    $text, $start, $end, $entity_type, $entity
+                ));
+            }
         }
     }
     @entity_segments = sort { $a->{start} <=> $b->{start} } @entity_segments;
