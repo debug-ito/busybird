@@ -6,6 +6,7 @@ use Carp;
 use Exporter qw(import);
 use BusyBird::DateTime::Format;
 use BusyBird::Log qw(bblog);
+use BusyBird::SafeData qw(safed);
 use DateTime;
 use 5.10.0;
 use Future::Q 0.040;
@@ -85,17 +86,14 @@ sub sort_statuses {
     my ($statuses) = @_;
     use sort 'stable';
     
-    my @dt_statuses = do {
-        no autovivification;
-        map {
-            my $acked_at = $_->{busybird}{acked_at}; ## avoid autovivification
-            [
-                $_,
-                _epoch_undef($acked_at),
-                _epoch_undef($_->{created_at}),
-            ];
-        } @$statuses;
-    };
+    my @dt_statuses = map {
+        my $safe_status = safed($_);
+        [
+            $_,
+            _epoch_undef($safe_status->val("busybird", "acked_at")),
+            _epoch_undef($safe_status->val("created_at")),
+        ];
+    } @$statuses;
     return [ map { $_->[0] } sort {
         foreach my $sort_key (1, 2) {
             my $ret = _sort_compare($a->[$sort_key], $b->[$sort_key]);
