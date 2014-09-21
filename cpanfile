@@ -45,6 +45,7 @@ requires 'SQL::QueryMaker' => '0.03';
 requires 'Future::Q' => '0.040';
 requires 'POSIX' => 0;
 requires 'Data::UUID' => 0;
+requires 'Data::Diver' => 0;
 requires 'Twiggy' => 0;
 
 on 'test' => sub {
@@ -68,6 +69,7 @@ on 'test' => sub {
     requires 'DBI' => 0;
     requires 'DBD::SQLite' => 0;
     requires 'Encode' => 0;
+    requires 'Storable';
 };
 
 on 'configure' => sub {
