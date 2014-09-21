@@ -10,6 +10,7 @@ use Try::Tiny;
 our @EXPORT_OK = qw(test_storage_crazy_statuses);
 
 sub crazy_statuses {
+    my ($accept_crazy_timestamps) = @_;
     my @common = testlib::CrazyStatus::crazy_statuses();
     my (@ng, @crazy_but_ok);
     foreach my $s (@common) {
@@ -19,8 +20,7 @@ sub crazy_statuses {
             push @ng, $s;
         }
     }
-    push(
-        @ng,
+    my @crazy_timestamps = (
         {
             id => 'crazy: created_at in weird format',
             created_at => 'foobar'
@@ -46,14 +46,20 @@ sub crazy_statuses {
             busybird => { acked_at => {} }
         }
     );
+    if($accept_crazy_timestamps) {
+        push @crazy_but_ok, @crazy_timestamps;
+    }else {
+        push @ng, @crazy_timestamps;
+    }
     return (\@ng, \@crazy_but_ok);
 }
 
 sub test_storage_crazy_statuses {
-    my ($storage, $loop, $unloop) = @_;
+    my ($storage, $loop, $unloop, $opts) = @_;
     local $LOOP = $loop || sub {};
     local $UNLOOP = $unloop || sub {};
-    my ($ngs, $oks) = crazy_statuses();
+    $opts ||= {};
+    my ($ngs, $oks) = crazy_statuses($opts->{accept_crazy_timestamps});
     {
         note('--- crazy_statuses: you can put some crazy statuses (if the craziness is moderate)');
         my %oktl = (timeline => "ok timeline");
