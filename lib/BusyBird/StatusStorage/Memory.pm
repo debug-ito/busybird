@@ -5,6 +5,7 @@ use parent ('BusyBird::StatusStorage');
 use BusyBird::Util qw(set_param sort_statuses);
 use BusyBird::Log qw(bblog);
 use BusyBird::StatusStorage::Common qw(contains ack_statuses get_unacked_counts);
+use BusyBird::DateTime::Format;
 use Storable qw(dclone);
 use Carp;
 use List::Util qw(min);
@@ -90,6 +91,17 @@ sub load {
     return $success;
 }
 
+sub _is_timestamp_format_ok {
+    my ($timestamp_str) = @_;
+    return 1 if not defined $timestamp_str;
+    
+    ## It is very inefficient to parse $timestamp_str to check its
+    ## format, because creating a DateTime object takes long time. We
+    ## do it because BB::SS::Memory is just a reference
+    ## implementation.
+    return defined(BusyBird::DateTime::Format->parse_datetime($timestamp_str));
+}
+
 sub put_statuses {
     my ($self, %args) = @_;
     croak 'timeline arg is mandatory' if not defined $args{timeline};
@@ -111,7 +123,11 @@ sub put_statuses {
         croak 'statuses arg must be STATUS/ARRAYREF_OF_STATUSES';
     }
     foreach my $s (@$statuses) {
+        no autovivification;
         croak "{id} field is mandatory in statuses" if not defined $s->{id};
+        croak "{busybird} field must be a hash-ref if present" if defined($s->{busybird}) && ref($s->{busybird}) ne "HASH";
+        croak "{created_at} field must be parsable by BusyBird::DateTime::Format" if !_is_timestamp_format_ok($s->{created_at});
+        croak "{busybird}{acked_at} field must be parsable by BusyBird::DateTime::Format" if !_is_timestamp_format_ok($s->{busybird}{acked_at});
     }
     my $put_count = 0;
     foreach my $status_index (reverse 0 .. $#$statuses) {
