@@ -3,6 +3,8 @@ use warnings;
 use Test::More;
 use JSON;
 use utf8;
+use lib "t";
+use testlib::CrazyStatus qw(crazy_statuses);
 
 BEGIN {
     use_ok('BusyBird::Filter::Twitter', qw(:transform :filter));
@@ -182,6 +184,15 @@ INPUT
         is_deeply(filter_twitter_unescape()->([$case->{in_status_gen}->()]),
                   [$case->{out_status}],
                   "filter $case->{label}: HTML unescape OK");
+    }
+}
+
+{
+    note("--- filter_twitter should not croak at crazy statuses");
+    my $filter = filter_twitter_all();
+    foreach my $s (crazy_statuses()) {
+        my $got = $filter->([$s]);
+        is scalar(@$got), 1, "$s->{id}: filtered without exception";
     }
 }
 
