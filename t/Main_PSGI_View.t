@@ -11,6 +11,7 @@ use Encode qw(encode_utf8);
 use lib "t";
 use testlib::HTTP;
 use testlib::Main_Util;
+use testlib::CrazyStatus qw(crazy_statuses);
 
 BEGIN {
     use_ok("BusyBird::Main::PSGI::View");
@@ -82,6 +83,24 @@ sub create_main {
         my $res = $view->response_error_html($case->{in_code}, $case->{in_message});
         test_psgi_response($res, $case->{in_code}, "case: $case->{in_message} HTTP code OK");
         like(join("", @{$res->[2]}), $case->{exp_message}, "case: $case->{in_message} message OK");
+    }
+}
+
+{
+    note("--- response_statuses should not croak even if crazy statuses are given");
+    my $main = create_main();
+    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
+    my @logs = ();
+    local $BusyBird::Log::Logger = sub {
+        push @logs, \@_;
+    };
+    foreach my $s (crazy_statuses()) {
+        @logs = ();
+        my $ret = $view->response_statuses(statuses => [$s], http_code => 200, format => 'html', timeline_name => 'test');
+        test_psgi_response($ret, 200, "$s->{id}");
+        is(scalar(grep { $_->[0] =~ /^(err|warn|crit|alert|fatal)/i } @logs), 0, "$s->{id}: no warning or error");
+        ## my $content = join "", @{$ret->[2]};
+        ## note("============\n$content");
     }
 }
 
