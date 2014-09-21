@@ -2,6 +2,8 @@ use strict;
 use warnings;
 use Test::More;
 use BusyBird::Test::StatusStorage qw(:storage :status);
+use lib "t";
+use testlib::StatusStorage::CrazyStatus qw(test_storage_crazy_statuses);
 
 BEGIN {
     use_ok('BusyBird::StatusStorage::Memory');
@@ -14,6 +16,7 @@ BEGIN {
     test_storage_missing_arguments($storage);
     test_storage_requires_status_ids($storage);
     test_storage_undef_in_array($storage);
+    test_storage_crazy_statuses($storage);
 }
 
 {

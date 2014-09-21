@@ -5,9 +5,10 @@ use Test::Exception;
 use BusyBird::Test::StatusStorage qw(:storage :status);
 use File::Temp 0.19;
 use Test::MockObject::Extends;
+use DBI;
 use lib "t";
 use testlib::Timeline_Util qw(sync status test_sets);
-use DBI;
+use testlib::StatusStorage::CrazyStatus qw(test_storage_crazy_statuses);
 
 BEGIN {
     use_ok('BusyBird::StatusStorage::SQLite');
@@ -44,6 +45,7 @@ sub test_sqlite {
         test_storage_missing_arguments($storage);
         test_storage_requires_status_ids($storage);
         test_storage_undef_in_array($storage);
+        test_storage_crazy_statuses($storage);
     }
     {
         my $path = $STORAGE_PATH_BUILDER{$storage_type}->();
