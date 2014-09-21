@@ -263,6 +263,7 @@ C<$text> is a string to be split. C<$entities_hashref> is a hash-ref which has t
 L<Twitter Entities|https://dev.twitter.com/docs/platform-objects/entities>.
 Each entity object annotates a part of C<$text> with such information as linked URLs, mentioned users,
 mentioned hashtags, etc.
+If C<$entities_hashref> doesn't conform to the said structure, it is ignored.
 
 The return value C<$segments_arrayref> is an array-ref of "segment" objects.
 A "segment" is a hash-ref containing a part of C<$text> and the entity object (if any) attached to it.
@@ -310,9 +311,11 @@ Example:
 Any entity object is required to have C<indices> field, which is an array-ref
 of starting and ending indices of the text part.
 The ending index must be greater than or equal to the starting index.
-Other fields in entity objects are optional.
+If an entitiy object does not meet this condition, that entity object is ignored.
 
-Entity objects must not overlap. In that case, the result is undefined.
+Except for C<indices>, all fields in entity objects are optional.
+
+Text ranges annotated by entity objects must not overlap. In that case, the result is undefined.
 
 A segment hash-ref has the following fields.
 

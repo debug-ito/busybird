@@ -113,6 +113,51 @@ BEGIN {
     } 'it should die if $text is undef';
 }
 
-done_testing();
+{
+    note('--- erroneous cases');
+    my %noentity = (type => undef, entity => undef);
+    my @cases = (
+        {label => '$entities_hashref is string', args => ['hoge', 'string'],
+         exp => [{text => 'hoge', start => 0, end => 4, %noentity}]},
+        {label => '$entities_hashref is array-ref', args => ['hoge', ['foobar']],
+         exp => [{text => 'hoge', start => 0, end => 4, %noentity}]},
+        {label => '$entities_hashref is undef', args => ['hoge', undef],
+         exp => [{text => 'hoge', start => 0, end => 4, %noentity}]},
+        
+        {label => '$entities_hashref->{$type} is not an array-ref',
+         args => ['hoge', {ok => [{indices => [0, 1]}], ng => "NG!"}],
+         exp => [{text => 'h', start => 0, end => 1, type => 'ok', entity => {indices => [0,1]}},
+                 {text => 'oge', start => 1, end => 4, %noentity}]},
+        
+        {label => '$entities_hashref->{$type}[$i] is not a hash-ref',
+         args => ['hoge', {ok => [{indices => [0, 1], ret => "ok"}, ["this is", "ng"]]}],
+         exp => [{text => 'h', start => 0, end => 1, type => 'ok', entity => {indices => [0, 1], ret => 'ok'}},
+                 {text => 'oge', start => 1, end => 4, %noentity}]},
+        
+        {label => '$entities_hashref->{$type}[$i]{indices} does not exist',
+         args => ['hoge', {ok => [{indices => [0, 1], ret => "ok"}, {ret => "ng"}]}],
+         exp => [{text => 'h', start => 0, end => 1, type => 'ok', entity => {indices => [0, 1], ret => 'ok'}},
+                 {text => 'oge', start => 1, end => 4, %noentity}]},
 
+        {label => '$entities_hashref->{$type}[$i]{indices} is not an array-ref',
+         args => ['hoge', {ok => [{indices => [0, 1], ret => "ok"}, {ret => "ng", indices => {foo => "bar"}}]}],
+         exp => [{text => 'h', start => 0, end => 1, type => 'ok', entity => {indices => [0, 1], ret => 'ok'}},
+                 {text => 'oge', start => 1, end => 4, %noentity}]},
+
+        {label => '$entities_hashref->{$type}[$i]{indices} does not have two elems',
+         args => ['hoge', {ok => [{indices => [0, 1], ret => "ok"}, {ret => "ng", indices => [2]}]}],
+         exp => [{text => 'h', start => 0, end => 1, type => 'ok', entity => {indices => [0, 1], ret => 'ok'}},
+                 {text => 'oge', start => 1, end => 4, %noentity}]},
+
+        {label => '$entities_hashref->{$type}[$i]{indices}[0] > [1]',
+         args => ['hoge', {ok => [{indices => [0, 1], ret => "ok"}, {ret => "ng", indices => [4, 3]}]}],
+         exp => [{text => 'h', start => 0, end => 1, type => 'ok', entity => {indices => [0, 1], ret => 'ok'}},
+                 {text => 'oge', start => 1, end => 4, %noentity}]}
+    );
+    foreach my $case (@cases) {
+        is_deeply(split_with_entities(@{$case->{args}}), $case->{exp}, "$case->{label}: invalid entities are just ignored");
+    }
+}
+
+done_testing();
 
