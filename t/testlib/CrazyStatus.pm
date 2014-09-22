@@ -71,6 +71,15 @@ sub crazy_statuses {
             id => "crazy: array 'user'",
             user => []
         },
+        {
+            id => "crazy: string 'busybird' with 'retweeted_status'",
+            busybird => "hoge",
+            retweeted_status => {}
+        },
+        {
+            id => "crazy: string 'retweeted_status'",
+            retweeted_status => "foobar"
+        },
     );
 }
 
