@@ -12,6 +12,7 @@ use Encode ();
 use JavaScript::Value::Escape ();
 use DateTime::TimeZone;
 use BusyBird::DateTime::Format;
+use BusyBird::Log qw(bblog);
 use Cache::Memory::Simple;
 use Plack::Util ();
 use Tie::IxHash;
@@ -30,7 +31,12 @@ sub new {
         cache_dir => File::Spec->tmpdir,
         syntax => 'Kolon',
         function => $self->template_functions(),
-        ## warn_handler => sub { ... },
+        warn_handler => sub {
+            bblog("warn", @_);
+        },
+        die_handler => sub {
+            bblog("error", @_);
+        },
     );
     return $self;
 }
@@ -384,6 +390,7 @@ B<< This module is rather for internal use.
 End-users should not use this module directly.
 Specification in this document may be changed in the future. >>
 
+This module uses L<BusyBird::Log> for logging.
 
 =head1 CLASS METHODS
 
