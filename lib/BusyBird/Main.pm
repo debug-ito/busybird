@@ -77,8 +77,12 @@ my %DEFAULT_CONFIG_GENERATOR = (
             my $ss = safed($status);
             my @entities = map { $ss->array($_, "media") } qw(entities extended_entities);
             foreach my $entity (@entities) {
-                my $url = safed($entity)->val("media_url");
-                $url_set{$url} = 1 if defined $url;
+                my $sentity = safed($entity);
+                my $url = $sentity->val("media_url");
+                my $type = $sentity->val("type");
+                if(defined($url) && (!defined($type) || lc($type) eq "photo")) {
+                    $url_set{$url} = 1 if defined $url;
+                }
             }
             return keys %url_set;
         };

@@ -366,7 +366,17 @@ sub create_main {
                  {media_url => 'http://this.is.ok.com/hoge.png'}
              ] }
          }],
-         exp => ["http://this.is.ok.com/hoge.png"]}
+         exp => ["http://this.is.ok.com/hoge.png"]},
+        {label => "media entity with type = video",
+         args => [{
+             text => "hoge",
+             entities => { media => [
+                 { type => "video", media_url => "http://hoge.com/video.ogg" },
+                 { type => "photo", media_url => "http://hoge.com/photo.jpg" },
+                 {                  media_url => "http://hoge.com/no_type.png" },
+             ] }
+         }],
+         exp => ["http://hoge.com/photo.jpg", "http://hoge.com/no_type.png"]},
     ) {
         is_deeply $funcs->{bb_attached_image_urls}(@{$case->{args}}), $case->{exp}, "$case->{label}: OK";
     }
