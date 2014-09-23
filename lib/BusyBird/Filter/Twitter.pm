@@ -2,7 +2,7 @@ package BusyBird::Filter::Twitter;
 use strict;
 use warnings;
 use BusyBird::DateTime::Format;
-use BusyBird::Util qw(split_with_entities);
+use BusyBird::Util qw(split_with_entities vivifiable_as);
 use BusyBird::Filter qw(filter_map);
 use Exporter qw(import);
 
@@ -53,7 +53,10 @@ sub trans_twitter_status_id {
     $api_url =~ s|/+$||;
     foreach my $key (qw(id id_str in_reply_to_status_id in_reply_to_status_id_str)) {
         next if not defined $status->{$key};
-        $status->{busybird}{original}{$key} = $status->{$key};
+        if(vivifiable_as($status->{busybird}, "HASH")
+               && vivifiable_as($status->{busybird}{original}, "HASH")) {
+            $status->{busybird}{original}{$key} = $status->{$key};
+        }
         $status->{$key} = "$api_url/statuses/show/" . $status->{$key} . ".json";
     }
     return $status;
@@ -66,7 +69,7 @@ sub filter_twitter_status_id {
 
 sub trans_twitter_unescape {
     my ($status) = @_;
-    if(defined($status->{retweeted_status})) {
+    if(ref($status->{retweeted_status}) eq "HASH") {
         trans_twitter_unescape($status->{retweeted_status});
     }
     if(!defined($status->{text})) {
@@ -75,7 +78,7 @@ sub trans_twitter_unescape {
     my $segments = split_with_entities($status->{text}, $status->{entities});
     my $new_text = "";
     my %new_entities = ();
-    if(defined($status->{entities}) && ref($status->{entities}) eq 'HASH') {
+    if(ref($status->{entities}) eq 'HASH') {
         %new_entities = map { $_ => [] } keys %{$status->{entities}};
     }
     foreach my $segment (@$segments) {
@@ -83,9 +86,11 @@ sub trans_twitter_unescape {
         $segment->{text} =~ s/&gt;/>/g;
         $segment->{text} =~ s/&quot;/"/g;
         $segment->{text} =~ s/&amp;/&/g;
-        if(defined($segment->{entity})) {
-            $segment->{entity}{indices}[0] = length($new_text);
-            $segment->{entity}{indices}[1] = $segment->{entity}{indices}[0] + length($segment->{text});
+        if(ref($segment->{entity}) eq "HASH") {
+            if(vivifiable_as($segment->{entity}{indices}, "ARRAY")) {
+                $segment->{entity}{indices}[0] = length($new_text);
+                $segment->{entity}{indices}[1] = $segment->{entity}{indices}[0] + length($segment->{text});
+            }
             push(@{$new_entities{$segment->{type}}}, $segment->{entity});
         }
         $new_text .= $segment->{text};

@@ -14,7 +14,8 @@ use File::HomeDir;
 use File::Spec;
 
 our @EXPORT_OK =
-    qw(set_param expand_param config_directory config_file_path sort_statuses split_with_entities future_of make_tracking);
+    qw(set_param expand_param config_directory config_file_path sort_statuses
+       split_with_entities future_of make_tracking vivifiable_as);
 our @CARP_NOT = qw(Future::Q);
 
 sub set_param {
@@ -61,6 +62,10 @@ sub config_directory {
 sub config_file_path {
     my (@paths) = @_;
     return File::Spec->catfile(config_directory, @paths);
+}
+
+sub vivifiable_as {
+    return !defined($_[0]) || ref($_[0]) eq $_[1];
 }
 
 sub _epoch_undef {
