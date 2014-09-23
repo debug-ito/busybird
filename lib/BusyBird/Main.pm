@@ -71,22 +71,14 @@ my %DEFAULT_CONFIG_GENERATOR = (
     hidden => sub { 0 },
 
     attached_image_urls_builder => sub {
-        no autovivification;
-        my $get_media_urls = sub {
-            my ($entities_obj) = @_;
-            return try {
-                grep { defined($_) } map {
-                    $_->{media_url}
-                } @{$entities_obj->{media}};
-            }catch {
-                ()
-            };
-        };
         return sub {
             my ($status) = @_;
             tie my %url_set, "Tie::IxHash";
-            foreach my $url (map { $get_media_urls->($status->{$_}) } qw(entities extended_entities)) {
-                $url_set{$url} = 1;
+            my $ss = safed($status);
+            my @entities = map { $ss->array($_, "media") } qw(entities extended_entities);
+            foreach my $entity (@entities) {
+                my $url = safed($entity)->val("media_url");
+                $url_set{$url} = 1 if defined $url;
             }
             return keys %url_set;
         };
