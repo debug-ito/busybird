@@ -13,6 +13,7 @@ use JavaScript::Value::Escape ();
 use DateTime::TimeZone;
 use BusyBird::DateTime::Format;
 use BusyBird::Log qw(bblog);
+use BusyBird::SafeData qw(safed);
 use Cache::Memory::Simple;
 use Plack::Util ();
 use Tie::IxHash;
@@ -35,6 +36,15 @@ sub new {
             bblog("warn", @_);
         },
         die_handler => sub {
+            ## See perlvar
+            ##
+            ## By default, $SIG{__DIE__} (and so die_handler) captures
+            ## every death even inside eval() block. This may be fixed
+            ## in the future perl, but it behaves like that now. $^S
+            ## tells you the context (eval()ed or not), so I'm using
+            ## it. However I'm not so sure about its reliability and
+            ## portability...
+            return if $^S;
             bblog("error", @_);
         },
     );
@@ -185,7 +195,7 @@ sub template_functions_for_timeline {
         bb_status_permalink => sub {
             my ($status) = @_;
             my $builder = $self->{main_obj}->get_timeline_config($timeline_name, "status_permalink_builder");
-            my $url = $builder->($status);
+            my $url = try { $builder->($status) };
             return (_is_valid_link_url($url) ? $url : "");
         },
         bb_text => html_builder {
@@ -213,7 +223,8 @@ sub template_functions_for_timeline {
         bb_attached_image_urls => sub {
             my ($status) = @_;
             my $urls_builder = $self->{main_obj}->get_timeline_config($timeline_name, "attached_image_urls_builder");
-            return [grep { _is_valid_link_url($_) } $urls_builder->($status)];
+            my @image_urls = try { $urls_builder->($status) } catch { () };
+            return [grep { _is_valid_link_url($_) } @image_urls ];
         },
     };
 }
@@ -253,7 +264,7 @@ sub _escape_and_linkify_status_text {
 sub _format_status_html_destructive {
     my ($self, $status, $timeline_name) = @_;
     $timeline_name = "" if not defined $timeline_name;
-    if(defined($status->{retweeted_status}) && ref($status->{retweeted_status}) eq "HASH") {
+    if(ref($status->{retweeted_status}) eq "HASH" && (!defined($status->{busybird}) || ref($status->{busybird}) eq 'HASH')) {
         my $retweet = $status->{retweeted_status};
         $status->{busybird}{retweeted_by_user} = $status->{user};
         foreach my $key (qw(text created_at user entities)) {
@@ -262,7 +273,7 @@ sub _format_status_html_destructive {
     }
     return $self->{renderer}->render(
         "status.tx",
-        {s => $status,
+        {ss => safed($status),
          %{$self->template_functions_for_timeline($timeline_name)}}
     );
 }

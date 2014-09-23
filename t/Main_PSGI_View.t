@@ -98,7 +98,9 @@ sub create_main {
         @logs = ();
         my $ret = $view->response_statuses(statuses => [$s], http_code => 200, format => 'html', timeline_name => 'test');
         test_psgi_response($ret, 200, "$s->{id}");
-        is(scalar(grep { $_->[0] =~ /^(err|warn|crit|alert|fatal)/i } @logs), 0, "$s->{id}: no warning or error");
+        is(scalar(grep { $_->[0] =~ /^(err|warn|crit|alert|fatal)/i } @logs), 0, "$s->{id}: no warning or error") or do {
+            diag(join "", map { "$_->[0]: $_->[1]\n" } @logs);
+        };
         ## my $content = join "", @{$ret->[2]};
         ## note("============\n$content");
     }
