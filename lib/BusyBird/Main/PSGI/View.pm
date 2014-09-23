@@ -208,7 +208,13 @@ sub template_functions_for_timeline {
         bb_status_permalink => sub {
             my ($status) = @_;
             my $builder = $self->{main_obj}->get_timeline_config($timeline_name, "status_permalink_builder");
-            my $url = $builder->($status);
+            my $url = try {
+                $builder->($status);
+            }catch {
+                my ($e) = @_;
+                bblog("error", "Error in status_permalink_builder: $e");
+                undef;
+            };
             return (_is_valid_link_url($url) ? $url : "");
         },
         bb_text => html_builder {
@@ -231,7 +237,13 @@ sub template_functions_for_timeline {
         bb_attached_image_urls => sub {
             my ($status) = @_;
             my $urls_builder = $self->{main_obj}->get_timeline_config($timeline_name, "attached_image_urls_builder");
-            my @image_urls = $urls_builder->($status);
+            my @image_urls = try {
+                $urls_builder->($status);
+            }catch {
+                my ($e) = @_;
+                bblog("error", "Error in attached_image_urls_builder: $e");
+                ();
+            };
             return [grep { _is_valid_link_url($_) } @image_urls ];
         },
     };
