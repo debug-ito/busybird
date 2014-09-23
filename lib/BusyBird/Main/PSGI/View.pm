@@ -178,6 +178,19 @@ sub template_functions {
     };
 }
 
+sub _render_text_segment {
+    my ($self, $timeline_name, $segment, $status) = @_;
+    return undef if !defined($segment->{entity}) || !defined($segment->{type});
+    my $url_builder = $self->{main_obj}->get_timeline_config($timeline_name, "$segment->{type}_entity_url_builder");
+    my $text_builder = $self->{main_obj}->get_timeline_config($timeline_name, "$segment->{type}_entity_text_builder");
+    return undef if !defined($url_builder) || !defined($text_builder);
+    my $url_str = $url_builder->($segment->{text}, $segment->{entity}, $status);
+    return undef if !_is_valid_link_url($url_str);
+    my $text_str = $text_builder->($segment->{text}, $segment->{entity}, $status);
+    $text_str = "" if not defined $text_str;
+    return _html_link_status_text($text_str, $url_str);
+}
+
 sub template_functions_for_timeline {
     my ($self, $timeline_name) = @_;
     weaken $self;  ## in case the functions are kept by $self
@@ -195,7 +208,7 @@ sub template_functions_for_timeline {
         bb_status_permalink => sub {
             my ($status) = @_;
             my $builder = $self->{main_obj}->get_timeline_config($timeline_name, "status_permalink_builder");
-            my $url = try { $builder->($status) };
+            my $url = $builder->($status);
             return (_is_valid_link_url($url) ? $url : "");
         },
         bb_text => html_builder {
@@ -204,26 +217,21 @@ sub template_functions_for_timeline {
             my $segments_ref = split_with_entities($status->{text}, $status->{entities});
             my $result_text = "";
             foreach my $segment (@$segments_ref) {
-                $result_text .= try {
-                    die "no entity" if not defined $segment->{entity};
-                    my $url_builder = $self->{main_obj}->get_timeline_config($timeline_name, "$segment->{type}_entity_url_builder");
-                    my $text_builder = $self->{main_obj}->get_timeline_config($timeline_name, "$segment->{type}_entity_text_builder");
-                    die "no builder" if !defined($url_builder) || !defined($text_builder);
-                    my $url_str = $url_builder->($segment->{text}, $segment->{entity}, $status);
-                    die "invalid URL" if !_is_valid_link_url($url_str);
-                    my $text_str = $text_builder->($segment->{text}, $segment->{entity}, $status);
-                    $text_str = "" if not defined $text_str;
-                    return _html_link_status_text($text_str, $url_str);
+                my $rendered_text = try {
+                    $self->_render_text_segment($timeline_name, $segment, $status)
                 }catch {
-                    return _escape_and_linkify_status_text($segment->{text});
+                    my ($e) = @_;
+                    bblog("error", "Error while rendering text: $e");
+                    undef;
                 };
+                $result_text .= defined($rendered_text) ? $rendered_text : _escape_and_linkify_status_text($segment->{text});
             }
             return $result_text;
         },
         bb_attached_image_urls => sub {
             my ($status) = @_;
             my $urls_builder = $self->{main_obj}->get_timeline_config($timeline_name, "attached_image_urls_builder");
-            my @image_urls = try { $urls_builder->($status) } catch { () };
+            my @image_urls = $urls_builder->($status);
             return [grep { _is_valid_link_url($_) } @image_urls ];
         },
     };
