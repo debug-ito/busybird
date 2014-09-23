@@ -63,7 +63,9 @@ if(-r $filepath) {
                 my ($error, $statuses) = @_;
                 $callbacked = 1;
                 is($error, undef, "get_statuses succeed");
-                is_deeply($statuses, [map { status($_) } reverse 1..10], "status loaded");
+                is_deeply($statuses, [map { status($_) } reverse 1..10], "status loaded") or do {
+                    diag(explain $statuses);
+                };
             }
         );
         ok($callbacked, "callbacked");

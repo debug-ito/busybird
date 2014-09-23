@@ -127,7 +127,8 @@ sub put_statuses {
         croak "{id} field is mandatory in statuses" if not defined $s->{id};
         croak "{busybird} field must be a hash-ref if present" if defined($s->{busybird}) && ref($s->{busybird}) ne "HASH";
         croak "{created_at} field must be parsable by BusyBird::DateTime::Format" if !_is_timestamp_format_ok($s->{created_at});
-        croak "{busybird}{acked_at} field must be parsable by BusyBird::DateTime::Format" if !_is_timestamp_format_ok($s->{busybird}{acked_at});
+        my $acked_at = $s->{busybird}{acked_at}; ## avoid autovivification
+        croak "{busybird}{acked_at} field must be parsable by BusyBird::DateTime::Format" if !_is_timestamp_format_ok($acked_at);
     }
     my $put_count = 0;
     foreach my $status_index (reverse 0 .. $#$statuses) {
