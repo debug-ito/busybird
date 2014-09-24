@@ -25,6 +25,7 @@ sub new {
         renderer => undef,
     }, $class;
     $self->set_param(\%args, "main_obj", undef, 1);
+    $self->set_apram(\%args, "script_name", undef, 1);
     my $sharedir = $self->{main_obj}->get_config('sharedir_path');
     $sharedir =~ s{/+$}{};
     $self->{renderer} = Text::Xslate->new(
@@ -354,7 +355,7 @@ sub _create_timeline_config_json {
 }
 
 sub response_timeline {
-    my ($self, $timeline_name, $script_name) = @_;
+    my ($self, $timeline_name) = @_;
     my $timeline = $self->{main_obj}->get_timeline($timeline_name);
     return $self->response_notfound("Cannot find $timeline_name") if not defined($timeline);
     
@@ -374,7 +375,7 @@ sub response_timeline {
 
 sub response_timeline_list {
     my ($self, %args) = @_;
-    foreach my $key (qw(script_name timeline_unacked_counts total_page_num cur_page)) {
+    foreach my $key (qw(timeline_unacked_counts total_page_num cur_page)) {
         croak "$key parameter is mandatory" if not defined $args{$key};
     }
     croak "timeline_unacked_counts must be an array-ref" if ref($args{timeline_unacked_counts}) ne "ARRAY";
@@ -434,6 +435,10 @@ Fields in C<%args> are:
 =over
 
 =item C<main_obj> => L<BusyBird::Main> OBJECT (mandatory)
+
+=item C<script_name> => STRING (mandatory)
+
+The URL path to the application root. This must be what you get as C<SCRIPT_NAME> in a L<PSGI> environment object.
 
 =back
 
@@ -508,15 +513,13 @@ A string of timeline name for the statuses.
 
 =back
 
-=head2 $psgi_response = $view->response_timeline($timeline_name, $script_name)
+=head2 $psgi_response = $view->response_timeline($timeline_name)
 
 Returns a L<PSGI> response object of the top view for a timeline.
 
 C<$timeline_name> is a string of timeline name to be rendered.
 If the timeline does not exist in C<$view>'s L<BusyBird::Main> object, it returns "404 Not Found" response.
 
-C<$script_name> is the base path for internal hyperlinks.
-It should be C<SCRIPT_NAME> of the L<PSGI> environment.
 
 =head2 $psgi_response = $view->response_timeline_list(%args)
 
@@ -525,10 +528,6 @@ Returns a L<PSGI> response object of the view of timeline list.
 Fields in C<%args> are:
 
 =over
-
-=item C<script_name> => STR (mandatory)
-
-The base path for internal hyperlinks known as C<SCRIPT_NAME>.
 
 =item C<timeline_unacked_counts> => ARRAYREF (mandatory)
 
