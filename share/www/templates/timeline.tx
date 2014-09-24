@@ -1,6 +1,6 @@
-: ## Arguments: script_name, timeline_name, timeline_config_json,
+: ## Arguments: timeline_name, timeline_config_json,
 : ##            post_button_url, attached_image_max_height, attached_image_show_default_bool
-: cascade wrapper_navbar { script_name => $script_name, title => $timeline_name }
+: cascade wrapper_navbar { title => $timeline_name }
 : around navbar_content -> {
 <form class="navbar-form navbar-right bb-nav-controls-container">
   <div class="btn-group">
@@ -27,7 +27,7 @@
 <div class="navbar-collapse collapse">
   <ul class="nav navbar-nav navbar-left">
     <li class="active"><a><: $timeline_name :></a></li>
-    <li class="visible-xs"><a href="<: $script_name :>/"><span class="glyphicon glyphicon-arrow-left"></span> Top</a></li>
+    <li class="visible-xs"><a href="<: path('/') :>/"><span class="glyphicon glyphicon-arrow-left"></span> Top</a></li>
   </ul>
 </div>
 : }  ## around navbar_content
@@ -58,12 +58,12 @@
   </div>
 </div>
 
-<script type="text/javascript" src="<: $script_name :>/static/jquery.js"></script>
-<script type="text/javascript" src="<: $script_name :>/static/bootstrap/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="<: $script_name :>/static/spin.js"></script>
-<script type="text/javascript" src="<: $script_name :>/static/q.js"></script>
-<script type="text/javascript" src="<: $script_name :>/static/busybird.js"></script>
-<script type="text/javascript" src="<: $script_name :>/static/timeline.js"></script>
+<script type="text/javascript" src="<: path('/static/jquery.js') :>"></script>
+<script type="text/javascript" src="<: path('/static/bootstrap/js/bootstrap.min.js') :>"></script>
+<script type="text/javascript" src="<: path('/static/spin.js') :>"></script>
+<script type="text/javascript" src="<: path('/static/q.js') :>"></script>
+<script type="text/javascript" src="<: path('/static/busybird.js') :>"></script>
+<script type="text/javascript" src="<: path('/static/timeline.js') :>"></script>
 <script type="text/javascript">
 "use strict";
 
@@ -247,13 +247,13 @@
             message_banner.show(error_message, "error");
             timeline_config = {};
         }
-        var notification = new bb.Notification({scriptName: "<: $script_name | js :>"});
+        var notification = new bb.Notification({scriptName: "<: script_name() | js :>"});
         if(timeline_config.timeline_web_notifications === "simple") {
             notification.initWebNotification();
         }
         var status_container = new bb.StatusContainer({
             selectorContainer: "#statuses", timeline: '<: $timeline_name | js :>',
-            apiBase: '<: $script_name | js :>'
+            apiBase: '<: script_name() | js :>'
         });
         var unacked_counts_poller = new bb.TimelineUnackedCountsPoller({
             statusContainer: status_container

@@ -1,16 +1,16 @@
-: ## Arguments: script_name, timeline_unacked_counts_json, page_list, last_page (begin with 0), cur_page (begin with 0)
-: cascade wrapper_navbar { script_name => $script_name }
+: ## Arguments: timeline_unacked_counts_json, page_list, last_page (begin with 0), cur_page (begin with 0), page_path (func)
+: cascade wrapper_navbar { }
 
 <: macro pagination -> { -:>
 <:- if $last_page > 0 { -:>
 <ul class="bb-timeline-page-list pagination">
-  <li><a href="<: $script_name :>/?page=0">&laquo;</a></li>
-  <: if $cur_page == 0 { :><li class="disabled"><a href="#"><: } else { :><li><a href="<: $script_name :>/?page=<: $cur_page -1 :>"><: } :>&lt;</a></li>
+  <li><a href="<: $page_path(0) :>">&laquo;</a></li>
+  <: if $cur_page == 0 { :><li class="disabled"><a href="#"><: } else { :><li><a href="<: $page_path($cur_page -1) :>"><: } :>&lt;</a></li>
   <:- for $page_list -> $page { :>
-  <li<: if $page == $cur_page { :> class="active"<: } :>><a href="<: $script_name :>/?page=<: $page :>"><: $page + 1 :></a></li>
+  <li<: if $page == $cur_page { :> class="active"<: } :>><a href="<: $page_path($page) :>"><: $page + 1 :></a></li>
   <:- } ## for :>
-  <: if $cur_page == $last_page { :><li class="disabled"><a href="#"><: } else { :><li><a href="<: $script_name :>/?page=<: $cur_page +1 :>"><: } :>&gt;</a></li>
-  <li><a href="<: $script_name :>/?page=<: $last_page :>">&raquo;</a></li>
+  <: if $cur_page == $last_page { :><li class="disabled"><a href="#"><: } else { :><li><a href="<: $page_path($cur_page +1) :>"><: } :>&gt;</a></li>
+  <li><a href="<: $page_path($last_page) :>">&raquo;</a></li>
 </ul>
 <:- } ## if $last_page -:>
 <: } ## macro pagination -:>
@@ -27,7 +27,7 @@
         <tbody>
           <:- for $timeline_unacked_counts_json -> $timeline_entry { :>
           <tr data-bb-init-counts="<: $timeline_entry.counts_json :>">
-            <td><a href="<: $script_name :>/timelines/<: $timeline_entry.name | uri_escape :>/"><span class="glyphicon glyphicon-list"></span> <span class="bb-timeline-name"><: $timeline_entry.name :></span></a></td>
+            <td><a href="<: path('/timelines/' ~ uri_escape($timeline_entry.name)) :>/"><span class="glyphicon glyphicon-list"></span> <span class="bb-timeline-name"><: $timeline_entry.name :></span></a></td>
             <td class="bb-timeline-unacked-counts-total-cell"></td>
             <td class="bb-timeline-unacked-counts-levels-cell"><ul class="list-unstyled"></ul></td>
           </tr>
@@ -39,12 +39,12 @@
   </div>
 </div>
 
-<script type="text/javascript" src="<: $script_name :>/static/jquery.js"></script>
-<script type="text/javascript" src="<: $script_name :>/static/bootstrap/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="<: $script_name :>/static/spin.js"></script>
-<script type="text/javascript" src="<: $script_name :>/static/q.js"></script>
-<script type="text/javascript" src="<: $script_name :>/static/busybird.js"></script>
-<script type="text/javascript" src="<: $script_name :>/static/timeline_list.js"></script>
+<script type="text/javascript" src="<: path('/static/jquery.js') :>"></script>
+<script type="text/javascript" src="<: path('/static/bootstrap/js/bootstrap.min.js') :>"></script>
+<script type="text/javascript" src="<: path('/static/spin.js') :>"></script>
+<script type="text/javascript" src="<: path('/static/q.js') :>"></script>
+<script type="text/javascript" src="<: path('/static/busybird.js') :>"></script>
+<script type="text/javascript" src="<: path('/static/timeline_list.js') :>"></script>
 <script type="text/javascript">
 "use strict";
 
@@ -58,10 +58,10 @@ var getTotalUnackedCount = function() {
 
 $(function() {
     var poller = new bb.UnackedCountsPoller({
-        apiBase: "<: $script_name | js :>"
+        apiBase: "<: script_name() | js :>"
     });
     var notification = new bb.Notification({
-        scriptName: "<: $script_name | js :>"
+        scriptName: "<: script_name() | js :>"
     });
     var updateFavicon = function() {
         notification.setFaviconAlert(getTotalUnackedCount() > 0);

@@ -28,7 +28,7 @@ note("Tests of View related to configuration parameters");
         post_button_url => 'http://hoge.com/post',
         attached_image_max_height => 256,
     );
-    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
+    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main, script_name => "");
     my $tree = get_tree($view->response_timeline("test", ""));
     
     cmp_ok $tree->findnodes('//a[@href="http://hoge.com/post"]')->size, ">", 0, "at least one post_button_url link";
@@ -43,7 +43,7 @@ note("Tests of View related to configuration parameters");
     $main->timeline("test")->set_config(
         attached_image_show_default => "visible"
     );
-    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
+    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main, script_name => "");
     my $tree = get_tree($view->response_timeline("test", ""));
     my $got_style = get_inline_style($tree);
     like $got_style, qr|bb-status-extension-pane\s*\{\s*display\s*:\s*block|, "extension pane is visible by default";
@@ -64,7 +64,7 @@ note("Tests of View related to configuration parameters");
             ]
         }
     };
-    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main);
+    my $view = BusyBird::Main::PSGI::View->new(main_obj => $main, script_name => "");
     my $funcs = $view->template_functions_for_timeline("test");
     is_deeply $funcs->{bb_attached_image_urls}($status), ["http://hogehoge.com/image.png"], "attached_image_urls_builder customization OK";
 }

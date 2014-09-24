@@ -25,7 +25,7 @@ sub new {
         renderer => undef,
     }, $class;
     $self->set_param(\%args, "main_obj", undef, 1);
-    $self->set_apram(\%args, "script_name", undef, 1);
+    $self->set_param(\%args, "script_name", undef, 1);
     my $sharedir = $self->{main_obj}->get_config('sharedir_path');
     $sharedir =~ s{/+$}{};
     $self->{renderer} = Text::Xslate->new(
@@ -158,7 +158,17 @@ sub _html_link_status_text {
     return _html_link($text, href => $url, target => "_blank");
 }
 
+sub _make_path {
+    my ($script_name, $given_path) = @_;
+    if(substr($given_path, 0, 1) eq "/") {
+        return "$script_name$given_path";
+    }else {
+        return $given_path;
+    }
+}
+
 sub template_functions {
+    my $script_name = $_[0]->{script_name};
     return {
         js => \&JavaScript::Value::Escape::js,
         link => html_builder(\&_html_link),
@@ -176,6 +186,8 @@ sub template_functions {
             $level = 0 if not defined $level;
             return $level;
         },
+        path => sub { _make_path($script_name, $_[0]) },
+        script_name => sub { $script_name },
     };
 }
 
@@ -363,7 +375,6 @@ sub response_timeline {
         template => "timeline.tx",
         args => {
             timeline_name => $timeline_name,
-            script_name => $script_name,
             timeline_config_json => $self->_create_timeline_config_json($timeline_name),
             post_button_url => $self->{main_obj}->get_timeline_config($timeline_name, "post_button_url"),
             attached_image_max_height => $self->{main_obj}->get_timeline_config($timeline_name, "attached_image_max_height"),
@@ -381,7 +392,7 @@ sub response_timeline_list {
     croak "timeline_unacked_counts must be an array-ref" if ref($args{timeline_unacked_counts}) ne "ARRAY";
     
     my %input_args = (last_page => $args{total_page_num} - 1);
-    foreach my $input_key (qw(script_name cur_page)) {
+    foreach my $input_key (qw(cur_page)) {
         $input_args{$input_key} = $args{$input_key};
     }
     
@@ -398,6 +409,10 @@ sub response_timeline_list {
         : $args{cur_page} >= ($args{total_page_num} - $right_margin)
                                                     ? [($args{total_page_num} - $pager_entry_max) .. ($args{total_page_num} - 1)]
                                                     : [($args{cur_page} - $left_margin) .. ($args{cur_page} + $right_margin - 1)];
+    $input_args{page_path} = sub {
+        my ($page) = @_;
+        return _make_path($self->{script_name}, "/?page=$page");
+    };
     return $self->_response_template(
         template => "timeline_list.tx",
         args => \%input_args,
@@ -579,6 +594,18 @@ If C<< $attr{href} >> does not look like a valid link URL, it returns the escape
 
 Returns C<< <img> >> tag with C<%attr> attributes.
 If C<< $attr{src} >> does not look like a valid image URL, it returns an empty string.
+
+=item C<path> => CODEREF($path)
+
+Returns the appropriate URL path for the given C<$path>.
+
+If C<$path> is relative, it returns the C<$path> unchanged.
+If C<$path> is absolute, it prepends the C<SCRIPT_NAME> to the C<$path>,
+so that you can use the path in HTML pages.
+
+=item C<script_name> => CODEREF()
+
+Returns the C<SCRIPT_NAME>.
 
 =item C<bb_level> => CODEREF($level)
 
