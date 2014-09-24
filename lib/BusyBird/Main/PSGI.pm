@@ -31,10 +31,9 @@ sub _new {
     my ($class, %params) = @_;
     my $self = bless {
         router => Router::Simple->new,
-        view => undef,
+        view => undef, ## lazy build
     }, $class;
     $self->set_param(\%params, "main_obj", undef, 1);
-    $self->{view} = BusyBird::Main::PSGI::View->new(main_obj => $self->{main_obj});
     $self->_build_routes();
     return $self;
 }
@@ -56,6 +55,7 @@ sub _my_app {
     my ($self) = @_;
     return sub {
         my ($env) = @_;
+        $self->{view} ||= BusyBird::Main::PSGI::View->new(main_obj => $self->{main_obj}, script_name => $env->{SCRIPT_NAME});
         if(my $dest = $self->{router}->match($env)) {
             my $req = Plack::Request->new($env);
             my $code = $dest->{code};
@@ -267,7 +267,7 @@ sub _handle_get_unacked_counts {
 
 sub _handle_tl_index {
     my ($self, $req, $dest) = @_;
-    return $self->{view}->response_timeline(_get_timeline_name($dest), $req->script_name);
+    return $self->{view}->response_timeline(_get_timeline_name($dest));
 }
 
 sub _handle_get_timeline_list {
@@ -298,7 +298,6 @@ sub _handle_get_timeline_list {
                     +{ name => $target_timelines[$_]->name, counts => $unacked_counts_list[$_] }
                 } 0 .. $#target_timelines;
                 $responder->( $self->{view}->response_timeline_list(
-                    script_name => $req->script_name,
                     timeline_unacked_counts => \@timeline_unacked_counts,
                     total_page_num => $page_num,
                     cur_page => $cur_page
