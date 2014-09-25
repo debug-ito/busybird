@@ -36,18 +36,9 @@ sub new {
         warn_handler => sub {
             bblog("warn", @_);
         },
-        die_handler => sub {
-            ## See perlvar
-            ##
-            ## By default, $SIG{__DIE__} (and so die_handler) captures
-            ## every death even inside eval() block. This may be fixed
-            ## in the future perl, but it behaves like that now. $^S
-            ## tells you the context (eval()ed or not), so I'm using
-            ## it. However I'm not so sure about its reliability and
-            ## portability...
-            return if $^S;
-            bblog("error", @_);
-        },
+        ## we don't use die_handler because (1) it is called for every
+        ## death even when it's in eval() scope, (2) exceptions are
+        ## caught by Xslate and passed to warn_handler anyway.
     );
     return $self;
 }
