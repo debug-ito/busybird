@@ -21,7 +21,7 @@ sub original {
 
 sub val {
     my ($self, @path) = @_;
-    return scalar(Data::Diver::Dive($$self, @path));
+    return scalar(Data::Diver::Dive($$self, map { "$_" } @path));
 }
 
 sub array {
