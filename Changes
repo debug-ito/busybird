@@ -1,5 +1,17 @@
 Revision history for BusyBird
 
+0.09    2014-09-28
+        [BUG FIX]
+        - Now it is more tolerant of statuses with unusual structure.
+        - Now Text::Xslate's warnings are reported through BusyBird::Log.
+        [API CHANGE]
+        - The default attached_image_urls_builder now ignores Twitter Entities
+          whose 'type' field is set to NOT 'photo'. This change makes it robust
+          to future changes in Twitter API. I think this change is backword-compatible in most cases.
+        - Refactoring and API revision of BusyBird::Main::PSGI::View.
+        [PACKAGING]
+        - Add 'Data::Diver' to dependency.
+
 0.08    2014-09-15
         [ENHANCEMENT]
         - Now it renders image URLs attached to statuses.
