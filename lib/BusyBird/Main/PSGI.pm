@@ -111,12 +111,13 @@ sub _handle_tl_get_statuses {
     return sub {
         my $responder = shift;
         my $timeline;
+        my $only_statuses = !!($req->query_parameters->{only_statuses});
+        my $format = !defined($dest->{format}) ? ""
+            : (lc($dest->{format}) eq "json" && $only_statuses) ? "json_only_statuses"
+            : $dest->{format};
         Future::Q->try(sub {
             $timeline = $self->_get_timeline($dest);
             my $count = $req->query_parameters->{count} || 20;
-            if(!defined($dest->{format})) {
-                $dest->{format} = "";
-            }
             if(!looks_like_number($count) || int($count) != $count) {
                 die "count parameter must be an integer\n";
             }
@@ -127,13 +128,13 @@ sub _handle_tl_get_statuses {
         })->then(sub {
             my $statuses = shift;
             $responder->($self->{view}->response_statuses(
-                statuses => $statuses, http_code => 200, format => $dest->{format},
+                statuses => $statuses, http_code => 200, format => $format,
                 timeline_name => $timeline->name
             ));
         })->catch(sub {
             my ($error, $is_normal_error) = @_;
             $responder->($self->{view}->response_statuses(
-                error => "$error", http_code => ($is_normal_error ? 500 : 400), format => $dest->{format},
+                error => "$error", http_code => ($is_normal_error ? 500 : 400), format => $format,
                 ($timeline ? (timeline_name => $timeline->name) : ())
             ));
         });

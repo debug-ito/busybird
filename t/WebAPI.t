@@ -151,7 +151,7 @@ sub test_list_choice {
         test_get_statuses($tester, 'test', 'max_id=23', [reverse 4..23], 'only max_id');
 
         {
-            my $got = $tester->get_json_ok('/timelines/test/statuses.json?max_id&count=30&only_statuses=1', qr/^200$/, 'GET only_statuses=1 OK');
+            my $got = $tester->get_json_ok('/timelines/test/statuses.json?max_id=20&count=30&only_statuses=1', qr/^200$/, 'GET only_statuses=1 OK');
             is ref($got), "ARRAY", 'GET only_statuses=1 returns ARRAY-ref';
             test_status_id_list($got, [reverse 1..20], 'GET only_statuses=1 ids OK');
         }
