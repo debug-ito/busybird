@@ -71,8 +71,6 @@ BusyBird::SafeData - a wrapper of a complex data structure to access its interna
 
 =head1 DESCRIPTION
 
-This module is rather for internal use. B<< End-users should not use it. >>
-
 L<BusyBird::SafeData> is a wrapper around a complex data structure to provide a safe way to access its internal data.
 
 =head1 EXPORTABLE FUNCTIONS
