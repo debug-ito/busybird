@@ -151,6 +151,12 @@ sub test_list_choice {
         test_get_statuses($tester, 'test', 'max_id=23', [reverse 4..23], 'only max_id');
 
         {
+            my $got = $tester->get_json_ok('/timelines/test/statuses.json?max_id&count=30&only_statuses=1', qr/^200$/, 'GET only_statuses=1 OK');
+            is ref($got), "ARRAY", 'GET only_statuses=1 returns ARRAY-ref';
+            test_status_id_list($got, [reverse 1..20], 'GET only_statuses=1 ids OK');
+        }
+
+        {
             my $exp_res = {error => undef, unacked_counts => {total => 25, 0 => 5, 1 => 10, 2 => 10}};
             foreach my $case (
                 {label => "no param", param => ""},
@@ -322,6 +328,10 @@ sub test_list_choice {
             ) {
                 test_error_request($tester, $case->{endpoint}, $case->{content}, $storage_case->{label});
             }
+
+            my $got = $tester->get_json_ok('/timelines/test/statuses.json?only_statuses=1', qr/^[45]/,
+                                           "$storage_case->{label}: GET only_statuses HTTP error OK");
+            is_deeply $got, [], "$storage_case->{label}: GET only_statuses returns an empty array OK";
         }
     }
 }
@@ -514,6 +524,16 @@ EOD
     }
   ]
 }
+EOD
+        {endpoint => 'GET /timelines/home/statuses.json?count=1&ack_state=any&max_id=http://example.com/page/2013/0202&only_statuses=1',
+         exp_response => <<EOD},
+[
+    {
+      "id": "http://example.com/page/2013/0202",
+      "created_at": "Sat Feb 02 17:38:12 +0900 2013",
+      "text": "another content"
+    }
+]
 EOD
         {endpoint => 'GET /timelines/home/updates/unacked_counts.json?total=2&0=2',
          exp_response => <<EOD},

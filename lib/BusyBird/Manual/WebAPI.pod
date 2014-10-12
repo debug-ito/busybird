@@ -69,23 +69,61 @@ If this option is omitted, statuses starting from the latest status are fetched.
 
 Specifies the maximum number of statuses to be fetched.
 
+=item C<only_statuses> = NUM (optional, default: 0)
+
+If set to 0, which is the default, the response includes statuses and the error message.
+If set to non-zero, the response is only statuses.
+
+This option is effective only when the C<format> is C<json>.
+It is useful when you transfer statuses from one L<BusyBird> instance to another.
+
 =back
 
 B<Response>
 
 In success, the HTTP response code is 200.
-If C<format> is C<json>, the response is a JSON object.
+
+=over
+
+=item *
+
+If C<format> is C<json> and C<only_statuses> is 0, the response is a JSON object.
 C<error> attribute of the object is C<null>, and C<statuses> attribute is the array of status objects fetched.
 The array can be empty.
+
+=item *
+
+If C<format> is C<json> and C<only_statuses> is non-zero, the response is a JSON array that contains status objects fetched.
+The array can be empty.
+
+=item *
+
 If C<format> is C<html>, the response is a sequence of HTML C<< <li> >> elements,
 each of which represents a status object.
 
+=back
+
+
 In failure, the HTTP response code is 4** or 5**.
-If C<format> is C<json>, the response is a JSON object.
+
+=over
+
+=item *
+
+If C<format> is C<json> and C<only_statuses> is 0, the response is a JSON object.
 C<error> attribute of the response object is non-null and it describes the error.
+
+=item *
+
+If C<format> is C<json> and C<only_statuses> is non-zero, the response is an empty JSON array.
+
+=item *
+
 If C<format> is C<html>, the response is an HTML element describing the error.
 
-B<Example>
+=back
+
+B<< Example 1 >>
 
 Request URL:
 
@@ -106,6 +144,21 @@ Response Body:
     }
 
 
+B<< Example 2 >>
+
+Request URL:
+
+    GET /timelines/home/statuses.json?count=1&ack_state=any&max_id=http://example.com/page/2013/0202&only_statuses=1
+
+Response Body:
+
+    [
+        {
+          "id": "http://example.com/page/2013/0202",
+          "created_at": "Sat Feb 02 17:38:12 +0900 2013",
+          "text": "another content"
+        }
+    ]
 
 =head2 POST /timelines/{timeline}/ack.json
 
