@@ -326,7 +326,10 @@ sub test_list_choice {
                 {endpoint => "POST /timelines/test/statuses.json", content => create_json_status(1)},
                 ## {endpoint => "GET /updates/unacked_counts.json?tl_test=3"}
             ) {
-                test_error_request($tester, $case->{endpoint}, $case->{content}, $storage_case->{label});
+                my $label = "$storage_case->{label} $case->{endpoint}";
+                my ($method, $path) = split(/ +/, $case->{endpoint});
+                my $got = $tester->request_json_ok($method, $path, $case->{content}, qr/^[45]/, "$label: request OK");
+                ok(defined($got->{error}), "$label: error message defined OK");
             }
 
             my $got = $tester->get_json_ok('/timelines/test/statuses.json?only_statuses=1', qr/^[45]/,
