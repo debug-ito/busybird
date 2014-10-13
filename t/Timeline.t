@@ -3,7 +3,7 @@ use warnings;
 use lib "t";
 use Test::More;
 use Test::Builder;
-use Test::Exception 0.35;
+use Test::Fatal qw(exception);
 use Test::MockObject;
 use BusyBird::Test::StatusStorage qw(:status test_cases_for_ack);
 use testlib::Timeline_Util qw(sync status test_sets test_content *LOOP *UNLOOP);
@@ -75,12 +75,12 @@ sub test_timeline {
         my %s = (storage => $CREATE_STORAGE->());
         note('== storage created');
         my $tl;
-        lives_ok {
-            note('== enter lives_ok');
+        is(exception {
+            note('== enter exception{}');
             $tl = $CLASS->new(%s, name => 'a-zA-Z 0-9_-');
             note('== timeline created');
-        } "OK: a-zA-Z 0-9_-";
-        note('== leave lives_ok');
+        }, undef, "OK: a-zA-Z 0-9_-");
+        note('== leave exception{} and is()');
         is($tl->name(), 'a-zA-Z 0-9_-', 'name OK');
         note('== got name');
     }
@@ -855,7 +855,9 @@ sub test_timeline {
         ) {
             my %args = (callback => sub { fail("should not be called") });
             $args{assumed} = $assumed_case->{arg} if exists $assumed_case->{arg};
-            dies_ok { $timeline->watch_unacked_counts(%args) } "'assumed': $assumed_case->{label}: watch_unacked_counts throws an exception";
+            like(exception { $timeline->watch_unacked_counts(%args) },
+                 qr/assumed must be a hash-ref/,
+                 "'assumed': $assumed_case->{label}: watch_unacked_counts throws an exception");
         }
         foreach my $callback_case (
             {label => "omit"}, {label => "undef", arg => undef}, {label => "string", arg => "foobar"},
@@ -863,7 +865,9 @@ sub test_timeline {
         ) {
             my %args = (assumed => {});
             $args{callback} = $callback_case->{arg} if exists $callback_case->{arg};
-            dies_ok { $timeline->watch_unacked_counts(%args) } "'callback': $callback_case->{label}: watch_unacked_counts throws an exception.";
+            like(exception { $timeline->watch_unacked_counts(%args) },
+                 qr/callback must be a code-ref/,
+                 "'callback': $callback_case->{label}: watch_unacked_counts throws an exception.");
         }
     }
     
