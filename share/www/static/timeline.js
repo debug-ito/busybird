@@ -373,7 +373,7 @@ bb.StatusContainer = (function() { var selfclass = $.extend(function(args) {
         // @returns: promise resolved when done.
         var self = this;
         var old_threshold = self.threshold_level;
-        self.threshold_level = new_threshold;
+        self.threshold_level = parseInt(new_threshold, 10);
         self._adjustCursor();
         if(old_threshold !== new_threshold) {
             $.each(self.on_threshold_level_changed_callbacks, function(i, callback) {

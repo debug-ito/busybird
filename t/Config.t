@@ -58,6 +58,8 @@ sub create_main_and_timeline {
     ok(!$main->get_config("hidden"), "hidden param is false by default");
     is($main->get_config("attached_image_max_height"), 360, "default attached_image_max_height OK");
     is($main->get_config("attached_image_show_default"), "hidden", "default attached_image_show_default OK");
+    is($main->get_config("acked_statuses_load_count"), 20, "acked_statuses_load_count OK");
+    is($main->get_config("default_level_threshold"), 0, "default_level_threshold OK");
 }
 
 done_testing();

@@ -305,6 +305,19 @@ Specifies how attached images are rendered in a timeline.
 If set to C<"visible">, the attached images are visible by default.
 Setting it to any other value hides the attached images.
 
+=head2 C<acked_statuses_load_count> => INT
+
+B<Default:> C<20>
+
+The number of acked statuses loaded at once.
+
+This affects the number of acked statuses loaded at initialization and when you click the "More..." button.
+
+=head2 C<default_level_threshold> => INT
+
+B<Default:> C<0>
+
+The default level threshold for the timeline.
 
 =head1 EXAMPLES
 

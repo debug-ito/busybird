@@ -247,6 +247,9 @@
             message_banner.show(error_message, "error");
             timeline_config = {};
         }
+        if(defined(timeline_config.acked_statuses_load_count)) {
+            bb.StatusContainer.LOAD_MORE_STATUSES_COUNT = timeline_config.acked_statuses_load_count;
+        }
         var notification = new bb.Notification({scriptName: "<: script_name() | js :>"});
         if(timeline_config.timeline_web_notifications === "simple") {
             notification.initWebNotification();
@@ -255,6 +258,9 @@
             selectorContainer: "#statuses", timeline: '<: $timeline_name | js :>',
             apiBase: '<: script_name() | js :>'
         });
+        if(defined(timeline_config.default_level_threshold)) {
+            status_container.setThresholdLevel(timeline_config.default_level_threshold);
+        }
         var unacked_counts_poller = new bb.TimelineUnackedCountsPoller({
             statusContainer: status_container
         });

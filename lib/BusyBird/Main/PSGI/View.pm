@@ -357,6 +357,8 @@ sub response_statuses {
 
 my %TIMELINE_CONFIG_FILTER_FOR = (
     timeline_web_notifications => sub { defined($_[0]) ? "$_[0]" : ""},
+    acked_statuses_load_count => sub { $_[0] =~ /^\d+$/ ? $_[0] : undef },
+    default_level_threshold => sub { $_[0] =~ /^\d+$/ ? $_[0] : undef},
 );
 
 sub _create_timeline_config_json {

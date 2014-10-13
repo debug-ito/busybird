@@ -89,6 +89,8 @@ my %DEFAULT_CONFIG_GENERATOR = (
     },
     attached_image_max_height => sub { 360 },
     attached_image_show_default => sub { "hidden" },
+    acked_statuses_load_count => sub { 20 },
+    default_level_threshold => sub { 0 },
 
     timeline_list_pager_entry_max => sub { 7 },
     timeline_list_per_page => sub { 30 },
