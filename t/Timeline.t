@@ -3,7 +3,7 @@ use warnings;
 use lib "t";
 use Test::More;
 use Test::Builder;
-use Test::Exception;
+use Test::Fatal qw(exception);
 use Test::MockObject;
 use BusyBird::Test::StatusStorage qw(:status test_cases_for_ack);
 use testlib::Timeline_Util qw(sync status test_sets test_content *LOOP *UNLOOP);
@@ -72,7 +72,7 @@ sub test_timeline {
         note('-- checking names');
         my %s = (storage => $CREATE_STORAGE->());
         my $tl;
-        lives_ok { $tl = $CLASS->new(%s, name => 'a-zA-Z 0-9_-') } "OK: a-zA-Z 0-9_-";
+        is(exception { $tl = $CLASS->new(%s, name => 'a-zA-Z 0-9_-') }, undef, "OK: a-zA-Z 0-9_-");
         is($tl->name(), 'a-zA-Z 0-9_-', 'name OK');
     }
 
@@ -845,7 +845,9 @@ sub test_timeline {
         ) {
             my %args = (callback => sub { fail("should not be called") });
             $args{assumed} = $assumed_case->{arg} if exists $assumed_case->{arg};
-            dies_ok { $timeline->watch_unacked_counts(%args) } "'assumed': $assumed_case->{label}: watch_unacked_counts throws an exception";
+            like(exception { $timeline->watch_unacked_counts(%args) },
+                 qr/assumed must be a hash-ref/,
+                 "'assumed': $assumed_case->{label}: watch_unacked_counts throws an exception");
         }
         foreach my $callback_case (
             {label => "omit"}, {label => "undef", arg => undef}, {label => "string", arg => "foobar"},
@@ -853,7 +855,9 @@ sub test_timeline {
         ) {
             my %args = (assumed => {});
             $args{callback} = $callback_case->{arg} if exists $callback_case->{arg};
-            dies_ok { $timeline->watch_unacked_counts(%args) } "'callback': $callback_case->{label}: watch_unacked_counts throws an exception.";
+            like(exception { $timeline->watch_unacked_counts(%args) },
+                 qr/callback must be a code-ref/,
+                 "'callback': $callback_case->{label}: watch_unacked_counts throws an exception.");
         }
     }
     
