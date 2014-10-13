@@ -15,11 +15,9 @@ use DateTime::Duration;
 use Storable qw(dclone);
 use utf8;
 
-BEGIN {
-    use_ok('BusyBird::Timeline');
-    use_ok('BusyBird::StatusStorage::SQLite');
-    use_ok('BusyBird::Watcher');
-}
+use BusyBird::Timeline;
+use BusyBird::StatusStorage::SQLite;
+use BusyBird::Watcher;
 
 $Devel::Trace::TRACE = 0;
 
