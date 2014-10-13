@@ -21,6 +21,8 @@ BEGIN {
     use_ok('BusyBird::Watcher');
 }
 
+$Devel::Trace::TRACE = 0;
+
 $BusyBird::Log::Logger = undef;
 
 our $CREATE_STORAGE;
@@ -82,6 +84,7 @@ sub test_timeline {
         is($tl->name(), 'a-zA-Z 0-9_-', 'name OK');
         note('== got name');
     }
+    return;
 
     {
         note('--- status methods');
@@ -969,6 +972,7 @@ sub test_timeline {
                 delay_sec => 0
             );
         };
+        local $Devel::Trace::TRACE = 1;
         test_timeline();
     }
 }

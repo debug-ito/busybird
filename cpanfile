@@ -70,6 +70,7 @@ on 'test' => sub {
     requires 'DBD::SQLite' => 0;
     requires 'Encode' => 0;
     requires 'Storable';
+    requires 'Devel::Trace';
 };
 
 on 'configure' => sub {
