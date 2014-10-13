@@ -953,7 +953,6 @@ sub test_timeline {
 
 {
     local $@ = 0;
-    use AnyEvent::Loop;
     use testlib::StatusStorage::AEDelayed;
     if($@) {
         diag("SKIP TESTS: Error while loading AEDelayed: $@");
