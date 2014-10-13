@@ -6,6 +6,7 @@ use BusyBird::Log qw(bblog);
 use BusyBird::Flow;
 use BusyBird::Watcher::Aggregator;
 use BusyBird::DateTime::Format 0.04;
+use BusyBird::Config;
 use Async::Selector 1.0;
 use Data::UUID;
 use Carp;
@@ -13,7 +14,7 @@ use Storable qw(dclone);
 use Scalar::Util qw(weaken looks_like_number);
 use DateTime;
 
-our @CARP_NOT = ();
+our @CARP_NOT = qw(BusyBird::Config);
 
 sub new {
     my ($class, %args) = @_;
@@ -21,7 +22,7 @@ sub new {
         filter_flow => BusyBird::Flow->new,
         selector => Async::Selector->new,
         unacked_counts => {total => 0},
-        config => {},
+        config => BusyBird::Config->new(type => "timeline", with_default => 0),
         id_generator => Data::UUID->new,
     }, $class;
     $self->set_param(\%args, 'name', undef, 1);
@@ -187,15 +188,11 @@ sub add_filter_async {
 }
 
 sub set_config {
-    my ($self, %configs) = @_;
-    foreach my $key (keys %configs) {
-        $self->{config}{$key} = $configs{$key};
-    }
+    shift()->{config}->set_config(@_);
 }
 
 sub get_config {
-    my ($self, $key) = @_;
-    return $self->{config}{$key};
+    shift()->{config}->get_config(@_);
 }
 
 sub watch_unacked_counts {
