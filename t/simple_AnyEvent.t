@@ -10,12 +10,12 @@ $Devel::Trace::TRACE = 0;
 
 {
     local $Devel::Trace::TRACE = 1;
-    my $cv = AnyEvent->condvar;
+    ##my $cv = AnyEvent->condvar;
     my $w; $w = AnyEvent->timer(after => 1, cb => sub {
-        $cv->send;
+        ##$cv->send;
         undef $w;
     });
-    $cv->recv;
+    ##$cv->recv;
     pass("done");
 }
 
