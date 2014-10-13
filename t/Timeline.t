@@ -954,8 +954,8 @@ sub test_timeline {
 ## }
 
 {
-    local $@;
-    eval('use testlib::StatusStorage::AEDelayed');
+    local $@ = 0;
+    use testlib::StatusStorage::AEDelayed;
     if($@) {
         diag("SKIP TESTS: Error while loading AEDelayed: $@");
     }else {
