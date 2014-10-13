@@ -15,8 +15,13 @@ use DateTime::Duration;
 use Storable qw(dclone);
 use utf8;
 
+{
+    no autovivification;
+    pass("hoge");
+}
+
 ## use BusyBird::Timeline;
-use BusyBird::StatusStorage::SQLite;
+## use BusyBird::StatusStorage::SQLite;
 ## use BusyBird::Watcher;
 ## use testlib::StatusStorage::AEDelayed;
 use AnyEvent;
