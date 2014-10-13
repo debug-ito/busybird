@@ -945,13 +945,13 @@ sub test_timeline {
     }
 }
 
-{
-    note('---------- sync storage');
-    local $LOOP = sub {};
-    local $UNLOOP = sub {};
-    local $CREATE_STORAGE = sub { BusyBird::StatusStorage::SQLite->new(path => ':memory:') };
-    test_timeline();
-}
+## {
+##     note('---------- sync storage');
+##     local $LOOP = sub {};
+##     local $UNLOOP = sub {};
+##     local $CREATE_STORAGE = sub { BusyBird::StatusStorage::SQLite->new(path => ':memory:') };
+##     test_timeline();
+## }
 
 {
     local $@;
