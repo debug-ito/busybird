@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
-use Test::Exception;
+use Test::Fatal;
 use Test::Memory::Cycle;
 use lib "t";
 use testlib::Timeline_Util qw(status sync);
@@ -202,23 +202,26 @@ sub create_memory_storage {
     $main->timeline('a');
     my %a = (assumed => {a => 1});
     foreach my $case (
-        {label => 'empty assumed', args => {level => 'total', assumed => {}, callback => sub {}}},
-        {label => 'watching only unknown timeline', args => {level => 'total', assumed => {b => 1}, callback => sub {}}},
-        {label => 'assumed str', args => {assumed => 'hoge', callback => sub {}}},
-        {label => 'no assumed', args => {callback => sub {}}},
-        {label => 'assumed undef', args => {assumed => undef, callback => sub {}}},
-        {label => "assumed array-ref", args => {assumed => [], callback => sub {}}},
-        {label => "assumed code-ref", args => {assumed => sub {}, callback => sub {}}},
-        {label => 'no callback', args => {%a}},
-        {label => 'callback undef', args => {%a, callback => undef}},
-        {label => 'callback str', args => {%a, callback => 'foobar'}},
-        {label => 'callback array-ref', args => {%a, callback => []}},
-        {label => 'callback hash-ref', args => {%a, callback => {}}},
+        {label => 'empty assumed', exp => qr/assumed/, args => {level => 'total', assumed => {}, callback => sub {}}},
+        {label => 'watching only unknown timeline', exp => qr/assumed/,
+         args => {level => 'total', assumed => {b => 1}, callback => sub {}}},
+        {label => 'assumed str', exp => qr/assumed/, args => {assumed => 'hoge', callback => sub {}}},
+        {label => 'no assumed', exp => qr/assumed/, args => {callback => sub {}}},
+        {label => 'assumed undef', exp => qr/assumed/, args => {assumed => undef, callback => sub {}}},
+        {label => "assumed array-ref", exp => qr/assumed/, args => {assumed => [], callback => sub {}}},
+        {label => "assumed code-ref", exp => qr/assumed/, args => {assumed => sub {}, callback => sub {}}},
+        {label => 'no callback', exp => qr/callback/, args => {%a}},
+        {label => 'callback undef', exp => qr/callback/, args => {%a, callback => undef}},
+        {label => 'callback str', exp => qr/callback/, args => {%a, callback => 'foobar'}},
+        {label => 'callback array-ref', exp => qr/callback/, args => {%a, callback => []}},
+        {label => 'callback hash-ref', exp => qr/callback/, args => {%a, callback => {}}},
     ) {
-        dies_ok { $main->watch_unacked_counts(%{$case->{args}}) } "watch_unacked_counts: $case->{label}: raises an exception";
+        like(exception { $main->watch_unacked_counts(%{$case->{args}}) },
+             $case->{exp}, "watch_unacked_counts: $case->{label}: raises an exception");
     }
     my $w;
-    lives_ok { $w = $main->watch_unacked_counts(assumed => {a => 0, b => 0}, callback => sub {}) } 'unknown timeline is ignored.';
+    is(exception { $w = $main->watch_unacked_counts(assumed => {a => 0, b => 0}, callback => sub {}) },
+       undef, 'unknown timeline is ignored.');
     ok($w->active, 'watcher is active.');
     $w->cancel();
 }

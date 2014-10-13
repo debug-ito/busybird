@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
-use Test::Exception;
+use Test::Fatal;
 use utf8;
 
 BEGIN {
@@ -108,9 +108,8 @@ BEGIN {
 
 {
     note("--- undef text");
-    dies_ok {
-        split_with_entities(undef, {});
-    } 'it should die if $text is undef';
+    like(exception { split_with_entities(undef, {}) },
+         qr/text .* undef/, 'it should die if $text is undef');
 }
 
 {

@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Builder;
-use Test::Exception;
+use Test::Fatal;
 use DateTime;
 use BusyBird::DateTime::Format;
 use Storable qw(dclone);
@@ -58,7 +58,7 @@ sub test_sort {
     note("--- sort crazy statuses");
     my @input = crazy_statuses();
     my $got;
-    lives_ok { $got = sort_statuses(\@input) } "sort_statuses() lives";
+    is(exception { $got = sort_statuses(\@input) }, undef, "sort_statuses() lives");
     my %got_ids = map { $_->{id} => 1 } @$got;
     my %exp_ids = map { $_->{id} => 1 } @input;
     is_deeply \%got_ids, \%exp_ids, "set of statuses preserved.";

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
-use Test::Exception;
+use Test::Fatal;
 use File::HomeDir::Test;
 use File::HomeDir;
 use File::Spec;
@@ -37,7 +37,10 @@ my $EXP_DEFAULT_CONFIG = File::Spec->catfile($EXP_CONFIG_DIR, "config.psgi");
     note("-- explicit config file: non-existent");
     my @warns = ();
     local $SIG{__WARN__} = sub { push @warns, shift };
-    dies_ok { BusyBird::Runner::prepare_plack_opts("xt/hogehoge") } "passing explicit non-existent config file leads to death";
+    like(exception { BusyBird::Runner::prepare_plack_opts("xt/hogehoge") },
+         qr{xt/hogehoge},
+         "passing explicit non-existent config file leads to death");
+    cmp_ok(scalar(grep { $_ =~ qr{xt/hogehoge} } @warns), ">", 0, "at least 1 warning reported");
     note("Reported warnings:");
     note(join "", @warns);
 }
@@ -46,7 +49,9 @@ my $EXP_DEFAULT_CONFIG = File::Spec->catfile($EXP_CONFIG_DIR, "config.psgi");
     note("-- --help option");
     my @warns = ();
     local $SIG{__WARN__} = sub { push @warns, shift };
-    dies_ok { BusyBird::Runner::prepare_plack_opts("--help", "xt/Runner.t") } "--help option raises exception";
+    like(exception { BusyBird::Runner::prepare_plack_opts("--help", "xt/Runner.t") },
+         qr{help},
+         "--help option raises exception");
     is scalar(@warns), 0, "no warnings";
 }
 

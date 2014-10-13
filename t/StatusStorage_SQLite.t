@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
-use Test::Exception;
+use Test::Fatal;
 use BusyBird::Test::StatusStorage qw(:storage :status);
 use File::Temp 0.19;
 use Test::MockObject::Extends;
@@ -239,11 +239,15 @@ test_sqlite('file');
 
 {
     note("--- trying to create DB at non-existent path");
-    dies_ok {
-        my $s = BusyBird::StatusStorage::SQLite->new(
-            path => './this/path/should/never/exist.sqlite3'
-        );
-    } "trying to create DB at non-existent path throws an exception.";
+    like(
+        exception {
+            my $s = BusyBird::StatusStorage::SQLite->new(
+                path => './this/path/should/never/exist.sqlite3'
+            );
+        },
+        qr{exist\.sqlite3},
+        "trying to create DB at non-existent path throws an exception."
+    );
 }
 
 {
@@ -322,8 +326,8 @@ SQL
     is($error, undef, "put succeeds");
     is($ret_num, 1, '1 inserted');
     my $dbh = connect_db($tempfile->filename);
-    throws_ok { $dbh->do(q{UPDATE statuses SET timeline_id = 256}) } qr/foreign/i,
-        "statuses.timeline_id cannot be modified to non-existent ID due to foreign key constraint";
+    like(exception { $dbh->do(q{UPDATE statuses SET timeline_id = 256}) }, qr/foreign/i,
+         "statuses.timeline_id cannot be modified to non-existent ID due to foreign key constraint");
 }
 
 test_sqlite('memory');

@@ -65,8 +65,9 @@ sub _ensure_config_file_exists {
         if($create_default) {
             _create_default_config_file($filepath);
         }else  {
-            warn "Cannot access config file $filepath. Maybe it does not exist.\n";
-            die "_check_config_file";
+            my $msg = "Cannot access config file $filepath. Maybe it does not exist.";
+            warn "$msg\n";
+            die $msg;
         }
     }
 }
