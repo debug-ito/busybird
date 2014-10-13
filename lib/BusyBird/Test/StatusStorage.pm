@@ -6,7 +6,7 @@ use DateTime;
 use DateTime::Duration;
 use Test::More;
 use Test::Builder;
-use Test::Exception;
+use Test::Fatal qw(dies_ok);
 use BusyBird::DateTime::Format;
 use BusyBird::StatusStorage;
 use BusyBird::Util ();
