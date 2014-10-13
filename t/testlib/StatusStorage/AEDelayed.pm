@@ -16,6 +16,7 @@ sub _delayed_call {
     $method = (caller(1))[3];
     $method =~ s/^.*:://g;
     my $delay = $self->{delay_sec} || 0;
+    warn "AEDelayed: call $method with timer";
     my $w; $w = AnyEvent->timer(
         after => $delay,
         cb => sub {
@@ -23,6 +24,7 @@ sub _delayed_call {
             $self->{backend}->$method(@args);
         }
     );
+    warn "AEDelayed: AnyEvent->timer() returned";
 }
 
 sub get_statuses { my $self = shift; $self->_delayed_call(@_) }

@@ -28,7 +28,9 @@ sub new {
     $self->set_param(\%args, 'storage', undef, 1);
     $self->set_param(\%args, 'watcher_max', 512);
     croak 'name must not be empty' if $self->{name} eq '';
+    warn "Timeline: before _init_selector()";
     $self->_init_selector();
+    warn "Timeline: before _update_unacked_counts()";
     $self->_update_unacked_counts();
     return $self;
 }
