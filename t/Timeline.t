@@ -3,7 +3,7 @@ use warnings;
 use lib "t";
 use Test::More;
 use Test::Builder;
-use Test::Exception;
+use Test::Exception 0.35;
 use Test::MockObject;
 use BusyBird::Test::StatusStorage qw(:status test_cases_for_ack);
 use testlib::Timeline_Util qw(sync status test_sets test_content *LOOP *UNLOOP);
