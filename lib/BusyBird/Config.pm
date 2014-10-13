@@ -4,6 +4,7 @@ use warnings;
 use Carp;
 use BusyBird::Log qw(bblog);
 use BusyBird::SafeData qw(safed);
+use BusyBird::Util qw(config_file_path);
 use URI::Escape qw(uri_escape);
 use Encode ();
 use Tie::IxHash;
@@ -83,7 +84,6 @@ $_DEFAULTS{timeline} = {
 
 $_DEFAULTS{global} = {
     %{$_DEFAULTS{timeline}},
-    _item_for_test => sub { 1 },
 
     default_status_storage => sub {
         BusyBird::StatusStorage::SQLite->new(path => config_file_path("statuses.sqlite3"));

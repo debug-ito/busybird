@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use BusyBird::Timeline;
 use BusyBird::Watcher::Aggregator;
-use BusyBird::Util qw(config_file_path);
 use BusyBird::Log qw(bblog);
 use BusyBird::Config;
 use Tie::IxHash;

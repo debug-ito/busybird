@@ -49,17 +49,41 @@ sub create_main_and_timeline {
 {
     note("--- default config (_item_for_test)");
     my ($main, $timeline) = create_main_and_timeline();
-    is($main->get_config("_item_for_test"), 1, "_item_for_test is 1 by default");
-    is($main->get_config("time_zone"), "local", "default timezone OK");
-    is($main->get_config("time_format"), '%x (%a) %X %Z', "default time_format OK");
-    is($main->get_config("time_locale"), $ENV{LC_TIME} || "C", "default time_locale OK");
-    is($main->get_config("post_button_url"), "https://twitter.com/intent/tweet", "default post_button_url OK");
-    is($main->get_config("timeline_web_notifications"), "simple", "default timeline_web_notifications OK");
-    ok(!$main->get_config("hidden"), "hidden param is false by default");
-    is($main->get_config("attached_image_max_height"), 360, "default attached_image_max_height OK");
-    is($main->get_config("attached_image_show_default"), "hidden", "default attached_image_show_default OK");
-    is($main->get_config("acked_statuses_load_count"), 20, "acked_statuses_load_count OK");
-    is($main->get_config("default_level_threshold"), 0, "default_level_threshold OK");
+    foreach my $case (
+        {key => "time_zone", exp => "local"},
+        {key => "time_format", exp => '%x (%a) %X %Z'},
+        {key => "time_locale", exp => $ENV{LC_TIME} || "C"},
+        {key => "post_button_url", exp => "https://twitter.com/intent/tweet"},
+        {key => "timeline_web_notifications", exp => "simple"},
+        {key => "hidden", exp => 0},
+        {key => "attached_image_max_height", exp => 360},
+        {key => "attached_image_show_default", exp => "hidden"},
+        {key => "acked_statuses_load_count", exp => 20},
+        {key => "default_level_threshold", exp => 0},
+    ) {
+        is($main->get_config($case->{key}), $case->{exp}, "$case->{key} get_config OK");
+        is($main->get_timeline_config("test", $case->{key}), $case->{exp}, "$case->{key} get_timeline_config OK");
+    }
+}
+
+{
+    note("--- warning for unknown config");
+    my @logs = ();
+    local $BusyBird::Log::Logger = sub {
+        push @logs, \@_;
+    };
+    my ($main, $timeline) = create_main_and_timeline();
+
+    foreach my $case (
+        {label => "main, typo in key", target => $main, key => "timeline_page_entry_max", val => 100},
+        {label => "timeline", target => $timeline, key => "THIS DOES NOT EXIST", val => "foo"},
+        {label => "timeline, global config", target => $timeline, key => "sharedir_path", val => "/some/path"}
+    ) {
+        @logs = ();
+        $case->{target}->set_config($case->{key}, $case->{val});
+        cmp_ok(scalar(grep { $_->[0] eq "warn" } @logs), ">", 0, "$case->{label}: at least 1 warning");
+        is($case->{target}->get_config($case->{key}), $case->{val}, "$case->{label}: the config is set anyway");
+    }
 }
 
 done_testing();
