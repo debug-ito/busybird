@@ -71,9 +71,16 @@ sub test_timeline {
     {
         note('-- checking names');
         my %s = (storage => $CREATE_STORAGE->());
+        note('== storage created');
         my $tl;
-        lives_ok { $tl = $CLASS->new(%s, name => 'a-zA-Z 0-9_-') } "OK: a-zA-Z 0-9_-";
+        lives_ok {
+            note('== enter lives_ok');
+            $tl = $CLASS->new(%s, name => 'a-zA-Z 0-9_-');
+            note('== timeline created');
+        } "OK: a-zA-Z 0-9_-";
+        note('== leave lives_ok');
         is($tl->name(), 'a-zA-Z 0-9_-', 'name OK');
+        note('== got name');
     }
 
     {
