@@ -47,6 +47,7 @@ requires 'POSIX' => 0;
 requires 'Data::UUID' => 0;
 requires 'Data::Diver' => 0;
 requires 'Twiggy' => 0;
+suggests 'EV';
 
 on 'test' => sub {
     requires 'Test::More'=> '0.98';
