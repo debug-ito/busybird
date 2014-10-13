@@ -7,3 +7,4 @@ perl:
   - "5.18"
   - "5.20"
 before_install: "cpanm Module::Build::Prereqs::FromCPANfile"
+script: "perl Build.PL; ./Build.PL; prove -vmb t/Timeline.t"
