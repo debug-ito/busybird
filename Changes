@@ -1,5 +1,17 @@
 Revision history for BusyBird
 
+0.10    2014-10-15
+        [ENHANCEMENTS]
+        - Web API: add "only_statuses" query parameter to GET /timelines/{timeline}/statues.json
+        - Add per-timeline config params: "acked_statuses_load_count" and "default_level_threshold".
+        - Now it warns you when you give unknown config parameters.
+        [DOCUMENTATION]
+        - BusyBird::SafeData is now public class. End-users are free to use it.
+        [PACKAGING]
+        - Drop dependency on Test::Exception. Use Test::Fatal instead.
+        - Add dependency on EV. This is necessary to avoid a bug in autovivification
+          ( https://rt.cpan.org/Public/Bug/Display.html?id=99458 )
+
 0.09    2014-09-28
         [BUG FIX]
         - Now it is more tolerant of statuses with unusual structure.
