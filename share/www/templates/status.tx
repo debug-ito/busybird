@@ -14,7 +14,7 @@
           &nbsp;<span class="label label-default">Lv. <: bb_level($ss.val('busybird', 'level')) :></span>
         </div>
         <div>
-          <span class="bb-status-username"><: $ss.val('user', 'screen_name') :></span>&nbsp;&nbsp;
+          <span class="bb-status-username"><: link( $ss.val('user', 'screen_name'), href => $ss.val('busybird', 'user_permalink'), target => "_blank" ) :></span>&nbsp;&nbsp;
           <span class="bb-status-created-at"><: link( $bb_timestamp($ss.val('created_at')), href => $bb_status_permalink($ss.original()), target => "_blank" ) :></span>
         </div>
       </div>

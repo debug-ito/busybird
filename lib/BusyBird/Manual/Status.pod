@@ -21,7 +21,8 @@ BusyBird::Manual::Status - Status object specification
         "busybird": {
             "level": 0,
             "acked_at": "Thu Jan 03 14:44:12 +0900 2013",
-            "status_permalink" : "http://example.com/status/2291"
+            "status_permalink" : "http://example.com/status/2291",
+            "user_permalink": "http://example.com/user/debug_ito"
         }
     }
     STATUS
@@ -76,6 +77,13 @@ If this field is set, L<BusyBird> uses this field if necessary, e.g., when it bu
 If set, this string is used for the permalink URL of the status.
 
 To further customize status permalinks, see C<status_permalink_builder> of L<BusyBird::Manual::Config>.
+
+=head2 C<busybird.user_permalink>
+
+B<Experimental>.
+
+If set, this string is used for the permalink URL for the user.
+
 
 =head2 C<created_at>
 
