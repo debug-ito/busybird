@@ -1,5 +1,10 @@
 Revision history for BusyBird
 
+0.11    2014-10-22
+        [ENHANCEMENTS]
+        - Now it renders "busybird.user_permalink" field as the link URL for the user.
+          This is an experimental feature for now.
+
 0.10    2014-10-15
         [ENHANCEMENTS]
         - Web API: add "only_statuses" query parameter to GET /timelines/{timeline}/statues.json
