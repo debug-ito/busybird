@@ -1,4 +1,6 @@
 package BusyBird::StatusStorage;
+use strict;
+use warnings;
 
 1;
 
