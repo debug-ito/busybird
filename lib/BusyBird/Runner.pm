@@ -6,7 +6,7 @@ use BusyBird::Util qw(config_directory config_file_path);
 use File::Spec;
 use Try::Tiny;
 use Plack::Runner ();
-use Exporter qw(import);
+use Exporter 5.57 qw(import);
 
 our @EXPORT_OK = qw(run);
 

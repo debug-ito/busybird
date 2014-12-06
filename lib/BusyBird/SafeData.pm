@@ -1,7 +1,7 @@
 package BusyBird::SafeData;
 use strict;
 use warnings;
-use Exporter qw(import);
+use Exporter 5.57 qw(import);
 use Data::Diver ();
 
 our @EXPORT_OK = qw(safed);
