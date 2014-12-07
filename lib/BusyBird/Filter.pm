@@ -1,4 +1,5 @@
 package BusyBird::Filter;
+use v5.8.0;
 use strict;
 use warnings;
 use Exporter 5.57 qw(import);

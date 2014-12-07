@@ -1,4 +1,5 @@
 package BusyBird::Watcher;
+use v5.8.0;
 use strict;
 use warnings;
 

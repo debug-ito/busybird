@@ -1,4 +1,5 @@
 package BusyBird::Runner;
+use v5.8.0;
 use strict;
 use warnings;
 use Getopt::Long qw(GetOptionsFromArray :config no_ignore_case bundling);

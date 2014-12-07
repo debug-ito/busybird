@@ -1,4 +1,5 @@
 package BusyBird::Main::PSGI;
+use v5.8.0;
 use strict;
 use warnings;
 use BusyBird::Util qw(set_param future_of);

@@ -1,4 +1,5 @@
 package BusyBird::Flow;
+use v5.8.0;
 use strict;
 use warnings;
 use Async::Queue;

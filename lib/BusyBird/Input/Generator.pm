@@ -1,4 +1,5 @@
 package BusyBird::Input::Generator;
+use v5.8.0;
 use strict;
 use warnings;
 use DateTime;

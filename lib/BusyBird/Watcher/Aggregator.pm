@@ -1,4 +1,5 @@
 package BusyBird::Watcher::Aggregator;
+use v5.8.0;
 use strict;
 use warnings;
 use Async::Selector 1.03;

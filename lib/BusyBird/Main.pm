@@ -1,4 +1,5 @@
 package BusyBird::Main;
+use v5.8.0;
 use strict;
 use warnings;
 use BusyBird::Timeline;

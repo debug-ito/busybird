@@ -1,4 +1,4 @@
-requires 'perl' => "5.10.0";
+requires 'perl' => "v5.8.0";
 requires 'BusyBird::DateTime::Format' => "0.04";
 requires 'parent' => "0";
 requires 'Async::Queue'=> '0.02';

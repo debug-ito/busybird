@@ -1,4 +1,5 @@
 package BusyBird::Filter::Twitter;
+use v5.8.0;
 use strict;
 use warnings;
 use BusyBird::DateTime::Format;
