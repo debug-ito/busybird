@@ -1,4 +1,9 @@
-Revision history for BusyBird
+Revision history for Perl module BusyBird
+
+0.12    2014-12-??
+        - When doing "use Exporter qw(import)" you should require Exporter 5.57,
+          since that was the first version that could export the import() function.
+        - Added "use strict" and "use warnings" to the modules that didn't have them.
 
 0.11    2014-10-22
         [ENHANCEMENTS]
@@ -101,4 +106,4 @@ Revision history for BusyBird
         - Install BusyBird under user's home directory.
 
 0.01    2014-06-15
-        First version, released on an unsuspecting world.
+        - First version, released on an unsuspecting world.

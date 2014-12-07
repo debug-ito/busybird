@@ -1,7 +1,7 @@
 package BusyBird::Filter;
 use strict;
 use warnings;
-use Exporter qw(import);
+use Exporter 5.57 qw(import);
 use Carp;
 use Storable qw(dclone);
 

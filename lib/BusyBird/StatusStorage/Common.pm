@@ -2,7 +2,7 @@ package BusyBird::StatusStorage::Common;
 use strict;
 use warnings;
 use Carp;
-use Exporter qw(import);
+use Exporter 5.57 qw(import);
 use BusyBird::Util qw(future_of);
 use BusyBird::DateTime::Format;
 use DateTime;

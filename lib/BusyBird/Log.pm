@@ -1,7 +1,7 @@
 package BusyBird::Log;
 use strict;
 use warnings;
-use Exporter qw(import);
+use Exporter 5.57 qw(import);
 
 our @EXPORT_OK = qw(bblog);
 our $Logger = \&default_logger;

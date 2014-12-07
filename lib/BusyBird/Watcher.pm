@@ -1,4 +1,6 @@
 package BusyBird::Watcher;
+use strict;
+use warnings;
 
 1;
 
