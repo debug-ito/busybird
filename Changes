@@ -1,9 +1,12 @@
 Revision history for Perl module BusyBird
 
-0.12    2014-12-??
-        - When doing "use Exporter qw(import)" you should require Exporter 5.57,
-          since that was the first version that could export the import() function.
-        - Added "use strict" and "use warnings" to the modules that didn't have them.
+0.12    2014-12-08
+        - No functional changes.
+        [PACKAGING]
+        - Now it requires Exporter 5.57, because we import the import() function instead of inheritance.
+        - Now it requires perl 5.8.0 (previously it was 5.10.0, but in fact I didn't use any feature in 5.10.0).
+        - Now it requires autovivification 0.14 for bug fix of RT#99458.
+          It drops dependency on EV.
 
 0.11    2014-10-22
         [ENHANCEMENTS]
