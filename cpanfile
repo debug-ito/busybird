@@ -33,7 +33,7 @@ requires 'Text::Xslate'=> '1.60';
 requires 'Tie::IxHash'=> '0';
 requires 'Time::HiRes'=> '1.9720';
 requires 'Try::Tiny'=> '0.10';
-requires 'autovivification'=> '0.10';
+requires 'autovivification'=> '0.14';
 requires 'JavaScript::Value::Escape'=> '0';
 requires 'Cache::Memory::Simple'=> '1.01';
 requires 'URI::Escape'=> '0';
@@ -47,7 +47,6 @@ requires 'POSIX' => 0;
 requires 'Data::UUID' => 0;
 requires 'Data::Diver' => 0;
 requires 'Twiggy' => 0;
-requires 'EV';
 
 on 'test' => sub {
     requires 'Test::More'=> '0.98';
