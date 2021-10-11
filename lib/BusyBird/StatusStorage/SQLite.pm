@@ -70,7 +70,12 @@ sub _create_new_dbh {
 sub _get_my_dbh {
     my ($self) = @_;
     my @connect_params = ("dbi:SQLite:dbname=$self->{path}", "", "", {
-        RaiseError => 1, PrintError => 0, AutoCommit => 1, sqlite_unicode => 1,
+        RaiseError => 1, PrintError => 0, AutoCommit => 1,
+        
+        ## DBD-SQLite-1.67_04 deprecates 'sqlite_unicode' option. We should use 'sqlite_string_mode' option instead.
+        ## However, deprecation warning is disabled in 1.69-01.
+        ## See the ChangeLog https://metacpan.org/dist/DBD-SQLite/changes
+        sqlite_unicode => 1,
     });
     if($self->{path} eq ':memory:') {
         $self->{in_memory_dbh} = $self->_create_new_dbh(@connect_params) if !$self->{in_memory_dbh};
